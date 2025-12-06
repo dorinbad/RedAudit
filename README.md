@@ -1,12 +1,46 @@
-# RedAudit
+<div align="center">
+  <img src="assets/header.png" alt="RedAudit Banner" width="100%">
 
-[ 🇬🇧 English ](README.md) | [ 🇪🇸 Español ](README_ES.md)
+  <br>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8%2B-blue)
-![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
+  [ 🇬🇧 English ](README.md) | [ 🇪🇸 Español ](README_ES.md)
+
+  <br>
+
+  ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
+  ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square)
+  ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
+</div>
+
+<br>
 
 **RedAudit** is an interactive, automated network auditing tool designed for Kali Linux. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, easy-to-use CLI workflow.
+
+## 🖥️ Preview
+
+```text
+    ____          _    _   _           _ _ _
+   / __ \___  ___| |  / \  _   _  __| (_) |_
+  / /_/ / _ \/ __| | / _ \| | | |/ _` | | __|
+ / _, _/  __/ (__| |/ ___ \ |_| | (_| | | |_
+/_/ |_|\___|\___|_|/_/   \_\__,_|\__,_|_|\__|
+                                      v2.3
+══════════════════════════════════════════════════════
+   INTERACTIVE NETWORK AUDIT     ::  KALI LINUX
+══════════════════════════════════════════════════════
+
+? SCAN CONFIGURATION
+============================================================
+
+? TARGET SELECTION
+--------------------------------------------------
+✓ Interfaces detected:
+   1. 192.168.1.0/24 (eth0) - ~253 hosts
+   2. Enter manual
+   3. Scan ALL
+
+? Select network: [1-3] (1): 
+```
 
 ## 🚀 Features
 
