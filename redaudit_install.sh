@@ -1302,25 +1302,32 @@ class InteractiveNetworkAuditor:
                 self.print_status(self.t("json_report", json_path), "OKGREEN")
 
             # TXT
+            # TXT
             if self.config.get('save_txt_report'):
-        f.write(f"NETWORK AUDIT REPORT v{VERSION}\n")
-        f.write(f"Date: {datetime.now()}\n")
-        f.write(f"Status: {'PARTIAL/INTERRUPTED' if partial else 'COMPLETED'}\n\n")
-        summ = self.results.get("summary", {})
-        f.write(f"Hosts Found: {summ.get('hosts_found')}\n")
-        f.write(f"Hosts Scanned: {summ.get('hosts_scanned')}\n")
-        f.write(f"Vulns Found: {summ.get('vulns_found')}\n\n")
-        if self.results.get("vulnerabilities"):
-            f.write("VULNERABILITIES:\n")
-            for v in self.results['vulnerabilities']:
-                f.write(f"\nHost: {v['host']}\n")
-                for item in v['vulnerabilities']:
-                    f.write(f"  - {item['url']}\n")
-                    if item.get("whatweb"):
-                        f.write(f"    WhatWeb: {item['whatweb'][:80]}...\n")
-                    if item.get("nikto_findings"):
-                        f.write(f"    Nikto: {len(item['nikto_findings'])} hallazgos.\n")
-        f.write("\n")
+                # Generar el contenido del reporte TXT
+                txt_data = self._generate_text_report_string(partial)
+
+                if self.encryption_enabled:
+                    txt_data_enc = self.encrypt_data(txt_data)
+                    txt_path = f"{base}.txt.enc"
+                    with open(txt_path, 'wb') as f:
+                        f.write(txt_data_enc)
+                else:
+                    txt_path = f"{base}.txt"
+                    with open(txt_path, 'w') as f:
+                        f.write(txt_data)
+                self.print_status(self.t("txt_report", txt_path), "OKGREEN")
+
+            # Guardar salt si hay cifrado
+            if self.encryption_enabled and self.config.get('encryption_salt'):
+                salt = base64.b64decode(self.config['encryption_salt'])
+                with open(f"{base}.salt", 'wb') as f:
+                    f.write(salt)
+                self.print_status("Salt saved: " + f"{base}.salt", "INFO")
+
+        except Exception as e:
+            self.print_status(self.t("save_err", str(e)), "FAIL")
+            self.logger.error(f"Save results failed: {e}", exc_info=True)
 
 
 def main():

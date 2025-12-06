@@ -1,25 +1,40 @@
 # Changelog
-
 All notable changes to this project will be documented in this file.
 
-## [v2.3] - 2025-12-06
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.3.1] - 2024-05-20 (Security Hardening)
 
 ### Added
-- **Heartbeat Monitor**: A new background thread monitors Nmap activity to detect freezes and report progress periodically.
-- **Deep Scan Automation**: Automatically triggers aggressive scans (`-A -sV -Pn` + UDP) and traffic capture for unresponsive or "suspiciously quiet" hosts.
-- **Traffic Capture**: Integration with `tcpdump` and `tshark` to capture traffic snippets for analysis (if tools are available).
-- **Output Directory**: Default output directory set to `~/RedAuditReports`.
-- **Installer Improvements**: Added check for `apt` and root privileges. Added `-y` flag for non-interactive installation.
+- **Security Hardening**: Implemented strict sanitization for all user inputs (IP addresses, hostnames, interfaces) to prevent command injection.
+- **Report Encryption**: Added optional AES-128 encryption (Fernet) for generated reports. Included a helper script (`redaudit_decrypt.py`) for decryption.
+- **Rate Limiting**: Added configurable delay between concurrent host scans for stealthier operations.
+- **Professional Logging**: Implemented a rotating file logger (`~/.redaudit/logs/`) for detailed audit trails and debugging.
+- **Port Truncation**: Automatic truncation of port lists if >50 ports are found on a single host, reducing report noise.
 
 ### Changed
-- **Dependency Management**: Python core no longer installs dependencies. All dependency checks are done at startup with clear "Required" vs "Recommended" distinction.
-- **Web Scanning**: `whatweb` and `nikto` are now recommended (optional) rather than hard requirements.
-- **Reporting**: Improved JSON and TXT report structure.
-- **Error Handling**: Better concurrency management in worker threads; individual host failures do not crash the entire audit.
+- **Dependencies**: Added `python3-cryptography` as a core dependency for the encryption feature.
+- **Configuration**: Updated interactive setup to include prompts for encryption and rate limiting.
+
+## [2.3.0] - 2024-05-18
+
+### Added
+- **Heartbeat Monitor**: Background thread that prints activity status every 60s and warns if Nmap hangs (>300s).
+- **Graceful Exit**: Handles Ctrl+C (SIGINT) to save partial results before exiting.
+- **Deep Scan**: Automatically triggers aggressive Nmap scan + UDP if a host shows few open ports.
+- **Traffic Capture**: Captures small PCAP snippets (50 packets) for active hosts using `tcpdump`.
+- **Enrichment**:
+    - **WhatWeb**: fingerprinting for web services.
+    - **Nikto**: scan for web vulnerabilities (only in FULL mode).
+    - **DNS/Whois**: reverse lookup and basic whois for public IPs.
+    - **Curl/Wget/OpenSSL**: HTTP headers and TLS certificate info.
+
+### Changed
+- **Dependency Management**: Stopped using `pip`. All dependencies are now installed via `apt` (python3-nmap, etc.) to match Kali/Debian standards.
+- **Networking**: Replaced `netifaces` (often missing) with a robust parsing of `ip addr show` or `ifconfig`.
+- **Architecture**: `redaudit_install.sh` now embeds the Python core directly, removing the need for a separate `.py` file download.
 
 ### Fixed
-- Fixed concurrency crashes by adding try/except blocks in thread futures.
-- Resolved installer issues on non-Kali Debian systems by strictly checking for `apt`.
-
-## [v2.2] - Previous Release
-- Initial stable release with multi-threading and basic report generation.
+- **Tracebacks**: Added extensive `try/except` blocks to prevent crashes during scanning errors.
+- **Permissions**: Added check for `root` (sudo) at startup.
