@@ -1143,20 +1143,28 @@ sudo mv "$TEMP_SCRIPT" /usr/local/bin/redaudit
 sudo chown root:root /usr/local/bin/redaudit
 sudo chmod 755 /usr/local/bin/redaudit
 
-# 4) Alias persistente en ~/.bashrc (del usuario real)
+# 4) Alias persistente en ~/.bashrc o ~/.zshrc (del usuario real)
 REAL_USER=${SUDO_USER:-$USER}
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+USER_SHELL=$(getent passwd "$REAL_USER" | cut -d: -f7)
+RC_FILE="$REAL_HOME/.bashrc" # Default
 
-if ! grep -q "alias redaudit=" "$REAL_HOME/.bashrc" 2>/dev/null; then
-  echo "alias redaudit='sudo /usr/local/bin/redaudit'" >> "$REAL_HOME/.bashrc"
-  chown "$REAL_USER" "$REAL_HOME/.bashrc"
-  echo "$MSG_ALIAS_ADDED $REAL_HOME/.bashrc"
+if [[ "$USER_SHELL" == *"zsh"* ]]; then
+    RC_FILE="$REAL_HOME/.zshrc"
+elif [[ "$USER_SHELL" == *"bash"* ]]; then
+    RC_FILE="$REAL_HOME/.bashrc"
+fi
+
+if ! grep -q "alias redaudit=" "$RC_FILE" 2>/dev/null; then
+  echo "alias redaudit='sudo /usr/local/bin/redaudit'" >> "$RC_FILE"
+  chown "$REAL_USER" "$RC_FILE"
+  echo "$MSG_ALIAS_ADDED $RC_FILE"
 else
-  echo "$MSG_ALIAS_EXISTS $REAL_HOME/.bashrc"
+  echo "$MSG_ALIAS_EXISTS $RC_FILE"
 fi
 
 echo
 echo "$MSG_DONE"
 echo "$MSG_USAGE"
-echo "     source ~/.bashrc"
+echo "     source $RC_FILE" # Dynamic instruction
 echo "   redaudit"
