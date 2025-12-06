@@ -53,10 +53,12 @@
 - **Automatic deep scans** for “quiet” or error-prone hosts (extra Nmap passes, UDP probing and optional `tcpdump` capture).
 - **Web reconnaissance** via `whatweb` and `nikto` when available, plus optional `curl` / `wget` / `openssl` enrichment.
 - **Traffic & DNS enrichment**: small PCAP captures (`tcpdump` + `tshark`) and reverse DNS / whois for public IPs.
-- **Resilience for long runs**: a heartbeat thread that periodically prints activity and detects potential hangs, plus graceful signal handling with partial report saving on Ctrl+C.
-- **Professional Logging**: Rotating logs stored in `~/.redaudit/logs` for audit trails and debugging.
-- **Security Hardening**: Strict input sanitization (IP/Hostname/Interface) to prevent injection, plus optional report encryption (Fernet/AES).
-- **Rate Limiting**: Configurable delay between hosts for stealthier scans.
+- **Security Hardening**: Strict input sanitization and deep scan fallback.
+- **Report Encryption**: Optional AES-128 (Fernet) encryption for reports (JSON/TXT). Includes `redaudit_decrypt.py` tool.
+- **Rate Limiting**: Configurable delay between host scans for stealth.
+- **Logging**: Rotating logs in `~/.redaudit/logs/` for auditing and debugging.
+- **Heartbeat & Safety**: Background activity monitor and graceful exit (Ctrl+C).
+- **Embedded Core**: Single script installer (`redaudit_install.sh`) manages dependencies and Python core.
 - **Reporting**: structured JSON + human-readable TXT reports written by default to `~/RedAuditReports` (or a custom directory chosen at runtime). Encrypted variants (`.json.enc`) available.
 
 ## Requirements

@@ -53,11 +53,12 @@
 - **Deep Scans automáticos** para hosts “silenciosos” o con errores (pasadas extra de Nmap, sondeo UDP y captura opcional con `tcpdump`).
 - **Reconocimiento web** con `whatweb` y `nikto` cuando están disponibles, más enriquecimiento opcional con `curl` / `wget` / `openssl`.
 - **Enriquecimiento de tráfico y DNS**: pequeñas capturas PCAP (`tcpdump` + `tshark`) y resolución inversa / whois para IPs públicas.
-- **Resiliencia en ejecuciones largas**: hilo de *heartbeat* que informa periódicamente de la actividad y detecta posibles bloqueos, más manejo limpio de señales con guardado de informes parciales al recibir Ctrl+C.
-- **Logging Profesional**: Logs rotativos almacenados en `~/.redaudit/logs` para auditoría y depuración.
-- **Endurecimiento de Seguridad**: Sanitización estricta de entrada (IP/Hostname/Interfaz) para prevenir inyección, y cifrado opcional de reportes (Fernet/AES).
-- **Limitación de Velocidad**: Retardo configurable entre hosts para escaneos más sigilosos.
-- **Reportes**: genera informes JSON estructurados y un TXT legible, que se escriben por defecto en `~/RedAuditReports`. Variantes cifradas (`.json.enc`) disponibles.
+- **Endurecimiento y Seguridad**: Validación estricta de entradas y fallback a deep scan.
+- **Cifrado de Reportes**: Cifrado opcional AES-128 (Fernet) para reportes (JSON/TXT). Incluye herramienta `redaudit_decrypt.py`.
+- **Rate Limiting**: Retardo configurable entre hosts para mayor sigilo.
+- **Logging Profundo**: Logs rotativos en `~/.redaudit/logs/` para auditoría y depuración.
+- **Resiliencia**: Monitor de actividad (heartbeat) y salida elegante con Ctrl+C.
+- **Núcleo Embebido**: Instalador único (`redaudit_install.sh`) gestiona dependencias y el código Python.
 
 ## Dependencias
 

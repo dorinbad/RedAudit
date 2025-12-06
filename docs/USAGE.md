@@ -1,0 +1,52 @@
+# RedAudit Usage Guide
+
+## Installation
+RedAudit is designed for Kali Linux or Debian-based systems.
+
+1. **Install & Update**:
+   ```bash
+   sudo bash redaudit_install.sh
+   # Or for non-interactive mode:
+   sudo bash redaudit_install.sh -y
+   ```
+   This installs dependencies (`nmap`, `python3-cryptography`, etc.) and creates the alias.
+
+2. **Reload Shell**:
+   ```bash
+   source ~/.bashrc  # or ~/.zshrc
+   ```
+
+3. **Run**:
+   ```bash
+   redaudit
+   ```
+
+## Workflow
+
+### 1. Configuration
+The tool will prompt you for:
+- **Target Network**: Auto-detected interfaces or manual CIDR.
+- **Scan Mode**: Normal (Discovery+Top Ports), Fast, or Full.
+- **Threads**: Number of concurrent workers.
+- **Rate Limit**: Optional delay (seconds) between hosts for stealth.
+- **Encryption**: Optional password protection for reports.
+- **Output Directory**: Defaults to `~/RedAuditReports`.
+
+### 2. Execution Phases
+- **Discovery**: fast ping scan to find live hosts.
+- **Port Scan**: specific nmap scan per host.
+- **Vulnerability Scan**: checks web services (http/https) against `whatweb` / `nikto` (if full mode).
+
+### 3. Reports & Encryption
+Reports are saved with a timestamp `redaudit_YYYYMMDD_HHMMSS`.
+- **Plain**: `.json` and `.txt`.
+- **Encrypted**: `.json.enc`, `.txt.enc`, and `.salt`.
+
+To decrypt results:
+```bash
+python3 redaudit_decrypt.py /path/to/report.json.enc
+```
+This will generate `.decrypted` files (or restore original extension) after password verification.
+
+### 4. Logging
+Debug logs are stored in `~/.redaudit/logs/`. Check these files if the scan fails or behaves unexpectedly.
