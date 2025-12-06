@@ -42,109 +42,138 @@
 ? Select network: [1-3] (1): 
 ```
 
-## 🚀 Features
+## Features
 
-*   **Interactive CLI:** User-friendly menus for configuration and execution.
-*   **Smart Discovery:** Automatically detects local networks and interfaces.
-*   **Multi-Mode Scanning:**
-    *   **FAST:** Quick discovery (`-sn`), no port scanning, low noise.
-    *   **NORMAL:** Top ports + Service Versioning (`-F -sV`). Balanced speed/coverage.
-    *   **FULL:** All ports (`-p-`) + Scripts + Vulnerability checks + Web Analysis.
-*   **Automated Deep Scans:** Automatically triggers aggressive scans (`-A -sV -Pn` + UDP) and traffic capture (`tcpdump`) for suspicious or unresponsive hosts.
-*   **Web Analysis:** Integrates `whatweb`, `nikto` (recommended) for web service reconnaissance.
-*   **Resilience:** Includes a heartbeat monitor and signal handling for long-running scans.
-*   **Reporting:** Generates detailed JSON and TXT reports in `~/RedAuditReports` (or custom folder).
+- **Interactive CLI** with guided menus for target selection, scan mode and options.
+- **Automatic local network discovery** (`ip` / `netifaces`) to suggest sensible CIDR ranges.
+- **Multi-mode scanning**:
+  - **FAST** – host discovery only (`-sn`), minimal noise.
+  - **NORMAL** – top ports + service/version detection (balanced coverage).
+  - **FULL** – all ports, scripts, OS and service detection, plus optional web checks.
+- **Automatic deep scans** for “quiet” or error-prone hosts (extra Nmap passes, UDP probing and optional `tcpdump` capture).
+- **Web reconnaissance** via `whatweb` and `nikto` when available, plus optional `curl` / `wget` / `openssl` enrichment.
+- **Traffic & DNS enrichment**: small PCAP captures (`tcpdump` + `tshark`) and reverse DNS / whois for public IPs.
+- **Resilience for long runs**: a heartbeat thread that periodically prints activity and detects potential hangs, plus graceful signal handling with partial report saving on Ctrl+C.
+- **Reporting**: structured JSON + human-readable TXT reports written by default to `~/RedAuditReports` (or a custom directory chosen at runtime).
 
-## 📦 Dependencies
+## Requirements
 
-RedAudit is designed for **apt-based systems** (Kali, Debian, Ubuntu).
+RedAudit is designed for **Debian-based systems with `apt`** (Kali, Debian, Ubuntu…).
 
-### Required (Core)
-These are critical for the tool to function:
-*   `nmap` (The core scanning engine)
-*   `python3-nmap` (Python binding for Nmap)
+### Core (required)
 
-### Recommended (Enrichment)
-These tools are optional but highly recommended for full functionality (Web Analysis, Traffic Capture, DNS):
-*   `whatweb`
-*   `nikto`
-*   `curl`, `wget`, `openssl`
-*   `tcpdump`, `tshark`
-*   `whois`, `bind9-dnsutils` (for `dig`)
+These are mandatory for the tool to run:
 
-To install everything manually:
+- `nmap`
+- `python3-nmap`
+
+### Recommended (enrichment)
+
+Optional but strongly recommended if you want the full web / traffic / DNS features:
+
+- `whatweb`
+- `nikto`
+- `curl`, `wget`, `openssl`
+- `tcpdump`, `tshark`
+- `whois`, `bind9-dnsutils` (for `dig`)
+
+You can install everything in one go on Kali/Debian/Ubuntu:
+
 ```bash
 sudo apt update
-sudo apt install nmap python3-nmap whatweb nikto curl wget openssl tcpdump tshark whois bind9-dnsutils
+sudo apt install nmap python3-nmap whatweb nikto \
+  curl wget openssl tcpdump tshark whois bind9-dnsutils
 ```
 
-## 🏗️ Architecture & Flow
+The installer and the Python core will check these dependencies at runtime and adapt behaviour (reduced features when something is missing). Even though the installer can help you install some packages via apt, the documented, supported way is to manage them yourself using the commands above.
 
-1.  **Initialization:** The script detects network interfaces and prompts the user for targets.
-2.  **Discovery:** Runs a quick Nmap discovery (`-sn`) on selected ranges.
-3.  **Host Scanning:**
-    *   Iterates through active hosts using concurrent threads.
-    *   Performs the selected scan (FAST/NORMAL/FULL).
-    *   **Deep Scan Logic:** If a host yields few results or errors, a specialized Deep Scan is triggered automatically.
-4.  **Enrichment:**
-    *   **Web:** If HTTP/HTTPS is found, runs WhatWeb and Nikto (if enabled).
-    *   **Traffic:** If `tcpdump` is available, captures a small snippet of traffic for analysis.
-    *   **DNS/Whois:** Resolves public IPs.
-5.  **Reporting:** All data is aggregated into JSON and TXT reports in the output directory.
+## Architecture & Flow
 
-## 🛠️ Installation
+At a high level, a run looks like this:
 
-RedAudit v2.3 uses a Bash installer that wraps the Python core.
+1.	**Initialisation**
+	-	Detect local interfaces and networks.
+	-	Ask the user to select one or more target ranges.
+	-	Pick scan mode (FAST / NORMAL / FULL) and thread count.
+	-	Optionally enable web checks and customise the output directory.
+2.	**Discovery phase**
+	-	Run a fast Nmap discovery (-sn) on each selected range.
+	-	Build a list of responsive hosts; this is the input for deeper scans.
+3.	**Per-host scanning**
+	-	Iterate over live hosts concurrently using a thread pool.
+	-	For each host, run the configured Nmap flags for the chosen mode.
+	-	Record open ports, service names, versions and whether they look like web services.
+4.	**Automatic Deep Scan logic**
+	-	If a host returns very few ports or suspicious errors, trigger a dedicated Deep Scan:
+	-	Aggressive Nmap scan (-A -sV -Pn -p- --open) plus optional UDP probing.
+	-	Optional short PCAP capture around the host with tcpdump (and a summary via tshark if available).
+5.	**Enrichment**
+	-	For web-looking ports (HTTP/HTTPS, proxies, admin panels, etc.), optionally:
+		-	Run whatweb for quick fingerprinting.
+		-	Run nikto in FULL mode for basic misconfiguration / vuln pattern checks.
+		-	Pull HTTP headers and TLS details via curl, wget and openssl.
+	-	For public IPs, optionally:
+		-	Perform reverse lookups with dig.
+		-	Add a trimmed whois summary.
+6.	**Reporting**
+	-	Aggregate everything under a single JSON structure plus a textual report.
+	-	Write the files to `~/RedAuditReports` by default, or to the directory selected during setup.
+	-	On interruption (Ctrl+C), a partial report is still written so previous work is not lost.
 
-1.  Clone the repository:
+## Installation
+
+1.	Clone the repository:
+
     ```bash
     git clone https://github.com/dorinbad/RedAudit.git
     cd RedAudit
     ```
 
-2.  Run the installer (must be **root**):
+2.	Make the installer executable and run it as root (or via sudo):
+
     ```bash
     chmod +x redaudit_install.sh
-    
-    # Interactive installation (asks to install recommended tools)
+
+    # Interactive mode (asks about installing recommended tools when relevant)
     sudo bash redaudit_install.sh
-    
-    # Non-interactive mode (installs recommended tools automatically)
+
+    # Non-interactive: assume “yes” to the optional tools question
     sudo bash redaudit_install.sh -y
     ```
 
-3.  Reload your shell to use the `redaudit` alias:
+3.	Reload your shell configuration so the redaudit alias is available:
+
     ```bash
-    source ~/.bashrc  # Or ~/.zshrc
+    source ~/.bashrc    # or ~/.zshrc
     ```
 
-## 💻 Usage
+## Usage
 
-Once installed, simply run:
+After installation, you can launch RedAudit from any terminal:
 
 ```bash
 redaudit
 ```
 
-Follow the interactive wizard:
-1.  **Select Network**: Choose a detected local network or enter a CIDR manually.
-2.  **Scan Mode**:
-    *   **FAST**: Discovery only.
-    *   **NORMAL**: Standard reconnaissance.
-    *   **FULL**: Comprehensive audit.
-3.  **Options**: Set thread count, enable web vuln scan, choose output directory.
-4.  **Authorization**: Confirm you have permission to scan the target.
+The interactive wizard will guide you through:
+1.	**Target selection**: choose one of the detected local networks or manually enter a CIDR.
+2.	**Scan mode**: FAST, NORMAL or FULL.
+3.	**Options**: number of threads, whether to include web vulnerability checks, and where to store reports.
+4.	**Legal confirmation**: explicit confirmation that you are authorised to scan the selected targets.
 
-## ⚠️ Legal & Ethical Warning
+Reports will be stored in `~/RedAuditReports` by default, or in the custom directory you chose during configuration.
 
-**RedAudit is a security auditing tool for authorized use only.**
+## ⚠️ Legal & Ethical Notice
 
-scanning networks or systems without explicit permission is illegal and punishable by law.
-*   **Do not** use this tool on networks you do not own or have written consent to audit.
-*   **Do not** use this tool for malicious purposes.
+RedAudit is a security tool intended only for authorised auditing and educational purposes. Scanning systems or networks without explicit permission is illegal and may be punishable under criminal and civil law.
 
-The developers assume no liability for misuse of this software. The user is solely responsible for complying with all applicable local, state, and federal laws.
+By using this tool you agree that:
+-	You will only run it against assets you own or for which you have documented permission.
+-	You will not use it for malicious, intrusive or disruptive activities.
+-	You, as the operator, are solely responsible for complying with all applicable laws and policies.
 
-## 📄 License
+The author(s) decline all responsibility for any misuse or damage arising from this software.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## License
+
+This project is distributed under the MIT license. See the LICENSE file for details.
