@@ -69,6 +69,24 @@ RedAudit is smart. If a host seems "quiet" (very few open ports) or returns susp
 
 This ensures you don't miss "stealthy" hosts that a normal scan might overlook.
 
+## 🏗️ Architecture & Design
+
+RedAudit follows a modular design packed into a single portable installer:
+*   **Hybrid Core:** A wrapper Bash script handles environment validation and dependency management (APT), while the embedded Python core triggers the auditing logic.
+*   **Concurrent Engine:** Uses `ThreadPoolExecutor` for parallel host scanning and vulnerability analysis, ensuring speed without blocking the main workflow.
+*   **Resiliency:** A dedicated `Heartbeat Monitor` thread tracks Nmap's partial progress to distinguish between "hanging" processes and valid long scans.
+
+## 📊 Scan Profiles & Noise Levels
+
+Choose your profile carefully based on the environment:
+
+| Profile | Noise Level | Description |
+| :--- | :--- | :--- |
+| **FAST** | 🟢 Low | ICMP/ARP Discovery only (`-sn`). Minimal footprint. |
+| **NORMAL** | 🟡 Medium | Top 100 Ports + Service Versioning (`-F -sV`). Balanced speed/accuracy. |
+| **FULL** | 🔴 High | All 65k Ports + OS Detect + NSE Scripts (`-p- -A`). **Likely to trigger IDS/IPS.** |
+| **DEEP** | 🟣 Critical | Targeted aggressive analysis (+UDP, Packet Capture) automatically triggered for "stubborn" hosts. |
+
 ## 🛠️ Installation
 
 1.  Clone the repository:
@@ -80,7 +98,11 @@ This ensures you don't miss "stealthy" hosts that a normal scan might overlook.
 2.  Run the installer:
     ```bash
     chmod +x redaudit_install.sh
+    # Interactive mode
     sudo ./redaudit_install.sh
+    
+    # Non-interactive mode (auto-install dependencies)
+    sudo ./redaudit_install.sh -y
     ```
 
 3.  Reload your shell:

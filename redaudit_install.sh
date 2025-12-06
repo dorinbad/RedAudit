@@ -1,6 +1,14 @@
 #!/bin/bash
 # RedAudit installer / updater v2.3 (Full Toolchain + Heartbeat)
 
+if ! command -v apt >/dev/null 2>&1; then
+    echo "Este instalador está pensado para sistemas con apt (Debian/Kali)."
+    exit 1
+fi
+
+AUTO_YES=false
+if [[ "$1" == "-y" ]]; then AUTO_YES=true; fi
+
 # Language selection / Selección de idioma
 echo "----------------------------------------------------------------"
 echo " Select Language / Selecciona Idioma"
@@ -42,7 +50,11 @@ EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-n
 echo
 echo "$MSG_OPTIONAL"
 echo "   $EXTRA_PKGS"
-read -r -p "$MSG_ASK_INSTALL" RESP
+if $AUTO_YES; then
+    RESP="y"
+else
+    read -r -p "$MSG_ASK_INSTALL" RESP
+fi
 RESP=${RESP,,}
 
 INSTALL_YES=false
@@ -54,7 +66,7 @@ fi
 
 if $INSTALL_YES; then
     echo "$MSG_EXEC apt update && apt install -y $EXTRA_PKGS"
-    sudo apt update && sudo apt install -y $EXTRA_PKGS
+    apt update && apt install -y $EXTRA_PKGS
 else
     echo "$MSG_SKIP"
 fi
@@ -252,7 +264,7 @@ class InteractiveNetworkAuditor:
             'max_hosts_value': 'todos',
             'scan_mode': 'normal',
             'threads': 6,
-            'output_dir': '.',
+            'output_dir': os.path.expanduser("~/RedAuditReports"),
             'scan_vulnerabilities': True,
             'save_txt_report': True
         }
@@ -316,7 +328,6 @@ class InteractiveNetworkAuditor:
         while not self.heartbeat_stop:
             now = datetime.now()
             delta = (now - self.last_activity).total_seconds()
-            try:
             try:
                 # Format phase for better readability
                 phase_desc = self.current_phase
@@ -386,9 +397,9 @@ class InteractiveNetworkAuditor:
 
         required_tools = [
             ("nmap", ["nmap", "--version"]),
-            ("whatweb", ["whatweb", "--version"]),
         ]
         recommended_tools = [
+            ("whatweb", ["whatweb", "--version"]),
             ("nikto", ["nikto", "-Version"]),
         ]
 
@@ -975,7 +986,11 @@ class InteractiveNetworkAuditor:
                 if self.interrupted:
                     break
                 done += 1
-                res = f.result()
+                try:
+                    res = f.result()
+                except Exception as e:
+                    self.print_status(f"[worker error] {e}", "WARNING")
+                    continue
                 if "ports" in res:
                     results.append(res)
                     self.print_status(
@@ -999,7 +1014,11 @@ class InteractiveNetworkAuditor:
             for f in as_completed(futures):
                 if self.interrupted:
                     break
-                res = f.result()
+                try:
+                    res = f.result()
+                except Exception as e:
+                    self.print_status(f"[worker error] {e}", "WARNING")
+                    continue
                 if res:
                     self.results["vulnerabilities"].append(res)
                     self.print_status(
@@ -1034,6 +1053,7 @@ class InteractiveNetworkAuditor:
         if self.config['scan_mode'] == 'rapido':
             self.results['hosts'] = [{"ip": h, "status": "up"} for h in all_hosts]
             self.generate_summary(all_hosts, [])
+            self.show_results()
             self.save_results()
             self.stop_heartbeat()
             return True
@@ -1153,9 +1173,10 @@ EOF
 sed -i "s/__LANG__/$SELECTED_LANG/g" "$TEMP_SCRIPT"
 
 # Move to final location
-sudo mv "$TEMP_SCRIPT" /usr/local/bin/redaudit
-sudo chown root:root /usr/local/bin/redaudit
-sudo chmod 755 /usr/local/bin/redaudit
+# Move to final location
+mv "$TEMP_SCRIPT" /usr/local/bin/redaudit
+chown root:root /usr/local/bin/redaudit
+chmod 755 /usr/local/bin/redaudit
 
 # 4) Alias persistente en ~/.bashrc o ~/.zshrc (del usuario real)
 REAL_USER=${SUDO_USER:-$USER}

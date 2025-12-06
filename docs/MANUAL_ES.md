@@ -34,35 +34,27 @@ cd ~/herramientas_seguridad
 
 ⸻
 
-3. Crear el instalador de RedAudit
+3. Instalación
 
-En esa carpeta creamos el instalador (un script bash que genera / actualiza /usr/local/bin/redaudit):
+1.  Clonar el repositorio:
+    ```bash
+    git clone https://github.com/dorinbad/RedAudit.git
+    cd RedAudit
+    ```
 
-nano redaudit_install.sh
+2.  Ejecutar el instalador:
+    ```bash
+    chmod +x redaudit_install.sh
+    sudo ./redaudit_install.sh
+    
+    # O para instalación no interactiva:
+    # sudo ./redaudit_install.sh -y
+    ```
 
-Pega todo el script del final de este mensaje (desde #!/bin/bash hasta el último echo). Guarda y cierra.
-
-Después:
-
-chmod +x redaudit_install.sh
-
-
-⸻
-
-4. Ejecutar instalación / actualización
-
-Lanzas el instalador como root (vía sudo):
-
-sudo ./redaudit_install.sh
-
-El instalador:
-	1.	Ofrece instalar el pack de utilidades de red:
-	•	curl wget openssl nmap tcpdump tshark whois bind9-dnsutils
-	2.	Crea o reemplaza /usr/local/bin/redaudit con la versión Python 2.3.
-	3.	Ajusta permisos:
-	•	755 (root propietario, ejecutable por todos).
-	4.	Añade (si no existe) el alias en tu ~/.bashrc o ~/.zshrc:
-	•	alias redaudit='sudo /usr/local/bin/redaudit'
+El instalador se encargará de:
+1.  Ofrecer la instalación de utilidades de red recomendadas.
+2.  Instalar RedAudit en `/usr/local/bin/redaudit`.
+3.  Configurar el alias necesario en tu shell.
 
 ⸻
 
