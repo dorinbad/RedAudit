@@ -1,12 +1,15 @@
 # Security Architecture & Hardening
 
-RedAudit v2.4 is built with a "Secure by Design" philosophy, assuming execution in hostile or untrusted environments.
+RedAudit v2.5 is built with a "Secure by Design" philosophy, assuming execution in hostile or untrusted environments.
 
-## 1. Input Sanitization & Safety
+## 1. Input Sanitization & Safety (Enhanced in v2.5)
 All external inputs—target ranges, hostnames, interface names—are treated as untrusted.
+- **Type Validation**: All sanitizers now validate input type (only `str` accepted), preventing type confusion attacks.
+- **Length Limits**: Maximum input lengths enforced (1024 chars for IPs/hostnames, 50 for CIDR) to prevent DoS.
+- **Automatic Stripping**: All inputs are automatically stripped of leading/trailing whitespace.
 - **Strict Allowlisting**: We use strict regex patterns (`^[a-zA-Z0-9\.\-\/]+$`) for IPs and interfaces.
-- **Library Validation**: Python’s `ipaddress` library confirms CIDR/IP validity before any shell command sees them.
-- **Command Construction**: No user input is directly concatenated into shell strings without validation.
+- **Library Validation**: Python's `ipaddress` library confirms CIDR/IP validity before any shell command sees them.
+- **Command Construction**: No user input is directly concatenated into shell strings without validation. All commands use `subprocess.run` with argument lists.
 
 ## 2. Encryption Standard
 RedAudit uses the industrial-strength **Fernet** specification for report encryption.
@@ -21,6 +24,8 @@ RedAudit uses the industrial-strength **Fernet** specification for report encryp
 - **Traffic Capture Cap**: `tcpdump` captures are strictly capped at 50 packets or 15 seconds to prevent disk fills or process hangs.
 - **Activity Monitor**: Background heartbeat thread ensures the process doesn't "zombie" silently.
 - **Deep Scan Privacy**: Automated traffic captures (Deep Scan) are stored locally. These **PCAP files may contain sensitive payload data** (e.g., cleartext HTTP/Telnet). RedAudit never transmits these files; they are strictly for the operator's analysis.
+- **Secure File Permissions** (v2.5): All generated reports (JSON, TXT, encrypted, salt files) use 0o600 permissions (owner read/write only), preventing unauthorized access.
+- **Graceful Cryptography Handling** (v2.5): If `python3-cryptography` is unavailable, encryption is automatically disabled with clear warnings. No password prompts are shown, preventing user confusion and failed operations.
 
 ## 4. Audit Trails
 - **Logging**: Rotating logs stored in `~/.redaudit/logs/` (max 10MB, 5 backups).

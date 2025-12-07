@@ -14,7 +14,7 @@
 
 <br>
 
-# RedAudit v2.4
+# RedAudit v2.5
 
 ## 1. 📋 Overview
 **RedAudit** is an interactive, automated network auditing tool designed for **Kali Linux** and Debian-based systems. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, cohesive CLI workflow.
@@ -22,25 +22,33 @@
 Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, and reporting (JSON/TXT) with Python-based logic, offering professional-grade reliability and audit trails.
 
 ## 2. ✨ Features
-- **Interactive CLI**: Guided menu for target selection, scan modes, and configuration.
-- **Smart Discovery**: Auto-detects local interfaces and subnets using `ip` commands.
+- **Interactive & Non-Interactive CLI**: Guided menu or full command-line arguments for automation
+- **Smart Discovery**: Auto-detects local interfaces and subnets using `ip` commands
 - **Multi-Mode Scanning**:
-    - **FAST**: ICMP ping sweep (`-sn`) for quick live host detection.
-    - **NORMAL**: Top ports + Service Versioning (`-sV`).
-    - **FULL**: All ports, OS detection (`-O`), Scripts (`-sC`), and Web Vuln scans.
-- **Adaptive Deep Scan**: V2.4 engine that intelligently switches from TCP fingerprinting to UDP/OS detection only when necessary.
-- **Vendor/MAC Detection**: Automatically extracts hardware info even from partial scans.
-- **Traffic Analysis**: Optional micro-captures (`tcpdump`) for active analysis of target behavior.
-- **Web Recon**: Integrates `whatweb`, `nikto`, `curl`, and `openssl` for web-facing services.
-- **Resilience**: Background heartbeat monitor prevents silent freezes during long scans.
+    - **FAST**: ICMP ping sweep (`-sn`) for quick live host detection
+    - **NORMAL**: Top ports + Service Versioning (`-sV`)
+    - **FULL**: All ports, OS detection (`-O`), Scripts (`-sC`), and Web Vuln scans
+- **Adaptive Deep Scan**: Intelligent 2-phase engine (TCP Aggressive → UDP/OS Fallback) that maximizes speed and data
+- **Vendor/MAC Detection**: Automatically extracts hardware info even from partial scans
+- **Traffic Analysis**: Optional micro-captures (`tcpdump`) for active analysis of target behavior
+- **Web Recon**: Integrates `whatweb`, `nikto`, `curl`, and `openssl` for web-facing services
+- **Resilience**: Background heartbeat monitor prevents silent freezes during long scans
+- **Automation Ready**: Full CLI support for scripting and CI/CD integration
 
-## 3. 🔒 Security Features (NEW in v2.4)
-RedAudit v2.4 introduces enterprise-grade security hardening:
-- **Input Sanitization**: All user inputs (IPs, ranges) are validated via `ipaddress` library and strict regex (`^[a-zA-Z0-9\.\-\/]+$`) to strict `subprocess.run` lists (no shell injection).
-- **Encrypted Reports**: Optional **AES-128 (Fernet)** encryption with PBKDF2-HMAC-SHA256 (480,000 iterations).
-- **Thread Safety**: `ThreadPoolExecutor` with proper locking mechanisms for concurrent I/O.
-- **Rate Limiting**: Configurable `time.sleep()` delays to mitigate network flooding and IDS detection.
-- **Audit Logging**: Comprehensive, rotating logs (max 10MB, 5 backups) stored in `~/.redaudit/logs/`.
+## 3. 🔒 Security Features (Enhanced in v2.5)
+RedAudit v2.5 introduces enterprise-grade security hardening:
+- **Hardened Input Sanitization**: All user inputs validated for type, length, and format
+  - Type validation (only `str` accepted)
+  - Length limits (1024 chars for IPs/hostnames, 50 for CIDR)
+  - Automatic whitespace stripping
+  - Strict regex validation (`^[a-zA-Z0-9\.\-\/]+$`)
+  - No shell injection (uses `subprocess.run` with lists)
+- **Encrypted Reports**: Optional **AES-128 (Fernet)** encryption with PBKDF2-HMAC-SHA256 (480,000 iterations)
+- **Secure File Permissions**: All reports use 0o600 permissions (owner read/write only)
+- **Graceful Cryptography Handling**: Clear warnings if encryption unavailable, no password prompts
+- **Thread Safety**: `ThreadPoolExecutor` with proper locking mechanisms for concurrent I/O
+- **Rate Limiting**: Configurable `time.sleep()` delays to mitigate network flooding and IDS detection
+- **Audit Logging**: Comprehensive, rotating logs (max 10MB, 5 backups) stored in `~/.redaudit/logs/`
 
 [→ Full Security Documentation](docs/SECURITY.md)
 
@@ -75,16 +83,50 @@ source ~/.bashrc  # or ~/.zshrc
 ```
 *Note: Use `sudo bash redaudit_install.sh -y` for non-interactive installation.*
 
-## 6. 🚀 Quick Start (Interactive Flow)
+## 6. 🚀 Quick Start
+
+### Interactive Mode
 Launch the tool from any terminal:
 ```bash
 redaudit
 ```
 You will be guided through:
-1.  **Target Selection**: Pick a local subnet or enter a custom CIDR (e.g., `10.0.0.0/24`).
-2.  **Scan Mode**: Select FAST, NORMAL, or FULL.
-3.  **Options**: Configure threads, rate limits, and encryption.
-4.  **Authorization**: Confirm permission to scan.
+1.  **Target Selection**: Pick a local subnet or enter a custom CIDR (e.g., `10.0.0.0/24`)
+2.  **Scan Mode**: Select FAST, NORMAL, or FULL
+3.  **Options**: Configure threads, rate limits, and encryption
+4.  **Authorization**: Confirm permission to scan
+
+### Non-Interactive Mode (NEW in v2.5)
+For automation and scripting:
+```bash
+# Basic scan
+sudo redaudit --target 192.168.1.0/24 --mode normal
+
+# Full scan with encryption
+sudo redaudit --target 10.0.0.0/24 --mode full --threads 8 --encrypt --output /tmp/reports
+
+# Multiple targets
+sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
+
+# Skip legal warning (for automation)
+sudo redaudit --target 192.168.1.0/24 --mode fast --yes
+```
+
+**Available CLI Options:**
+- `--target, -t`: Target network(s) in CIDR notation (required for non-interactive)
+- `--mode, -m`: Scan mode (fast/normal/full, default: normal)
+- `--threads, -j`: Concurrent threads (1-16, default: 6)
+- `--rate-limit`: Delay between hosts in seconds (default: 0)
+- `--encrypt, -e`: Encrypt reports with password
+- `--output, -o`: Output directory (default: ~/RedAuditReports)
+- `--max-hosts`: Maximum hosts to scan (default: all)
+- `--no-vuln-scan`: Disable web vulnerability scanning
+- `--no-txt-report`: Disable TXT report generation
+- `--no-deep-scan`: Disable adaptive deep scan
+- `--yes, -y`: Skip legal warning (use with caution)
+- `--lang`: Language (en/es)
+
+See `redaudit --help` for full details.
 
 ## 7. ⚙️ Configuration & Internal Parameters
 
@@ -104,7 +146,7 @@ Controlled by the `rate_limit_delay` parameter.
     - **1-5s**: Balanced. Recommended for internal audits to avoid simple rate-limiter triggers.
     - **>5s**: Paranoid/Conservative. Use for sensitive production environments.
 
-### Adaptive Deep Scan (v2.4)
+### Adaptive Deep Scan (v2.5)
 RedAudit applies a smart 2-phase scan to "silent" or complex hosts:
 1.  **Phase 1**: Aggressive TCP (`-A -p- -sV -Pn`).
 2.  **Phase 2**: If Phase 1 yields no MAC/OS info, it launches OS+UDP detection (`-O -sSU`).
@@ -170,12 +212,14 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 **RedAudit** is a security tool for **authorized auditing only**.
 Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
 
-## 14. 📝 Changelog (v2.4 Summary)
-- **Adaptive Deep Scan**: Intelligent 2-phase engine (TCP Aggressive → UDP/OS Fallback) to maximize speed and data.
-- **Vendor/MAC Detection**: Native regex parsing to extract hardware vendor from Nmap output.
-- **Installer**: Refactored `redaudit_install.sh` to use clean copy operations without embedded Python code.
-- **Heartbeat**: Professional messaging ("Nmap is still running") to reduce user anxiety during long scans.
-- **Reporting**: Added `vendor` and `mac_address` fields to JSON/TXT reports.
+## 14. 📝 Changelog (v2.5 Summary)
+- **Security**: Hardened input sanitization with type/length validation, secure file permissions (0o600)
+- **Automation**: Full non-interactive CLI mode for scripting and CI/CD integration
+- **Testing**: Comprehensive integration and encryption test suites
+- **Robustness**: Improved cryptography handling with graceful degradation
+- **Documentation**: Complete documentation updates in English and Spanish
+
+For detailed changelog, see [CHANGELOG.md](CHANGELOG.md)
 
 ## 15. ⚖️ License
 

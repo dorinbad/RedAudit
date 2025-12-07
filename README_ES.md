@@ -14,7 +14,7 @@
 
 <br>
 
-# RedAudit v2.4
+# RedAudit v2.5
 
 ## 1. 📋 Descripción General
 **RedAudit** es una herramienta de auditoría de red interactiva y automatizada diseñada para **Kali Linux** y sistemas basados en Debian. Optimiza el proceso de reconocimiento combinando el descubrimiento de red, escaneo de puertos y evaluación de vulnerabilidades en un flujo de trabajo CLI único y cohesivo.
@@ -22,25 +22,33 @@
 A diferencia de simples scripts "wrapper", RedAudit gestiona la concurrencia, agregación de datos y generación de reportes (JSON/TXT) mediante lógica robusta en Python, ofreciendo fiabilidad de grado profesional y trazabilidad.
 
 ## 2. ✨ Características
-- **CLI Interactiva**: Menú guiado para selección de objetivos, modos de escaneo y configuración.
-- **Descubrimiento Inteligente**: Auto-detecta interfaces y subredes locales usando comandos `ip`.
+- **CLI Interactiva y No Interactiva**: Menú guiado o argumentos completos de línea de comandos para automatización
+- **Descubrimiento Inteligente**: Auto-detecta interfaces y subredes locales usando comandos `ip`
 - **Escaneo Multimodo**:
-    - **RÁPIDO (FAST)**: Barrido ICMP (`-sn`) para detección rápida de hosts vivos.
-    - **NORMAL**: Puertos principales + Detección de Versiones (`-sV`).
-    - **COMPLETO (FULL)**: Todos los puertos, detección de SO (`-O`), Scripts (`-sC`) y escaneo web.
-- **Deep Scan Adaptativo**: Motor v2.4 que cambia inteligentemente de fingerprinting TCP a detección OS/UDP solo si es necesario.
-- **Detección Vendor/MAC**: Extrae información de hardware incluso en escaneos parciales.
-- **Análisis de Tráfico**: Micro-capturas opcionales (`tcpdump`) para analizar el comportamiento del objetivo.
-- **Reconocimiento Web**: Integra `whatweb`, `nikto`, `curl` y `openssl` para servicios web.
-- **Resiliencia**: Monitor de actividad (heartbeat) en segundo plano para evitar bloqueos silenciosos.
+    - **RÁPIDO (FAST)**: Barrido ICMP (`-sn`) para detección rápida de hosts vivos
+    - **NORMAL**: Puertos principales + Detección de Versiones (`-sV`)
+    - **COMPLETO (FULL)**: Todos los puertos, detección de SO (`-O`), Scripts (`-sC`) y escaneo web
+- **Deep Scan Adaptativo**: Motor inteligente de 2 fases (TCP Agresivo → UDP/OS Fallback) que maximiza velocidad y datos
+- **Detección Vendor/MAC**: Extrae información de hardware incluso en escaneos parciales
+- **Análisis de Tráfico**: Micro-capturas opcionales (`tcpdump`) para analizar el comportamiento del objetivo
+- **Reconocimiento Web**: Integra `whatweb`, `nikto`, `curl` y `openssl` para servicios web
+- **Resiliencia**: Monitor de actividad (heartbeat) en segundo plano para evitar bloqueos silenciosos
+- **Listo para Automatización**: Soporte completo CLI para scripting e integración CI/CD
 
-## 3. 🔒 Características de Seguridad (NUEVO en v2.4)
-RedAudit v2.4 introduce un endurecimiento de seguridad de grado empresarial:
-- **Sanitización de Entrada**: Todas las entradas (IPs, rangos) se validan con la librería `ipaddress` y regex estricta (`^[a-zA-Z0-9\.\-\/]+$`) antes de pasar a listas seguras de `subprocess.run` (sin inyección de shell).
-- **Reportes Cifrados**: Cifrado opcional **AES-128 (Fernet)** con PBKDF2-HMAC-SHA256 (480,000 iteraciones).
-- **Seguridad de Hilos**: Uso de `ThreadPoolExecutor` con mecanismos de bloqueo adecuados para E/S concurrente.
-- **Rate Limiting**: Retardos `time.sleep()` configurables para mitigar la saturación de red y detección por IDS.
-- **Logging de Auditoría**: Logs rotativos exhaustivos (máx 10MB, 5 copias) almacenados en `~/.redaudit/logs/`.
+## 3. 🔒 Características de Seguridad (Mejorado en v2.5)
+RedAudit v2.5 introduce un endurecimiento de seguridad de grado empresarial:
+- **Sanitización de Entrada Endurecida**: Todas las entradas validadas por tipo, longitud y formato
+  - Validación de tipo (solo `str` aceptado)
+  - Límites de longitud (1024 chars para IPs/hostnames, 50 para CIDR)
+  - Eliminación automática de espacios en blanco
+  - Validación regex estricta (`^[a-zA-Z0-9\.\-\/]+$`)
+  - Sin inyección de shell (usa `subprocess.run` con listas)
+- **Reportes Cifrados**: Cifrado opcional **AES-128 (Fernet)** con PBKDF2-HMAC-SHA256 (480,000 iteraciones)
+- **Permisos de Archivo Seguros**: Todos los reportes usan permisos 0o600 (solo lectura/escritura del propietario)
+- **Manejo Graceful de Cryptography**: Avisos claros si el cifrado no está disponible, sin prompts de contraseña
+- **Seguridad de Hilos**: Uso de `ThreadPoolExecutor` con mecanismos de bloqueo adecuados para E/S concurrente
+- **Rate Limiting**: Retardos `time.sleep()` configurables para mitigar la saturación de red y detección por IDS
+- **Logging de Auditoría**: Logs rotativos exhaustivos (máx 10MB, 5 copias) almacenados en `~/.redaudit/logs/`
 
 [→ Documentación de Seguridad Completa](docs/SECURITY.md)
 
@@ -75,16 +83,50 @@ source ~/.bashrc  # o ~/.zshrc
 ```
 *Nota: Usa `sudo bash redaudit_install.sh -y` para instalación no interactiva.*
 
-## 6. 🚀 Inicio Rápido (Flujo Interactivo)
+## 6. 🚀 Inicio Rápido
+
+### Modo Interactivo
 Lanza la herramienta desde cualquier terminal:
 ```bash
 redaudit
 ```
 El asistente te guiará:
-1.  **Selección de Objetivo**: Elige una subred local o introduce un CIDR manual (ej: `10.0.0.0/24`).
-2.  **Modo de Escaneo**: Selecciona RÁPIDO, NORMAL o COMPLETO.
-3.  **Opciones**: Configura hilos, límite de velocidad y cifrado.
-4.  **Autorización**: Confirma que tienes permiso para escanear.
+1.  **Selección de Objetivo**: Elige una subred local o introduce un CIDR manual (ej: `10.0.0.0/24`)
+2.  **Modo de Escaneo**: Selecciona RÁPIDO, NORMAL o COMPLETO
+3.  **Opciones**: Configura hilos, límite de velocidad y cifrado
+4.  **Autorización**: Confirma que tienes permiso para escanear
+
+### Modo No Interactivo (NUEVO en v2.5)
+Para automatización y scripting:
+```bash
+# Escaneo básico
+sudo redaudit --target 192.168.1.0/24 --mode normal
+
+# Escaneo completo con cifrado
+sudo redaudit --target 10.0.0.0/24 --mode full --threads 8 --encrypt --output /tmp/reports
+
+# Múltiples objetivos
+sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
+
+# Saltar advertencia legal (para automatización)
+sudo redaudit --target 192.168.1.0/24 --mode fast --yes
+```
+
+**Opciones CLI Disponibles:**
+- `--target, -t`: Red(es) objetivo en notación CIDR (requerido para modo no interactivo)
+- `--mode, -m`: Modo de escaneo (fast/normal/full, por defecto: normal)
+- `--threads, -j`: Hilos concurrentes (1-16, por defecto: 6)
+- `--rate-limit`: Retardo entre hosts en segundos (por defecto: 0)
+- `--encrypt, -e`: Cifrar reportes con contraseña
+- `--output, -o`: Directorio de salida (por defecto: ~/RedAuditReports)
+- `--max-hosts`: Máximo de hosts a escanear (por defecto: todos)
+- `--no-vuln-scan`: Desactivar escaneo de vulnerabilidades web
+- `--no-txt-report`: Desactivar generación de reporte TXT
+- `--no-deep-scan`: Desactivar deep scan adaptativo
+- `--yes, -y`: Saltar advertencia legal (usar con precaución)
+- `--lang`: Idioma (en/es)
+
+Ver `redaudit --help` para detalles completos.
 
 ## 7. ⚙️ Configuración y Parámetros Internos
 
@@ -104,7 +146,7 @@ Controlado por el parámetro `rate_limit_delay`.
     - **1-5s**: Equilibrado. Recomendado para auditorías internas para evitar disparar limitadores simples.
     - **>5s**: Paranoico/Conservador. Úsalo en entornos de producción sensibles.
 
-### Deep Scan Adaptativo (v2.4)
+### Deep Scan Adaptativo (v2.5)
 RedAudit aplica un escaneo inteligente de 2 fases a hosts "silenciosos" o complejos:
 1.  **Fase 1**: TCP Agresivo (`-A -p- -sV -Pn`).
 2.  **Fase 2**: Si la Fase 1 no revela MAC/SO, lanza detección de SO+UDP (`-O -sSU`).
@@ -170,12 +212,14 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 **RedAudit** es una herramienta de seguridad únicamente para **auditorías autorizadas**.
 Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
 
-## 14. 📝 Historial de Cambios (Resumen v2.4)
-- **Deep Scan Adaptativo**: Motor inteligente de 2 fases (TCP Agresivo → UDP/OS Fallback) para maximizar velocidad y datos.
-- **Detección Vendor/MAC**: Parsing nativo con regex para extraer información de hardware desde la salida de Nmap.
-- **Instalador**: Refactorizado `redaudit_install.sh` para usar operaciones de copia limpias sin código Python embebido.
-- **Heartbeat**: Mensajes profesionales ("Nmap sigue ejecutándose") para reducir la ansiedad del usuario durante escaneos largos.
-- **Reportes**: Añadidos campos `vendor` y `mac_address` a los reportes JSON/TXT.
+## 14. 📝 Historial de Cambios (Resumen v2.5)
+- **Seguridad**: Sanitización de entrada endurecida con validación de tipo/longitud, permisos de archivo seguros (0o600)
+- **Automatización**: Modo CLI completo no interactivo para scripting e integración CI/CD
+- **Testing**: Suites de tests completas de integración y cifrado
+- **Robustez**: Manejo mejorado de cryptography con degradación graceful
+- **Documentación**: Actualizaciones completas de documentación en inglés y español
+
+Para el changelog detallado, consulta [CHANGELOG.md](CHANGELOG.md)
 
 ## 15. ⚖️ Licencia
 

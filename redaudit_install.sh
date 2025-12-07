@@ -1,5 +1,5 @@
 #!/bin/bash
-# RedAudit Installer v2.4 (Clean install + Language injection + Alias setup)
+# RedAudit Installer v2.5 (Clean install + Language injection + Alias setup)
 # GPLv3 - 2025 © Dorin Badea
 
 # -------------------------------------------
@@ -35,7 +35,7 @@ read -r -p "Choice [1/2]: " LANG_OPT
 
 if [[ "$LANG_OPT" == "2" ]]; then
     LANG_CODE="es"
-    MSG_INSTALL="🔧 Instalando/actualizando RedAudit v2.4..."
+    MSG_INSTALL="🔧 Instalando/actualizando RedAudit v2.5..."
     MSG_DONE="✅ Instalación completada."
     MSG_USAGE="👉 Ejecuta 'redaudit' para iniciar."
     MSG_ALIAS_ADDED="ℹ️ Alias 'redaudit' añadido en"
@@ -45,7 +45,7 @@ if [[ "$LANG_OPT" == "2" ]]; then
     MSG_APT_ERR="❌ Error con apt."
 else
     LANG_CODE="en"
-    MSG_INSTALL="🔧 Installing/updating RedAudit v2.4..."
+    MSG_INSTALL="🔧 Installing/updating RedAudit v2.5..."
     MSG_DONE="✅ Installation completed."
     MSG_USAGE="👉 Run 'redaudit' to start."
     MSG_ALIAS_ADDED="ℹ️ Alias 'redaudit' added to"

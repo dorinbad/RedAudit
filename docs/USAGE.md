@@ -22,12 +22,18 @@ RedAudit is designed for Kali Linux or Debian-based systems.
 
 3. **Run**:
    ```bash
+   # Interactive mode
    redaudit
+   
+   # Non-interactive mode (v2.5)
+   sudo redaudit --target 192.168.1.0/24 --mode normal
    ```
 
 ## Workflow
 
 ### 1. Configuration
+
+#### Interactive Mode
 The tool will prompt you for:
 - **Target Network**: Auto-detected interfaces or manual CIDR.
 - **Scan Mode**: Normal (Discovery+Top Ports), Fast, or Full.
@@ -35,6 +41,19 @@ The tool will prompt you for:
 - **Rate Limit**: Optional delay (seconds) between hosts for stealth.
 - **Encryption**: Optional password protection for reports.
 - **Output Directory**: Defaults to `~/RedAuditReports`.
+
+#### Non-Interactive Mode (v2.5)
+All configuration via command-line arguments:
+```bash
+sudo redaudit \
+  --target 192.168.1.0/24 \
+  --mode full \
+  --threads 8 \
+  --rate-limit 1 \
+  --encrypt \
+  --output /custom/path \
+  --max-hosts 100
+```
 
 ### 2. Execution Phases
 - **Discovery**: fast ping scan to find live hosts.
@@ -65,7 +84,7 @@ RedAudit allows you to set a delay (in seconds) between scanning hosts.
 **Note on Heartbeat**: If you set a very high delay (e.g., 60s) with many threads, the scan might seem "frozen". Check the "Active hosts" log or the heartbeat status.
 
 ### CLI Execution Markers
-RedAudit v2.4 strictly informs you about the commands being executed:
+RedAudit v2.5 strictly informs you about the commands being executed:
 - **`[nmap] 192.168.x.x → nmap ...`**: Standard port scan.
 - **`[deep] 192.168.x.x → combined ...`**: Deep Identity Scan execution (expect 90-140s duration).
 

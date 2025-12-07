@@ -22,12 +22,18 @@ RedAudit está diseñado para sistemas Kali Linux o Debian.
 
 3. **Ejecutar**:
    ```bash
+   # Modo interactivo
    redaudit
+   
+   # Modo no interactivo (v2.5)
+   sudo redaudit --target 192.168.1.0/24 --mode normal
    ```
 
 ## Flujo de Trabajo
 
 ### 1. Configuración
+
+#### Modo Interactivo
 La herramienta te pedirá:
 - **Red Objetivo**: Interfaces detectadas o CIDR manual.
 - **Modo de Escaneo**: Normal (Discovery+Top Ports), Rápido o Completo.
@@ -35,6 +41,19 @@ La herramienta te pedirá:
 - **Rate Limit**: Retardo opcional (segundos) entre hosts para sigilo.
 - **Cifrado**: Protección opcional con contraseña para los reportes.
 - **Directorio de Salida**: Por defecto `~/RedAuditReports`.
+
+#### Modo No Interactivo (v2.5)
+Toda la configuración mediante argumentos de línea de comandos:
+```bash
+sudo redaudit \
+  --target 192.168.1.0/24 \
+  --mode full \
+  --threads 8 \
+  --rate-limit 1 \
+  --encrypt \
+  --output /ruta/personalizada \
+  --max-hosts 100
+```
 
 ### 2. Fases de Ejecución
 - **Discovery**: Ping rápido para encontrar hosts vivos.

@@ -12,7 +12,7 @@ The implementation is licensed under GPLv3 – see [LICENSE](../LICENSE).
 | Field | Type | Description |
 |---|---|---|
 | `timestamp` | string | ISO 8601 timestamp of the scan start |
-| `version` | string | Version of RedAudit used (e.g., "2.4") |
+| `version` | string | Version of RedAudit used (e.g., "2.5") |
 | `network_info` | array | List of detected network interfaces and their CIDRs |
 | `hosts` | array | List of `Host` objects discovered and scanned |
 | `vulnerabilities` | array | List of web vulnerability findings (if web scanning was enabled) |
@@ -33,7 +33,7 @@ Represents a single discovered device.
       "protocol": "tcp",
       "service": "http",
       "product": "Apache",
-      "version": "2.4.41",
+      "version": "2.5.0",
       "is_web_service": true
     }
   ],
@@ -44,7 +44,7 @@ Represents a single discovered device.
     "whois_summary": "OrgName: Example Corp..."
   },
   "deep_scan": {
-    "strategy": "adaptive_v2.4",
+    "strategy": "adaptive_v2.5",
     "mac_address": "00:11:22:33:44:55",
     "vendor": "Vendor Name",
     "phase2_skipped": false,
@@ -72,7 +72,7 @@ This field appears only if automatic deep scan was triggered.
 
 | Field | Type | Description |
 |---|---|---|
-| `strategy` | string | Strategy used ("adaptive_v2.4") |
+| `strategy` | string | Strategy used ("adaptive_v2.5") |
 | `mac_address` | string | (Optional) MAC address if detected |
 | `vendor` | string | (Optional) Hardware vendor if detected |
 | `phase2_skipped` | boolean | True if Phase 2 (UDP/OS) was skipped because Phase 1 found identity |

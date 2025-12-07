@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Version 2.4 (Full Toolchain + Heartbeat + Hardened + Deep Identity Scan)
+Version 2.5 (Full Toolchain + Heartbeat + Hardened + Deep Identity Scan + Non-Interactive Mode)
 """
 
 import sys
@@ -34,6 +34,7 @@ import getpass
 import base64
 import logging
 import subprocess
+import argparse
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging.handlers import RotatingFileHandler
@@ -47,8 +48,13 @@ except ImportError:  # pragma: no cover
     PBKDF2HMAC = None
     hashes = None
 
-VERSION = "2.4"
+VERSION = "2.5"
 DEFAULT_LANG = "en"  # Installer may override this placeholder
+
+# Security constants
+MAX_INPUT_LENGTH = 1024  # Maximum length for IP/hostname inputs
+MAX_CIDR_LENGTH = 50     # Maximum length for CIDR ranges
+MAX_SUBPROCESS_RETRIES = 2  # Maximum retries for subprocess calls
 
 
 TRANSLATIONS = {
@@ -123,6 +129,8 @@ TRANSLATIONS = {
         "encrypt_reports": "Encrypt reports with password?",
         "encryption_password": "Report encryption password",
         "encryption_enabled": "✓ Encryption enabled",
+        "cryptography_missing": "⚠️  Warning: python3-cryptography not available. Encryption disabled.",
+        "cryptography_required": "Error: Encryption requires python3-cryptography. Install with: sudo apt install python3-cryptography",
         "rate_limiting": "Enable rate limiting (slower but stealthier)?",
         "rate_delay": "Delay between hosts (seconds):",
         "ports_truncated": "⚠️  {}: {} ports found, showing top 50",
@@ -202,6 +210,8 @@ TRANSLATIONS = {
         "encrypt_reports": "¿Cifrar reportes con contraseña?",
         "encryption_password": "Contraseña para cifrar reportes",
         "encryption_enabled": "✓ Cifrado activado",
+        "cryptography_missing": "⚠️  Aviso: python3-cryptography no disponible. Cifrado desactivado.",
+        "cryptography_required": "Error: El cifrado requiere python3-cryptography. Instala con: sudo apt install python3-cryptography",
         "rate_limiting": "¿Activar limitación de velocidad (más lento pero más sigiloso)?",
         "rate_delay": "Retardo entre hosts (segundos):",
         "ports_truncated": "⚠️  {}: {} puertos encontrados, mostrando los 50 principales",
@@ -252,6 +262,7 @@ class InteractiveNetworkAuditor:
         self.encryption_key = None
         self.rate_limit_delay = 0.0
         self.extra_tools = {}
+        self.cryptography_available = Fernet is not None and PBKDF2HMAC is not None
 
         self.last_activity = datetime.now()
         self.activity_lock = threading.Lock()
@@ -303,15 +314,35 @@ class InteractiveNetworkAuditor:
 
     @staticmethod
     def sanitize_ip(ip_str):
+        """Sanitize and validate IP address. Returns None for invalid input."""
+        if ip_str is None:
+            return None
+        if not isinstance(ip_str, str):
+            return None
+        ip_str = ip_str.strip()
+        if not ip_str:
+            return None
+        if len(ip_str) > MAX_INPUT_LENGTH:
+            return None
         try:
             ipaddress.ip_address(ip_str)
             return ip_str
-        except Exception:
+        except (ValueError, TypeError):
             return None
 
     @staticmethod
     def sanitize_hostname(hostname):
-        if hostname and re.match(r"^[a-zA-Z0-9\.\-]+$", hostname):
+        """Sanitize and validate hostname. Returns None for invalid input."""
+        if hostname is None:
+            return None
+        if not isinstance(hostname, str):
+            return None
+        hostname = hostname.strip()
+        if not hostname:
+            return None
+        if len(hostname) > MAX_INPUT_LENGTH:
+            return None
+        if re.match(r"^[a-zA-Z0-9\.\-]+$", hostname):
             return hostname
         return None
 
@@ -431,13 +462,29 @@ class InteractiveNetworkAuditor:
             return data
 
     def setup_encryption(self):
+        """Setup encryption if requested and available. Degrades gracefully if cryptography is missing."""
+        if not self.cryptography_available:
+            # Don't even ask if cryptography is not available
+            return
+        
         if self.ask_yes_no(self.t("encrypt_reports"), default="no"):
-            pwd = self.ask_password_twice(self.t("encryption_password"))
-            key, salt = self.derive_key_from_password(pwd)
-            self.encryption_key = key
-            self.config["encryption_salt"] = base64.b64encode(salt).decode()
-            self.encryption_enabled = True
-            self.print_status(self.t("encryption_enabled"), "OKGREEN")
+            # Double-check availability before asking for password
+            if not self.cryptography_available:
+                self.print_status(self.t("cryptography_required"), "FAIL")
+                return
+            
+            try:
+                pwd = self.ask_password_twice(self.t("encryption_password"))
+                key, salt = self.derive_key_from_password(pwd)
+                self.encryption_key = key
+                self.config["encryption_salt"] = base64.b64encode(salt).decode()
+                self.encryption_enabled = True
+                self.print_status(self.t("encryption_enabled"), "OKGREEN")
+            except RuntimeError as exc:
+                if "cryptography not available" in str(exc):
+                    self.print_status(self.t("cryptography_required"), "FAIL")
+                else:
+                    raise
 
     # ---------- Dependencies ----------
 
@@ -455,6 +502,13 @@ class InteractiveNetworkAuditor:
         except ImportError:
             self.print_status(self.t("nmap_missing"), "FAIL")
             return False
+
+        # Check cryptography (required for encryption)
+        if Fernet is None or PBKDF2HMAC is None:
+            self.print_status(self.t("cryptography_missing"), "WARNING")
+            self.cryptography_available = False
+        else:
+            self.cryptography_available = True
 
         tools = [
             "whatweb",
@@ -550,6 +604,9 @@ class InteractiveNetworkAuditor:
             net = input(
                 f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} CIDR (e.g. 192.168.1.0/24): "
             ).strip()
+            if len(net) > MAX_CIDR_LENGTH:
+                self.print_status(self.t("invalid_cidr"), "WARNING")
+                continue
             try:
                 ipaddress.ip_network(net, strict=False)
                 return net
@@ -786,7 +843,7 @@ class InteractiveNetworkAuditor:
 
     def deep_scan_host(self, host_ip):
         """
-        Adaptive Deep Scan v2.4
+        Adaptive Deep Scan v2.5
         Phase 1: TCP Connect + Service Version + Scripts (Aggressive)
         Phase 2: OS Detection + UDP Scan (only if Phase 1 yields no identity)
         """
@@ -795,7 +852,7 @@ class InteractiveNetworkAuditor:
             return None
 
         self.current_phase = f"deep:{safe_ip}"
-        deep_obj = {"strategy": "adaptive_v2.4", "commands": []}
+        deep_obj = {"strategy": "adaptive_v2.5", "commands": []}
         
         self.print_status(self.t("deep_identity_start", safe_ip, "Adaptive (2-Phase)"), "WARNING")
 
@@ -1389,10 +1446,14 @@ class InteractiveNetworkAuditor:
                 json_path = f"{base}.json.enc"
                 with open(json_path, "wb") as f:
                     f.write(json_enc)
+                # Secure file permissions (owner read/write only)
+                os.chmod(json_path, 0o600)
             else:
                 json_path = f"{base}.json"
                 with open(json_path, "w", encoding="utf-8") as f:
                     f.write(json_data)
+                # Secure file permissions (owner read/write only)
+                os.chmod(json_path, 0o600)
             self.print_status(self.t("json_report", json_path), "OKGREEN")
 
             if self.config.get("save_txt_report"):
@@ -1402,16 +1463,23 @@ class InteractiveNetworkAuditor:
                     txt_path = f"{base}.txt.enc"
                     with open(txt_path, "wb") as f:
                         f.write(txt_enc)
+                    # Secure file permissions (owner read/write only)
+                    os.chmod(txt_path, 0o600)
                 else:
                     txt_path = f"{base}.txt"
                     with open(txt_path, "w", encoding="utf-8") as f:
                         f.write(txt_data)
+                    # Secure file permissions (owner read/write only)
+                    os.chmod(txt_path, 0o600)
                 self.print_status(self.t("txt_report", txt_path), "OKGREEN")
 
             if self.encryption_enabled and self.config.get("encryption_salt"):
                 salt_bytes = base64.b64decode(self.config["encryption_salt"])
-                with open(f"{base}.salt", "wb") as f:
+                salt_path = f"{base}.salt"
+                with open(salt_path, "wb") as f:
                     f.write(salt_bytes)
+                # Secure file permissions (owner read/write only)
+                os.chmod(salt_path, 0o600)
 
         except Exception as exc:
             if self.logger:
@@ -1547,17 +1615,194 @@ class InteractiveNetworkAuditor:
             sys.exit(1)
 
 
+def parse_arguments():
+    """Parse command-line arguments for non-interactive mode."""
+    parser = argparse.ArgumentParser(
+        description="RedAudit - Interactive Network Auditor",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Interactive mode (default)
+  sudo redaudit
+
+  # Non-interactive mode
+  sudo redaudit --target 192.168.1.0/24 --mode full --threads 8
+
+  # With encryption
+  sudo redaudit --target 10.0.0.0/24 --mode normal --encrypt --output /tmp/reports
+        """
+    )
+    
+    parser.add_argument(
+        "--target", "-t",
+        type=str,
+        help="Target network(s) in CIDR notation (e.g., 192.168.1.0/24). Multiple targets separated by comma."
+    )
+    parser.add_argument(
+        "--mode", "-m",
+        choices=["fast", "normal", "full"],
+        default="normal",
+        help="Scan mode: fast (discovery only), normal (top ports), full (all ports + scripts)"
+    )
+    parser.add_argument(
+        "--threads", "-j",
+        type=int,
+        default=6,
+        choices=range(1, 17),
+        metavar="[1-16]",
+        help="Number of concurrent threads (1-16, default: 6)"
+    )
+    parser.add_argument(
+        "--rate-limit",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help="Delay between host scans in seconds (default: 0)"
+    )
+    parser.add_argument(
+        "--encrypt", "-e",
+        action="store_true",
+        help="Encrypt reports with password"
+    )
+    parser.add_argument(
+        "--no-vuln-scan",
+        action="store_true",
+        help="Disable web vulnerability scanning"
+    )
+    parser.add_argument(
+        "--no-txt-report",
+        action="store_true",
+        help="Disable TXT report generation"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        type=str,
+        help="Output directory for reports (default: ~/RedAuditReports)"
+    )
+    parser.add_argument(
+        "--max-hosts",
+        type=int,
+        help="Maximum number of hosts to scan (default: all)"
+    )
+    parser.add_argument(
+        "--no-deep-scan",
+        action="store_true",
+        help="Disable adaptive deep scan"
+    )
+    parser.add_argument(
+        "--yes", "-y",
+        action="store_true",
+        help="Skip legal warning confirmation (use with caution)"
+    )
+    parser.add_argument(
+        "--lang",
+        choices=["en", "es"],
+        help="Language: en (English) or es (Español)"
+    )
+    
+    return parser.parse_args()
+
+
+def configure_from_args(app, args):
+    """Configure application from command-line arguments."""
+    # Set language if specified
+    if args.lang:
+        # TRANSLATIONS is defined at module level, check directly
+        if args.lang in TRANSLATIONS:
+            app.lang = args.lang
+    
+    # Check dependencies
+    if not app.check_dependencies():
+        return False
+    
+    # Legal warning (unless --yes)
+    if not args.yes:
+        if not app.show_legal_warning():
+            return False
+    else:
+        app.print_status("⚠️  Legal warning skipped (--yes flag)", "WARNING")
+    
+    # Parse targets
+    if args.target:
+        targets = [t.strip() for t in args.target.split(",")]
+        # Validate each target
+        valid_targets = []
+        for t in targets:
+            if len(t) > MAX_CIDR_LENGTH:
+                app.print_status(f"Invalid target (too long): {t}", "FAIL")
+                continue
+            try:
+                ipaddress.ip_network(t, strict=False)
+                valid_targets.append(t)
+            except ValueError:
+                app.print_status(f"Invalid CIDR: {t}", "FAIL")
+        if not valid_targets:
+            app.print_status("No valid targets provided", "FAIL")
+            return False
+        app.config["target_networks"] = valid_targets
+    else:
+        app.print_status("Error: --target is required in non-interactive mode", "FAIL")
+        return False
+    
+    # Set scan mode
+    mode_map = {"fast": "rapido", "normal": "normal", "full": "completo"}
+    app.config["scan_mode"] = mode_map[args.mode]
+    
+    # Set threads
+    app.config["threads"] = args.threads
+    
+    # Set rate limit
+    app.rate_limit_delay = max(0.0, args.rate_limit)
+    
+    # Set output directory
+    if args.output:
+        app.config["output_dir"] = os.path.expanduser(args.output)
+    
+    # Set max hosts
+    if args.max_hosts:
+        app.config["max_hosts_value"] = args.max_hosts
+    else:
+        app.config["max_hosts_value"] = "all"
+    
+    # Set vulnerability scanning
+    app.config["scan_vulnerabilities"] = not args.no_vuln_scan
+    
+    # Set TXT report
+    app.config["save_txt_report"] = not args.no_txt_report
+    
+    # Set deep scan
+    app.config["deep_id_scan"] = not args.no_deep_scan
+    
+    # Setup encryption if requested
+    if args.encrypt:
+        app.setup_encryption()
+    
+    return True
+
+
 def main():
     if os.geteuid() != 0:
         print("Error: root privileges (sudo) required.")
         sys.exit(1)
+    
+    args = parse_arguments()
     app = InteractiveNetworkAuditor()
-    if app.interactive_setup():
-        ok = app.run_complete_scan()
-        sys.exit(0 if ok else 1)
+    
+    # Non-interactive mode if --target is provided
+    if args.target:
+        if configure_from_args(app, args):
+            ok = app.run_complete_scan()
+            sys.exit(0 if ok else 1)
+        else:
+            sys.exit(1)
     else:
-        print(app.t("config_cancel"))
-        sys.exit(0)
+        # Interactive mode
+        if app.interactive_setup():
+            ok = app.run_complete_scan()
+            sys.exit(0 if ok else 1)
+        else:
+            print(app.t("config_cancel"))
+            sys.exit(0)
 
 
 if __name__ == "__main__":

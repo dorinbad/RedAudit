@@ -29,10 +29,28 @@ sudo apt update && sudo apt install -y nmap
 
 ### 5. "Scans seem to hang" / Slow progress
 **Symptom**: The tool pauses for 1-2 minutes on a single host.
-**Explanation**: RedAudit v2.4 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
+**Explanation**: RedAudit v2.5 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
 - **Duration**: These scans can legitimately take **90–150 seconds** per host.
 - **Why**: Essential for identifying IoT boxes, firewalls, or filtered servers that hide their OS.
 - **Check**: Look for the `[deep]` marker in the CLI output.
+
+### 6. "Cryptography not available" warning
+**Symptom**: You see a warning about `python3-cryptography` not being available.
+**Explanation**: Encryption feature requires `python3-cryptography`. In v2.5, the tool gracefully degrades if it's missing.
+**Solution**: 
+```bash
+sudo apt install python3-cryptography
+```
+**Note**: In v2.5, if cryptography is unavailable, encryption options are automatically disabled. No password prompts will appear.
+
+### 7. Non-interactive mode errors
+**Symptom**: `--target` argument not working or "Error: --target is required".
+**Solution**: 
+- Ensure you provide `--target` with a valid CIDR (e.g., `--target 192.168.1.0/24`)
+- Multiple targets: `--target "192.168.1.0/24,10.0.0.0/24"`
+- Check CIDR format is correct
+- See `redaudit --help` for all available options
+
 **Symptom**: The script refuses to start.
 **Solution**: Run the installer again to fix missing python libraries:
 ```bash

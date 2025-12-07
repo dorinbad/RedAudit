@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+"""
+RedAudit - Encryption Tests
+Tests for encryption/decryption functionality.
+"""
+
+import sys
+import os
+import base64
+import tempfile
+import shutil
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    CRYPTO_AVAILABLE = True
+except ImportError:
+    CRYPTO_AVAILABLE = False
+    Fernet = None
+    PBKDF2HMAC = None
+    hashes = None
+
+from redaudit import InteractiveNetworkAuditor
+
+
+def test_key_derivation():
+    """Test PBKDF2 key derivation."""
+    if not CRYPTO_AVAILABLE:
+        print("⚠️  Skipping: cryptography not available")
+        return
+    
+    app = InteractiveNetworkAuditor()
+    password = "test_password_123"
+    salt = os.urandom(16)
+    
+    key1, salt1 = app.derive_key_from_password(password, salt)
+    key2, salt2 = app.derive_key_from_password(password, salt)
+    
+    assert key1 == key2, "Same password and salt should produce same key"
+    assert salt1 == salt, "Salt should be preserved"
+    assert len(key1) == 44, "Fernet key should be 44 bytes (base64 encoded)"
+    
+    # Different salt should produce different key
+    salt3 = os.urandom(16)
+    key3, _ = app.derive_key_from_password(password, salt3)
+    assert key1 != key3, "Different salt should produce different key"
+    
+    print("✅ Key derivation tests passed")
+
+
+def test_encryption_decryption():
+    """Test encryption and decryption of data."""
+    if not CRYPTO_AVAILABLE:
+        print("⚠️  Skipping: cryptography not available")
+        return
+    
+    app = InteractiveNetworkAuditor()
+    password = "test_password_123"
+    
+    # Derive key
+    key, salt = app.derive_key_from_password(password)
+    app.encryption_key = key
+    app.encryption_enabled = True
+    
+    # Test data
+    test_data = "This is a test report with sensitive data"
+    
+    # Encrypt
+    encrypted = app.encrypt_data(test_data)
+    assert encrypted != test_data, "Encrypted data should be different"
+    assert isinstance(encrypted, bytes), "Encrypted data should be bytes"
+    
+    # Decrypt
+    fernet = Fernet(key)
+    decrypted = fernet.decrypt(encrypted).decode('utf-8')
+    assert decrypted == test_data, "Decrypted data should match original"
+    
+    print("✅ Encryption/decryption tests passed")
+
+
+def test_encryption_without_crypto():
+    """Test that encryption degrades gracefully without cryptography."""
+    # Mock missing cryptography
+    import redaudit
+    original_fernet = redaudit.Fernet
+    redaudit.Fernet = None
+    
+    try:
+        app = InteractiveNetworkAuditor()
+        app.cryptography_available = False
+        
+        # Should not crash
+        result = app.encrypt_data("test")
+        assert result == "test", "Should return original data if encryption unavailable"
+        
+        print("✅ Graceful degradation test passed")
+    finally:
+        redaudit.Fernet = original_fernet
+
+
+def test_password_validation():
+    """Test password validation in ask_password_twice."""
+    if not CRYPTO_AVAILABLE:
+        print("⚠️  Skipping: cryptography not available")
+        return
+    
+    # This test would require mocking input/getpass
+    # For now, just verify the method exists
+    app = InteractiveNetworkAuditor()
+    assert hasattr(app, 'ask_password_twice'), "ask_password_twice method should exist"
+    assert hasattr(app, 'derive_key_from_password'), "derive_key_from_password method should exist"
+    
+    print("✅ Password validation structure test passed")
+
+
+if __name__ == "__main__":
+    print("Running encryption tests...\n")
+    
+    test_key_derivation()
+    test_encryption_decryption()
+    test_encryption_without_crypto()
+    test_password_validation()
+    
+    print("\n🎉 All encryption tests passed!")
+

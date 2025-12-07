@@ -1,7 +1,7 @@
 # Manual de Usuario de RedAudit
 
-**Versión**: 2.4
-**Fecha**: 2025-05-20
+**Versión**: 2.5
+**Fecha**: 2025-12-07
 **Nivel Objetivo**: Pentester Profesional / SysAdmin
 
 ---
@@ -93,6 +93,10 @@ RedAudit trata los datos de los reportes como material sensible.
     - **Algoritmo**: PBKDF2HMAC (SHA-256).
     - **Iteraciones**: 480,000 (supera la recomendación OWASP de 310,000).
     - **Salt**: 16 bytes aleatorios, guardados en archivo `.salt`.
+- **Degradación Graceful** (v2.5): Si `python3-cryptography` no está disponible, el cifrado se desactiva automáticamente con avisos claros. No se muestran prompts de contraseña.
+- **Permisos de Archivo** (v2.5): Todos los reportes (cifrados y planos) usan permisos seguros (0o600 - solo lectura/escritura del propietario).
+- **Degradación Graceful** (v2.5): Si `python3-cryptography` no está disponible, el cifrado se desactiva automáticamente con avisos claros. No se muestran prompts de contraseña.
+- **Permisos de Archivo** (v2.5): Todos los reportes (cifrados y planos) usan permisos seguros (0o600 - solo lectura/escritura del propietario).
 
 ## 6. Lógica de Escaneo
 1.  **Descubrimiento**: Barrido ICMP Echo (`-PE`) + ARP (`-PR`) para mapear hosts vivos.

@@ -5,6 +5,37 @@ RedAudit is licensed under GPLv3. See LICENSE for details.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-12-07 (Security Hardening & Non-Interactive Mode)
+
+### Added
+- **Non-Interactive Mode**: Full CLI argument support for automation and scripting
+  - `--target`, `--mode`, `--threads`, `--rate-limit`, `--encrypt`, `--output`, etc.
+  - `--yes` flag to skip legal warning for automated runs
+  - `--lang` flag for language selection
+- **Input Length Validation**: Protection against DoS via overly long inputs
+  - `MAX_INPUT_LENGTH` (1024) for IPs/hostnames
+  - `MAX_CIDR_LENGTH` (50) for CIDR ranges
+- **File Permission Security**: Reports now use secure permissions (0o600 - owner read/write only)
+- **Integration Tests**: Comprehensive test suite (`test_integration.py`)
+- **Encryption Tests**: Full test coverage for encryption functionality (`test_encryption.py`)
+
+### Changed
+- **Sanitizers Hardened**: `sanitize_ip()` and `sanitize_hostname()` now:
+  - Validate input type (only `str` accepted)
+  - Strip whitespace automatically
+  - Return `None` for invalid types (int, list, etc.)
+  - Enforce maximum length limits
+- **Cryptography Handling**: Improved graceful degradation
+  - `check_dependencies()` now verifies cryptography availability
+  - `setup_encryption()` doesn't prompt for password if cryptography unavailable
+  - Clear warning messages in both English and Spanish
+- **Version**: Updated to 2.5.0
+
+### Security
+- **Input Validation**: All user inputs now validated for type and length
+- **File Permissions**: All generated reports use secure permissions (0o600)
+- **Error Handling**: Better exception handling prevents information leakage
+
 ## [2.4.0] - 2025-05-21 (Adaptive Deep Scan)
 
 ### Added

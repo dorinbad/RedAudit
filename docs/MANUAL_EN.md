@@ -1,7 +1,7 @@
 # RedAudit User Manual
 
-**Version**: 2.4
-**Date**: 2025-05-20
+**Version**: 2.5
+**Date**: 2025-12-07
 **Target Level**: Professional Pentester / SysAdmin
 
 ---
@@ -52,6 +52,8 @@ source ~/.bashrc  # Activates the alias
 - `whatweb`, `nikto`, `tcpdump`, `tshark` (Optional enrichment)
 
 ## 4. Quick Start
+
+### Interactive Mode
 Run `redaudit` to start the interactive wizard.
 
 **Example Session:**
@@ -60,9 +62,45 @@ Run `redaudit` to start the interactive wizard.
 ? Select scan mode: NORMAL
 ? Enter number of threads [1-16]: 6
 ? Enable Web Vulnerability scans? [y/N]: y
-? Enable Web Vulnerability scans? [y/N]: y
 ? Encrypt reports with password? [y/N]: y
 ```
+
+### Non-Interactive Mode (v2.5)
+For automation, use command-line arguments:
+
+```bash
+# Basic scan
+sudo redaudit --target 192.168.1.0/24 --mode normal --threads 6
+
+# Full scan with all options
+sudo redaudit \
+  --target 10.0.0.0/24 \
+  --mode full \
+  --threads 8 \
+  --rate-limit 2 \
+  --encrypt \
+  --output /tmp/reports \
+  --max-hosts 50
+
+# Multiple targets
+sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal
+
+# Automation (skip legal warning)
+sudo redaudit --target 192.168.1.0/24 --mode fast --yes
+```
+
+**Key CLI Arguments:**
+- `--target, -t`: Target network(s) in CIDR (required for non-interactive)
+- `--mode, -m`: fast/normal/full (default: normal)
+- `--threads, -j`: 1-16 (default: 6)
+- `--rate-limit`: Delay in seconds (default: 0)
+- `--encrypt, -e`: Enable encryption
+- `--output, -o`: Output directory
+- `--max-hosts`: Limit number of hosts
+- `--yes, -y`: Skip legal warning
+- `--lang`: Language (en/es)
+
+Run `redaudit --help` for complete list.
 
 ## 5. Deep Configuration
 
@@ -84,7 +122,7 @@ To evade IDS heuristics based on connection frequency, RedAudit implements **App
     - **>10s**: "Low and Slow". Drastically increases scan time but virtually eliminates simple burst detection.
 
 ### Encryption
-RedAudit treats report data as sensitive sensitive material.
+RedAudit treats report data as sensitive material.
 - **Standard**: **Fernet** (Specification compliant).
     - **Cipher**: AES-128 in CBC mode.
     - **Signing**: HMAC-SHA256.
@@ -93,6 +131,8 @@ RedAudit treats report data as sensitive sensitive material.
     - **Algorithm**: PBKDF2HMAC (SHA-256).
     - **Iterations**: 480,000 (exceeds OWASP recommendation of 310,000).
     - **Salt**: 16 random bytes, stored in `.salt` file.
+- **Graceful Degradation** (v2.5): If `python3-cryptography` is unavailable, encryption is automatically disabled with clear warnings. No password prompts are shown.
+- **File Permissions** (v2.5): All reports (encrypted and plain) use secure permissions (0o600 - owner read/write only).
 
 ## 6. Scan Logic & Phases
 1.  **Discovery**: ICMP Echo (`-PE`) + ARP (`-PR`) sweep to map live hosts.
