@@ -169,7 +169,7 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 **RedAudit** es una herramienta de seguridad únicamente para **auditorías autorizadas**.
 Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
 
-## 14. 📝 Historial de Cambios (Resumen v2.3)
+## 14. 📝 Historial de Cambios (Resumen v2.4)
 - **Seguridad**: Añadido Cifrado de Reportes y Sanitización estricta de entradas.
 - **Rendimiento**: Añadidos Rate Limiting y Control de Hilos.
 - **Resiliencia**: Añadidos Monitor Heartbeat y Logs Rotativos.

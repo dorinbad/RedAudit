@@ -169,7 +169,7 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 **RedAudit** is a security tool for **authorized auditing only**.
 Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
 
-## 14. 📝 Changelog (v2.3 Summary)
+## 14. 📝 Changelog (v2.4 Summary)
 - **Security**: Added Report Encryption and Strict Input Sanitization.
 - **Performance**: Added Rate Limiting and Thread Controls.
 - **Resilience**: Added Heartbeat Monitor and Rotating Logs.

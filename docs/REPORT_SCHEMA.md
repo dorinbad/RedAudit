@@ -12,7 +12,7 @@ The implementation is licensed under GPLv3 – see [LICENSE](../LICENSE).
 | Field | Type | Description |
 |---|---|---|
 | `timestamp` | string | ISO 8601 timestamp of the scan start |
-| `version` | string | Version of RedAudit used (e.g., "2.3") |
+| `version` | string | Version of RedAudit used (e.g., "2.4") |
 | `scanned_networks` | array | List of CIDRs that were targeted |
 | `hosts` | array | List of `Host` objects discovered and scanned |
 | `scan_summary` | object | High-level statistics |
