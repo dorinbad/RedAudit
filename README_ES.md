@@ -7,7 +7,7 @@
 
   <br>
 
-  ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
+  ![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat-square)
   ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square)
   ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 </div>
@@ -165,6 +165,32 @@ Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total re
 - **Rendimiento**: Añadidos Rate Limiting y Control de Hilos.
 - **Resiliencia**: Añadidos Monitor Heartbeat y Logs Rotativos.
 - **Núcleo**: Instalación y núcleo Python consolidados en `redaudit_install.sh`.
+
+## 15. ⚖️ Licencia
+
+RedAudit se distribuye bajo la **GNU General Public License v3.0 (GPLv3)**.  
+Consulta el archivo [LICENSE](LICENSE) para ver el texto completo y las condiciones.
+
+## 16. 🧠 Internos & Glosario (Por qué RedAudit se comporta así)
+
+### Pool de hilos (`threads`)
+RedAudit utiliza un *pool* de hilos para escanear varios hosts en paralelo.  
+El parámetro `threads` controla cuántos hosts se analizan simultáneamente:
+- Valor bajo (2–4): más lento, pero más sigiloso y con menos ruido.
+- Valor medio (por defecto, 6): buen equilibrio para la mayoría de entornos.
+- Valor alto (10–16): más rápido, pero puede generar más ruido y más timeouts.
+
+### Limitación de tasa (*rate limiting*)
+Para no saturar la red, RedAudit puede introducir un pequeño retardo entre host y host.  
+Esto sacrifica velocidad a cambio de estabilidad y menor huella en entornos sensibles.
+
+### Heartbeat y watchdog
+En escaneos largos, RedAudit muestra mensajes de *heartbeat* cuando lleva un tiempo sin imprimir nada.  
+Sirve para distinguir un escaneo “silencioso pero sano” de un bloqueo real.
+
+### Reportes cifrados
+Los reportes pueden cifrarse con contraseña.  
+La clave se deriva con PBKDF2-HMAC-SHA256 (480k iteraciones) y se acompaña de un archivo `.salt` para poder descifrarlos posteriormente con `redaudit_decrypt.py`.
 
 ---
 [Documentación Completa](docs/) | [Esquema de Reporte](docs/REPORT_SCHEMA.md) | [Especificaciones de Seguridad](docs/SECURITY.md)

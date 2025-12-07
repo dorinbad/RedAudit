@@ -1,6 +1,7 @@
 # Propuestas de Mejora (Non-Binding)
 
 Este documento recoge sugerencias arquitectónicas para futuras versiones, sin alterar el núcleo actual (v2.3.1).
+*Nota: Cualquier propuesta implementada debe cumplir con la licencia GPLv3.*
 
 ## 1. Desacoplar el código Python
 **Estado Actual**: `redaudit_install.sh` contiene todo el código Python en un bloque `cat << 'EOF'`.

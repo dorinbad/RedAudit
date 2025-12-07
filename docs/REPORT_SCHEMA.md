@@ -2,6 +2,9 @@
 
 RedAudit generates reports in JSON format. Below is the structure of the `redaudit_report_<timestamp>.json` files found in the output directory.
 
+This schema documents RedAudit JSON reports.  
+The implementation is licensed under GPLv3 – see [LICENSE](../LICENSE).
+
 > **Note**: If encryption was enabled during the scan, the output will be a `.json.enc` file (binary AES encrypted). This schema applies to the **decrypted** content obtained via `redaudit_decrypt.py`.
 
 ## Root Object

@@ -71,3 +71,7 @@ RedAudit intenta automáticamente un "Deep Scan" en hosts que parecen "silencios
     - Guarda archivos `.pcap` en tu directorio de reportes.
     - Si `tshark` está instalado, incluye un resumen de protocolos en el reporte JSON.
     - *Defensa*: La duración de captura está estrictamente limitada para prevenir bloqueos.
+
+---
+
+RedAudit se distribuye bajo **GPLv3**. Consulta [LICENSE](../LICENSE) para más detalles.

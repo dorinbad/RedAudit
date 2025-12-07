@@ -158,3 +158,8 @@ R: El objetivo puede estar filtrando paquetes SYN. RedAudit intentará un Deep S
 
 ## 12. Aviso Legal
 Esta herramienta es **únicamente para auditorías de seguridad autorizadas**. El uso sin consentimiento escrito del propietario de la red es ilegal bajo jurisdicciones de responsabilidad estricta. Los autores no aceptan responsabilidad por daños o uso no autorizado.
+
+### Licencia
+
+RedAudit se distribuye bajo la **GNU General Public License v3.0 (GPLv3)**.  
+Consulta el archivo raíz [LICENSE](../LICENSE) para más detalles.

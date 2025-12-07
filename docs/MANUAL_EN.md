@@ -158,3 +158,8 @@ A: The target might be filtering SYN packets. RedAudit will attempt a Deep Scan 
 
 ## 12. Legal Notice
 This tool is for **authorized security auditing only**. Usage without written consent of the network owner is illegal in strict liability jurisdictions. The authors accept no liability for damage or unauthorized use.
+
+### License
+
+RedAudit is licensed under the **GNU General Public License v3.0 (GPLv3)**.  
+See the root [LICENSE](../LICENSE) file for details.

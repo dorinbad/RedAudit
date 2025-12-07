@@ -32,3 +32,5 @@ sudo apt update && sudo apt install -y nmap
 ```bash
 sudo bash redaudit_install.sh -y
 ```
+
+RedAudit and this troubleshooting guide are part of a GPLv3-licensed project. See [LICENSE](../LICENSE).

@@ -40,3 +40,8 @@ bash redaudit_verify.sh
 *   Keep the code clean and commented.
 *   Follow PEP 8 for Python code where possible.
 *   Shell scripts should be POSIX compliant where possible or clearly Bash-specific.
+
+## License
+
+By contributing to RedAudit, you agree that your contributions will be licensed under the  
+**GNU General Public License v3.0 (GPLv3)**, the same license as the project.

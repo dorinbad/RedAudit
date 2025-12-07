@@ -7,7 +7,7 @@
 
   <br>
 
-  ![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
+  ![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat-square)
   ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square)
   ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 </div>
@@ -165,6 +165,32 @@ Scanning networks without permission is illegal. By using this tool, you accept 
 - **Performance**: Added Rate Limiting and Thread Controls.
 - **Resilience**: Added Heartbeat Monitor and Rotating Logs.
 - **Core**: Consolidated installation and python core into `redaudit_install.sh`.
+
+## 15. ⚖️ License
+
+RedAudit is released under the **GNU General Public License v3.0 (GPLv3)**.  
+See the [LICENSE](LICENSE) file for the full text and terms.
+
+## 16. 🧠 Internals & Glossary (Why RedAudit behaves this way)
+
+### Thread pool (`threads`)
+RedAudit uses a thread pool to scan multiple hosts in parallel.  
+The `threads` setting controls how many hosts are scanned concurrently:
+- Low (2–4): slower but stealthier and less noisy.
+- Medium (default 6): balanced for most environments.
+- High (10–16): faster, but may create more noise and timeouts.
+
+### Rate limiting
+RedAudit can insert a small delay between host scans.  
+This trades raw speed for stability and stealth during long operations.
+
+### Heartbeat & watchdog
+During long scans, RedAudit prints heartbeat messages if no output appears for a while.  
+This helps distinguish a “silent but healthy” scan from a real freeze.
+
+### Encrypted reports
+Reports can be encrypted with a user password.  
+Keys are derived with PBKDF2-HMAC-SHA256 (480k iterations) and a separate `.salt` file, so decryption is possible later with `redaudit_decrypt.py`.
 
 ---
 [Full Documentation](docs/) | [Report Schema](docs/REPORT_SCHEMA.md) | [Security Specs](docs/SECURITY.md)

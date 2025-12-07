@@ -72,4 +72,8 @@ RedAudit automatically attempts a "Deep Scan" on hosts that appear "quiet" (up b
     - If `tshark` is installed, a text summary of protocols is included in the JSON report.
     - *Defense*: The capture duration is strictly capped to prevent hanging.
 
+---
+
+RedAudit is licensed under **GPLv3**. See [LICENSE](../LICENSE) for details.
+
 

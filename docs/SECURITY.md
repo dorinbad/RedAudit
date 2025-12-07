@@ -24,3 +24,8 @@ RedAudit uses the industrial-strength **Fernet** specification for report encryp
 ## 4. Audit Trails
 - **Logging**: Rotating logs stored in `~/.redaudit/logs/` (max 10MB, 5 backups).
 - **Traceability**: Every scan logs the user (`SUDO_USER`), PID, and start time.
+
+## 5. License
+
+This security model is part of the RedAudit project and is covered by the  
+**GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.

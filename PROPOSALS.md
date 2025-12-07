@@ -1,6 +1,7 @@
 # Improvement Proposals (Non-Binding)
 
 This document collects architectural suggestions for future versions, without altering the current core (v2.3.1).
+*Note: Any proposals implemented must comply with the GPLv3 license.*
 
 ## 1. Decoupling Python Code
 **Current State**: `redaudit_install.sh` embeds the entire Python source code within a `cat << 'EOF'` block.
