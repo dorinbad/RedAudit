@@ -97,15 +97,13 @@ RedAudit treats report data as sensitive sensitive material.
 ## 6. Scan Logic & Phases
 1.  **Discovery**: ICMP Echo (`-PE`) + ARP (`-PR`) sweep to map live hosts.
 2.  **Enumeration**: Parallel Nmap scans based on mode.
-3.  **Deep Identity Scan (Automatic)**:
-    - **Triggers**: RedAudit automatically triggers this scan if:
-        - Host has **>8 open ports**.
-        - Host has **suspicous services** (e.g., `vpn`, `proxy`, `nagios`, `socks`).
-        - Host has **very few ports (<=3)** or no version info (potentially obfuscated).
-    - **Action**:
-        - Runs a combined fingerprinting strategy: `nmap -A -sV -O -Pn -p- -sSU`.
-        - If that fails to identify the OS, it falls back to separate aggressive scans.
-    - **Result**: Data is stored in `host.deep_scan`, including exact command logs, duration, and output.
+3.  **Adaptive Deep Scan (Automatic)**:
+    - **Triggers**: Auto-triggered if a host returns minimal info or suspicious services.
+    - **Strategy (2-Phases)**:
+        1.  **Phase 1**: `nmap -A -sV -Pn -p-` (TCP Aggressive).
+            - *Check*: If MAC/OS is found, stop here.
+        2.  **Phase 2**: `nmap -O -sSU -Pn` (UDP + OS fallback).
+    - **Result**: Data is stored in `host.deep_scan`, including `mac_address` and `vendor`.
 
 4.  **Traffic Capture**:
     - As part of the **Deep Scan** process, if `tcpdump` is present, RedAudit captures a small snippet (50 packets/15s) from the host's traffic.
@@ -131,8 +129,9 @@ Long scans (e.g., full port ranges on slow networks) can look like "hangs".
 - **States**:
     - **Active**: Activity < 60s ago. No output.
     - **Busy**: Activity < 300s ago. Warning log.
-    - **Silent**: Activity > 300s ago. Warning on console.
-        - *Note*: A "Fail" heartbeat does NOT mean the scan crashed. It often means Nmap is grinding through a slow or filtered host. RedAudit will continue running.
+    - **Silent**: Activity > 300s ago. 
+        - Message: *"Nmap is still running; this is normal on slow or filtered hosts."*
+        - **Action**: Do NOT abort. Deep scans can take 8-10 minutes on firewall-protected hosts.
 - **Logs**: Check `~/.redaudit/logs/` for fine-grained debugging info.
 
 ## 9. Verification Script

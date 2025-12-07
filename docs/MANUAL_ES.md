@@ -97,15 +97,13 @@ RedAudit trata los datos de los reportes como material sensible.
 ## 6. Lógica de Escaneo
 1.  **Descubrimiento**: Barrido ICMP Echo (`-PE`) + ARP (`-PR`) para mapear hosts vivos.
 2.  **Enumeración**: Escaneos Nmap paralelos basados en el modo.
-3.  **Deep Identity Scan (Automático)**:
-    - **Disparadores**: Se activa automáticamente si:
-        - El host tiene **>8 puertos abiertos**.
-        - Detecta **servicios sospechosos** (ej: `vpn`, `proxy`, `nagios`, `socks`).
-        - El host tiene **muy pocos puertos (<=3)** o sin info de versión (posible ofuscación).
-    - **Acción**:
-        - Ejecuta una estrategia combinada: `nmap -A -sV -O -Pn -p- -sSU`.
-        - Si no logra identificar el SO, recurre a escaneos agresivos por separado.
-    - **Resultado**: Datos guardados en `host.deep_scan`, incluyendo logs exactos, duración y salida.
+3.  **Deep Scan Adaptativo (Automático)**:
+    - **Disparadores**: Se activa si un host devuelve poca info o servicios sospechosos.
+    - **Estrategia (2 Fases)**:
+        1.  **Fase 1**: `nmap -A -sV -Pn -p-` (TCP Agresivo).
+            - *Chequeo*: Si encuentra MAC/SO, se detiene aquí.
+        2.  **Fase 2**: `nmap -O -sSU -Pn` (UDP + SO de respaldo).
+    - **Resultado**: Datos guardados en `host.deep_scan`, incluyendo `mac_address` y `vendor`.
 
 4.  **Captura de Tráfico**:
     - Como parte del proceso de **Deep Scan**, si `tcpdump` está presente, captura un fragmento (50 paquetes/15s) del tráfico del host.
@@ -131,8 +129,9 @@ Los escaneos largos (ej: rangos de puertos completos en redes lentas) pueden par
 - **Estados**:
     - **Activo**: Actividad < hace 60s. Sin salida.
     - **Ocupado**: Actividad < hace 300s. Log de advertencia.
-    - **Silencioso**: Actividad > hace 300s. Advertencia en consola.
-        - *Nota*: Un fallo de heartbeat NO significa que el escaneo murió. A menudo indica que Nmap está trabajando duro en un host lento o filtrado.
+    - **Silencioso**: Actividad > hace 300s.
+        - Mensaje: *"Nmap sigue ejecutándose; esto es normal en hosts lentos o filtrados."*
+        - **Acción**: NO abortes. Los escaneos profundos pueden tomar 8-10 minutos en hosts con firewall.
 - **Logs**: Revisa `~/.redaudit/logs/` para depuración detallada.
 
 ## 9. Script de Verificación

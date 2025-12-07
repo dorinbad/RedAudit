@@ -28,8 +28,8 @@ A diferencia de simples scripts "wrapper", RedAudit gestiona la concurrencia, ag
     - **RÁPIDO (FAST)**: Barrido ICMP (`-sn`) para detección rápida de hosts vivos.
     - **NORMAL**: Puertos principales + Detección de Versiones (`-sV`).
     - **COMPLETO (FULL)**: Todos los puertos, detección de SO (`-O`), Scripts (`-sC`) y escaneo web.
-- **Deep Scan Automático**: Dispara automáticamente escaneos agresivos (`-A -p- -sV`) y sondeo UDP en hosts "silenciosos".
-- **Deep Identity Scan**: Escaneo mejorado basado en heurísticas para hosts de infraestructura/inusuales (VPNs, proxies, sistemas de monitorización).
+- **Deep Scan Adaptativo**: Motor v2.4 que cambia inteligentemente de fingerprinting TCP a detección OS/UDP solo si es necesario.
+- **Detección Vendor/MAC**: Extrae información de hardware incluso en escaneos parciales.
 - **Análisis de Tráfico**: Micro-capturas opcionales (`tcpdump`) para analizar el comportamiento del objetivo.
 - **Reconocimiento Web**: Integra `whatweb`, `nikto`, `curl` y `openssl` para servicios web.
 - **Resiliencia**: Monitor de actividad (heartbeat) en segundo plano para evitar bloqueos silenciosos.
@@ -104,11 +104,13 @@ Controlado por el parámetro `rate_limit_delay`.
     - **1-5s**: Equilibrado. Recomendado para auditorías internas para evitar disparar limitadores simples.
     - **>5s**: Paranoico/Conservador. Úsalo en entornos de producción sensibles.
 
-### Escaneo profundo de infraestructura
-RedAudit aplica un "Deep Identity Scan" a hosts que cumplan ciertas heurísticas (ej: >8 puertos abiertos, servicios sospechosos como `vpn`/`proxy`, o muy pocos puertos).
-- **Activación**: Automática basada en análisis de hallazgos.
-- **Acción**: Fingerprinting combinado Nmap (`-A -sV -O -p- -sSU`) + captura de tráfico.
-- **Salida**: Resultados guardados en `host.deep_scan`, incluyendo logs de comandos y archivos `.pcap`.
+### Deep Scan Adaptativo (v2.4)
+RedAudit aplica un escaneo inteligente de 2 fases a hosts "silenciosos" o complejos:
+1.  **Fase 1**: TCP Agresivo (`-A -p- -sV -Pn`).
+2.  **Fase 2**: Si la Fase 1 no revela MAC/SO, lanza detección de SO+UDP (`-O -sSU`).
+- **Activación**: Automática.
+- **Beneficio**: Ahorra tiempo saltando la Fase 2 si el host ya está identificado.
+- **Salida**: Logs completos y datos MAC/Vendor en `host.deep_scan`.
 
 ## 8. 🔐 Reportes, Cifrado y Descifrado
 Los reportes se guardan en `~/RedAuditReports` (por defecto) con fecha y hora.

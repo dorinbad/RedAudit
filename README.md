@@ -28,8 +28,8 @@ Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, a
     - **FAST**: ICMP ping sweep (`-sn`) for quick live host detection.
     - **NORMAL**: Top ports + Service Versioning (`-sV`).
     - **FULL**: All ports, OS detection (`-O`), Scripts (`-sC`), and Web Vuln scans.
-- **Auto Deep Scan**: Automatically triggers aggressive scans (`-A -p- -sV`) and UDP probing on "quiet" hosts.
-- **Deep Identity Scan**: Heuristic-based enhanced scanning for infrastructure/unusual hosts (VPNs, proxies, monitoring systems).
+- **Adaptive Deep Scan**: V2.4 engine that intelligently switches from TCP fingerprinting to UDP/OS detection only when necessary.
+- **Vendor/MAC Detection**: Automatically extracts hardware info even from partial scans.
 - **Traffic Analysis**: Optional micro-captures (`tcpdump`) for active analysis of target behavior.
 - **Web Recon**: Integrates `whatweb`, `nikto`, `curl`, and `openssl` for web-facing services.
 - **Resilience**: Background heartbeat monitor prevents silent freezes during long scans.
@@ -104,11 +104,13 @@ Controlled by the `rate_limit_delay` parameter.
     - **1-5s**: Balanced. Recommended for internal audits to avoid simple rate-limiter triggers.
     - **>5s**: Paranoid/Conservative. Use for sensitive production environments.
 
-### Infrastructure hosts deep scan
-RedAudit applies a "Deep Identity Scan" to hosts that match specific heuristics (e.g., >8 open ports, suspicious services like `vpn`/`proxy`, or very few ports).
-- **Trigger**: Automatic based on finding analysis.
-- **Action**: Combined Nmap fingerprinting (`-A -sV -O -p- -sSU`) + traffic capture.
-- **Output**: Results stored in `host.deep_scan`, including command logs and `.pcap` files.
+### Adaptive Deep Scan (v2.4)
+RedAudit applies a smart 2-phase scan to "silent" or complex hosts:
+1.  **Phase 1**: Aggressive TCP (`-A -p- -sV -Pn`).
+2.  **Phase 2**: If Phase 1 yields no MAC/OS info, it launches OS+UDP detection (`-O -sSU`).
+- **Trigger**: Automatic.
+- **Benefit**: Saves time by skipping Phase 2 if the host is already identified.
+- **Output**: Full logs and MAC/Vendor data in `host.deep_scan`.
 
 ## 8. 🔐 Reports, Encryption & Decryption
 Reports are saved to `~/RedAuditReports` (default) with timestamps.

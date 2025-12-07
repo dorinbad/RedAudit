@@ -58,8 +58,9 @@ TRANSLATIONS = {
         "heartbeat_warn": "⏱  Activity Monitor: {} - No output for {}s (nmap might be busy)",
         "heartbeat_fail": (
             "⏱  Activity Monitor: {} - Long silence (> {}s). "
-            "Nmap is still running; this is common on filtered or slow hosts."
+            "Nmap is still running; this is normal on slow or filtered hosts."
         ),
+        "deep_scan_skip": "✅ Info sufficient (MAC/OS found), skipping phase 2.",
         "verifying_env": "Verifying environment integrity...",
         "detected": "✓ {} detected",
         "nmap_avail": "✓ python-nmap available",
@@ -136,8 +137,9 @@ TRANSLATIONS = {
         "heartbeat_warn": "⏱  Monitor de Actividad: {} - Sin salida hace {}s (nmap puede estar ocupado)",
         "heartbeat_fail": (
             "⏱  Monitor de Actividad: {} - Silencio prolongado (> {}s). "
-            "Nmap sigue ejecutándose; esto es habitual en hosts lentos o filtrados."
+            "Nmap sigue ejecutándose; esto es normal en hosts lentos o filtrados."
         ),
+        "deep_scan_skip": "✅ Info suficiente (MAC/OS detectado), saltando fase 2.",
         "verifying_env": "Verificando integridad del entorno...",
         "detected": "✓ {} detectado",
         "nmap_avail": "✓ python-nmap disponible",
@@ -735,65 +737,73 @@ class InteractiveNetworkAuditor:
         deep_obj.setdefault("commands", []).append(record)
         return record
 
-    def _combined_output_has_identity(self, records):
-        """Heuristic: has MAC, OS details or device type in stdout/stderr."""
-        needles = ["MAC Address", "OS details", "Device type", "Running:", "OS CPE"]
-        for rec in records:
-            text = (rec.get("stdout") or "") + "\n" + (rec.get("stderr") or "")
-            for n in needles:
-                if n in text:
-                    return True
-        return False
+    def _extract_vendor_mac(self, text):
+        """Extracts MAC and Vendor from Nmap output."""
+        if not text:
+            return None, None
+        # Helper regex for standard Nmap MAC line
+        # MAC Address: 00:11:22:33:44:55 (Vendor Name)
+        match = re.search(r"MAC Address: ([0-9A-Fa-f:]+) \((.*?)\)", text)
+        if match:
+            return match.group(1), match.group(2)
+        return None, None
 
     def deep_scan_host(self, host_ip):
-        """Aggressive follow-up scan plus optional traffic capture."""
+        """
+        Adaptive Deep Scan v2.4
+        Phase 1: TCP Connect + Service Version + Scripts (Aggressive)
+        Phase 2: OS Detection + UDP Scan (only if Phase 1 yields no identity)
+        """
         safe_ip = self.sanitize_ip(host_ip)
         if not safe_ip:
             return None
 
         self.current_phase = f"deep:{safe_ip}"
-        deep = {"strategy": "combined", "commands": []}
-        self.print_status(self.t("deep_identity_start", safe_ip, deep["strategy"]), "WARNING")
+        deep_obj = {"strategy": "adaptive_v2.4", "commands": []}
+        
+        self.print_status(self.t("deep_identity_start", safe_ip, "Adaptive (2-Phase)"), "WARNING")
 
-        # Combined TCP+UDP+OS+version fingerprinting
-        cmd_combined = [
-            "nmap", "-A", "-sV", "-O", "-Pn", "-p-", "-sSU",
-            "--version-intensity", "9", safe_ip
-        ]
-        rec = self._run_nmap_command(
-            cmd_combined,
-            timeout=400,
-            host_ip=safe_ip,
-            strategy_name="combined",
-            estimate_label="90–140",
-            deep_obj=deep,
+        # --- Phase 1: Aggressive TCP ---
+        cmd_p1 = ["nmap", "-A", "-sV", "-Pn", "-p-", "--open", "--version-intensity", "9", safe_ip]
+        rec1 = self._run_nmap_command(
+            cmd_p1, timeout=400, host_ip=safe_ip, 
+            strategy_name="phase1", estimate_label="~120-180", deep_obj=deep_obj
         )
 
-        records_for_identity = [rec]
-        if not self._combined_output_has_identity(records_for_identity):
-            # Fallback to separate commands for stubborn hosts
-            deep["strategy"] = "fallback"
-            cmds = [
-                (["nmap", "-A", "-sV", "-Pn", "-p-", safe_ip], "60–120"),
-                (["nmap", "-O", "-sSU", "-Pn", safe_ip], "60–120"),
-            ]
-            for cmd, label in cmds:
-                self._run_nmap_command(
-                    cmd,
-                    timeout=300,
-                    host_ip=safe_ip,
-                    strategy_name="fallback",
-                    estimate_label=label,
-                    deep_obj=deep,
-                )
+        # Check for Identity (MAC/OS)
+        has_identity = self._combined_output_has_identity([rec1])
+        mac, vendor = self._extract_vendor_mac(rec1.get("stdout", ""))
+        
+        if mac:
+            deep_obj["mac_address"] = mac
+        if vendor:
+            deep_obj["vendor"] = vendor
 
+        # --- Phase 2: UDP + OS (Conditional) ---
+        if has_identity:
+            self.print_status(self.t("deep_scan_skip"), "OKGREEN")
+            deep_obj["phase2_skipped"] = True
+        else:
+            # Fallback if Phase 1 didn't give us enough hardware info
+            cmd_p2 = ["nmap", "-O", "-sSU", "-Pn", "-p-", "--max-retries", "2", safe_ip]
+            rec2 = self._run_nmap_command(
+                cmd_p2, timeout=400, host_ip=safe_ip,
+                strategy_name="phase2", estimate_label="~150-300", deep_obj=deep_obj
+            )
+            # Try extracting again from Phase 2
+            if not mac:
+                m2, v2 = self._extract_vendor_mac(rec2.get("stdout", ""))
+                if m2: deep_obj["mac_address"] = m2
+                if v2: deep_obj["vendor"] = v2
+
+        # Traffic Capture (Always attempted in deep scan)
         pcap_info = self.capture_traffic_snippet(safe_ip)
         if pcap_info:
-            deep["pcap_capture"] = pcap_info
+            deep_obj["pcap_capture"] = pcap_info
 
-        last_dur = deep["commands"][-1].get("duration_seconds", 0.0)
-        self.print_status(self.t("deep_identity_done", safe_ip, last_dur), "OKGREEN")
-        return deep
+        total_dur = sum(c.get("duration_seconds", 0) for c in deep_obj["commands"])
+        self.print_status(self.t("deep_identity_done", safe_ip, total_dur), "OKGREEN")
+        return deep_obj
 
     def capture_traffic_snippet(self, host_ip, duration=15):
         """Small PCAP capture with tcpdump + optional tshark summary."""
