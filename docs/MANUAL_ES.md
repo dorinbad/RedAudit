@@ -98,12 +98,16 @@ RedAudit trata los datos de los reportes como material sensible.
 1.  **Descubrimiento**: Barrido ICMP Echo (`-PE`) + ARP (`-PR`) para mapear hosts vivos.
 2.  **Enumeración**: Escaneos Nmap paralelos basados en el modo.
 3.  **Deep Scan Adaptativo (Automático)**:
-    - **Disparadores**: Se activa si un host devuelve poca info o servicios sospechosos.
+    - **Disparadores**: Se activa automáticamente si un host:
+        - Tiene más de 8 puertos abiertos
+        - Tiene servicios sospechosos (socks, proxy, vpn, tor, nagios, etc.)
+        - Tiene 3 o menos puertos abiertos
+        - Tiene puertos abiertos pero no se detectó información de versión
     - **Estrategia (2 Fases)**:
-        1.  **Fase 1**: `nmap -A -sV -Pn -p-` (TCP Agresivo).
-            - *Chequeo*: Si encuentra MAC/SO, se detiene aquí.
-        2.  **Fase 2**: `nmap -O -sSU -Pn` (UDP + SO de respaldo).
-    - **Resultado**: Datos guardados en `host.deep_scan`, incluyendo `mac_address` y `vendor`.
+        1.  **Fase 1**: `nmap -A -sV -Pn -p- --open --version-intensity 9` (TCP Agresivo).
+            - *Chequeo*: Si encuentra MAC/SO, se detiene aquí y omite la Fase 2.
+        2.  **Fase 2**: `nmap -O -sSU -Pn -p- --max-retries 2` (UDP + SO de respaldo, solo si la Fase 1 no obtuvo identidad).
+    - **Resultado**: Datos guardados en `host.deep_scan`, incluyendo `mac_address`, `vendor`, y flag `phase2_skipped`.
 
 4.  **Captura de Tráfico**:
     - Como parte del proceso de **Deep Scan**, si `tcpdump` está presente, captura un fragmento (50 paquetes/15s) del tráfico del host.

@@ -139,9 +139,10 @@ Debug and audit logs are stored in `~/.redaudit/logs/`.
 - **Content**: Tracks user PID, command arguments, and exceptions.
 
 ### Heartbeat Monitor
-A background `threading.Thread` monitors the scan state every 60 seconds.
-- **<60s silence**: Normal.
-- **>300s silence**: Logs a **WARNING ("Zombie scan?")**.
+A background `threading.Thread` monitors the scan state every 30 seconds.
+- **<60s silence**: Normal (no output).
+- **60-300s silence**: Logs a **WARNING** that Nmap might be busy.
+- **>300s silence**: Logs a **WARNING** with message "Nmap is still running; this is normal on slow or filtered hosts."
 - **Purpose**: Assures the operator that the tool is alive during long Nmap operations (e.g., `-p-` scans).
 
 ## 10. ✅ Verification Script
@@ -170,10 +171,11 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
 
 ## 14. 📝 Changelog (v2.4 Summary)
-- **Security**: Added Report Encryption and Strict Input Sanitization.
-- **Performance**: Added Rate Limiting and Thread Controls.
-- **Resilience**: Added Heartbeat Monitor and Rotating Logs.
-- **Core**: Consolidated installation and python core into `redaudit_install.sh`.
+- **Adaptive Deep Scan**: Intelligent 2-phase engine (TCP Aggressive → UDP/OS Fallback) to maximize speed and data.
+- **Vendor/MAC Detection**: Native regex parsing to extract hardware vendor from Nmap output.
+- **Installer**: Refactored `redaudit_install.sh` to use clean copy operations without embedded Python code.
+- **Heartbeat**: Professional messaging ("Nmap is still running") to reduce user anxiety during long scans.
+- **Reporting**: Added `vendor` and `mac_address` fields to JSON/TXT reports.
 
 ## 15. ⚖️ License
 

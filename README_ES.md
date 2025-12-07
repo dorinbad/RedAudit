@@ -139,9 +139,10 @@ Logs de depuración y auditoría se guardan en `~/.redaudit/logs/`.
 - **Contenido**: Rastrea PID de usuario, argumentos de comandos y excepciones.
 
 ### Monitor de Actividad (Heartbeat)
-Un hilo en segundo plano (`threading.Thread`) monitoriza el estado del escaneo cada 60 segundos.
-- **<60s silencio**: Normal.
-- **>300s silencio**: Registra un **WARNING ("Zombie scan?")**.
+Un hilo en segundo plano (`threading.Thread`) monitoriza el estado del escaneo cada 30 segundos.
+- **<60s silencio**: Normal (sin salida).
+- **60-300s silencio**: Registra un **WARNING** indicando que Nmap puede estar ocupado.
+- **>300s silencio**: Registra un **WARNING** con el mensaje "Nmap sigue ejecutándose; esto es normal en hosts lentos o filtrados."
 - **Propósito**: Asegurar al operador que la herramienta sigue viva durante operaciones largas de Nmap (ej: escaneos `-p-`).
 
 ## 10. ✅ Script de Verificación
@@ -170,10 +171,11 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
 
 ## 14. 📝 Historial de Cambios (Resumen v2.4)
-- **Seguridad**: Añadido Cifrado de Reportes y Sanitización estricta de entradas.
-- **Rendimiento**: Añadidos Rate Limiting y Control de Hilos.
-- **Resiliencia**: Añadidos Monitor Heartbeat y Logs Rotativos.
-- **Núcleo**: Instalación y núcleo Python consolidados en `redaudit_install.sh`.
+- **Deep Scan Adaptativo**: Motor inteligente de 2 fases (TCP Agresivo → UDP/OS Fallback) para maximizar velocidad y datos.
+- **Detección Vendor/MAC**: Parsing nativo con regex para extraer información de hardware desde la salida de Nmap.
+- **Instalador**: Refactorizado `redaudit_install.sh` para usar operaciones de copia limpias sin código Python embebido.
+- **Heartbeat**: Mensajes profesionales ("Nmap sigue ejecutándose") para reducir la ansiedad del usuario durante escaneos largos.
+- **Reportes**: Añadidos campos `vendor` y `mac_address` a los reportes JSON/TXT.
 
 ## 15. ⚖️ Licencia
 

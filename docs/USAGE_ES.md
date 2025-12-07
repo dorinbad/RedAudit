@@ -66,10 +66,12 @@ RedAudit permite configurar un retardo (en segundos) entre el escaneo de cada ho
 
 ### Deep Scan Adaptativo y Captura de Tráfico
 RedAudit intenta automáticamente un "Deep Scan Adaptativo" en hosts que:
-1.  Parecen "silenciosos" (arriba pero con pocos puertos).
-2.  **Coinciden con patrones de infraestructura** (servicios VPN/monitor/proxy), si se habilita la opción.
+1.  **Tienen más de 8 puertos abiertos**
+2.  **Tienen servicios sospechosos** (socks, proxy, vpn, tor, nagios, etc.)
+3.  **Tienen muy pocos puertos (<=3)**
+4.  **Tienen puertos abiertos pero no se detectó información de versión**
  
-- **Estrategia Adaptativa**: Ejecuta un escaneo de 2 fases (primero TCP agresivo, luego UDP/SO si hace falta) para identificar hosts complejos.
+- **Estrategia Adaptativa**: Ejecuta un escaneo de 2 fases (primero TCP agresivo, luego UDP/SO solo si la Fase 1 no encontró identidad MAC/SO) para identificar hosts complejos.
 - **Captura de Tráfico**: Como parte del Deep Scan, si `tcpdump` está disponible, captura un **snippet de 50 paquetes** (máx 15s) del tráfico del host.
     - Guarda archivos `.pcap` en tu directorio de reportes.
     - Si `tshark` está instalado, incluye un resumen de protocolos en el reporte JSON.

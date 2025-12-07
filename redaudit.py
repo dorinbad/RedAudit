@@ -737,6 +737,42 @@ class InteractiveNetworkAuditor:
         deep_obj.setdefault("commands", []).append(record)
         return record
 
+    def _combined_output_has_identity(self, records):
+        """
+        Check if any record contains sufficient identity information (MAC/OS).
+        Returns True if MAC address, vendor, or OS detection info is found.
+        This determines whether Phase 2 (UDP/OS scan) can be skipped.
+        """
+        for rec in records:
+            stdout = rec.get("stdout", "") or ""
+            stderr = rec.get("stderr", "") or ""
+            combined = stdout + "\n" + stderr
+            
+            if not combined.strip():
+                continue
+            
+            # Check for MAC address and vendor (most reliable indicator)
+            mac, vendor = self._extract_vendor_mac(combined)
+            if mac or vendor:
+                return True
+            
+            # Check for OS detection patterns in Nmap output
+            # Common patterns when OS detection succeeds:
+            os_patterns = [
+                r"OS details?:",           # "OS details:" or "OS Details:"
+                r"Running:\s*[A-Z]",       # "Running: Linux" or "Running: Windows"
+                r"OS CPE:",                # OS CPE identifier
+                r"Aggressive OS guesses:", # OS guesses section
+                r"OS details:.*\(.*%\)",   # OS details with accuracy percentage
+                r"Device type:",           # Device type identification
+            ]
+            
+            for pattern in os_patterns:
+                if re.search(pattern, combined, re.IGNORECASE | re.MULTILINE):
+                    return True
+        
+        return False
+
     def _extract_vendor_mac(self, text):
         """Extracts MAC and Vendor from Nmap output."""
         if not text:

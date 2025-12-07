@@ -98,12 +98,16 @@ RedAudit treats report data as sensitive sensitive material.
 1.  **Discovery**: ICMP Echo (`-PE`) + ARP (`-PR`) sweep to map live hosts.
 2.  **Enumeration**: Parallel Nmap scans based on mode.
 3.  **Adaptive Deep Scan (Automatic)**:
-    - **Triggers**: Auto-triggered if a host returns minimal info or suspicious services.
+    - **Triggers**: Auto-triggered if a host:
+        - Has more than 8 open ports
+        - Has suspicious services (socks, proxy, vpn, tor, nagios, etc.)
+        - Has 3 or fewer open ports
+        - Has open ports but no version information detected
     - **Strategy (2-Phases)**:
-        1.  **Phase 1**: `nmap -A -sV -Pn -p-` (TCP Aggressive).
-            - *Check*: If MAC/OS is found, stop here.
-        2.  **Phase 2**: `nmap -O -sSU -Pn` (UDP + OS fallback).
-    - **Result**: Data is stored in `host.deep_scan`, including `mac_address` and `vendor`.
+        1.  **Phase 1**: `nmap -A -sV -Pn -p- --open --version-intensity 9` (TCP Aggressive).
+            - *Check*: If MAC/OS is found, stop here and skip Phase 2.
+        2.  **Phase 2**: `nmap -O -sSU -Pn -p- --max-retries 2` (UDP + OS fallback, only if Phase 1 yielded no identity).
+    - **Result**: Data is stored in `host.deep_scan`, including `mac_address`, `vendor`, and `phase2_skipped` flag.
 
 4.  **Traffic Capture**:
     - As part of the **Deep Scan** process, if `tcpdump` is present, RedAudit captures a small snippet (50 packets/15s) from the host's traffic.

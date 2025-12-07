@@ -71,10 +71,12 @@ RedAudit v2.4 strictly informs you about the commands being executed:
 
 ### Adaptive Deep Scan & Traffic Capture
 RedAudit automatically attempts an "Adaptive Deep Scan" on hosts that:
-1.  **Have >8 open ports** or **suspicious services**.
-2.  **Have very few ports (<=3)** or no version info.
+1.  **Have >8 open ports**
+2.  **Have suspicious services** (socks, proxy, vpn, tor, nagios, etc.)
+3.  **Have very few ports (<=3)**
+4.  **Have open ports but no version information detected**
  
-- **Adaptive Strategy**: Runs a 2-phase scan (TCP aggressive first, then UDP/OS fallback if needed) to fingerprint complex hosts.
+- **Adaptive Strategy**: Runs a 2-phase scan (TCP aggressive first, then UDP/OS fallback only if Phase 1 didn't find MAC/OS identity) to fingerprint complex hosts.
 - **Traffic Capture**: As part of Deep Scan, if `tcpdump` is available, the tool captures a **50-packet snippet** (max 15s) from the host's traffic.
     - Saves `.pcap` files in your report directory.
     - If `tshark` is installed, a text summary of protocols is included in the JSON report.
