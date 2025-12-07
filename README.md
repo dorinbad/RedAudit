@@ -19,7 +19,7 @@
 ## 1. 📋 Overview
 **RedAudit** is an interactive, automated network auditing tool designed for **Kali Linux** and Debian-based systems. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, cohesive CLI workflow.
 
-Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, and reporting (JSON/PDF/TXT) with Python-based logic, offering professional-grade reliability and audit trails.
+Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, and reporting (JSON/TXT) with Python-based logic, offering professional-grade reliability and audit trails.
 
 ## 2. ✨ Features
 - **Interactive CLI**: Guided menu for target selection, scan modes, and configuration.
