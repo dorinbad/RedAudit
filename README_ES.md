@@ -148,7 +148,7 @@ python3 redaudit_decrypt.py /ruta/a/reporte_TIMESTAMP.json.enc
 ```
 **Nota**: El archivo `.salt` debe estar en el mismo directorio. Se te pedirá la contraseña usada durante el escaneo.
 
-## Desinstalación
+## Instalación
 
 1.	Clona el repositorio:
 
@@ -174,6 +174,15 @@ python3 redaudit_decrypt.py /ruta/a/reporte_TIMESTAMP.json.enc
     ```bash
     source ~/.bashrc    # o ~/.zshrc
     ```
+
+## Desinstalación
+
+Para eliminar RedAudit (binario y alias):
+
+```bash
+sudo rm -f /usr/local/bin/redaudit
+# Elimina manualmente el alias de ~/.bashrc o ~/.zshrc
+```
 
 ## Uso
 

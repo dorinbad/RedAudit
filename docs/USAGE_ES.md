@@ -52,6 +52,12 @@ Esto generará archivos `.decrypted` (o restaurará la extensión original) tras
 Los logs de depuración se guardan en `~/.redaudit/logs/`. Revisa estos archivos si el escaneo falla o se comporta de forma inesperada.
 
 ## Rendimiento y Sigilo
+### Limitación de Velocidad (Rate Limiting)
+RedAudit permite configurar un retardo (en segundos) entre el escaneo de cada host.
+- **0s (Por defecto)**: Velocidad máxima. Ideal para auditorías internas donde el ruido no importa.
+- **1-5s**: Sigilo moderado. Reduce la probabilidad de activar firewalls de rate-limit simples.
+- **>10s**: Sigilo alto. Ralentiza significativamente la auditoría pero minimiza el riesgo de detección y congestión.
+
 **Nota sobre el Heartbeat**: Si usas un retardo alto (ej. 60s) con muchos hilos, el escaneo puede parecer "congelado". Revisa el log o el estado del heartbeat.
 
 ### Deep Scan Automático y Captura de Tráfico
