@@ -1,139 +1,160 @@
-# RedAudit Installation Manual v2.3.1
+# RedAudit User Manual
 
-**Role:** Pentester / Senior Programmer
-
-## 1. Prerequisites
-
-**Target System:**
-*   Kali Linux (or similar Debian-based distro)
-*   User with `sudo` privileges
-*   Internet connection for package installation
-
-**Packages used:**
-The installer can automatically install these for you if requested (interactive mode or `-y` flag).
-
-*   **Core (Required):** `nmap`, `python3-nmap`, `python3-cryptography`
-*   **Recommended (Optional):** `whatweb`, `nikto`, `curl`, `wget`, `openssl`, `tcpdump`, `tshark`, `whois`, `bind9-dnsutils`
-
-To install manually:
-```bash
-sudo apt update
-sudo apt install -y nmap python3-nmap whatweb nikto curl wget openssl tcpdump tshark whois bind9-dnsutils
-```
-
-> **Note:** `nmap` and `python3-nmap` are critical. The others are recommended for full functionality (Web scans, traffic capture, DNS enrichment).
-
-*   **Automatic Deep Scan:** The tool automatically detects "quiet" or suspicious hosts and launches a deep scan (`-A -p- -sV`) including packet capture to identify firewalls or hidden services.
+**Version**: 2.3
+**Date**: 2025-05-20
+**Target Level**: Professional Pentester / SysAdmin
 
 ---
 
-## 2. Prepare Working Directory
-
-We use a standard directory for tools:
-
-```bash
-mkdir -p ~/security_tools
-cd ~/security_tools
-```
+## 📑 Table of Contents
+1. [Introduction](#1-introduction)
+2. [Supported Environment](#2-supported-environment)
+3. [Installation](#3-installation)
+4. [Quick Start](#4-quick-start)
+5. [Deep Configuration](#5-deep-configuration)
+    - [Concurrency & Threads](#concurrency--threads)
+    - [Rate Limiting](#rate-limiting)
+    - [Encryption](#encryption)
+6. [Scan Logic &Phases](#6-scan-logic--phases)
+7. [Decryption Guide](#7-decryption-guide)
+8. [Monitoring & Heartbeat](#8-monitoring--heartbeat)
+9. [Verification Script](#9-verification-script)
+10. [FAQ](#10-faq)
+11. [Glossary](#11-glossary)
+12. [Legal Notice](#12-legal-notice)
 
 ---
+
+## 1. Introduction
+RedAudit is an automated reconnaissance framework designed to streamline the `Discovery` → `Enumeration` → `Vulnerability Assessment` pipeline. It wraps industry-standard tools (`nmap`, `whatweb`, `tcpdump`) in a robust Python concurrency model, adding layers of resilience (heartbeats, retries) and security (encryption, sanitization).
+
+## 2. Supported Environment
+- **OS**: Kali Linux (Preferred), Debian 10+, Ubuntu 20.04+.
+- **Privileges**: **Root** (`sudo`) access is mandatory for:
+    - SYN scanning (`nmap -sS`).
+    - OS detection (`nmap -O`).
+    - Raw packet capture (`tcpdump`).
+- **Python**: 3.8 or higher.
 
 ## 3. Installation
-
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/dorinbad/RedAudit.git
-    cd RedAudit
-    ```
-
-2.  Run the installer:
-    ```bash
-    chmod +x redaudit_install.sh
-    sudo ./redaudit_install.sh
-    
-    # Or for non-interactive installation:
-    # sudo ./redaudit_install.sh -y
-    ```
-
-The installer will:
-1.  Offer to install recommended network utilities.
-2.  Install RedAudit to `/usr/local/bin/redaudit`.
-3.  Set up the necessary shell alias.
-
----
-
-## 4. Activate the Alias
-
-After installation:
+RedAudit uses a consolidated installer script that handles dependencies (apt) and setup.
 
 ```bash
-source ~/.bashrc
+git clone https://github.com/dorinbad/RedAudit.git
+cd RedAudit
+sudo bash redaudit_install.sh
+source ~/.bashrc  # Activates the alias
 ```
 
-From now on, in any terminal as your normal user:
+**Dependencies installed:**
+- `nmap`, `python3-nmap` (Core scanning)
+- `python3-cryptography` (Report encryption)
+- `whatweb`, `nikto`, `tcpdump`, `tshark` (Optional enrichment)
 
-```bash
-redaudit
+## 4. Quick Start
+Run `redaudit` to start the interactive wizard.
+
+**Example Session:**
+```text
+? Select network: 192.168.1.0/24
+? Select scan mode: NORMAL
+? Enter number of threads [1-16]: 6
+? Enable Web Vulnerability scans? [y/N]: y
+? Encrypt reports with password? [y/N]: y
 ```
 
----
-## 5. 🔒 Security Features (NEW in v2.3)
+## 5. Deep Configuration
 
-RedAudit v2.3 introduces enterprise-grade security hardening:
+### Concurrency & Threads
+RedAudit uses a **Thread Pool** (`concurrent.futures.ThreadPoolExecutor`) to scan hosts in parallel.
+- **Nature**: These are **Python Threads**, not processes. They share memory and global interpreter state, but since Nmap is an I/O-bound subprocess, threading is highly efficient.
+- **Tuning**:
+    - **1-4 Threads**: Stealth mode. Use for strictly monitored networks or legacy switches susceptible to congestion.
+    - **6-10 Threads (Default)**: Balanced for standard LANs.
+    - **12-16 Threads**: Aggressive. Suitable for CTFs or robust, modern networks. Exceeding 16 often yields diminishing returns due to Nmap's own internal parallelism.
 
-- **Input Sanitization**: All user inputs and command outputs are validated.
-- **Encrypted Reports**: Optional **AES-128 (Fernet)** encryption with PBKDF2-HMAC-SHA256 (480k iterations).
-- **Thread Safety**: All concurrent operations use proper locking mechanisms.
-- **Rate Limiting**: Configurable delays to avoid detection and network saturation.
-- **Audit Logging**: Comprehensive logging with automatic rotation (10MB, 5 backups).
+### Rate Limiting
+To evade IDS heuristics based on connection frequency, RedAudit implements **Application-Layer Rate Limiting**.
+- **Parameter**: `rate_limit_delay` (seconds).
+- **Implementation**: A forced `time.sleep(DELAY)` executes before a worker thread picks up a new host task.
+- **Impact**:
+    - **0s**: Fire-and-forget.
+    - **2s**: Adds a 2-second cooldown between host starts. In a 100-host subnet with 10 threads, this significantly spreads out the SYN packet bursts.
+    - **>10s**: "Low and Slow". Drastically increases scan time but virtually eliminates simple burst detection.
 
-[→ Full Security Documentation](SECURITY.md)
+### Encryption
+RedAudit treats report data as sensitive sensitive material.
+- **Standard**: **Fernet** (Specification compliant).
+    - **Cipher**: AES-128 in CBC mode.
+    - **Signing**: HMAC-SHA256.
+    - **Validation**: Timestamp-aware token (TTL ignored by default).
+- **Key Derivation**:
+    - **Algorithm**: PBKDF2HMAC (SHA-256).
+    - **Iterations**: 480,000 (exceeds OWASP recommendation of 310,000).
+    - **Salt**: 16 random bytes, stored in `.salt` file.
 
-To decrypt reports:
+## 6. Scan Logic & Phases
+1.  **Discovery**: ICMP Echo (`-PE`) + ARP (`-PR`) sweep to map live hosts.
+2.  **Enumeration**: Parallel Nmap scans based on mode.
+3.  **Automatic Deep Scan**:
+    - Triggered if a host is alive but returns minimal/confusing data.
+    - Launches aggressive flags (`-A -p-`) and UDP (`-sU`) to penetrate local firewalls or find non-standard services.
+4.  **Traffic Capture**:
+    - If `tcpdump` is present, captures a small snippet (50 packets/15s) to analyze traffic patterns (useful for detecting beacons).
+
+## 7. Decryption Guide
+Encrypted reports (`.json.enc`, `.txt.enc`) are unreadable without the password and the `.salt` file.
+
+**Usage:**
 ```bash
 python3 redaudit_decrypt.py /path/to/report.json.enc
 ```
+1. Script finds `report.salt` in the same directory.
+2. Prompts for password.
+3. Derives key and attempts decryption.
+4. Outputs `report.decrypted.json` or `report.json` (if avoiding overwrite).
 
----
+## 8. Monitoring & Heartbeat
+Long scans (e.g., full port ranges on slow networks) can look like "hangs".
+- **Heartbeat Thread**: Checks `self.last_activity` timestamp every 60s.
+- **States**:
+    - **Active**: Activity < 60s ago. No output.
+    - **Busy**: Activity < 300s ago. Warning log.
+    - **Frozen**: Activity > 300s ago. Warning on console ("Zombie scan?").
+- **Logs**: Check `~/.redaudit/logs/` for fine-grained debugging info.
 
-## 6. Quick Verification
-
-Useful commands to check everything is in place:
-
+## 9. Verification Script
+Ensure your deployment is clean and uncorrupted.
 ```bash
-# Where is the binary?
-which redaudit
-# → should point to /usr/local/bin/redaudit (via alias)
-
-# Check binary permissions
-ls -l /usr/local/bin/redaudit
-
-# Confirm alias
-grep "alias redaudit" ~/.bashrc
+bash redaudit_verify.sh
 ```
+Checks:
+- Binary paths.
+- Python module availability (`cryptography`, `nmap`).
+- Alias configuration.
+- Optional tool presence.
 
----
+## 10. FAQ
+**Q: Why "Encryption missing" error?**
+A: You likely skipped the dependency installation. Run `sudo apt install python3-cryptography`.
 
-## 7. Updating RedAudit
+**Q: Can I scan over VPN?**
+A: Yes, RedAudit detects VPN tun0/tap0 interfaces automatically.
 
-To update the code (e.g., from 2.3 to 2.4):
-1.  Edit the installer `redaudit_install.sh` with the new code.
-2.  Run it again:
-    ```bash
-    sudo ./redaudit_install.sh
-    source ~/.bashrc  # Or ~/.zshrc
-    ```
+**Q: Is it safe for production?**
+A: Yes, if configured responsibly (Threads < 5, Rate Limit > 1s). Always have authorization.
 
-The binary `/usr/local/bin/redaudit` will be overwritten with the new version.
+**Q: Why minimal ports found?**
+A: The target might be filtering SYN packets. RedAudit will attempt a Deep Scan automatically to try and bypass this.
 
----
+## 11. Glossary
+- **Deep Scan**: Automated fallback using aggressive Nmap flags to probe "quiet" hosts.
+- **Fernet**: Symmetric encryption primitive ensuring 128-bit security and integrity.
+- **Heartbeat**: Background monitoring thread ensuring process health.
+- **PBKDF2**: *Password-Based Key Derivation Function 2*. Makes password cracking slow.
+- **Ports Truncated**: Optimization where lists >50 ports are summarized to keep reports readable.
+- **Rate Limit**: Artificial delay introduced to reduce network noise.
+- **Salt**: Random data combined with password to create a unique encryption key.
 
-## 8. Uninstallation
-
-To remove the binary and alias:
-
-```bash
-sudo rm -f /usr/local/bin/redaudit
-sed -i '/alias redaudit=/d' ~/.bashrc  # Or ~/.zshrc
-source ~/.bashrc  # Or ~/.zshrc
-```
+## 12. Legal Notice
+This tool is for **authorized security auditing only**. Usage without written consent of the network owner is illegal in strict liability jurisdictions. The authors accept no liability for damage or unauthorized use.

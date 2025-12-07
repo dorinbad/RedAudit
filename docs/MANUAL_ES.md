@@ -1,142 +1,160 @@
-Manual de instalación de RedAudit v2.3.1
+# Manual de Usuario de RedAudit
 
-**Rol:** Pentester / Programador Senior
-
-## 1. Requisitos previos
-
-**Sistema objetivo:**
-*   Kali Linux (o distro similar basada en Debian)
-*   Usuario con `sudo` configurado
-*   Conexión a Internet para instalar paquetes
-
-**Paquetes usados:**
-El instalador puede instalar automáticamente el pack recomendado si se solicita (modo interactivo o flag `-y`).
-
-*   **Core (Requerido):** `nmap`, `python3-nmap`, `python3-cryptography`
-*   **Recomendado (Opcional):** `whatweb`, `nikto`, `curl`, `wget`, `openssl`, `tcpdump`, `tshark`, `whois`, `bind9-dnsutils`
-
-Para instalar manualmente:
-```bash
-sudo apt update
-sudo apt install -y nmap python3-nmap whatweb nikto curl wget openssl tcpdump tshark whois bind9-dnsutils
-```
-
-> **Nota:** `nmap` y `python3-nmap` son críticos. El resto se recomiendan para aprovechar todas las funciones (escáner web, captura de tráfico, enriquecimiento DNS).
-
-*   **Deep Scan Automático:** RedAudit detecta automáticamente hosts "tímidos" o sospechosos y lanza un escaneo profundo (`-A -p- -sV`) que incluye captura de paquetes para identificar firewalls o servicios ocultos.
+**Versión**: 2.3
+**Fecha**: 2025-05-20
+**Nivel Objetivo**: Pentester Profesional / SysAdmin
 
 ---
 
-## 2. Preparar carpeta de trabajo
-
-Usamos una carpeta estándar para herramientas:
-
-```bash
-mkdir -p ~/herramientas_seguridad
-cd ~/herramientas_seguridad
-```
+## 📑 Índice (TOC)
+1. [Introducción](#1-introducción)
+2. [Entorno Soportado](#2-entorno-soportado)
+3. [Instalación](#3-instalación)
+4. [Inicio Rápido](#4-inicio-rápido)
+5. [Configuración Profunda](#5-configuración-profunda)
+    - [Concurrencia e Hilos](#concurrencia-e-hilos)
+    - [Rate Limiting (Sigilo)](#rate-limiting-sigilo)
+    - [Cifrado](#cifrado)
+6. [Lógica de Escaneo](#6-lógica-de-escaneo)
+7. [Guía de Descifrado](#7-guía-de-descifrado)
+8. [Monitorización y Heartbeat](#8-monitorización-y-heartbeat)
+9. [Script de Verificación](#9-script-de-verificación)
+10. [FAQ (Preguntas Frecuentes)](#10-faq-preguntas-frecuentes)
+11. [Glosario](#11-glosario)
+12. [Aviso Legal](#12-aviso-legal)
 
 ---
+
+## 1. Introducción
+RedAudit es un framework de reconocimiento automatizado diseñado para agilizar el flujo de `Descubrimiento` → `Enumeración` → `Evaluación de Vulnerabilidades`. Envuelve herramientas estándar de la industria (`nmap`, `whatweb`, `tcpdump`) en un modelo de concurrencia robusto basado en Python, añadiendo capas de resiliencia (heartbeats, reintentos) y seguridad (cifrado, sanitización).
+
+## 2. Entorno Soportado
+- **SO**: Kali Linux (Preferido), Debian 10+, Ubuntu 20.04+.
+- **Privilegios**: Acceso **Root** (`sudo`) obligatorio para:
+    - Escaneo SYN (`nmap -sS`).
+    - Detección de SO (`nmap -O`).
+    - Captura de paquetes crudos (`tcpdump`).
+- **Python**: 3.8 o superior.
 
 ## 3. Instalación
-
-1.  Clonar el repositorio:
-    ```bash
-    git clone https://github.com/dorinbad/RedAudit.git
-    cd RedAudit
-    ```
-
-2.  Ejecutar el instalador:
-    ```bash
-    chmod +x redaudit_install.sh
-    sudo ./redaudit_install.sh
-    
-    # O para instalación no interactiva:
-    # sudo ./redaudit_install.sh -y
-    ```
-
-El instalador se encargará de:
-1.  Ofrecer la instalación de utilidades de red recomendadas.
-2.  Instalar RedAudit en `/usr/local/bin/redaudit`.
-3.  Configurar el alias necesario en tu shell.
-
----
-
-## 4. Activar el alias en tu shell
-
-Tras la instalación:
+RedAudit usa un script instalador consolidado que gestiona dependencias (apt) y configuración.
 
 ```bash
-source ~/.bashrc  # O ~/.zshrc si usas ZSH
+git clone https://github.com/dorinbad/RedAudit.git
+cd RedAudit
+sudo bash redaudit_install.sh
+source ~/.bashrc  # Activa el alias
 ```
 
-A partir de aquí, en cualquier terminal de tu usuario normal:
+**Dependencias instaladas:**
+- `nmap`, `python3-nmap` (Escaneo núcleo)
+- `python3-cryptography` (Cifrado de reportes)
+- `whatweb`, `nikto`, `tcpdump`, `tshark` (Enriquecimiento opcional)
 
-```bash
-redaudit
+## 4. Inicio Rápido
+Ejecuta `redaudit` para iniciar el asistente interactivo.
+
+**Ejemplo de Sesión:**
+```text
+? Select network: 192.168.1.0/24
+? Select scan mode: NORMAL
+? Enter number of threads [1-16]: 6
+? Enable Web Vulnerability scans? [y/N]: y
+? Encrypt reports with password? [y/N]: y
 ```
 
----
+## 5. Configuración Profunda
 
-## 5. 🔒 Características de Seguridad (NUEVO en v2.3)
+### Concurrencia e Hilos
+RedAudit utiliza un **Pool de Hilos** (`concurrent.futures.ThreadPoolExecutor`) para escanear hosts en paralelo.
+- **Naturaleza**: Son **Hilos Python**, no procesos. Comparten memoria y estado global, pero dado que Nmap es un subproceso intensivo en E/S, el threading es altamente eficiente.
+- **Ajuste**:
+    - **1-4 Hilos**: Modo sigilo. Úsalo en redes estrictamente monitorizadas o switches antiguos susceptibles a congestión.
+    - **6-10 Hilos (Defecto)**: Equilibrado para LANs estándar.
+    - **12-16 Hilos**: Agresivo. Adecuado para CTFs o redes modernas robustas. Superar 16 hilos suele tener retornos decrecientes debido al propio paralelismo interno de Nmap.
 
-RedAudit v2.3 introduce un endurecimiento de seguridad de grado empresarial:
+### Rate Limiting (Sigilo)
+Para evadir heurísticas de IDS basadas en frecuencia de conexión, RedAudit implementa **Rate Limiting a nivel de Aplicación**.
+- **Parámetro**: `rate_limit_delay` (segundos).
+- **Implementación**: Un `time.sleep(DELAY)` forzado se ejecuta antes de que un hilo trabajador inicie una nueva tarea de host.
+- **Impacto**:
+    - **0s**: Velocidad máxima (Fire-and-forget).
+    - **2s**: Añade un enfriamiento de 2 segundos entre inicios de host. En una subred de 100 hosts con 10 hilos, esto dispersa significativamente las ráfagas de paquetes SYN.
+    - **>10s**: "Low and Slow". Aumenta drásticamente el tiempo de escaneo pero elimina virtualmente la detección por ráfagas simples.
 
-- **Sanitización de Entrada**: Todas las entradas de usuario y salidas de comandos son validadas.
-- **Reportes Cifrados**: Cifrado opcional **AES-128 (Fernet)** con PBKDF2-HMAC-SHA256 (480k iteraciones).
-- **Seguridad de Hilos**: Todas las operaciones concurrentes usan mecanismos de bloqueo adecuados.
-- **Rate Limiting**: Retardos configurables para evitar detección y saturación de red.
-- **Audit Logging**: Registro exhaustivo con rotación automática (10MB, 5 backups).
+### Cifrado
+RedAudit trata los datos de los reportes como material sensible.
+- **Estándar**: **Fernet** (Cumple especificación).
+    - **Cifrado**: AES-128 en modo CBC.
+    - **Firma**: HMAC-SHA256.
+    - **Validación**: Token con timestamp (TTL ignorado por defecto).
+- **Derivación de Clave**:
+    - **Algoritmo**: PBKDF2HMAC (SHA-256).
+    - **Iteraciones**: 480,000 (supera la recomendación OWASP de 310,000).
+    - **Salt**: 16 bytes aleatorios, guardados en archivo `.salt`.
 
-[→ Documentación de Seguridad Completa](SECURITY.md)
+## 6. Lógica de Escaneo
+1.  **Descubrimiento**: Barrido ICMP Echo (`-PE`) + ARP (`-PR`) para mapear hosts vivos.
+2.  **Enumeración**: Escaneos Nmap paralelos basados en el modo.
+3.  **Deep Scan Automático**:
+    - Se dispara si un host está vivo pero devuelve datos mínimos/confusos.
+    - Lanza flags agresivos (`-A -p-`) y UDP (`-sU`) para penetrar firewalls locales o encontrar servicios no estándar.
+4.  **Captura de Tráfico**:
+    - Si `tcpdump` está presente, captura un pequeño fragmento (50 paquetes/15s) para analizar patrones de tráfico (útil para detectar beacons).
 
-Para descifrar reportes:
+## 7. Guía de Descifrado
+Los reportes cifrados (`.json.enc`, `.txt.enc`) son ilegibles sin la contraseña y el archivo `.salt`.
+
+**Uso:**
 ```bash
 python3 redaudit_decrypt.py /ruta/a/reporte.json.enc
 ```
+1. El script encuentra `reporte.salt` en el mismo directorio.
+2. Pide la contraseña.
+3. Deriva la clave e intenta descifrar.
+4. Genera `reporte.decrypted.json` o `reporte.json` (si no hay conflicto).
 
----
+## 8. Monitorización y Heartbeat
+Los escaneos largos (ej: rangos de puertos completos en redes lentas) pueden parecer "cuelgues".
+- **Hilo Heartbeat**: Revisa la marca de tiempo `self.last_activity` cada 60s.
+- **Estados**:
+    - **Activo**: Actividad < hace 60s. Sin salida.
+    - **Ocupado**: Actividad < hace 300s. Log de advertencia.
+    - **Congelado**: Actividad > hace 300s. Advertencia en consola ("Zombie scan?").
+- **Logs**: Revisa `~/.redaudit/logs/` para depuración detallada.
 
-## 6. Verificación rápida
-
-Comandos útiles para comprobar que todo está en su sitio:
-
+## 9. Script de Verificación
+Asegura que tu despliegue está limpio y sin corrupciones.
 ```bash
-# Dónde está el binario
-which redaudit
-# → debe apuntar a /usr/local/bin/redaudit (vía alias)
-
-# Ver permisos del binario
-ls -l /usr/local/bin/redaudit
-
-# Confirmar alias
-grep "alias redaudit" ~/.bashrc
-# (o ~/.zshrc)
+bash redaudit_verify.sh
 ```
+Comprueba:
+- Rutas de binarios.
+- Disponibilidad de módulos Python (`cryptography`, `nmap`).
+- Configuración de alias.
+- Presencia de herramientas opcionales.
 
----
+## 10. FAQ (Preguntas Frecuentes)
+**P: ¿Por qué error "Encryption missing"?**
+R: Probablemente saltaste la instalación de dependencias. Ejecuta `sudo apt install python3-cryptography`.
 
-## 7. Actualizar RedAudit a una nueva versión
+**P: ¿Puedo escanear sobre VPN?**
+R: Sí, RedAudit detecta interfaces VPN tun0/tap0 automáticamente.
 
-Cuando quieras actualizar el código (por ejemplo, pasar de 2.3 a 2.4):
-1.  Editas el instalador con el código nuevo (git pull).
-2.  Lo ejecutas de nuevo:
+**P: ¿Es seguro para producción?**
+R: Sí, si se configura responsablemente (Hilos < 5, Rate Limit > 1s). Ten siempre autorización.
 
-    ```bash
-    sudo ./redaudit_install.sh
-    source ~/.bashrc
-    ```
+**P: ¿Por qué encuentro pocos puertos?**
+R: El objetivo puede estar filtrando paquetes SYN. RedAudit intentará un Deep Scan automáticamente para intentar sortear esto.
 
-El binario `/usr/local/bin/redaudit` se sobrescribe con la nueva versión.
+## 11. Glosario
+- **Deep Scan**: Escaneo de respaldo automático con flags agresivos de Nmap para sondear hosts "silenciosos".
+- **Fernet**: Primitiva de cifrado simétrico que asegura seguridad e integridad de 128 bits.
+- **Heartbeat**: Hilo de monitorización en segundo plano que asegura la salud del proceso.
+- **PBKDF2**: *Password-Based Key Derivation Function 2*. Hace que el crackeo de contraseñas sea lento.
+- **Ports Truncated**: Optimización donde listas >50 puertos se resumen para mantener los reportes legibles.
+- **Rate Limit**: Retardo artificial introducido para reducir el ruido en la red.
+- **Salt**: Dato aleatorio combinado con la contraseña para crear una clave de cifrado única.
 
----
-
-## 8. Desinstalación (por si hace falta)
-
-Eliminar binario y alias:
-
-```bash
-sudo rm -f /usr/local/bin/redaudit
-sed -i '/alias redaudit=/d' ~/.bashrc  # O ~/.zshrc
-source ~/.bashrc
-```
+## 12. Aviso Legal
+Esta herramienta es **únicamente para auditorías de seguridad autorizadas**. El uso sin consentimiento escrito del propietario de la red es ilegal bajo jurisdicciones de responsabilidad estricta. Los autores no aceptan responsabilidad por daños o uso no autorizado.

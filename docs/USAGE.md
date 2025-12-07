@@ -1,5 +1,9 @@
 # RedAudit Usage Guide
 
+> **Tip**: For a deep technical dive (Threads, Encryption internals, etc.), check the [Professional User Manual](MANUAL_EN.md).
+
+
+
 ## Installation
 RedAudit is designed for Kali Linux or Debian-based systems.
 

@@ -14,220 +14,157 @@
 
 <br>
 
-**RedAudit** es una herramienta de auditoría de red interactiva y automatizada diseñada para Kali Linux. Agiliza el proceso de reconocimiento combinando descubrimiento de red, escaneo de puertos y evaluación de vulnerabilidades en un flujo de trabajo CLI único y fácil de usar.
+# RedAudit v2.3
 
-## 🖥️ Preview
+## 1. Descripción General
+**RedAudit** es una herramienta de auditoría de red interactiva y automatizada diseñada para **Kali Linux** y sistemas basados en Debian. Optimiza el proceso de reconocimiento combinando el descubrimiento de red, escaneo de puertos y evaluación de vulnerabilidades en un flujo de trabajo CLI único y cohesivo.
 
-```text
-    ____          _    _   _           _ _ _
-   / __ \___  ___| |  / \  _   _  __| (_) |_
-  / /_/ / _ \/ __| | / _ \| | | |/ _` | | __|
- / _, _/  __/ (__| |/ ___ \ |_| | (_| | | |_
-/_/ |_|\___|\___|_|/_/   \_\__,_|\__,_|_|\__|
-                                      v2.3
-══════════════════════════════════════════════════════
-   AUDITORÍA DE RED INTERACTIVA  ::  KALI LINUX
-══════════════════════════════════════════════════════
+A diferencia de simples scripts "wrapper", RedAudit gestiona la concurrencia, agregación de datos y generación de reportes (JSON/TXT) mediante lógica robusta en Python, ofreciendo fiabilidad de grado profesional y trazabilidad.
 
-? CONFIGURACIÓN DE ESCANEO
-============================================================
+## 2. Características
+- **CLI Interactiva**: Menú guiado para selección de objetivos, modos de escaneo y configuración.
+- **Descubrimiento Inteligente**: Auto-detecta interfaces y subredes locales usando comandos `ip`.
+- **Escaneo Multimodo**:
+    - **RÁPIDO (FAST)**: Barrido ICMP (`-sn`) para detección rápida de hosts vivos.
+    - **NORMAL**: Puertos principales + Detección de Versiones (`-sV`).
+    - **COMPLETO (FULL)**: Todos los puertos, detección de SO (`-O`), Scripts (`-sC`) y escaneo web.
+- **Deep Scan Automático**: Dispara automáticamente escaneos agresivos (`-A -p- -sV`) y sondeo UDP en hosts "silenciosos".
+- **Análisis de Tráfico**: Micro-capturas opcionales (`tcpdump`) para analizar el comportamiento del objetivo.
+- **Reconocimiento Web**: Integra `whatweb`, `nikto`, `curl` y `openssl` para servicios web.
+- **Resiliencia**: Monitor de actividad (heartbeat) en segundo plano para evitar bloqueos silenciosos.
 
-? SELECCIÓN DE OBJETIVO
---------------------------------------------------
-✓ Interfaces detectadas:
-   1. 192.168.1.0/24 (eth0) - ~253 hosts
-   2. Introducir manual
-   3. Escanear TODAS
-
-? Selecciona red: [1-3] (1): 
-```
-
-## Características
-
-- **CLI interactiva** con menús guiados para seleccionar objetivos, modo de escaneo y opciones.
-- **Detección automática de redes locales** (`ip` / `netifaces`) para sugerir rangos CIDR razonables.
-- **Escaneo en varios modos**:
-  - **RÁPIDO** – solo descubrimiento de hosts (`-sn`), ruido mínimo.
-  - **NORMAL** – puertos principales + detección de servicio/versión (equilibrio entre velocidad y cobertura).
-  - **COMPLETO** – todos los puertos, scripts, detección de SO y servicios, más comprobaciones web opcionales.
-- **Deep Scans automáticos** para hosts “silenciosos” o con errores (pasadas extra de Nmap, sondeo UDP y captura opcional con `tcpdump`).
-- **Reconocimiento web** con `whatweb` y `nikto` cuando están disponibles, más enriquecimiento opcional con `curl` / `wget` / `openssl`.
-- **Enriquecimiento de tráfico y DNS**: pequeñas capturas PCAP (`tcpdump` + `tshark`) y resolución inversa / whois para IPs públicas.
-- **Endurecimiento y Seguridad**: Validación estricta de entradas y fallback a deep scan.
-- **Cifrado de Reportes**: Cifrado opcional AES-128 (Fernet) para reportes (JSON/TXT). Incluye herramienta `redaudit_decrypt.py`.
-- **Rate Limiting**: Retardo configurable entre hosts para mayor sigilo.
-- **Logging Profundo**: Logs rotativos en `~/.redaudit/logs/` para auditoría y depuración.
-- **Resiliencia**: Monitor de actividad (heartbeat) y salida elegante con Ctrl+C.
-- **Núcleo Embebido**: Instalador único (`redaudit_install.sh`) gestiona dependencias y el código Python.
-
-Consulta la [Guía de Uso](docs/USAGE_ES.md) y [Solución de Problemas](docs/TROUBLESHOOTING.md) (en inglés) para más detalles.
-
-## Dependencias
-
-RedAudit está pensado para **sistemas basados en Debian con `apt`** (Kali, Debian, Ubuntu…).
-
-### Requeridas (núcleo)
-
-Imprescindibles para que la herramienta funcione:
-
-- `nmap`
-- `python3-nmap`
-- `python3-cryptography` (para cifrado de reportes)
-
-### Recomendadas (enriquecimiento)
-
-Opcionales pero muy recomendables si quieres sacar todo el partido a las funciones web / tráfico / DNS:
-
-- `whatweb`
-- `nikto`
-- `curl`, `wget`, `openssl`
-- `tcpdump`, `tshark`
-- `whois`, `bind9-dnsutils` (para `dig`)
-
-Instalación rápida de todo en Kali/Debian/Ubuntu:
-
-```bash
-sudo apt update
-sudo apt install nmap python3-nmap python3-cryptography whatweb nikto \
-  curl wget openssl tcpdump tshark whois bind9-dnsutils
-```
-
-El instalador y el núcleo en Python comprueban estas dependencias en tiempo de ejecución y ajustan el comportamiento (menos funciones si falta algo). Aunque el instalador puede ayudarte a instalar ciertos paquetes vía apt, la forma recomendada y documentada es gestionarlos tú mismo con los comandos anteriores.
-
-## Arquitectura y flujo
-
-A alto nivel, una ejecución sigue este flujo:
-
-1.	**Inicialización**
-	-	Detecta interfaces y redes locales.
-	-	Te pide seleccionar uno o varios rangos objetivo.
-	-	Permite elegir modo de escaneo (RÁPIDO / NORMAL / COMPLETO) y número de hilos.
-	-	Opcionalmente activa el análisis web y permite elegir el directorio de salida.
-2.	**Fase de descubrimiento**
-	-	Ejecuta un discovery rápido de Nmap (-sn) sobre cada rango seleccionado.
-	-	Construye una lista de hosts que responden; esa lista se usa después para los escaneos profundos.
-3.	**Escaneo por host**
-	-	Itera sobre los hosts vivos usando un thread pool.
-	-	Para cada host, ejecuta los flags de Nmap correspondientes al modo elegido.
-	-	Registra puertos abiertos, nombres de servicio, versiones y si tienen pinta de servicio web.
-4.	**Lógica de Deep Scan**
-	-	Si un host devuelve muy pocos puertos o errores sospechosos, lanza un Deep Scan específico:
-	-	Escaneo agresivo de Nmap (-A -sV -Pn -p- --open) y sondeo UDP opcional.
-	-	Captura corta de tráfico alrededor del host con tcpdump (más un resumen vía tshark si está disponible).
-5.	**Enriquecimiento**
-	-	Para puertos que parecen web (HTTP/HTTPS, proxies, paneles de admin, etc.), opcionalmente:
-		-	Ejecuta whatweb para un fingerprint rápido.
-		-	Lanza nikto en modo COMPLETO para detectar patrones de mala configuración o vulnerabilidades típicas.
-		-	Extrae cabeceras HTTP y detalles TLS con curl, wget y openssl.
-	-	Para IPs públicas, opcionalmente:
-		-	Realiza resolución inversa con dig.
-		-	Añade un resumen recortado de whois.
-6.	**Reportes**
-	-	Agrega toda la información en una estructura JSON única y en un informe de texto.
-	-	Escribe los ficheros en `~/RedAuditReports` por defecto, o en el directorio elegido durante la configuración.
-	-	Si se interrumpe la ejecución (Ctrl+C), se guarda igualmente un informe parcial para no perder el trabajo previo.
-
-## 🔒 Características de Seguridad (NUEVO en v2.3)
-
+## 3. 🔒 Características de Seguridad (NUEVO en v2.3)
 RedAudit v2.3 introduce un endurecimiento de seguridad de grado empresarial:
-
-- **Sanitización de Entrada**: Todas las entradas de usuario y salidas de comandos son validadas.
-- **Reportes Cifrados**: Cifrado opcional **AES-128 (Fernet)** con PBKDF2-HMAC-SHA256 (480k iteraciones).
-- **Seguridad de Hilos**: Todas las operaciones concurrentes usan mecanismos de bloqueo adecuados.
-- **Rate Limiting**: Retardos configurables para evitar detección y saturación de red.
-- **Audit Logging**: Registro exhaustivo con rotación automática (10MB, 5 backups).
+- **Sanitización de Entrada**: Todas las entradas (IPs, rangos) se validan con la librería `ipaddress` y regex estricta (`^[a-zA-Z0-9\.\-\/]+$`) antes de pasar a listas seguras de `subprocess.run` (sin inyección de shell).
+- **Reportes Cifrados**: Cifrado opcional **AES-128 (Fernet)** con PBKDF2-HMAC-SHA256 (480,000 iteraciones).
+- **Seguridad de Hilos**: Uso de `ThreadPoolExecutor` con mecanismos de bloqueo adecuados para E/S concurrente.
+- **Rate Limiting**: Retardos `time.sleep()` configurables para mitigar la saturación de red y detección por IDS.
+- **Logging de Auditoría**: Logs rotativos exhaustivos (máx 10MB, 5 copias) almacenados en `~/.redaudit/logs/`.
 
 [→ Documentación de Seguridad Completa](docs/SECURITY.md)
 
-## Verificación
-Para verificar la integridad de tu instalación y dependencias, ejecuta el script incluido:
-```bash
-bash redaudit_verify.sh
-```
-Esto comprueba el binario, el alias, las librerías Python (`cryptography`) y herramientas opcionales (`tcpdump`, `whatweb`, etc).
+## 4. Requisitos y Dependencias
+Diseñado para **Kali Linux**, **Debian** o **Ubuntu**.
+Requiere privilegios de `root` o `sudo` para detección de SO y captura de paquetes crudos.
 
-## Descifrando Reportes
-Si activaste el cifrado, tendrás archivos `.json.enc` y `.salt`. Para descifrar:
+**Núcleo (Requerido):**
+- `nmap` (Network Mapper)
+- `python3-nmap` (Bindings de Python)
+- `python3-cryptography` (Para cifrado)
 
-```bash
-python3 redaudit_decrypt.py /ruta/a/reporte_TIMESTAMP.json.enc
-```
-**Nota**: El archivo `.salt` debe estar en el mismo directorio. Se te pedirá la contraseña usada durante el escaneo.
+**Recomendado (Enriquecimiento):**
+- `whatweb`, `nikto` (Escaneo web)
+- `tcpdump`, `tshark` (Captura de tráfico)
+- `curl`, `wget`, `openssl` (Análisis HTTP/TLS)
+- `bind9-dnsutils` (para `dig`)
 
-## Instalación
-
-1.	Clona el repositorio:
-
-    ```bash
-    git clone https://github.com/dorinbad/RedAudit.git
-    cd RedAudit
-    ```
-
-2.	Da permisos de ejecución al instalador y ejecútalo como root (o con sudo):
-
-    ```bash
-    chmod +x redaudit_install.sh
-
-    # Modo interactivo (pregunta si quieres instalar herramientas recomendadas cuando corresponda)
-    sudo bash redaudit_install.sh
-
-    # Modo no interactivo: asume “sí” a la pregunta de herramientas opcionales
-    sudo bash redaudit_install.sh -y
-    ```
-
-3.	Recarga la configuración de tu shell para habilitar el alias redaudit:
-
-    ```bash
-    source ~/.bashrc    # o ~/.zshrc
-    ```
-
-## Desinstalación
-
-Para eliminar RedAudit (binario y alias):
+## 5. Instalación
+El instalador gestiona las dependencias y la configuración automáticamente.
 
 ```bash
-sudo rm -f /usr/local/bin/redaudit
-# Elimina manualmente el alias de ~/.bashrc o ~/.zshrc
+# 1. Clonar Repositorio
+git clone https://github.com/dorinbad/RedAudit.git
+cd RedAudit
+
+# 2. Ejecutar Instalador (Interactivo)
+sudo bash redaudit_install.sh
+
+# 3. Recargar Shell (para activar el alias)
+source ~/.bashrc  # o ~/.zshrc
 ```
+*Nota: Usa `sudo bash redaudit_install.sh -y` para instalación no interactiva.*
 
-## Uso
-
-Tras la instalación, puedes lanzar RedAudit desde cualquier terminal:
-
+## 6. Inicio Rápido (Flujo Interactivo)
+Lanza la herramienta desde cualquier terminal:
 ```bash
 redaudit
 ```
+El asistente te guiará:
+1.  **Selección de Objetivo**: Elige una subred local o introduce un CIDR manual (ej: `10.0.0.0/24`).
+2.  **Modo de Escaneo**: Selecciona RÁPIDO, NORMAL o COMPLETO.
+3.  **Opciones**: Configura hilos, límite de velocidad y cifrado.
+4.  **Autorización**: Confirma que tienes permiso para escanear.
 
-El asistente interactivo te guía por:
-1.	**Selección de objetivo**: elegir una de las redes locales detectadas o introducir un CIDR manualmente.
-2.	**Modo de escaneo**: RÁPIDO, NORMAL o COMPLETO.
-3.	**Opciones**: número de hilos, si incluir análisis de vulnerabilidades web y dónde guardar los reportes.
-4.	**Autorización**: confirmación explícita de que tienes permiso para escanear los objetivos seleccionados.
-5.  **Cifrado**: Opción para cifrar los reportes de salida con contraseña.
+## 7. Configuración y Parámetros Internos
 
-Los informes se guardarán por defecto en `~/RedAuditReports`. Si se activa el cifrado, los archivos tendrán extensión `.json.enc` y `.txt.enc` junto a un archivo `.salt`.
+### Concurrencia (Hilos)
+RedAudit usa `ThreadPoolExecutor` de Python para escanear múltiples hosts simultáneamente.
+- **Parámetro**: `threads` (Defecto: 6).
+- **Rango**: 1–16.
+- **Comportamiento**: Son *hilos* (threads), no procesos independientes. Comparten memoria pero ejecutan instancias de Nmap por separado.
+    - **Alto (10-16)**: Escaneo más rápido, pero mayor carga de CPU y ruido en la red. Riesgo de congestión.
+    - **Bajo (1-4)**: Más lento, más sigiloso y amable con redes antiguas o saturadas.
 
-### Descifrado de Reportes
+### Rate Limiting (Sigilo)
+Controlado por el parámetro `rate_limit_delay`.
+- **Mecanismo**: Introduce un `time.sleep(N)` *antes* de iniciar la tarea de escaneo de cada host.
+- **Ajustes**:
+    - **0s**: Velocidad máxima. Ideal para laboratorios o CTFs.
+    - **1-5s**: Equilibrado. Recomendado para auditorías internas para evitar disparar limitadores simples.
+    - **>5s**: Paranoico/Conservador. Úsalo en entornos de producción sensibles.
 
-Si elegiste cifrar tus reportes, usa el script de ayuda proporcionado:
+## 8. Reportes, Cifrado y Descifrado
+Los reportes se guardan en `~/RedAuditReports` (por defecto) con fecha y hora.
 
+### Cifrado (`.enc`)
+Si activas **"¿Cifrar reportes?"** durante la configuración:
+1.  Se genera un salt aleatorio de 16 bytes.
+2.  Tu contraseña deriva una clave de 32 bytes vía **PBKDF2HMAC-SHA256** (480,000 iteraciones).
+3.  Los archivos se cifran usando **Fernet (AES-128-CBC)**.
+    - `report.json` → `report.json.enc`
+    - `report.txt` → `report.txt.enc`
+    - Se guarda un archivo `.salt` junto a ellos.
+
+### Descifrado
+Para leer tus reportes, **debes** tener el archivo `.salt` y recordar tu contraseña.
 ```bash
-python3 redaudit_decrypt.py ~/RedAuditReports/redaudit_...json.enc
+python3 redaudit_decrypt.py /ruta/a/report_NOMBRE.json.enc
 ```
+*El script localiza automáticamente el archivo `.salt` correspondiente.*
 
-Se te pedirá la contraseña usada durante la auditoría.
+## 9. Logging y Monitor de Actividad (Heartbeat)
 
-## ⚠️ Aviso legal y ético
+### Logs de Aplicación
+Logs de depuración y auditoría se guardan en `~/.redaudit/logs/`.
+- **Rotación**: Mantiene los últimos 5 archivos, máx 10MB cada uno.
+- **Contenido**: Rastrea PID de usuario, argumentos de comandos y excepciones.
 
-RedAudit es una herramienta de seguridad destinada únicamente a auditorías autorizadas y fines educativos. Escanear sistemas o redes sin permiso explícito es ilegal y puede ser sancionado por la ley, tanto a nivel penal como civil.
+### Monitor de Actividad (Heartbeat)
+Un hilo en segundo plano (`threading.Thread`) monitoriza el estado del escaneo cada 60 segundos.
+- **<60s silencio**: Normal.
+- **>300s silencio**: Registra un **WARNING ("Zombie scan?")**.
+- **Propósito**: Asegurar al operador que la herramienta sigue viva durante operaciones largas de Nmap (ej: escaneos `-p-`).
 
-Al usar esta herramienta aceptas que:
--	Solo la ejecutarás sobre activos que sean tuyos o para los que tengas permiso documentado.
--	No la utilizarás con fines maliciosos, intrusivos o disruptivos.
--	Tú, como operador, eres el único responsable de cumplir la normativa y las políticas aplicables.
+## 10. Script de Verificación
+Verifica la integridad de tu entorno (checksums, dependencias, alias) en cualquier momento:
+```bash
+bash redaudit_verify.sh
+```
+*Útil tras actualizaciones del sistema o `git pull`.*
 
-Los autores declinan cualquier responsabilidad derivada del uso indebido de este software.
+## 11. Glosario
+- **Fernet**: Estándar de cifrado simétrico usando AES-128 y HMAC-SHA256.
+- **Heartbeat**: Tarea en segundo plano que asegura que el proceso principal responde.
+- **Deep Scan**: Escaneo de respaldo automático (`-A`) disparado cuando un host devuelve datos limitados.
+- **PBKDF2**: Función de derivación de claves que encarece los ataques de fuerza bruta (configurada a 480k iteraciones).
+- **Salt**: Dato aleatorio añadido al hash de contraseña para evitar ataques de rainbow table, guardado en archivos `.salt`.
+- **Thread Pool**: Colección de hilos trabajadores que ejecutan tareas (escaneos de host) concurrentemente.
 
-## Licencia
+## 12. Solución de Problemas
+Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones detalladas.
+- **"Permission denied"**: Asegúrate de usar `sudo`.
+- **"Cryptography missing"**: Ejecuta `sudo apt install python3-cryptography`.
+- **"Scan frozen"**: Revisa `~/.redaudit/logs/` o reduce `rate_limit_delay`.
 
-Este proyecto se distribuye bajo licencia MIT. Consulta el archivo LICENSE para más detalles.
+## 13. Aviso Legal
+**RedAudit** es una herramienta de seguridad únicamente para **auditorías autorizadas**.
+Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
+
+## 14. Historial de Cambios (Resumen v2.3)
+- **Seguridad**: Añadido Cifrado de Reportes y Sanitización estricta de entradas.
+- **Rendimiento**: Añadidos Rate Limiting y Control de Hilos.
+- **Resiliencia**: Añadidos Monitor Heartbeat y Logs Rotativos.
+- **Núcleo**: Instalación y núcleo Python consolidados en `redaudit_install.sh`.
+
+---
+[Documentación Completa](docs/) | [Esquema de Reporte](docs/REPORT_SCHEMA.md) | [Especificaciones de Seguridad](docs/SECURITY.md)

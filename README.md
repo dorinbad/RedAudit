@@ -14,221 +14,157 @@
 
 <br>
 
-**RedAudit** is an interactive, automated network auditing tool designed for Kali Linux and Debian-based systems. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, easy-to-use CLI workflow.
+# RedAudit v2.3
 
-## 🖥️ Preview
+## 1. Overview
+**RedAudit** is an interactive, automated network auditing tool designed for **Kali Linux** and Debian-based systems. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, cohesive CLI workflow.
 
-```text
-    ____          _    _   _           _ _ _
-   / __ \___  ___| |  / \  _   _  __| (_) |_
-  / /_/ / _ \/ __| | / _ \| | | |/ _` | | __|
- / _, _/  __/ (__| |/ ___ \ |_| | (_| | | |_
-/_/ |_|\___|\___|_|/_/   \_\__,_|\__,_|_|\__|
-                                      v2.3
-══════════════════════════════════════════════════════
-   INTERACTIVE NETWORK AUDIT     ::  KALI LINUX
-══════════════════════════════════════════════════════
+Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, and reporting (JSON/PDF/TXT) with Python-based logic, offering professional-grade reliability and audit trails.
 
-? SCAN CONFIGURATION
-============================================================
+## 2. Features
+- **Interactive CLI**: Guided menu for target selection, scan modes, and configuration.
+- **Smart Discovery**: Auto-detects local interfaces and subnets using `ip` commands.
+- **Multi-Mode Scanning**:
+    - **FAST**: ICMP ping sweep (`-sn`) for quick live host detection.
+    - **NORMAL**: Top ports + Service Versioning (`-sV`).
+    - **FULL**: All ports, OS detection (`-O`), Scripts (`-sC`), and Web Vuln scans.
+- **Auto Deep Scan**: Automatically triggers aggressive scans (`-A -p- -sV`) and UDP probing on "quiet" hosts.
+- **Traffic Analysis**: Optional micro-captures (`tcpdump`) for active analysis of target behavior.
+- **Web Recon**: Integrates `whatweb`, `nikto`, `curl`, and `openssl` for web-facing services.
+- **Resilience**: Background heartbeat monitor prevents silent freezes during long scans.
 
-? TARGET SELECTION
---------------------------------------------------
-✓ Interfaces detected:
-   1. 192.168.1.0/24 (eth0) - ~253 hosts
-   2. Enter manual
-   3. Scan ALL
-
-? Select network: [1-3] (1): 
-```
-
-## Features
-
-- **Interactive CLI** with guided menus for target selection, scan mode and options.
-- **Automatic local network discovery** (`ip` / `netifaces`) to suggest sensible CIDR ranges.
-- **Multi-mode scanning**:
-  - **FAST** – host discovery only (`-sn`), minimal noise.
-  - **NORMAL** – top ports + service/version detection (balanced coverage).
-  - **FULL** – all ports, scripts, OS and service detection, plus optional web checks.
-- **Automatic deep scans** for “quiet” or error-prone hosts (extra Nmap passes, UDP probing and optional `tcpdump` capture).
-- **Web reconnaissance** via `whatweb` and `nikto` when available, plus optional `curl` / `wget` / `openssl` enrichment.
-- **Traffic & DNS enrichment**: small PCAP captures (`tcpdump` + `tshark`) and reverse DNS / whois for public IPs.
-- **Security Hardening**: Strict input sanitization and deep scan fallback.
-- **Report Encryption**: Optional AES-128 (Fernet) encryption for reports (JSON/TXT). Includes `redaudit_decrypt.py` tool.
-- **Rate Limiting**: Configurable delay between host scans for stealth.
-- **Logging**: Rotating logs in `~/.redaudit/logs/` for auditing and debugging.
-- **Heartbeat & Safety**: Background activity monitor and graceful exit (Ctrl+C).
-- **Embedded Core**: Single script installer (`redaudit_install.sh`) manages dependencies and Python core.
-
-See [Usage Guide](docs/USAGE.md) and [Troubleshooting](docs/TROUBLESHOOTING.md) for more details.
-- **Reporting**: structured JSON + human-readable TXT reports written by default to `~/RedAuditReports` (or a custom directory chosen at runtime). Encrypted variants (`.json.enc`) available.
-
-## Requirements
-
-RedAudit is designed for **Debian-based systems with `apt`** (Kali, Debian, Ubuntu…).
-
-### Core (required)
-
-These are mandatory for the tool to run:
-
-- `nmap`
-- `python3-nmap`
-- `python3-cryptography` (for report encryption)
-
-### Recommended (enrichment)
-
-Optional but strongly recommended if you want the full web / traffic / DNS features:
-
-- `whatweb`
-- `nikto`
-- `curl`, `wget`, `openssl`
-- `tcpdump`, `tshark`
-- `whois`, `bind9-dnsutils` (for `dig`)
-
-You can install everything in one go on Kali/Debian/Ubuntu:
-
-```bash
-sudo apt update
-sudo apt install nmap python3-nmap python3-cryptography whatweb nikto \
-  curl wget openssl tcpdump tshark whois bind9-dnsutils
-```
-
-The installer and the Python core will check these dependencies at runtime and adapt behaviour (reduced features when something is missing). Even though the installer can help you install some packages via apt, the documented, supported way is to manage them yourself using the commands above.
-
-## Architecture & Flow
-
-At a high level, a run looks like this:
-
-1.	**Initialisation**
-	-	Detect local interfaces and networks.
-	-	Ask the user to select one or more target ranges.
-	-	Pick scan mode (FAST / NORMAL / FULL) and thread count.
-	-	Optionally enable web checks and customise the output directory.
-2.	**Discovery phase**
-	-	Run a fast Nmap discovery (-sn) on each selected range.
-	-	Build a list of responsive hosts; this is the input for deeper scans.
-3.	**Per-host scanning**
-	-	Iterate over live hosts concurrently using a thread pool.
-	-	For each host, run the configured Nmap flags for the chosen mode.
-	-	Record open ports, service names, versions and whether they look like web services.
-4.	**Automatic Deep Scan logic**
-	-	If a host returns very few ports or suspicious errors, trigger a dedicated Deep Scan:
-	-	Aggressive Nmap scan (-A -sV -Pn -p- --open) plus optional UDP probing.
-	-	Optional short PCAP capture around the host with tcpdump (and a summary via tshark if available).
-5.	**Enrichment**
-	-	For web-looking ports (HTTP/HTTPS, proxies, admin panels, etc.), optionally:
-		-	Run whatweb for quick fingerprinting.
-		-	Run nikto in FULL mode for basic misconfiguration / vuln pattern checks.
-		-	Pull HTTP headers and TLS details via curl, wget and openssl.
-	-	For public IPs, optionally:
-		-	Perform reverse lookups with dig.
-		-	Add a trimmed whois summary.
-6.	**Reporting**
-	-	Aggregate everything under a single JSON structure plus a textual report.
-	-	Write the files to `~/RedAuditReports` by default, or to the directory selected during setup.
-	-	On interruption (Ctrl+C), a partial report is still written so previous work is not lost.
-
-## 🔒 Security Features (NEW in v2.3)
-
+## 3. 🔒 Security Features (NEW in v2.3)
 RedAudit v2.3 introduces enterprise-grade security hardening:
-
-- **Input Sanitization**: All user inputs and command outputs are validated.
-- **Encrypted Reports**: Optional **AES-128 (Fernet)** encryption with PBKDF2-HMAC-SHA256 (480k iterations).
-- **Thread Safety**: All concurrent operations use proper locking mechanisms.
-- **Rate Limiting**: Configurable delays to avoid detection and network saturation.
-- **Audit Logging**: Comprehensive logging with automatic rotation (10MB, 5 backups).
+- **Input Sanitization**: All user inputs (IPs, ranges) are validated via `ipaddress` library and strict regex (`^[a-zA-Z0-9\.\-\/]+$`) to strict `subprocess.run` lists (no shell injection).
+- **Encrypted Reports**: Optional **AES-128 (Fernet)** encryption with PBKDF2-HMAC-SHA256 (480,000 iterations).
+- **Thread Safety**: `ThreadPoolExecutor` with proper locking mechanisms for concurrent I/O.
+- **Rate Limiting**: Configurable `time.sleep()` delays to mitigate network flooding and IDS detection.
+- **Audit Logging**: Comprehensive, rotating logs (max 10MB, 5 backups) stored in `~/.redaudit/logs/`.
 
 [→ Full Security Documentation](docs/SECURITY.md)
 
-## Verification
-To verify the integrity of your installation and dependencies, run the included verification script:
-```bash
-bash redaudit_verify.sh
-```
-This checks for the binary, correct alias, Python libraries (`cryptography`), and optional tools (`tcpdump`, `whatweb`, etc).
+## 4. Requirements & Dependencies
+Designed for **Kali Linux**, **Debian**, or **Ubuntu**.
+Requires `root` or `sudo` privileges for Nmap OS detection and raw packet capture.
 
-## Decrypting Reports
-If you enabled encryption, you will have `.json.enc` and `.salt` files. To decrypt:
+**Core (Required):**
+- `nmap` (Network Mapper)
+- `python3-nmap` (Python bindings)
+- `python3-cryptography` (For encryption)
 
-```bash
-python3 redaudit_decrypt.py /path/to/report_TIMESTAMP.json.enc
-```
-**Note**: The `.salt` file must be in the same directory. You will be prompted for the password used during the scan.
+**Recommended (Enrichment):**
+- `whatweb`, `nikto` (Web scanning)
+- `tcpdump`, `tshark` (Traffic capture)
+- `curl`, `wget`, `openssl` (HTTP/TLS analysis)
+- `bind9-dnsutils` (for `dig`)
 
-## Installation
-
-1.	Clone the repository:
-
-    ```bash
-    git clone https://github.com/dorinbad/RedAudit.git
-    cd RedAudit
-    ```
-
-2.	Make the installer executable and run it as root (or via sudo):
-
-    ```bash
-    chmod +x redaudit_install.sh
-
-    # Interactive mode (asks about installing recommended tools when relevant)
-    sudo bash redaudit_install.sh
-
-    # Non-interactive: assume “yes” to the optional tools question
-    sudo bash redaudit_install.sh -y
-    ```
-
-3.	Reload your shell configuration so the redaudit alias is available:
-
-    ```bash
-    source ~/.bashrc    # or ~/.zshrc
-    ```
-
-## Uninstallation
-
-To remove RedAudit (binary and alias):
+## 5. Installation
+The installer handles dependencies and setup automatically.
 
 ```bash
-sudo rm -f /usr/local/bin/redaudit
-# Manually remove the alias from ~/.bashrc or ~/.zshrc
+# 1. Clone Repository
+git clone https://github.com/dorinbad/RedAudit.git
+cd RedAudit
+
+# 2. Run Installer (Interactive)
+sudo bash redaudit_install.sh
+
+# 3. Reload Shell (to activate alias)
+source ~/.bashrc  # or ~/.zshrc
 ```
+*Note: Use `sudo bash redaudit_install.sh -y` for non-interactive installation.*
 
-## Usage
-
-After installation, you can launch RedAudit from any terminal:
-
+## 6. Quick Start (Interactive Flow)
+Launch the tool from any terminal:
 ```bash
 redaudit
 ```
+You will be guided through:
+1.  **Target Selection**: Pick a local subnet or enter a custom CIDR (e.g., `10.0.0.0/24`).
+2.  **Scan Mode**: Select FAST, NORMAL, or FULL.
+3.  **Options**: Configure threads, rate limits, and encryption.
+4.  **Authorization**: Confirm permission to scan.
 
-The interactive wizard will guide you through:
-1.	**Target selection**: choose one of the detected local networks or manually enter a CIDR.
-2.	**Scan mode**: FAST, NORMAL or FULL.
-3.	**Options**: number of threads, whether to include web vulnerability checks, and where to store reports.
-4.	**Legal confirmation**: explicit confirmation that you are authorised to scan the selected targets.
-5.  **Encryption**: Option to encrypt the output reports with a password.
+## 7. Configuration & Internal Parameters
 
-Reports will be stored in `~/RedAuditReports` by default. If encryption is enabled, files will have extensions `.json.enc` and `.txt.enc` along with a `.salt` file.
+### Concurrency (Threads)
+RedAudit uses Python's `ThreadPoolExecutor` to scan multiple hosts simultaneously.
+- **Parameter**: `threads` (Default: 6).
+- **Range**: 1–16.
+- **Behavior**: These are *threads*, not processes. They share memory but execute Nmap instances independently.
+    - **Higher (10-16)**: Faster scan, but higher network noise and CPU load. Risk of congestion.
+    - **Lower (1-4)**: Slower, stealthier, kinder to legacy networks.
 
-### Decrypting Reports
+### Rate Limiting (Stealth)
+Controlled by the `rate_limit_delay` parameter.
+- **Mechanism**: Introduces a `time.sleep(N)` *before* each host scan task starts.
+- **Settings**:
+    - **0s**: Max speed. Best for CTFs or labs.
+    - **1-5s**: Balanced. Recommended for internal audits to avoid simple rate-limiter triggers.
+    - **>5s**: Paranoid/Conservative. Use for sensitive production environments.
 
-If you chose to encrypt your reports, use the provided helper script:
+## 8. Reports, Encryption & Decryption
+Reports are saved to `~/RedAuditReports` (default) with timestamps.
 
+### Encryption (`.enc`)
+If you check **"Encrypt reports?"** during setup:
+1.  A random 16-byte salt is generated.
+2.  Your password derives a 32-byte key via **PBKDF2HMAC-SHA256** (480,000 iterations).
+3.  Files are encrypted using **Fernet (AES-128-CBC)**.
+    - `report.json` → `report.json.enc`
+    - `report.txt` → `report.txt.enc`
+    - A `.salt` file is saved alongside.
+
+### Decryption
+To read your reports, you **must** have the `.salt` file and recall your password.
 ```bash
-python3 redaudit_decrypt.py ~/RedAuditReports/redaudit_...json.enc
+python3 redaudit_decrypt.py /path/to/report_NAME.json.enc
 ```
+*The script automatically locates the corresponding `.salt` file.*
 
-You will be prompted for the password used during the audit.
+## 9. Logging & Heartbeat
 
-## ⚠️ Legal & Ethical Notice
+### Application Logs
+Debug and audit logs are stored in `~/.redaudit/logs/`.
+- **Rotation**: Keeps last 5 logs, max 10MB each.
+- **Content**: Tracks user PID, command arguments, and exceptions.
 
-RedAudit is a security tool intended only for authorised auditing and educational purposes. Scanning systems or networks without explicit permission is illegal and may be punishable under criminal and civil law.
+### Heartbeat Monitor
+A background `threading.Thread` monitors the scan state every 60 seconds.
+- **<60s silence**: Normal.
+- **>300s silence**: Logs a **WARNING ("Zombie scan?")**.
+- **Purpose**: Assures the operator that the tool is alive during long Nmap operations (e.g., `-p-` scans).
 
-By using this tool you agree that:
--	You will only run it against assets you own or for which you have documented permission.
--	You will not use it for malicious, intrusive or disruptive activities.
--	You, as the operator, are solely responsible for complying with all applicable laws and policies.
+## 10. Verification Script
+Verify your environment integrity (checksums, dependencies, alias) at any time:
+```bash
+bash redaudit_verify.sh
+```
+*Useful after OS updates or git pulls.*
 
-The author(s) decline all responsibility for any misuse or damage arising from this software.
+## 11. Glossary
+- **Fernet**: Symmetric encryption standard using AES-128 and HMAC-SHA256.
+- **Heartbeat**: Background task ensuring the main process is responsive.
+- **Deep Scan**: Automated fallback scan (`-A`) triggered when a host returns limited data.
+- **PBKDF2**: Key derivation function making brute-force attacks expensive (configured to 480k iterations).
+- **Salt**: Random data added to password hashing to prevent rainbow table attacks. stored in `.salt` files.
+- **Thread Pool**: Collection of worker threads that execute tasks (host scans) concurrently.
 
-## License
+## 12. Troubleshooting
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
+- **"Permission denied"**: Ensure you run with `sudo`.
+- **"Cryptography missing"**: Run `sudo apt install python3-cryptography`.
+- **"Scan frozen"**: Check `~/.redaudit/logs/` or reduce `rate_limit_delay`.
 
-This project is distributed under the MIT license. See the LICENSE file for details.
+## 13. Legal Notice
+**RedAudit** is a security tool for **authorized auditing only**.
+Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
+
+## 14. Changelog (v2.3 Summary)
+- **Security**: Added Report Encryption and Strict Input Sanitization.
+- **Performance**: Added Rate Limiting and Thread Controls.
+- **Resilience**: Added Heartbeat Monitor and Rotating Logs.
+- **Core**: Consolidated installation and python core into `redaudit_install.sh`.
+
+---
+[Full Documentation](docs/) | [Report Schema](docs/REPORT_SCHEMA.md) | [Security Specs](docs/SECURITY.md)

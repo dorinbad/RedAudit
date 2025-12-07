@@ -1,5 +1,9 @@
 # Guía de Uso de RedAudit
 
+> **Consejo**: Para una explicación técnica detallada (Hilos, Cifrado, etc.), consulta el [Manual de Usuario Profesional](MANUAL_ES.md).
+
+
+
 ## Instalación
 RedAudit está diseñado para sistemas Kali Linux o Debian.
 
