@@ -130,7 +130,6 @@ TRANSLATIONS = {
         "encrypt_reports": "Encrypt reports with password?",
         "encryption_password": "Report encryption password",
         "encryption_enabled": "✓ Encryption enabled",
-        "cryptography_missing": "⚠️  Warning: python3-cryptography not available. Encryption disabled.",
         "cryptography_required": "Error: Encryption requires python3-cryptography. Install with: sudo apt install python3-cryptography",
         "rate_limiting": "Enable rate limiting (slower but stealthier)?",
         "rate_delay": "Delay between hosts (seconds):",
@@ -212,7 +211,6 @@ TRANSLATIONS = {
         "encrypt_reports": "¿Cifrar reportes con contraseña?",
         "encryption_password": "Contraseña para cifrar reportes",
         "encryption_enabled": "✓ Cifrado activado",
-        "cryptography_missing": "⚠️  Aviso: python3-cryptography no disponible. Cifrado desactivado.",
         "cryptography_required": "Error: El cifrado requiere python3-cryptography. Instala con: sudo apt install python3-cryptography",
         "rate_limiting": "¿Activar limitación de velocidad (más lento pero más sigiloso)?",
         "rate_delay": "Retardo entre hosts (segundos):",
@@ -265,7 +263,6 @@ class InteractiveNetworkAuditor:
         self.cryptography_available = Fernet is not None and PBKDF2HMAC is not None
         self.rate_limit_delay = 0.0
         self.extra_tools = {}
-        self.cryptography_available = Fernet is not None and PBKDF2HMAC is not None
 
         self.last_activity = datetime.now()
         self.activity_lock = threading.Lock()
@@ -377,6 +374,11 @@ class InteractiveNetworkAuditor:
             if file_handler:
                 logger.addHandler(file_handler)
             logger.addHandler(ch)
+        else:
+            # If handlers exist but no file handler was added yet, attach it now.
+            has_file = any(isinstance(h, RotatingFileHandler) for h in logger.handlers)
+            if file_handler and not has_file:
+                logger.addHandler(file_handler)
 
         self.logger = logger
         if file_handler is None:
