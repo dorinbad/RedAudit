@@ -1,4 +1,4 @@
-# RedAudit Installation Manual v2.3
+# RedAudit Installation Manual v2.3.1
 
 **Role:** Pentester / Senior Programmer
 
@@ -12,7 +12,7 @@
 **Packages used:**
 The installer can automatically install these for you if requested (interactive mode or `-y` flag).
 
-*   **Core (Required):** `nmap`, `python3-nmap`
+*   **Core (Required):** `nmap`, `python3-nmap`, `python3-cryptography`
 *   **Recommended (Optional):** `whatweb`, `nikto`, `curl`, `wget`, `openssl`, `tcpdump`, `tshark`, `whois`, `bind9-dnsutils`
 
 To install manually:

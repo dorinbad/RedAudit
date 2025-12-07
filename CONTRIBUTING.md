@@ -28,7 +28,12 @@ If you find a bug, please open an issue describing:
 
 ## Dependencies
 
-Before submitting code, please ensure it works with the core dependencies. See [README.md](README.md#requirements) for the full list of required and recommended tools.
+Before submitting code, please ensure it works with the core dependencies. See [README.md](README.md#security-features) for the full list of required and recommended tools.
+
+You can verify your environment and installation integrity by running:
+```bash
+bash redaudit_verify.sh
+```
 
 ## Code Style
 
