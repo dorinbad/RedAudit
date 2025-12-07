@@ -16,12 +16,12 @@
 
 # RedAudit v2.3
 
-## 1. Descripción General
+## 1. 📋 Descripción General
 **RedAudit** es una herramienta de auditoría de red interactiva y automatizada diseñada para **Kali Linux** y sistemas basados en Debian. Optimiza el proceso de reconocimiento combinando el descubrimiento de red, escaneo de puertos y evaluación de vulnerabilidades en un flujo de trabajo CLI único y cohesivo.
 
 A diferencia de simples scripts "wrapper", RedAudit gestiona la concurrencia, agregación de datos y generación de reportes (JSON/TXT) mediante lógica robusta en Python, ofreciendo fiabilidad de grado profesional y trazabilidad.
 
-## 2. Características
+## 2. ✨ Características
 - **CLI Interactiva**: Menú guiado para selección de objetivos, modos de escaneo y configuración.
 - **Descubrimiento Inteligente**: Auto-detecta interfaces y subredes locales usando comandos `ip`.
 - **Escaneo Multimodo**:
@@ -43,7 +43,7 @@ RedAudit v2.3 introduce un endurecimiento de seguridad de grado empresarial:
 
 [→ Documentación de Seguridad Completa](docs/SECURITY.md)
 
-## 4. Requisitos y Dependencias
+## 4. 📦 Requisitos y Dependencias
 Diseñado para **Kali Linux**, **Debian** o **Ubuntu**.
 Requiere privilegios de `root` o `sudo` para detección de SO y captura de paquetes crudos.
 
@@ -58,7 +58,7 @@ Requiere privilegios de `root` o `sudo` para detección de SO y captura de paque
 - `curl`, `wget`, `openssl` (Análisis HTTP/TLS)
 - `bind9-dnsutils` (para `dig`)
 
-## 5. Instalación
+## 5. 🏗️ Instalación
 El instalador gestiona las dependencias y la configuración automáticamente.
 
 ```bash
@@ -74,7 +74,7 @@ source ~/.bashrc  # o ~/.zshrc
 ```
 *Nota: Usa `sudo bash redaudit_install.sh -y` para instalación no interactiva.*
 
-## 6. Inicio Rápido (Flujo Interactivo)
+## 6. 🚀 Inicio Rápido (Flujo Interactivo)
 Lanza la herramienta desde cualquier terminal:
 ```bash
 redaudit
@@ -85,7 +85,7 @@ El asistente te guiará:
 3.  **Opciones**: Configura hilos, límite de velocidad y cifrado.
 4.  **Autorización**: Confirma que tienes permiso para escanear.
 
-## 7. Configuración y Parámetros Internos
+## 7. ⚙️ Configuración y Parámetros Internos
 
 ### Concurrencia (Hilos)
 RedAudit usa `ThreadPoolExecutor` de Python para escanear múltiples hosts simultáneamente.
@@ -103,7 +103,7 @@ Controlado por el parámetro `rate_limit_delay`.
     - **1-5s**: Equilibrado. Recomendado para auditorías internas para evitar disparar limitadores simples.
     - **>5s**: Paranoico/Conservador. Úsalo en entornos de producción sensibles.
 
-## 8. Reportes, Cifrado y Descifrado
+## 8. 🔐 Reportes, Cifrado y Descifrado
 Los reportes se guardan en `~/RedAuditReports` (por defecto) con fecha y hora.
 
 ### Cifrado (`.enc`)
@@ -122,7 +122,7 @@ python3 redaudit_decrypt.py /ruta/a/report_NOMBRE.json.enc
 ```
 *El script localiza automáticamente el archivo `.salt` correspondiente.*
 
-## 9. Logging y Monitor de Actividad (Heartbeat)
+## 9. 💓 Logging y Monitor de Actividad (Heartbeat)
 
 ### Logs de Aplicación
 Logs de depuración y auditoría se guardan en `~/.redaudit/logs/`.
@@ -135,14 +135,14 @@ Un hilo en segundo plano (`threading.Thread`) monitoriza el estado del escaneo c
 - **>300s silencio**: Registra un **WARNING ("Zombie scan?")**.
 - **Propósito**: Asegurar al operador que la herramienta sigue viva durante operaciones largas de Nmap (ej: escaneos `-p-`).
 
-## 10. Script de Verificación
+## 10. ✅ Script de Verificación
 Verifica la integridad de tu entorno (checksums, dependencias, alias) en cualquier momento:
 ```bash
 bash redaudit_verify.sh
 ```
 *Útil tras actualizaciones del sistema o `git pull`.*
 
-## 11. Glosario
+## 11. 📚 Glosario
 - **Fernet**: Estándar de cifrado simétrico usando AES-128 y HMAC-SHA256.
 - **Heartbeat**: Tarea en segundo plano que asegura que el proceso principal responde.
 - **Deep Scan**: Escaneo de respaldo automático (`-A`) disparado cuando un host devuelve datos limitados.
@@ -150,17 +150,17 @@ bash redaudit_verify.sh
 - **Salt**: Dato aleatorio añadido al hash de contraseña para evitar ataques de rainbow table, guardado en archivos `.salt`.
 - **Thread Pool**: Colección de hilos trabajadores que ejecutan tareas (escaneos de host) concurrentemente.
 
-## 12. Solución de Problemas
+## 12. 🛠️ Solución de Problemas
 Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones detalladas.
 - **"Permission denied"**: Asegúrate de usar `sudo`.
 - **"Cryptography missing"**: Ejecuta `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Revisa `~/.redaudit/logs/` o reduce `rate_limit_delay`.
 
-## 13. Aviso Legal
+## 13. ⚖️ Aviso Legal
 **RedAudit** es una herramienta de seguridad únicamente para **auditorías autorizadas**.
 Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
 
-## 14. Historial de Cambios (Resumen v2.3)
+## 14. 📝 Historial de Cambios (Resumen v2.3)
 - **Seguridad**: Añadido Cifrado de Reportes y Sanitización estricta de entradas.
 - **Rendimiento**: Añadidos Rate Limiting y Control de Hilos.
 - **Resiliencia**: Añadidos Monitor Heartbeat y Logs Rotativos.

@@ -16,12 +16,12 @@
 
 # RedAudit v2.3
 
-## 1. Overview
+## 1. 📋 Overview
 **RedAudit** is an interactive, automated network auditing tool designed for **Kali Linux** and Debian-based systems. It streamlines the reconnaissance process by combining network discovery, port scanning, and vulnerability assessment into a single, cohesive CLI workflow.
 
 Unlike simple wrapper scripts, RedAudit manages concurrency, data aggregation, and reporting (JSON/PDF/TXT) with Python-based logic, offering professional-grade reliability and audit trails.
 
-## 2. Features
+## 2. ✨ Features
 - **Interactive CLI**: Guided menu for target selection, scan modes, and configuration.
 - **Smart Discovery**: Auto-detects local interfaces and subnets using `ip` commands.
 - **Multi-Mode Scanning**:
@@ -43,7 +43,7 @@ RedAudit v2.3 introduces enterprise-grade security hardening:
 
 [→ Full Security Documentation](docs/SECURITY.md)
 
-## 4. Requirements & Dependencies
+## 4. 📦 Requirements & Dependencies
 Designed for **Kali Linux**, **Debian**, or **Ubuntu**.
 Requires `root` or `sudo` privileges for Nmap OS detection and raw packet capture.
 
@@ -58,7 +58,7 @@ Requires `root` or `sudo` privileges for Nmap OS detection and raw packet captur
 - `curl`, `wget`, `openssl` (HTTP/TLS analysis)
 - `bind9-dnsutils` (for `dig`)
 
-## 5. Installation
+## 5. 🏗️ Installation
 The installer handles dependencies and setup automatically.
 
 ```bash
@@ -74,7 +74,7 @@ source ~/.bashrc  # or ~/.zshrc
 ```
 *Note: Use `sudo bash redaudit_install.sh -y` for non-interactive installation.*
 
-## 6. Quick Start (Interactive Flow)
+## 6. 🚀 Quick Start (Interactive Flow)
 Launch the tool from any terminal:
 ```bash
 redaudit
@@ -85,7 +85,7 @@ You will be guided through:
 3.  **Options**: Configure threads, rate limits, and encryption.
 4.  **Authorization**: Confirm permission to scan.
 
-## 7. Configuration & Internal Parameters
+## 7. ⚙️ Configuration & Internal Parameters
 
 ### Concurrency (Threads)
 RedAudit uses Python's `ThreadPoolExecutor` to scan multiple hosts simultaneously.
@@ -103,7 +103,7 @@ Controlled by the `rate_limit_delay` parameter.
     - **1-5s**: Balanced. Recommended for internal audits to avoid simple rate-limiter triggers.
     - **>5s**: Paranoid/Conservative. Use for sensitive production environments.
 
-## 8. Reports, Encryption & Decryption
+## 8. 🔐 Reports, Encryption & Decryption
 Reports are saved to `~/RedAuditReports` (default) with timestamps.
 
 ### Encryption (`.enc`)
@@ -122,7 +122,7 @@ python3 redaudit_decrypt.py /path/to/report_NAME.json.enc
 ```
 *The script automatically locates the corresponding `.salt` file.*
 
-## 9. Logging & Heartbeat
+## 9. 💓 Logging & Heartbeat
 
 ### Application Logs
 Debug and audit logs are stored in `~/.redaudit/logs/`.
@@ -135,14 +135,14 @@ A background `threading.Thread` monitors the scan state every 60 seconds.
 - **>300s silence**: Logs a **WARNING ("Zombie scan?")**.
 - **Purpose**: Assures the operator that the tool is alive during long Nmap operations (e.g., `-p-` scans).
 
-## 10. Verification Script
+## 10. ✅ Verification Script
 Verify your environment integrity (checksums, dependencies, alias) at any time:
 ```bash
 bash redaudit_verify.sh
 ```
 *Useful after OS updates or git pulls.*
 
-## 11. Glossary
+## 11. 📚 Glossary
 - **Fernet**: Symmetric encryption standard using AES-128 and HMAC-SHA256.
 - **Heartbeat**: Background task ensuring the main process is responsive.
 - **Deep Scan**: Automated fallback scan (`-A`) triggered when a host returns limited data.
@@ -150,17 +150,17 @@ bash redaudit_verify.sh
 - **Salt**: Random data added to password hashing to prevent rainbow table attacks. stored in `.salt` files.
 - **Thread Pool**: Collection of worker threads that execute tasks (host scans) concurrently.
 
-## 12. Troubleshooting
+## 12. 🛠️ Troubleshooting
 See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 - **"Permission denied"**: Ensure you run with `sudo`.
 - **"Cryptography missing"**: Run `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Check `~/.redaudit/logs/` or reduce `rate_limit_delay`.
 
-## 13. Legal Notice
+## 13. ⚖️ Legal Notice
 **RedAudit** is a security tool for **authorized auditing only**.
 Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
 
-## 14. Changelog (v2.3 Summary)
+## 14. 📝 Changelog (v2.3 Summary)
 - **Security**: Added Report Encryption and Strict Input Sanitization.
 - **Performance**: Added Rate Limiting and Thread Controls.
 - **Resilience**: Added Heartbeat Monitor and Rotating Logs.

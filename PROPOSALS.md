@@ -1,27 +1,27 @@
-# Propuestas de Mejora (Non-Binding)
+# Improvement Proposals (Non-Binding)
 
-Este documento recoge sugerencias arquitectónicas para futuras versiones, sin alterar el núcleo actual (v2.3.1).
+This document collects architectural suggestions for future versions, without altering the current core (v2.3.1).
 
-## 1. Desacoplar el código Python
-**Estado Actual**: `redaudit_install.sh` contiene todo el código Python en un bloque `cat << 'EOF'`.
-**Propuesta**: Separar en dos archivos:
-- `install.sh`: Solo lógica de instalación (apt, alias, copy).
-- `src/redaudit.py`: El código fuente limpio.
-**Beneficio**: Facilita el linting, testeo y revisión de código sin regenerar el instalador.
+## 1. Decoupling Python Code
+**Current State**: `redaudit_install.sh` embeds the entire Python source code within a `cat << 'EOF'` block.
+**Proposal**: Split into two files:
+- `install.sh`: Installation logic only (apt, aliases, copy).
+- `src/redaudit.py`: The clean Python source code.
+**Benefit**: Facilitates linting, testing, and code review without regenerating the installer.
 
-## 2. Tests para el Descifrador
-**Estado Actual**: `redaudit_decrypt.py` se prueba manualmente.
-**Propuesta**: Añadir `tests/test_decrypt.py` que:
-1. Genere una clave y salt dummy.
-2. Cifre un string.
-3. Invoque `redaudit_decrypt.py` (o sus funciones importadas) para verificar el round-trip.
+## 2. Decryptor Tests
+**Current State**: `redaudit_decrypt.py` is tested manually.
+**Proposal**: Add `tests/test_decrypt.py` that:
+1. Generates a dummy key and salt.
+2. Encrypts a string.
+3. Invokes `redaudit_decrypt.py` (or its imported functions) to verify the round-trip.
 
-## 3. Validación de Versión Python
-**Estado Actual**: Se asume `python3` (normalmente 3.10+ en Kali).
-**Propuesta**: Añadir check explícito de versión (>= 3.8) en el instalador para evitar errores de sintaxis en distros antiguas.
+## 3. Python Version Validation
+**Current State**: Assumes `python3` (typically 3.10+ on Kali).
+**Proposal**: Add an explicit version check (>= 3.8) in the installer to avoid syntax errors on older distros.
 
 ## 4. CI/CD Integration
-**Propuesta**: Incluir un archivo `.github/workflows/verify.yml` para validar PRs automáticamente sin ejecutar escaneos reales.
+**Proposal**: Include a `.github/workflows/verify.yml` file to validate PRs automatically without running actual scans.
 
 ```yaml
 name: Verify RedAudit
