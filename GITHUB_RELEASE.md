@@ -29,7 +29,7 @@ sudo bash redaudit_install.sh
 - `--yes, -y`: Skip legal warning
 - `--lang`: Language (en/es)
 
-### 🧪 Testing
+### Testing
 
 - **Integration Tests**: Comprehensive test suite
 - **Encryption Tests**: Full coverage for encryption functionality

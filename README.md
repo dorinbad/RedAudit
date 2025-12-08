@@ -80,7 +80,7 @@ sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
 
 See `redaudit --help` for full details.
 
-## 7. ⚙️ Configuration & Internal Parameters
+## Configuration & Internal Parameters
 
 ### Concurrency (Threads)
 RedAudit uses Python's `ThreadPoolExecutor` to scan multiple hosts simultaneously.

@@ -82,22 +82,22 @@ redaudit --compare scan_ayer.json scan_hoy.json
 
 ## 🚀 Roadmap Estratégico
 
-### v2.6 (Corto Plazo: Consolidación)
-*Enfoque en calidad de código, testing y usabilidad de datos.*
+### v2.6 (Short Term: Consolidation)
+*Focus on code quality, testing, and data usability.*
 
-- [ ] **Suite de Tests**: Implementar tests unitarios y de integración faltantes.
-- [ ] **Exportación**: Soporte para salida CSV y HTML básico.
-- [ ] **Multilenguaje**: Facilitar la adición de más idiomas (refactorizar strings).
-- [ ] **Comparación**: Implementar funcionalidad básica de `diff` entre reportes JSON.
+- [ ] **Test Suite**: Implement missing unit and integration tests.
+- [ ] **Export**: Support for CSV and basic HTML output.
+- [ ] **Multi-language**: Facilitate adding more languages (refactor strings).
+- [ ] **Comparison**: Implement basic `diff` functionality between JSON reports.
 
-🗓️ **Estimado**: Q1 2025
+**Estimate**: Q1 2025
 
-### v3.0 (Medio Plazo: Expansión)
-*Enfoque en integración y visualización.*
+### v3.0 (Mid Term: Expansion)
+*Focus on integration and visualization.*
 
-- [ ] **Dashboard Web**: Servidor ligero (Flask/FastAPI) para visualizar reportes históricos.
-- [ ] **Base de Datos**: Integración opcional con SQLite para historial de scans.
-- [ ] **Docker**: Containerización oficial de la herramienta.
+- [ ] **Web Dashboard**: Lightweight server (Flask/FastAPI) to visualize historical reports.
+- [ ] **Database**: Optional integration with SQLite for scan history.
+- [ ] **Docker**: Official tool containerization.
 - [ ] **API REST**: Exponer el motor de escaneo vía API para integraciones de terceros.
 
 🗓️ **Estimado**: Q2-Q3 2025

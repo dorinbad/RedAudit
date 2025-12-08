@@ -21,12 +21,12 @@ sudo redaudit --target 192.168.1.0/24 --mode full --encrypt
 ````--lang`
 - All interactive options available via CLI
 
-### 🧪 Testing
+### Testing
 - **Integration Tests**: Comprehensive test suite (`test_integration.py`)
 - **Encryption Tests**: Full coverage for encryption functionality (`test_encryption.py`)
 - All existing tests updated and passing
 
-## 📝 Changes
+## Changes
 
 ### Added
 - Non-interactive CLI mode with full argument support
@@ -47,7 +47,7 @@ sudo redaudit --target 192.168.1.0/24 --mode full --encrypt
 - File permissions hardened
 - Better exception handling prevents information leakage
 
-## 🔧 Installation
+## Installation
 
 ```bash
 git clone https://github.com/dorinbadea/RedAudit.git
@@ -56,7 +56,7 @@ sudo bash redaudit_install.sh
 source ~/.bashrc  # or ~/.zshrc
 ```
 
-## 📚 Documentation
+## Documentation
 
 All documentation has been updated:
 - README.md / README_ES.md
@@ -67,17 +67,17 @@ All documentation has been updated:
 - REPORT_SCHEMA.md
 - CHANGELOG.md
 
-## 🐛 Bug Fixes
+## Bug Fixes
 
 - Fixed missing `_combined_output_has_identity()` function
 - Fixed cryptography availability check flow
 - Fixed sanitizer type validation issues
 
-## ⚠️ Breaking Changes
+## Breaking Changes
 
 None. This is a backward-compatible release.
 
-## 🙏 Credits
+## Credits
 
 Thanks to all contributors and users who provided feedback!
 
