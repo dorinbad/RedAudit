@@ -1,6 +1,6 @@
 # RedAudit
 
-[![Push for English](https://img.shields.io/badge/Push%20for%20English-blue?style=flat-square)](README.md)
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](README.md)
 
 RedAudit es una herramienta CLI para auditoría de red estructurada y hardening en sistemas Kali/Debian.
 
