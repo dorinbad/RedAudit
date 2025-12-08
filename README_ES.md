@@ -60,16 +60,39 @@ flowchart TB
         H[i18n.py]
     end
     
-    subgraph External["Herramientas Externas"]
+    subgraph Scanning["Descubrimiento de Puertos"]
         I[nmap]
-        J[whatweb / nikto]
-        K[testssl.sh]
+    end
+    
+    subgraph WebAudit["Reconocimiento Web"]
+        J[whatweb]
+        K[nikto]
+        L[curl / wget]
+    end
+    
+    subgraph SSL["Análisis SSL/TLS"]
+        M[testssl.sh]
+        N[openssl]
+    end
+    
+    subgraph Traffic["Captura de Tráfico"]
+        O[tcpdump]
+        P[tshark]
+    end
+    
+    subgraph Intel["Inteligencia de Amenazas"]
+        Q[searchsploit]
+        R[dig / whois]
     end
     
     A --> B
     B --> C & D & E & F
-    C --> I & J & K
     B --> G & H
+    C --> I
+    C --> J & K & L
+    C --> M & N
+    C --> O & P
+    C --> Q & R
     E --> Output[(Reportes Cifrados)]
     F --> Output
 ```
