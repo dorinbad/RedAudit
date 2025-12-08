@@ -28,15 +28,16 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 
 RedAudit operates as an orchestration layer, managing concurrent execution threads for network interaction and data processing. It implements a two-phase architecture: generic discovery followed by targeted deep scans.
 
-| Component | Native tool / library | Role in RedAudit |
-| :--- | :--- | :--- |
-| **Discovery Engine** | `nmap` | Performs rapid host discovery and service enumeration. |
-| **Vulnerability Scanner** | `nmap` scripting engine | Executes targeted NSE scripts based on open ports. |
+| **Category** | **Tools** | **Purpose** |
+|:---|:---|:---|
+| **Core Scanner** | `nmap`, `python3-nmap` | TCP/UDP port scanning, service/version detection, OS fingerprinting. |
 | **Web Recon** | `whatweb`, `curl`, `wget`, `nikto` | Analyzes HTTP headers, technologies, and vulnerabilities. |
-| **SSL/TLS Analysis** | `openssl` | detailed certificate chain inspection and protocol support. |
-| **Traffic Capture** | `tcpdump`, `tshark` | Captures sample traffic for forensic validation (PCAP). |
+| **Exploit Intel** | `searchsploit` (v2.6.1+) | Automatic ExploitDB lookup for services with detected versions. |
+| **SSL/TLS Analysis** | `testssl.sh` (v2.6.1+) | Deep SSL/TLS vulnerability scanning (Heartbleed, POODLE, weak ciphers). |
+| **Traffic Capture** | `tcpdump`, `tshark` | Captures network packets for detailed protocol analysis. |
+| **DNS/Whois** | `dig`, `whois` | Reverse DNS lookups and ownership information for public IPs. |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
-| **Encryption** | `cryptography` (AES-128) | Secures output artifacts at rest using symmetric encryption. |
+| **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 
 Deep scans are triggered selectively: web auditing modules launch only upon detection of HTTP/HTTPS services, and SSL inspection is reserved for encrypted ports.
 
@@ -231,7 +232,7 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 - **"Cryptography missing"**: Run `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Check `~/.redaudit/logs/` or reduce `rate_limit_delay`.
 
-## 13. Changelog (v2.6 Summary)
+## 13. Changelog (v2.6.1 Summary)
 
 - **Modular Architecture**: Refactored monolithic script into organized package structure (8 modules)
 - **CI/CD Pipeline**: GitHub Actions workflow for automated testing (Python 3.9-3.12)

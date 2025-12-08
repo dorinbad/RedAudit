@@ -59,7 +59,7 @@ sudo bash redaudit_install.sh
 ### 5. "Scans seem to hang" / Slow progress
 
 **Symptom**: The tool pauses for 1-2 minutes on a single host.
-**Explanation**: RedAudit v2.6 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
+**Explanation**: RedAudit v2.6.1 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
 
 - **Duration**: These scans can legitimately take **90–150 seconds** per host.
 - **Why**: Essential for identifying IoT boxes, firewalls, or filtered servers that hide their OS.

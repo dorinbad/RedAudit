@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2025-12-08 (Exploit Intelligence & SSL/TLS Deep Analysis)
+
+### Added
+
+- **SearchSploit Integration**: Automatic exploit lookup from ExploitDB for services with detected versions
+  - Queries `searchsploit` for known exploits when product+version identified
+  - Results displayed in both JSON and TXT reports
+  - Timeout: 10 seconds per query
+  - Runs in all scan modes (fast/normal/completo)
+  - New function: `exploit_lookup()` in `redaudit/core/scanner.py`
+
+- **TestSSL.sh Integration**: Comprehensive SSL/TLS security analysis for HTTPS services
+  - Deep SSL/TLS vulnerability scanning (Heartbleed, POODLE, BEAST, etc.)
+  - Weak cipher and protocol detection
+  - Only runs in `completo` mode (60-second timeout per port)
+  - Results include summary, vulnerabilities, weak ciphers, and protocols
+  - New function: `ssl_deep_analysis()` in `redaudit/core/scanner.py`
+
+- **Enhanced Reporting**:
+  - TXT reports now show known exploits for each service
+  - TXT reports display TestSSL vulnerability findings
+  - JSON reports automatically include all new data fields
+
+- **Internationalization**: Added English and Spanish translations for new features:
+  - `exploits_found` - Exploit discovery notifications
+  - `testssl_analysis` - SSL/TLS analysis progress messages
+
+### Changed
+
+- **Installation**: Updated `redaudit_install.sh` to install `exploitdb` and `testssl.sh` packages
+- **Verification**: Updated `redaudit_verify.sh` to check for new tools
+- **Dependencies**: Added searchsploit and testssl.sh to optional tools list (12 total optional tools)
+- **Version**: Updated to 2.6.1
+
+### Philosophy
+
+Both tools maintain RedAudit's adaptive approach:
+
+- **SearchSploit**: Lightweight, runs automatically when version info available
+- **TestSSL**: Heavy analysis, only in full mode for actionable security findings
+
+---
+
 ## [2.6.0] - 2025-12-08 (Modular Architecture)
 
 ### Added

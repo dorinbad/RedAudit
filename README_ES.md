@@ -28,15 +28,16 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 
 RedAudit opera como una capa de orquestación, gestionando hilos de ejecución concurrentes para la interacción de red y el procesamiento de datos. Implementa una arquitectura de dos fases: descubrimiento genérico seguido de escaneos profundos dirigidos.
 
-| Componente | Herramienta nativa / librería | Rol en RedAudit |
-| :--- | :--- | :--- |
-| **Motor de Descubrimiento** | `nmap` | Realiza descubrimiento rápido de hosts y enumeración de servicios. |
-| **Escáner de Vulnerabilidades** | `nmap` scripting engine | Ejecuta scripts NSE dirigidos basados en puertos abiertos. |
+| **Categoría** | **Herramientas** | **Propósito** |
+|:---|:---|:---|
+| **Escáner Core** | `nmap`, `python3-nmap` | Escaneo de puertos TCP/UDP, detección de servicios/versión, fingerprinting de SO. |
 | **Reconocimiento Web** | `whatweb`, `curl`, `wget`, `nikto` | Analiza cabeceras HTTP, tecnologías y vulnerabilidades. |
-| **Análisis SSL/TLS** | `openssl` | Inspección detallada de cadena de certificados y soporte de protocolos. |
-| **Captura de Tráfico** | `tcpdump`, `tshark` | Captura muestras de tráfico para validación forense (PCAP). |
+| **Inteligencia de Exploits** | `searchsploit` (v2.6.1+) | Búsqueda automática en ExploitDB para servicios con versiones detectadas. |
+| **Análisis SSL/TLS** | `testssl.sh` (v2.6.1+) | Escaneo profundo de vulnerabilidades SSL/TLS (Heartbleed, POODLE, cifrados débiles). |
+| **Captura de Tráfico** | `tcpdump`, `tshark` | Captura de paquetes de red para análisis detallado de protocolos. |
+| **DNS/Whois** | `dig`, `whois` | Búsquedas DNS inversas e información de propiedad para IPs públicas. |
 | **Orquestador** | `concurrent.futures` (Python) | Gestiona pools de hilos para escaneo paralelo de hosts. |
-| **Cifrado** | `cryptography` (AES-128) | Asegura artefactos de salida en reposo usando cifrado simétrico. |
+| **Cifrado** | `python3-cryptography` | Cifrado AES-128 para reportes de auditoría sensibles. |
 
 Los escaneos profundos se activan selectivamente: los módulos de auditoría web solo se lanzan tras la detección de servicios HTTP/HTTPS, y la inspección SSL se reserva para puertos cifrados.
 
@@ -248,7 +249,7 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 - **"Cryptography missing"**: Ejecuta `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Revisa `~/.redaudit/logs/` o reduce `rate_limit_delay`.
 
-## 13. Historial de Cambios (Resumen v2.6)
+## 13. Historial de Cambios (Resumen v2.6.1)
 
 - **Arquitectura Modular**: Script monolítico refactorizado en estructura de paquete organizada (8 módulos)
 - **Pipeline CI/CD**: Workflow de GitHub Actions para testing automatizado (Python 3.9-3.12)

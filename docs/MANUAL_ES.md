@@ -1,9 +1,9 @@
-# Manual de Usuario RedAudit v2.6
+# Manual de Usuario de RedAudit v2.6.1
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](MANUAL_EN.md)
 
-**Versión**: 2.6
-**Audiencia**: Analistas de Seguridad, Administradores de Sistemas
+**Versión**: 2.6.1
+**Audiencia objetivo**: Analistas de Seguridad, Administradores de Sistemas
 **Licencia**: GPLv3
 
 ## 1. Introducción
@@ -37,7 +37,54 @@ Después de la instalación, active el alias:
 | **Kali Linux** (2020.3+) | Zsh | `source ~/.zshrc` |
 | **Debian / Ubuntu / Parrot** | Bash | `source ~/.bashrc` |
 
-> **Nota**: Kali usa Zsh por defecto desde 2020. El instalador detecta tu shell automáticamente.
+> **Nota**: Kali usa Zsh por defecto desde 2020. El instalador detecta automáticamente tu shell.
+
+## 2.5. Nuevo en v2.6.1: Inteligencia de Exploits y Análisis SSL/TLS
+
+### Integración de SearchSploit (Búsqueda en Base de Datos de Exploits)
+
+RedAudit consulta automáticamente ExploitDB para exploits conocidos cuando detecta versiones de servicios.
+
+**Cómo funciona:**
+
+- Se activa automáticamente cuando `nmap` detecta producto+versión (ej: "Apache 2.4.49")
+- Consulta `searchsploit` con timeout de 10 segundos
+- Resultados almacenados en `ports[].known_exploits` (JSON) y mostrados en reportes TXT
+- **Disponible en todos los modos de escaneo** (rápido/normal/completo)
+
+**Ejemplo de salida:**
+
+```
+⚠️  Encontrados 3 exploits conocidos para OpenSSH 7.4
+```
+
+### Integración de TestSSL.sh (Análisis de Seguridad SSL/TLS)
+
+Evaluación exhaustiva de vulnerabilidades SSL/TLS para servicios HTTPS.
+
+**Qué detecta:**
+
+- Vulnerabilidades conocidas: Heartbleed, POODLE, BEAST, CRIME, BREACH
+- Suites de cifrado débiles/inseguras
+- Protocolos obsoletos (SSLv2, SSLv3, TLS 1.0/1.1)
+
+**Activación:**
+
+- **Solo se ejecuta en modo `completo`** (intensivo en recursos, timeout de 60s por puerto)
+- Se activa automáticamente para puertos HTTPS (443, 8443, etc.)
+
+**Ejemplo de salida:**
+
+```json
+"testssl_analysis": {
+  "summary": "WARNING: 2 cifrados débiles encontrados",
+  "vulnerabilities": [],
+  "weak_ciphers": ["TLS_RSA_WITH_RC4_128_SHA"],
+  "protocols": ["TLS 1.2 (0x0303)", "TLS 1.3 (0x0304)"]
+}
+```
+
+**Filosofía**: Ambas herramientas mantienen el enfoque adaptativo de RedAudit—searchsploit es ligero y siempre activo, mientras testssl solo se ejecuta en modo de auditoría completa para hallazgos accionables.
 
 ## 3. Configuración
 

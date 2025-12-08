@@ -92,6 +92,11 @@ def generate_text_report(results: Dict, partial: bool = False) -> str:
             lines.append(
                 f"    - {p['port']}/{p['protocol']}  {p['service']}  {p['version']}\n"
             )
+            # Show known exploits if found
+            if p.get("known_exploits"):
+                lines.append(f"      ⚠️  Known Exploits ({len(p['known_exploits'])}):\n")
+                for exploit in p["known_exploits"][:3]:  # Max 3 for readability
+                    lines.append(f"         - {exploit}\n")
 
         if h.get("dns", {}).get("reverse"):
             lines.append("  Reverse DNS:\n")
@@ -121,6 +126,14 @@ def generate_text_report(results: Dict, partial: bool = False) -> str:
                     lines.append(f"    WhatWeb: {item['whatweb'][:80]}...\n")
                 if item.get("nikto_findings"):
                     lines.append(f"    Nikto: {len(item['nikto_findings'])} findings.\n")
+                # TestSSL analysis results
+                if item.get("testssl_analysis"):
+                    tssl = item["testssl_analysis"]
+                    lines.append(f"    TestSSL: {tssl.get('summary', 'analyzed')}\n")
+                    if tssl.get("vulnerabilities"):
+                        lines.append(f"      Vulnerabilities ({len(tssl['vulnerabilities'])}):\n")
+                        for vuln in tssl["vulnerabilities"][:3]:
+                            lines.append(f"        - {vuln}\n")
 
     return "".join(lines)
 

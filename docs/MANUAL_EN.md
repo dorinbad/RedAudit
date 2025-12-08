@@ -1,8 +1,8 @@
-# RedAudit v2.6 User Manual
+# RedAudit v2.6.1 User Manual
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](MANUAL_ES.md)
 
-**Version**: 2.6
+**Version**: 2.6.1
 **Target Audience**: Security Analysts, Systems Administrators
 **License**: GPLv3
 
@@ -38,6 +38,53 @@ After installation, activate the alias:
 | **Debian / Ubuntu / Parrot** | Bash | `source ~/.bashrc` |
 
 > **Note**: Kali uses Zsh by default since 2020. The installer auto-detects your shell.
+
+## 2.5. New in v2.6.1: Exploit Intelligence & SSL/TLS Analysis
+
+### SearchSploit Integration (Exploit Database Lookup)
+
+RedAudit automatically queries ExploitDB for known exploits when service versions are detected.
+
+**How it works:**
+
+- Triggers automatically when `nmap` detects product+version (e.g., "Apache 2.4.49")
+- Queries `searchsploit` with 10-second timeout
+- Results stored in `ports[].known_exploits` (JSON) and displayed in TXT reports
+- **Available in all scan modes** (fast/normal/completo)
+
+**Example output:**
+
+```
+⚠️  Found 3 known exploits for OpenSSH 7.4
+```
+
+### TestSSL.sh Integration (SSL/TLS Security Analysis)
+
+Comprehensive SSL/TLS vulnerability assessment for HTTPS services.
+
+**What it detects:**
+
+- Known vulnerabilities: Heartbleed, POODLE, BEAST, CRIME, BREACH
+- Weak/insecure cipher suites
+- Deprecated protocols (SSLv2, SSLv3, TLS 1.0/1.1)
+
+**Activation:**
+
+- **Only runs in `completo` mode** (resource-intensive, 60s timeout per port)
+- Automatically triggers for HTTPS ports (443, 8443, etc.)
+
+**Output example:**
+
+```json
+"testssl_analysis": {
+  "summary": "WARNING: 2 weak ciphers found",
+  "vulnerabilities": [],
+  "weak_ciphers": ["TLS_RSA_WITH_RC4_128_SHA"],
+  "protocols": ["TLS 1.2 (0x0303)", "TLS 1.3 (0x0304)"]
+}
+```
+
+**Philosophy**: Both tools maintain RedAudit's adaptive approach—searchsploit is lightweight and always active, while testssl runs only in full audit mode for actionable findings.
 
 ## 3. Configuration
 

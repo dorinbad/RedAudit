@@ -95,7 +95,7 @@ RedAudit allows you to set a delay (in seconds) between scanning hosts.
 
 ### CLI Execution Markers
 
-RedAudit v2.6 strictly informs you about the commands being executed:
+RedAudit v2.6.1 strictly informs you about the commands being executed:
 
 - **`[nmap] 192.168.x.x → nmap ...`**: Standard port scan.
 - **`[deep] 192.168.x.x → combined ...`**: Deep Identity Scan execution (expect 90-140s duration).

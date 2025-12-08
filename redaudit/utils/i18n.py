@@ -88,6 +88,8 @@ TRANSLATIONS = {
         "deep_identity_cmd": "[deep] {} → {} (~{}s estimated)",
         "deep_identity_done": "Deep identity scan finished for {} in {:.1f}s",
         "nmap_cmd": "[nmap] {} → {}",
+        "exploits_found": "⚠️  Found {} known exploits for {}",
+        "testssl_analysis": "Running deep SSL/TLS analysis on {}:{} (may take 60s)...",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -169,6 +171,8 @@ TRANSLATIONS = {
         "deep_identity_cmd": "[deep] {} → {} (~{}s estimados)",
         "deep_identity_done": "Deep identity scan finalizado para {} en {:.1f}s",
         "nmap_cmd": "[nmap] {} → {}",
+        "exploits_found": "⚠️  Encontrados {} exploits conocidos para {}",
+        "testssl_analysis": "Ejecutando análisis SSL/TLS profundo en {}:{} (puede tomar 60s)...",
     },
 }
 

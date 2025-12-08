@@ -469,3 +469,178 @@ def tls_enrichment(host_ip: str, port: int, extra_tools: Dict) -> Dict:
             pass
 
     return data
+
+
+def exploit_lookup(service_name: str, version: str, extra_tools: Dict, logger=None) -> List[str]:
+    """
+    Query ExploitDB for known exploits matching service and version.
+
+    Args:
+        service_name: Service name (e.g., "Apache", "OpenSSH")
+        version: Version string (e.g., "2.4.49", "7.9")
+        extra_tools: Dict of available tool paths
+        logger: Optional logger
+
+    Returns:
+        List of exploit descriptions (max 10)
+    """
+    if not extra_tools.get("searchsploit"):
+        return []
+    
+    if not service_name or not version:
+        return []
+    
+    # Sanitize inputs
+    if not isinstance(service_name, str) or not isinstance(version, str):
+        return []
+    
+    service_name = service_name.strip()[:50]
+    version = version.strip()[:20]
+    
+    if not service_name or not version:
+        return []
+    
+    # Build search query
+    query = f"{service_name} {version}"
+    
+    try:
+        res = subprocess.run(
+            [extra_tools["searchsploit"], "--colour", "--nmap", query],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        
+        if res.returncode != 0:
+            return []
+        
+        output = res.stdout or ""
+        if not output.strip():
+            return []
+        
+        # Parse output - each exploit is on a line
+        exploits = []
+        for line in output.splitlines():
+            line = line.strip()
+            if not line or line.startswith("-") or line.startswith("Exploit"):
+                continue
+            if "|" in line:  # Standard searchsploit format
+                parts = line.split("|")
+                if len(parts) >= 1:
+                    exploit_title = parts[0].strip()
+                    if exploit_title and len(exploit_title) > 10:
+                        exploits.append(exploit_title[:150])
+        
+        # Return max 10 exploits
+        return exploits[:10]
+    
+    except subprocess.TimeoutExpired:
+        if logger:
+            logger.warning("Searchsploit timeout for %s %s", service_name, version)
+        return []
+    except Exception as exc:
+        if logger:
+            logger.debug("Searchsploit error for %s %s: %s", service_name, version, exc)
+        return []
+
+
+def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None) -> Optional[Dict]:
+    """
+    Perform comprehensive SSL/TLS security analysis using testssl.sh.
+
+    Args:
+        host_ip: Target IP address
+        port: Target port (typically 443)
+        extra_tools: Dict of available tool paths
+        logger: Optional logger
+
+    Returns:
+        Dictionary with SSL/TLS analysis results or None
+    """
+    if not extra_tools.get("testssl.sh"):
+        return None
+    
+    safe_ip = sanitize_ip(host_ip)
+    if not safe_ip:
+        return None
+    
+    if not isinstance(port, int) or port < 1 or port > 65535:
+        return None
+    
+    try:
+        # Run testssl.sh with JSON output if supported
+        cmd = [
+            extra_tools["testssl.sh"],
+            "--quiet",
+            "--fast",
+            "--severity", "HIGH",
+            f"{safe_ip}:{port}"
+        ]
+        
+        res = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        
+        output = res.stdout or res.stderr or ""
+        if not output.strip():
+            return None
+        
+        # Parse output for key findings
+        findings = {
+            "target": f"{safe_ip}:{port}",
+            "summary": "",
+            "vulnerabilities": [],
+            "weak_ciphers": [],
+            "protocols": []
+        }
+        
+        lines = output.splitlines()
+        for line in lines:
+            line_lower = line.lower()
+            
+            # Detect vulnerabilities
+            if any(vuln in line_lower for vuln in ["vulnerable", "heartbleed", "poodle", "beast", "crime", "breach"]):
+                if "not vulnerable" not in line_lower and "ok" not in line_lower:
+                    findings["vulnerabilities"].append(line.strip()[:200])
+            
+            # Detect weak ciphers
+            if "weak" in line_lower or "insecure" in line_lower:
+                if "cipher" in line_lower or "encryption" in line_lower:
+                    findings["weak_ciphers"].append(line.strip()[:150])
+            
+            # Detect protocols
+            if any(proto in line_lower for proto in ["sslv2", "sslv3", "tls 1.0", "tls 1.1", "tls 1.2", "tls 1.3"]):
+                findings["protocols"].append(line.strip()[:100])
+        
+        # Generate summary
+        vuln_count = len(findings["vulnerabilities"])
+        weak_count = len(findings["weak_ciphers"])
+        
+        if vuln_count > 0:
+            findings["summary"] = f"CRITICAL: {vuln_count} vulnerabilities detected"
+        elif weak_count > 0:
+            findings["summary"] = f"WARNING: {weak_count} weak ciphers found"
+        else:
+            findings["summary"] = "No major issues detected"
+        
+        # Only return if we found something useful
+        if vuln_count > 0 or weak_count > 0 or len(findings["protocols"]) > 0:
+            # Truncate lists
+            findings["vulnerabilities"] = findings["vulnerabilities"][:5]
+            findings["weak_ciphers"] = findings["weak_ciphers"][:5]
+            findings["protocols"] = findings["protocols"][:8]
+            return findings
+        
+        return None
+    
+    except subprocess.TimeoutExpired:
+        if logger:
+            logger.warning("TestSSL timeout for %s:%d", safe_ip, port)
+        return {"error": "Analysis timeout after 60s", "target": f"{safe_ip}:{port}"}
+    except Exception as exc:
+        if logger:
+            logger.debug("TestSSL error for %s:%d: %s", safe_ip, port, exc)
+        return None

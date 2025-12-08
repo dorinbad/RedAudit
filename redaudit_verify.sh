@@ -17,8 +17,8 @@
 
 # RedAudit Installation Verification Script
 
-echo "RedAudit v2.6 Installation Verification"
-echo "======================================"
+echo "RedAudit v2.6.1 Installation Verification"
+echo "========================================"
 echo
 
 # Check binary
@@ -80,7 +80,9 @@ check_cmd wget
 check_cmd openssl
 check_cmd whois
 check_cmd dig
+check_cmd searchsploit
+check_cmd testssl.sh
 
 echo
-echo "======================================"
+echo "========================================"
 echo "Verification complete!"

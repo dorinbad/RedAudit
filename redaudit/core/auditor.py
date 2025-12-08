@@ -58,6 +58,8 @@ from redaudit.core.scanner import (
     enrich_host_with_whois,
     http_enrichment,
     tls_enrichment,
+    exploit_lookup,
+    ssl_deep_analysis,
 )
 from redaudit.core.reporter import (
     generate_summary,
@@ -305,6 +307,7 @@ class InteractiveNetworkAuditor:
         tools = [
             "whatweb", "nikto", "curl", "wget", "openssl",
             "tcpdump", "tshark", "whois", "dig",
+            "searchsploit", "testssl.sh",
         ]
         missing = []
         for tname in tools:
@@ -591,6 +594,20 @@ class InteractiveNetworkAuditor:
             if total_ports > 0 and not any_version:
                 trigger_deep = True
 
+            # SearchSploit exploit lookup for services with version info
+            if self.extra_tools.get("searchsploit"):
+                for port_info in ports:
+                    product = port_info.get("product", "")
+                    version = port_info.get("version", "")
+                    if product and version:
+                        exploits = exploit_lookup(product, version, self.extra_tools, self.logger)
+                        if exploits:
+                            port_info["known_exploits"] = exploits
+                            self.print_status(
+                                self.t("exploits_found", len(exploits), f"{product} {version}"),
+                                "WARNING"
+                            )
+
             if trigger_deep:
                 deep = self.deep_scan_host(safe_ip)
                 if deep:
@@ -670,6 +687,22 @@ class InteractiveNetworkAuditor:
             if scheme == "https":
                 tls_data = tls_enrichment(ip, port, self.extra_tools)
                 finding.update(tls_data)
+                
+                # TestSSL deep analysis (only in completo mode)
+                if self.config["scan_mode"] == "completo" and self.extra_tools.get("testssl.sh"):
+                    self.print_status(
+                        self.t("testssl_analysis", ip, port),
+                        "INFO"
+                    )
+                    ssl_analysis = ssl_deep_analysis(ip, port, self.extra_tools, self.logger)
+                    if ssl_analysis:
+                        finding["testssl_analysis"] = ssl_analysis
+                        # Alert if vulnerabilities found
+                        if ssl_analysis.get("vulnerabilities"):
+                            self.print_status(
+                                f"⚠️  SSL/TLS vulnerabilities detected on {ip}:{port}",
+                                "WARNING"
+                            )
 
             # WhatWeb
             if self.extra_tools.get("whatweb"):
