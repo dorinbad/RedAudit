@@ -1,6 +1,6 @@
 # RedAudit Usage Guide
 
-[![Ver en español](https://img.shields.io/badge/Ver%20en%20español-red?style=flat-square)](USAGE_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](USAGE_ES.md)
 
 ## CLI Reference
 

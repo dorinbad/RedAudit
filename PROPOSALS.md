@@ -1,6 +1,6 @@
 # Architectural Proposals
 
-[![Ver en español](https://img.shields.io/badge/Ver%20en%20español-red?style=flat-square)](PROPOSALS_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](PROPOSALS_ES.md)
 
 This document collects architectural suggestions for future versions, focusing on modularity and testing.
 

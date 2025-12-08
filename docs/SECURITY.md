@@ -1,6 +1,6 @@
 # Security Architecture & Hardening
 
-[![Ver en español](https://img.shields.io/badge/Ver%20en%20español-red?style=flat-square)](SECURITY_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](SECURITY_ES.md)
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Roadmap & Architecture Proposals
 
-[![Ver en español](https://img.shields.io/badge/Ver%20en%20español-red?style=flat-square)](IMPROVEMENTS_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](IMPROVEMENTS_ES.md)
 
 This document outlines the technical roadmap, planned architectural improvements, and discarded approaches for RedAudit.
 

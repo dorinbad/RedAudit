@@ -1,6 +1,6 @@
 # RedAudit v2.6 User Manual
 
-[![Ver en español](https://img.shields.io/badge/Ver%20en%20español-red?style=flat-square)](MANUAL_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](MANUAL_ES.md)
 
 **Version**: 2.6
 **Target Audience**: Security Analysts, Systems Administrators
