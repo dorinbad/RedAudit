@@ -1,4 +1,13 @@
-# RedAudit Usage Guide
+<div align="center">
+
+# 🛠️ RedAudit Usage Guide
+
+[![Language](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](USAGE.md)
+[![Type](https://img.shields.io/badge/Type-Guide-orange?style=for-the-badge)](MANUAL_EN.md)
+
+</div>
+
+---
 
 > **Tip**: For a deep technical dive (Threads, Encryption internals, etc.), check the [Professional User Manual](MANUAL_EN.md).
 

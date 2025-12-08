@@ -7,9 +7,9 @@
 
   <br>
 
-  [![Version](https://img.shields.io/badge/version-2.5-blue.svg)](https://github.com/dorinbadea/RedAudit)
-  ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square)
-  ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
+  [![Version](https://img.shields.io/badge/Version-v2.5-blue?style=for-the-badge&logo=python)](https://github.com/dorinbadea/RedAudit/releases)
+  [![Platform](https://img.shields.io/badge/Platform-Kali%20Linux-black?style=for-the-badge&logo=linux)](https://www.kali.org)
+  [![License](https://img.shields.io/badge/License-GPLv3-red?style=for-the-badge&logo=gnu)](LICENSE)
 </div>
 
 <br>

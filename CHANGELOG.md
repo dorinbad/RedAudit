@@ -1,5 +1,15 @@
-# Changelog
+<div align="center">
+
+# 📜 RedAudit Changelog
+
+[![Version](https://img.shields.io/badge/Latest-v2.5.0-blue?style=for-the-badge)](RELEASE_NOTES_v2.5.md)
+[![History](https://img.shields.io/badge/History-Full-lightgrey?style=for-the-badge)](https://github.com/dorinbadea/RedAudit/commits)
+
+</div>
+
 All notable changes to this project will be documented in this file.
+
+---
 RedAudit is licensed under GPLv3. See LICENSE for details.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

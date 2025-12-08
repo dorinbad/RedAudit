@@ -1,4 +1,13 @@
-# RedAudit Troubleshooting Guide
+<div align="center">
+
+# 🔧 RedAudit Troubleshooting Guide
+
+[![Type](https://img.shields.io/badge/Type-Support-orange?style=for-the-badge)](MANUAL_EN.md)
+[![Issues](https://img.shields.io/badge/Report-Bug-red?style=for-the-badge&logo=github)](https://github.com/dorinbadea/RedAudit/issues)
+
+</div>
+
+---
 
 ## Common Issues
 

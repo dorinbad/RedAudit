@@ -1,5 +1,19 @@
 # RedAudit User Manual
 
+---
+
+<div align="center">
+
+# 📘 RedAudit v2.5 User Manual
+
+[![Language](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](MANUAL_EN.md)
+[![Version](https://img.shields.io/badge/Version-v2.5-green?style=for-the-badge)](../RELEASE_NOTES_v2.5.md)
+[![Type](https://img.shields.io/badge/Type-Official_Docs-orange?style=for-the-badge)](../README.md)
+
+</div>
+
+---
+
 **Version**: 2.5
 **Date**: 2025-12-07
 **Target Level**: Professional Pentester / SysAdmin

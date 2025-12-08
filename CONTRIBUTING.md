@@ -1,6 +1,15 @@
-# Contributing to RedAudit
+<div align="center">
 
-Thank you for your interest in contributing to RedAudit!
+# 🤝 Contributing to RedAudit
+
+[![Status](https://img.shields.io/badge/Status-Open_for_PRs-success?style=for-the-badge&logo=git)](https://github.com/dorinbadea/RedAudit/pulls)
+[![Guidelines](https://img.shields.io/badge/Guidelines-Standard-blue?style=for-the-badge)](CONTRIBUTING.md)
+
+</div>
+
+Thank you for your interest in improving RedAudit! We welcome contributions from everyone.
+
+---
 
 ## Target Environment
 

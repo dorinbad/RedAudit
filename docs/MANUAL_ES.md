@@ -1,4 +1,15 @@
-# Manual de Usuario de RedAudit
+
+<div align="center">
+
+# 📘 Manual de Usuario RedAudit v2.5
+
+[![Idioma](https://img.shields.io/badge/Idioma-Español-yellow?style=for-the-badge)](MANUAL_ES.md)
+[![Versión](https://img.shields.io/badge/Versión-v2.5-green?style=for-the-badge)](../RELEASE_NOTES_v2.5.md)
+[![Tipo](https://img.shields.io/badge/Tipo-Doc_Oficial-orange?style=for-the-badge)](../README_ES.md)
+
+</div>
+
+---
 
 **Versión**: 2.5
 **Fecha**: 2025-12-07

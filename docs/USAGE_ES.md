@@ -1,4 +1,13 @@
-# Guía de Uso de RedAudit
+<div align="center">
+
+# 🛠️ Guía de Uso RedAudit
+
+[![Idioma](https://img.shields.io/badge/Idioma-Español-yellow?style=for-the-badge)](USAGE_ES.md)
+[![Tipo](https://img.shields.io/badge/Tipo-Guía-orange?style=for-the-badge)](MANUAL_ES.md)
+
+</div>
+
+---
 
 > **Consejo**: Para una explicación técnica detallada (Hilos, Cifrado, etc.), consulta el [Manual de Usuario Profesional](MANUAL_ES.md).
 

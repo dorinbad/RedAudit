@@ -1,4 +1,14 @@
-# Security Architecture & Hardening
+<div align="center">
+
+# 🛡️ RedAudit Security Architecture
+
+[![Status](https://img.shields.io/badge/Security-Hardened-success?style=for-the-badge&logo=security)](SECURITY.md)
+[![Encryption](https://img.shields.io/badge/Encryption-AES--128-blue?style=for-the-badge&logo=lock)](../redaudit_decrypt.py)
+
+</div>
+
+---
+
 The security of **RedAudit v2.5** is a priority. This document describes the security policies, architecture, and philosophy, assuming execution in hostile or untrusted environments.
 
 ## 1. Input Sanitization & Safety (Enhanced in v2.5)

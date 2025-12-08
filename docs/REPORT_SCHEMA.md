@@ -1,4 +1,13 @@
-# RedAudit Report Schema
+<div align="center">
+
+# 📊 RedAudit Report Schema
+
+[![Format](https://img.shields.io/badge/Format-JSON%20Schema-yellow?style=for-the-badge&logo=json)](REPORT_SCHEMA.md)
+[![Type](https://img.shields.io/badge/Type-Technical_Spec-orange?style=for-the-badge)](MANUAL_EN.md)
+
+</div>
+
+---
 
 RedAudit generates reports in JSON format. Below is the structure of the `redaudit_report_<timestamp>.json` files found in the output directory.
 
