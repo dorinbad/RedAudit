@@ -12,7 +12,8 @@ from unittest.mock import Mock, patch, MagicMock
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from redaudit import InteractiveNetworkAuditor, VERSION, MAX_INPUT_LENGTH, MAX_CIDR_LENGTH
+from redaudit import InteractiveNetworkAuditor
+from redaudit.utils.constants import VERSION, MAX_INPUT_LENGTH, MAX_CIDR_LENGTH
 
 
 class TestIntegration(unittest.TestCase):
@@ -24,7 +25,7 @@ class TestIntegration(unittest.TestCase):
     
     def test_version(self):
         """Test that version is set."""
-        self.assertEqual(VERSION, "2.5")
+        self.assertEqual(VERSION, "2.6")
     
     def test_constants(self):
         """Test security constants."""
@@ -89,12 +90,12 @@ class TestIntegration(unittest.TestCase):
         long_cidr = "192.168.1." + "0/24" + "x" * 100
         self.assertGreater(len(long_cidr), MAX_CIDR_LENGTH)
     
-    @patch('redaudit.shutil.which')
+    @patch('redaudit.core.auditor.shutil.which')
     def test_check_dependencies(self, mock_which):
         """Test dependency checking."""
         mock_which.return_value = "/usr/bin/nmap"
         
-        with patch('redaudit.importlib.import_module') as mock_import:
+        with patch('redaudit.core.auditor.importlib.import_module') as mock_import:
             mock_import.return_value = MagicMock()
             result = self.app.check_dependencies()
             # Should return True if nmap is found

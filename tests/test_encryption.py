@@ -25,6 +25,12 @@ except ImportError:
     hashes = None
 
 from redaudit import InteractiveNetworkAuditor
+from redaudit.core.crypto import (
+    is_crypto_available,
+    derive_key_from_password,
+    encrypt_data,
+    generate_random_password,
+)
 
 
 def test_key_derivation():
@@ -84,22 +90,19 @@ def test_encryption_decryption():
 
 def test_encryption_without_crypto():
     """Test that encryption degrades gracefully without cryptography."""
-    # Mock missing cryptography
-    import redaudit
-    original_fernet = redaudit.Fernet
-    redaudit.Fernet = None
+    # Import the crypto module to mock it
+    import redaudit.core.crypto as crypto_module
+    original_fernet = crypto_module.Fernet
+    crypto_module.Fernet = None
     
     try:
-        app = InteractiveNetworkAuditor()
-        app.cryptography_available = False
-        
-        # Should not crash
-        result = app.encrypt_data("test")
+        # Test encrypt_data returns original when Fernet is None
+        result = encrypt_data("test", None)
         assert result == "test", "Should return original data if encryption unavailable"
         
         print("✅ Graceful degradation test passed")
     finally:
-        redaudit.Fernet = original_fernet
+        crypto_module.Fernet = original_fernet
 
 
 def test_password_validation():

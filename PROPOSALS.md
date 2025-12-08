@@ -2,28 +2,41 @@
 
 This document collects architectural suggestions for future versions, focusing on modularity and testing.
 
-## 1. Source Decoupling strategy
-**Current State**: `redaudit_install.sh` acts as a self-extracting archive containing the Python source.
-**Proposal**: Split the distribution into:
-- `bin/redaudit`: Entry point script.
-- `lib/redaudit/`: Python package structure.
-**Benefit**: Enables standard Python tooling (pip, pylint, pytest) to function without extraction steps.
+## 1. Source Decoupling Strategy
+
+**Status**: COMPLETED in v2.6
+**Implementation**: RedAudit is now a Python package:
+
+- `redaudit/core/`: Core modules (auditor, scanner, crypto, reporter, network)
+- `redaudit/utils/`: Utilities (constants, i18n)
+- Original `redaudit.py` preserved as backward-compatible wrapper
+**Benefit**: Standard Python tooling (pip, pylint, pytest) now works seamlessly.
 
 ## 2. Decryption Verification Suite
+
 **Current State**: Decryption logic is manually verified.
 **Proposal**: Implement automated regression tests `tests/test_crypto_roundtrip.py`:
+
 1. Generate ephemeral key/salt.
 2. Encrypt payload.
 3. Decrypt and assert equality.
 
 ## 3. Runtime Environment Validation
+
 **Proposal**: Add a `pre_flight_check()` routine that verifies:
+
 - Python version >= 3.8.
 - Nmap binary presence and version >= 7.0.
 - Write permissions in output directory.
 
 ## 4. CI/CD Integration
-**Proposal**: Include a `.github/workflows/verify.yml` file to validate PRs automatically without running actual scans.
+
+**Status**: COMPLETED in v2.6
+**Implementation**: `.github/workflows/tests.yml` provides:
+
+- Automated testing on Python 3.9, 3.10, 3.11, 3.12
+- Codecov integration for coverage reporting
+- Flake8 linting
 
 ```yaml
 name: Verify RedAudit

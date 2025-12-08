@@ -5,24 +5,30 @@
 ## Error Codes and Resolution
 
 ### 1. `Permission denied` / "Root privileges required"
+
 **Symptom**: The script exits immediately with a privilege error.
 **Cause**: The application requires raw socket access for `nmap` (SYN scans/OS detection) and `tcpdump`.
 **Resolution**:
+
 - Always execute with `sudo`.
 - Verify user matches sudoers policy.
 
 ### 2. `nmap: command not found`
+
 **Symptom**: Scanning engine fails to initialize.
 **Cause**: The `nmap` binary is not in the system `$PATH`.
 **Resolution**:
+
 ```bash
 sudo apt update && sudo apt install nmap
 ```
 
 ### 3. `ModuleNotFoundError: No module named 'cryptography'`
+
 **Symptom**: Script fails during imports.
 **Cause**: Python dependencies are missing or installed in a different environment.
 **Resolution**:
+
 ```bash
 pip3 install -r requirements.txt
 # Or run the verified installer
@@ -30,39 +36,50 @@ sudo bash redaudit_install.sh
 ```
 
 ### 4. `Heartbeat file stuck`
+
 **Symptom**: The timestamp in `~/.redaudit/logs/heartbeat` is older than 30 seconds.
 **Cause**: The main thread may be blocked by a subprocess hanging (e.g., a stalled `nikto` scan).
 **Resolution**:
+
 - Check system load: `top`
 - Inspect logs: `tail -f ~/.redaudit/logs/redaudit.log`
 - Terminate process if unresponsive > 5 minutes.
 
 ### 5. `Decryption failed: Invalid Token`
+
 **Symptom**: `redaudit_decrypt.py` rejects the password.
 **Cause**: Incorrect password derived key does not match the file signature.
 **Resolution**:
+
 - Ensure correct case sensitivity.
 - Verify file integrity (check file size > 0). Do not abort immediately; deep scans on filtered hosts can take time.
 
 ### 5. "Scans seem to hang" / Slow progress
+
 **Symptom**: The tool pauses for 1-2 minutes on a single host.
-**Explanation**: RedAudit v2.5 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
+**Explanation**: RedAudit v2.6 performs **Deep Identity Scans** on complex hosts (combined TCP/UDP/OS fingerprinting).
+
 - **Duration**: These scans can legitimately take **90–150 seconds** per host.
 - **Why**: Essential for identifying IoT boxes, firewalls, or filtered servers that hide their OS.
 - **Check**: Look for the `[deep]` marker in the CLI output.
 
 ### 6. "Cryptography not available" warning
+
 **Symptom**: You see a warning about `python3-cryptography` not being available.
-**Explanation**: Encryption feature requires `python3-cryptography`. In v2.5, the tool gracefully degrades if it's missing.
-**Solution**: 
+**Explanation**: Encryption feature requires `python3-cryptography`. The tool gracefully degrades if it's missing.
+**Solution**:
+
 ```bash
 sudo apt install python3-cryptography
 ```
-**Note**: In v2.5, if cryptography is unavailable, encryption options are automatically disabled. No password prompts will appear.
+
+**Note**: If cryptography is unavailable, encryption options are automatically disabled. No password prompts will appear.
 
 ### 7. Non-interactive mode errors
+
 **Symptom**: `--target` argument not working or "Error: --target is required".
-**Solution**: 
+**Solution**:
+
 - Ensure you provide `--target` with a valid CIDR (e.g., `--target 192.168.1.0/24`)
 - Multiple targets: `--target "192.168.1.0/24,10.0.0.0/24"`
 - Check CIDR format is correct
@@ -70,6 +87,7 @@ sudo apt install python3-cryptography
 
 **Symptom**: The script refuses to start.
 **Solution**: Run the installer again to fix missing python libraries:
+
 ```bash
 sudo bash redaudit_install.sh -y
 ```

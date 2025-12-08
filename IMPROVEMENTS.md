@@ -2,7 +2,7 @@
 
 This document outlines the technical roadmap, planned architectural improvements, and discarded approaches for RedAudit.
 
-## Immediate Roadmap (v2.6+)
+## Immediate Roadmap (v2.7+)
 
 | Priority | Feature | Description |
 | :--- | :--- | :--- |
@@ -15,23 +15,28 @@ This document outlines the technical roadmap, planned architectural improvements
 ## Architectural Proposals
 
 ### 1. Modular Plugin Engine
+
 **Status**: Under Consideration
 **Concept**: Decouple the core scanner from tools. Allow Python-based "Plugins" to define new tool wrappers (e.g., specific IoT scanners) without modifying core logic.
 **Benefit**: easier community contribution and extensibility.
 
 ### 2. Distributed Scanning (Master/Slave)
+
 **Status**: Long-term
 **Concept**: Separate the Orchestrator from verify workers.
+
 - Central API (Master) distributes targets.
 - Remote Agents (Slaves) execute scans and return JSON.
 
 ## Discarded Concepts
 
 ### 1. Web GUI (Flask/Django)
+
 **Reason**: Increases attack surface and dependency weight. RedAudit targets headless servers and CLI workflows.
 Alternative: Use JSON output to feed external Dashboards (e.g., ELK Stack).
 
 ### 2. Active Exploitation
+
 **Reason**: Out of scope. RedAudit is an *auditing* and *discovery* tool, not an exploitation framework (like Metasploit).
 **Policy**: The tool will remain strictly read-only/non-destructive.
 
@@ -42,9 +47,11 @@ tests/
 ├── test_network_discovery.py # Mocking de interfaces
 └── test_scan_modes.py        # Mocking de Nmap
 ```
+
 > **Acción**: Crear `.github/workflows/tests.yml` para ejecutar estos tests en cada PR.
 
 ### 2. Configuración Persistente
+
 Eliminar valores hardcoded y permitir configuración de usuario en `~/.redaudit/config.yaml`.
 
 ```yaml
@@ -57,11 +64,13 @@ default:
 ```
 
 ### 3. Nuevos Formatos de Exportación
-*   📄 **PDF**: Reportes ejecutivos con gráficos de topología.
-*   📊 **CSV**: Para importación en Excel/Pandas.
-*   🌐 **HTML**: Reportes interactivos con tablas y búsqueda.
+
+* 📄 **PDF**: Reportes ejecutivos con gráficos de topología.
+- 📊 **CSV**: Para importación en Excel/Pandas.
+- 🌐 **HTML**: Reportes interactivos con tablas y búsqueda.
 
 ### 4. Integración de CVEs
+
 Enriquecer los resultados consultando bases de datos de vulnerabilidades.
 
 ```python
@@ -71,6 +80,7 @@ if service_version:
 ```
 
 ### 5. Comparación de Auditorías (Diffing)
+
 Detectar cambios entre dos escaneos para identificar desviaciones.
 
 ```bash
@@ -82,17 +92,20 @@ redaudit --compare scan_ayer.json scan_hoy.json
 
 ## 🚀 Roadmap Estratégico
 
-### v2.6 (Short Term: Consolidation)
-*Focus on code quality, testing, and data usability.*
+### v2.6 (Completed - December 2026)
 
-- [ ] **Test Suite**: Implement missing unit and integration tests.
-- [ ] **Export**: Support for CSV and basic HTML output.
-- [ ] **Multi-language**: Facilitate adding more languages (refactor strings).
-- [ ] **Comparison**: Implement basic `diff` functionality between JSON reports.
+*Focus on code quality, testing, and modularization.*
 
-**Estimate**: Q1 2026
+- [x] **Modular Architecture**: Refactored into Python package structure
+- [x] **CI/CD Pipeline**: GitHub Actions for automated testing (Python 3.9-3.12)
+- [x] **Test Suite**: Expanded to 34 automated tests
+- [x] **Named Constants**: All magic numbers replaced
+- [x] **Backward Compatibility**: Original `redaudit.py` preserved as wrapper
+
+### v2.7 (Short Term: Data Usability)
 
 ### v3.0 (Mid Term: Expansion)
+
 *Focus on integration and visualization.*
 
 - [ ] **Web Dashboard**: Lightweight server (Flask/FastAPI) to visualize historical reports.
@@ -103,6 +116,7 @@ redaudit --compare scan_ayer.json scan_hoy.json
 **Estimado**: Q2-Q3 2026
 
 ### v4.0 (Largo Plazo: Inteligencia)
+
 *Enfoque en análisis avanzado y gran escala.*
 
 - [ ] **Machine Learning**: Detección de anomalías en patrones de tráfico.
@@ -128,15 +142,15 @@ Propuestas que evalué pero no implementaré:
 
 Si deseas contribuir a alguna de estas features:
 
-1.  Check existing [Issues](https://github.com/dorinbadea/RedAudit/issues).
-2.  Comment before starting to avoid duplication.
-3.  Read [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
-4.  Open a [Discussion](https://github.com/dorinbadea/RedAudit/discussions) for new ideas.
+1. Check existing [Issues](https://github.com/dorinbadea/RedAudit/issues).
+2. Comment before starting to avoid duplication.
+3. Read [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
+4. Open a [Discussion](https://github.com/dorinbadea/RedAudit/discussions) for new ideas.
 
 **Especialmente busco ayuda en:**
-*   Tests unitarios (ideal para empezar).
-*   Traducción a otros idiomas.
-*   Documentación y ejemplos de uso.
+- Tests unitarios (ideal para empezar).
+- Traducción a otros idiomas.
+- Documentación y ejemplos de uso.
 
 ---
 
@@ -148,4 +162,3 @@ Si deseas contribuir a alguna de estas features:
 <sub>Si este documento no se actualiza en >6 meses, el proyecto puede estar pausado. En ese caso, considera hacer un fork o contactarme.</sub>
 
 </div>
-

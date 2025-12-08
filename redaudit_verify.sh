@@ -1,6 +1,6 @@
 #!/bin/bash
 # RedAudit - Interactive Network Auditor
-# Copyright (C) 2025  Dorin Badea
+# Copyright (C) 2026  Dorin Badea
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 # RedAudit Installation Verification Script
 
-echo "🔍 RedAudit v2.5 Installation Verification"
+echo "RedAudit v2.6 Installation Verification"
 echo "======================================"
 echo
 

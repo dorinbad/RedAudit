@@ -1,13 +1,17 @@
 # RedAudit Report Schema
 
 ## Overview
+
 RedAudit generates machine-readable reports in JSON format. This document describes the schema structure for `redaudit_report_<timestamp>.json` artifacts.
+
 **Data Types**: Standard JSON types (`string`, `number`, `boolean`, `array`, `object`).
 **Nullable**: Fields are nullable unless specified otherwise.
+**Source Module**: `redaudit/core/reporter.py` (v2.6+)
 
 ## Schema Definition
 
 ### Root Object
+
 The top-level container for the scan session.
 
 | Field | Type | Description |
@@ -18,6 +22,7 @@ The top-level container for the scan session.
 | `scan_summary` | `object` | Aggregated statistics. |
 
 ### Host Object
+
 Represents a single targeted IP address.
 
 ```json
@@ -29,7 +34,7 @@ This field appears only if automatic deep scan was triggered.
 
 | Field | Type | Description |
 |---|---|---|
-| `strategy` | string | Strategy used ("adaptive_v2.5") |
+| `strategy` | string | Strategy identifier ("adaptive_v2.5" - feature introduced in v2.5) |
 | `mac_address` | string | (Optional) MAC address if detected |
 | `vendor` | string | (Optional) Hardware vendor if detected |
 | `phase2_skipped` | boolean | True if Phase 2 (UDP/OS) was skipped because Phase 1 found identity |
@@ -93,6 +98,7 @@ List of web vulnerability findings. Each entry contains:
 | `duration` | string | Total scan duration (HH:MM:SS format) |
 
 ## Network Info Array
+
 List of detected network interfaces.
 
 ```json
