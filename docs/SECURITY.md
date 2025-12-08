@@ -22,6 +22,7 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 - **Primitive**: AES-128-CBC (Fernet specification).
 - **Key Management**: Keys are derived from user-supplied passwords using PBKDF2HMAC-SHA256 with 480,000 iterations and a per-session random salt.
 - **Integrity**: Fernet includes a HMAC signature to prevent ciphertext tampering.
+- **Password Policy**: Minimum 12 characters with complexity requirements (uppercase, lowercase, digit).
 - **Module Location**: `redaudit/core/crypto.py`
 
 ## 3. Operational Security (OpSec)
@@ -35,7 +36,15 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 
 All operations are logged to `~/.redaudit/logs/` with rotation policies (max 10MB, 5 backups). Logs contain execution timestamps, thread identifiers, and raw command invocations for accountability.
 
-## 5. Modular Architecture (v2.6)
+## 5. CI/CD Security
+
+Automated security controls are integrated into the development pipeline:
+
+- **Dependabot**: Weekly scans for vulnerable dependencies (pip, GitHub Actions)
+- **CodeQL**: Static analysis for security vulnerabilities on every push/PR
+- **Multi-version Testing**: Compatibility verified across Python 3.9-3.12
+
+## 6. Modular Architecture (v2.6)
 
 The codebase is organized into focused modules to improve maintainability and auditability:
 
@@ -43,7 +52,7 @@ The codebase is organized into focused modules to improve maintainability and au
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
 - **Test coverage**: 34 automated tests with CI/CD pipeline
 
-## 6. License
+## 7. License
 
 This security model is part of the RedAudit project and is covered by the  
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.

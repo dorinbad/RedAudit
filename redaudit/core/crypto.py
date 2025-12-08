@@ -109,6 +109,46 @@ def decrypt_data(encrypted_data: bytes, encryption_key: bytes) -> bytes:
     return f.decrypt(encrypted_data)
 
 
+def validate_password_strength(password: str, lang: str = "en") -> tuple:
+    """
+    Validate password meets security requirements.
+
+    Args:
+        password: Password to validate
+        lang: Language for error messages
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    import re
+
+    if len(password) < MIN_PASSWORD_LENGTH:
+        msg = f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+        if lang == "es":
+            msg = f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres"
+        return False, msg
+
+    if not re.search(r'[A-Z]', password):
+        msg = "Password must contain at least one uppercase letter"
+        if lang == "es":
+            msg = "La contraseña debe contener al menos una mayúscula"
+        return False, msg
+
+    if not re.search(r'[a-z]', password):
+        msg = "Password must contain at least one lowercase letter"
+        if lang == "es":
+            msg = "La contraseña debe contener al menos una minúscula"
+        return False, msg
+
+    if not re.search(r'[0-9]', password):
+        msg = "Password must contain at least one digit"
+        if lang == "es":
+            msg = "La contraseña debe contener al menos un número"
+        return False, msg
+
+    return True, ""
+
+
 def ask_password_twice(prompt: str = "Password", lang: str = "en") -> str:
     """
     Prompt user for password twice with validation.
@@ -123,11 +163,9 @@ def ask_password_twice(prompt: str = "Password", lang: str = "en") -> str:
     while True:
         p1 = getpass.getpass(f"{COLORS['CYAN']}?{COLORS['ENDC']} {prompt}: ")
 
-        if len(p1) < MIN_PASSWORD_LENGTH:
-            msg = "Password must be at least 8 characters"
-            if lang == "es":
-                msg = "La contraseña debe tener al menos 8 caracteres"
-            print(f"{COLORS['WARNING']}[WARNING]{COLORS['ENDC']} {msg}")
+        is_valid, error_msg = validate_password_strength(p1, lang)
+        if not is_valid:
+            print(f"{COLORS['WARNING']}[WARNING]{COLORS['ENDC']} {error_msg}")
             continue
 
         p2 = getpass.getpass(f"{COLORS['CYAN']}?{COLORS['ENDC']} Confirm: ")

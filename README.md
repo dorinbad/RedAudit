@@ -39,6 +39,41 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 
+### System Overview
+
+```mermaid
+flowchart TB
+    subgraph Input["User Input"]
+        A[CLI / Interactive Mode]
+    end
+    
+    subgraph Core["redaudit/core/"]
+        B[auditor.py<br/>Orchestrator]
+        C[scanner.py<br/>Nmap + Deep Scan]
+        D[network.py<br/>Interface Detection]
+        E[reporter.py<br/>JSON/TXT Output]
+        F[crypto.py<br/>AES-128 + PBKDF2]
+    end
+    
+    subgraph Utils["redaudit/utils/"]
+        G[constants.py]
+        H[i18n.py]
+    end
+    
+    subgraph External["External Tools"]
+        I[nmap]
+        J[whatweb / nikto]
+        K[testssl.sh]
+    end
+    
+    A --> B
+    B --> C & D & E & F
+    C --> I & J & K
+    B --> G & H
+    E --> Output[(Encrypted Reports)]
+    F --> Output
+```
+
 Deep scans are triggered selectively: web auditing modules launch only upon detection of HTTP/HTTPS services, and SSL inspection is reserved for encrypted ports.
 
 ## Quick demo

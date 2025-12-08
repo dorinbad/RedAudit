@@ -39,6 +39,41 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 | **Orquestador** | `concurrent.futures` (Python) | Gestiona pools de hilos para escaneo paralelo de hosts. |
 | **Cifrado** | `python3-cryptography` | Cifrado AES-128 para reportes de auditoría sensibles. |
 
+### Vista General del Sistema
+
+```mermaid
+flowchart TB
+    subgraph Input["Entrada de Usuario"]
+        A[CLI / Modo Interactivo]
+    end
+    
+    subgraph Core["redaudit/core/"]
+        B[auditor.py<br/>Orquestador]
+        C[scanner.py<br/>Nmap + Deep Scan]
+        D[network.py<br/>Detección de Interfaces]
+        E[reporter.py<br/>Salida JSON/TXT]
+        F[crypto.py<br/>AES-128 + PBKDF2]
+    end
+    
+    subgraph Utils["redaudit/utils/"]
+        G[constants.py]
+        H[i18n.py]
+    end
+    
+    subgraph External["Herramientas Externas"]
+        I[nmap]
+        J[whatweb / nikto]
+        K[testssl.sh]
+    end
+    
+    A --> B
+    B --> C & D & E & F
+    C --> I & J & K
+    B --> G & H
+    E --> Output[(Reportes Cifrados)]
+    F --> Output
+```
+
 Los escaneos profundos se activan selectivamente: los módulos de auditoría web solo se lanzan tras la detección de servicios HTTP/HTTPS, y la inspección SSL se reserva para puertos cifrados.
 
 ## Demo rápida
