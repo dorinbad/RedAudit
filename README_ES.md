@@ -5,6 +5,15 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 
+```text
+    ____          __  ___           ___ __ 
+   / __ \___  ___/ / /   | __  ____/ (_) /_
+  / /_/ / _ \/ __  / / /| |/ / / / __  / __/
+ / _, _/  __/ /_/ / / ___ / /_/ / /_/ / /_  
+/_/ |_|\___/\__,_/\__,_/\__/  |_\__,_/\__,_/\__/  
+                                      v2.5
+```
+
 ## Visión General
 RedAudit automatiza las fases de descubrimiento, enumeración y reporte en evaluaciones de seguridad de red. Está diseñado para su uso en entornos de laboratorio controlados, flujos de trabajo de hardening defensivo y ejercicios de seguridad ofensiva autorizados. Al orquestar herramientas estándar de la industria en un pipeline concurrente coherente, reduce la carga manual y garantiza una generación de resultados consistente.
 

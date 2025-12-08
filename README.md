@@ -5,6 +5,15 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 
+```text
+    ____          __  ___           ___ __ 
+   / __ \___  ___/ / /   | __  ____/ (_) /_
+  / /_/ / _ \/ __  / / /| |/ / / / __  / __/
+ / _, _/  __/ /_/ / / ___ / /_/ / /_/ / /_  
+/_/ |_|\___/\__,_(_)_/  |_\__,_/\__,_/\__/  
+                                      v2.5
+```
+
 ## Overview
 RedAudit automates the discovery, enumeration, and reporting phases of network security assessments. It is designed for use in controlled lab environments, defensive hardening workflows, and authorized offensive security exercises. By orchestrating standard industry tools into a coherent concurrent pipeline, it reduces manual overhead and ensures consistent output generation.
 
