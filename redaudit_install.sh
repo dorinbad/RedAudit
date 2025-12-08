@@ -128,6 +128,27 @@ else
     echo "$MSG_ALIAS_EXISTS $RC_FILE"
 fi
 
+
+# Create the specific source command message based on the shell
+if [[ "$RC_FILE" == *".zshrc" ]]; then
+    SOURCE_CMD="source ~/.zshrc"
+    SHELL_NAME="Zsh"
+else
+    SOURCE_CMD="source ~/.bashrc"
+    SHELL_NAME="Bash"
+fi
+
 echo ""
 echo "$MSG_DONE"
-echo "$MSG_USAGE"
+
+if [[ "$LANG_CODE" == "es" ]]; then
+    echo "👉 IMPORTANTE: Para usar 'redaudit' inmediatamente, ejecuta:"
+    echo "   $SOURCE_CMD"
+    echo ""
+    echo "(O simplemente abre una nueva terminal)"
+else
+    echo "👉 IMPORTANT: To use 'redaudit' immediately, run:"
+    echo "   $SOURCE_CMD"
+    echo ""
+    echo "(Or simply open a new terminal)"
+fi

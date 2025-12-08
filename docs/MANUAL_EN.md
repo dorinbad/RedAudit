@@ -15,7 +15,7 @@
     - [Concurrency & Threads](#concurrency--threads)
     - [Rate Limiting](#rate-limiting)
     - [Encryption](#encryption)
-6. [Scan Logic &Phases](#6-scan-logic--phases)
+6. [Scan Logic & Phases](#6-scan-logic--phases)
 7. [Decryption Guide](#7-decryption-guide)
 8. [Monitoring & Heartbeat](#8-monitoring--heartbeat)
 9. [Verification Script](#9-verification-script)
@@ -43,7 +43,9 @@ RedAudit uses a consolidated installer script that handles dependencies (apt) an
 git clone https://github.com/dorinbadea/RedAudit.git
 cd RedAudit
 sudo bash redaudit_install.sh
-source ~/.bashrc  # Activates the alias
+source ~/.bashrc  # (Bash)
+# OR
+source ~/.zshrc   # (Zsh/Kali)
 ```
 
 **Dependencies installed:**

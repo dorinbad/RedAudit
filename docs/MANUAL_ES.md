@@ -43,7 +43,9 @@ RedAudit usa un script instalador consolidado que gestiona dependencias (apt) y 
 git clone https://github.com/dorinbadea/RedAudit.git
 cd RedAudit
 sudo bash redaudit_install.sh
-source ~/.bashrc  # Activa el alias
+source ~/.bashrc  # (Bash)
+# O
+source ~/.zshrc   # (Zsh/Kali)
 ```
 
 **Dependencias instaladas:**
@@ -59,7 +61,6 @@ Ejecuta `redaudit` para iniciar el asistente interactivo.
 ? Select network: 192.168.1.0/24
 ? Select scan mode: NORMAL
 ? Enter number of threads [1-16]: 6
-? Enable Web Vulnerability scans? [y/N]: y
 ? Enable Web Vulnerability scans? [y/N]: y
 ? Encrypt reports with password? [y/N]: y
 ```

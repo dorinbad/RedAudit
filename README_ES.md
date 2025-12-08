@@ -79,7 +79,8 @@ cd RedAudit
 sudo bash redaudit_install.sh
 
 # 3. Recargar Shell (para activar el alias)
-source ~/.bashrc  # o ~/.zshrc
+source ~/.bashrc  # para usuarios Bash
+source ~/.zshrc   # para usuarios Zsh (Kali por defecto)
 ```
 *Nota: Usa `sudo bash redaudit_install.sh -y` para instalación no interactiva.*
 

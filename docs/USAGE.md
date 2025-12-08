@@ -17,7 +17,9 @@ RedAudit is designed for Kali Linux or Debian-based systems.
 
 2. **Reload Shell**:
    ```bash
-   source ~/.bashrc  # or ~/.zshrc
+   source ~/.bashrc  # for Bash
+   # OR
+   source ~/.zshrc   # for Zsh
    ```
 
 3. **Run**:
