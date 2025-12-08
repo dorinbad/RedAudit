@@ -62,3 +62,36 @@ jobs:
       - name: Run flake8
         run: flake8 redaudit/ --max-line-length=120 --ignore=E501,W503,E203
         continue-on-error: true
+
+  update-badge:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest python-nmap cryptography
+
+      - name: Count tests
+        id: count
+        run: |
+          TEST_COUNT=$(pytest tests/ --collect-only -q 2>/dev/null | tail -1 | grep -oE '^[0-9]+' || echo "0")
+          echo "test_count=$TEST_COUNT" >> $GITHUB_OUTPUT
+          echo "Found $TEST_COUNT tests"
+
+      - name: Update Gist Badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ secrets.GIST_ID }}
+          filename: redaudit-tests.json
+          label: tests
+          message: ${{ steps.count.outputs.test_count }} passing
+          color: brightgreen
