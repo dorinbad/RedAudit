@@ -57,9 +57,22 @@ cd RedAudit
 
 # 2. Ejecutar el instalador (gestiona dependencias y aliases)
 sudo bash redaudit_install.sh
-
-redaudit
 ```
+
+### Activar el Alias
+
+Después de la instalación, necesitas recargar la configuración de tu shell para usar el comando `redaudit`:
+
+| Distribución | Shell por Defecto | Comando |
+|:---|:---|:---|
+| **Kali Linux** (2020.3+) | Zsh | `source ~/.zshrc` |
+| **Debian / Ubuntu / Parrot** | Bash | `source ~/.bashrc` |
+
+**O simplemente abre una nueva ventana de terminal.**
+
+> **¿Por qué dos shells?** Kali Linux cambió de Bash a Zsh en 2020 para ofrecer características mejoradas y más personalización. La mayoría de otras distros basadas en Debian siguen usando Bash por defecto. El instalador detecta automáticamente tu shell y configura el archivo correcto.
+
+### Asistente Interactivo
 
 El asistente te guiará:
 

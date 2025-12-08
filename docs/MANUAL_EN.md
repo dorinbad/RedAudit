@@ -26,6 +26,17 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
+### Shell Configuration
+
+After installation, activate the alias:
+
+| Distribution | Default Shell | Activation Command |
+|:---|:---|:---|
+| **Kali Linux** (2020.3+) | Zsh | `source ~/.zshrc` |
+| **Debian / Ubuntu / Parrot** | Bash | `source ~/.bashrc` |
+
+> **Note**: Kali uses Zsh by default since 2020. The installer auto-detects your shell.
+
 ## 3. Configuration
 
 RedAudit prioritizes runtime configuration via CLI arguments over static config files to facilitate automation and stateless execution in containerized environments.

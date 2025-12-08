@@ -57,19 +57,35 @@ cd RedAudit
 
 # 2. Run the installer (handles dependencies and aliases)
 sudo bash redaudit_install.sh
+```
 
+### Activating the Alias
 
+After installation, you need to reload your shell configuration to use the `redaudit` command:
+
+| Distribution | Default Shell | Command |
+|:---|:---|:---|
+| **Kali Linux** (2020.3+) | Zsh | `source ~/.zshrc` |
+| **Debian / Ubuntu / Parrot** | Bash | `source ~/.bashrc` |
+
+**Or simply open a new terminal window.**
+
+> **Why two shells?** Kali Linux switched from Bash to Zsh in 2020 for enhanced features and customization. Most other Debian-based distros still use Bash as default. The installer automatically detects your shell and configures the correct file.
+
+### Usage Examples
+
+```bash
 # Multiple targets
 sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
 
-    # Skip legal warning (for automation)
-    sudo redaudit --target 192.168.1.0/24 --mode fast --yes
+# Skip legal warning (for automation)
+sudo redaudit --target 192.168.1.0/24 --mode fast --yes
 
-    # With encryption (random password generated)
-    sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
+# With encryption (random password generated)
+sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
 
-    # With encryption (custom password)
-    sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password "MySecurePassword123" --yes
+# With encryption (custom password)
+sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password "MySecurePassword123" --yes
 ```
 
 **Available CLI Options:**
