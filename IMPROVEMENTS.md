@@ -8,8 +8,12 @@
 
 </div>
 
-> **📌 Nota Importante**  
-> Este roadmap es una guía de desarrollo, no un compromiso contractual. Las prioridades pueden cambiar según feedback de la comunidad, hallazgos de seguridad o recursos disponibles.
+<div align="center">
+
+**📌 Nota Importante**  
+*Este roadmap es una guía de desarrollo, no un compromiso contractual. Las prioridades pueden cambiar según feedback de la comunidad, hallazgos de seguridad o recursos disponibles.*
+
+</div>
 
 ---
 
