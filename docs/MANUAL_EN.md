@@ -151,6 +151,53 @@ python -m redaudit --help
         - Saves `.pcap` files in your report directory (e.g., `traffic_192.168.1.1.pcap`).
         - If `tshark` is installed, a text summary is embedded in `host.deep_scan.pcap_capture`.
 
+## 6.5. Tool Activation Matrix
+
+When does each external tool activate? This table shows the exact conditions:
+
+| Tool | Trigger Condition | Scan Mode | Output Location |
+|:-----|:------------------|:----------|:----------------|
+| **nmap** | Always | All | `host.ports[]` |
+| **searchsploit** | When service has version detected | All | `ports[].known_exploits` |
+| **whatweb** | When HTTP/HTTPS port detected | All | `vulnerabilities[].whatweb` |
+| **nikto** | When HTTP/HTTPS port detected | **Completo only** | `vulnerabilities[].nikto_findings` |
+| **curl** | When HTTP/HTTPS port detected | All | `vulnerabilities[].curl_headers` |
+| **wget** | When HTTP/HTTPS port detected | All | `vulnerabilities[].wget_headers` |
+| **openssl** | When HTTPS port detected | All | `vulnerabilities[].tls_info` |
+| **testssl.sh** | When HTTPS port detected | **Completo only** | `vulnerabilities[].testssl_analysis` |
+| **tcpdump** | During Deep Scan | All (if triggered) | `deep_scan.pcap_capture` |
+| **tshark** | After tcpdump capture | All (if triggered) | `deep_scan.pcap_capture.tshark_summary` |
+| **dig** | After port scan | All | `host.dns.reverse` |
+| **whois** | For public IPs only | All | `host.dns.whois_summary` |
+
+### Activation Flow
+
+```
+Discovery (nmap -sn)
+    │
+    ▼
+Port Scan (nmap -sV)
+    │
+    ├── Service has version? ──▶ searchsploit
+    │
+    ├── HTTP/HTTPS detected? ──▶ whatweb, curl, wget
+    │   │
+    │   └── Completo mode? ──▶ nikto
+    │
+    ├── HTTPS detected? ──▶ openssl
+    │   │
+    │   └── Completo mode? ──▶ testssl.sh
+    │
+    └── Deep Scan triggered?
+        ├── tcpdump (traffic capture)
+        └── tshark (summary)
+    │
+    ▼
+Enrichment
+    ├── dig (reverse DNS)
+    └── whois (public IPs only)
+```
+
 ## 7. Decryption Guide
 
 Encrypted reports (`.json.enc`, `.txt.enc`) are unreadable without the password and the `.salt` file.

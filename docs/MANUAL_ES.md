@@ -191,6 +191,53 @@ El uso de esta herramienta implica la aceptación de los términos de la licenci
         - Guarda archivos `.pcap` en el directorio de reportes.
         - Si `tshark` está instalado, incrusta un resumen de texto en `host.deep_scan.pcap_capture`.
 
+## 6.5. Matriz de Activación de Herramientas
+
+¿Cuándo se activa cada herramienta externa? Esta tabla muestra las condiciones exactas:
+
+| Herramienta | Condición de Activación | Modo de Escaneo | Ubicación en Salida |
+|:------------|:------------------------|:----------------|:--------------------|
+| **nmap** | Siempre | Todos | `host.ports[]` |
+| **searchsploit** | Cuando servicio tiene versión detectada | Todos | `ports[].known_exploits` |
+| **whatweb** | Cuando se detecta puerto HTTP/HTTPS | Todos | `vulnerabilities[].whatweb` |
+| **nikto** | Cuando se detecta puerto HTTP/HTTPS | **Solo Completo** | `vulnerabilities[].nikto_findings` |
+| **curl** | Cuando se detecta puerto HTTP/HTTPS | Todos | `vulnerabilities[].curl_headers` |
+| **wget** | Cuando se detecta puerto HTTP/HTTPS | Todos | `vulnerabilities[].wget_headers` |
+| **openssl** | Cuando se detecta puerto HTTPS | Todos | `vulnerabilities[].tls_info` |
+| **testssl.sh** | Cuando se detecta puerto HTTPS | **Solo Completo** | `vulnerabilities[].testssl_analysis` |
+| **tcpdump** | Durante Deep Scan | Todos (si activado) | `deep_scan.pcap_capture` |
+| **tshark** | Después de captura tcpdump | Todos (si activado) | `deep_scan.pcap_capture.tshark_summary` |
+| **dig** | Después de escaneo de puertos | Todos | `host.dns.reverse` |
+| **whois** | Solo para IPs públicas | Todos | `host.dns.whois_summary` |
+
+### Flujo de Activación
+
+```text
+Descubrimiento (nmap -sn)
+    │
+    ▼
+Escaneo de Puertos (nmap -sV)
+    │
+    ├── ¿Servicio tiene versión? ──▶ searchsploit
+    │
+    ├── ¿HTTP/HTTPS detectado? ──▶ whatweb, curl, wget
+    │   │
+    │   └── ¿Modo Completo? ──▶ nikto
+    │
+    ├── ¿HTTPS detectado? ──▶ openssl
+    │   │
+    │   └── ¿Modo Completo? ──▶ testssl.sh
+    │
+    └── ¿Deep Scan activado?
+        ├── tcpdump (captura de tráfico)
+        └── tshark (resumen)
+    │
+    ▼
+Enriquecimiento
+    ├── dig (DNS inverso)
+    └── whois (solo IPs públicas)
+```
+
 ## 7. Guía de Descifrado
 
 Los reportes cifrados (`.json.enc`, `.txt.enc`) son ilegibles sin la contraseña y el archivo `.salt`.
