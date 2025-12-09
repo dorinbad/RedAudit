@@ -8,8 +8,8 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 | Prioridad | Característica | Descripción |
 | :--- | :--- | :--- |
-| **Alta** | **Integración CVE** | Integrar búsqueda de base de datos CVE local (vía NVD/Vulners) para correlacionar hallazgos NSE con IDs de CVE. |
 | **Alta** | **Soporte IPv6** | Implementar soporte completo `nmap -6` y validación regex IPv6 en el módulo InputSanitizer. |
+| **Alta** | **Correlación CVE** | Profundizar el análisis de vulnerabilidades correlacionando versiones identificadas con NVD (más allá de SearchSploit). |
 | **Media** | **Análisis Diferencial** | Crear módulo `diff` para comparar dos reportes JSON y resaltar deltas (nuevos puertos/vulns). |
 | **Media** | **Proxy Chains** | Soporte nativo para proxies SOCKS5 para facilitar pivoting. |
 | **Baja** | **Contenedorización** | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
@@ -19,7 +19,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 ### 1. Motor de Plugins Modular
 
 **Estado**: En Consideración
-**Concepto**: Desacoplar el escáner principal de las herramientas. Permitir "Plugins" basados en Python para definir nuevos wrappers de herramientas (ej: escáneres IoT específicos) sin modificar la lógica central.
+**Concepto**: Desacoplar el escáner principal de las herramientas. Permitir "Plugins" basados en Python para definir nuevos wrappers de herramientas sin modificar la lógica central.
 **Beneficio**: Facilita contribución de la comunidad y extensibilidad.
 
 ### 2. Escaneo Distribuido (Master/Slave)
@@ -30,70 +30,23 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 - API Central (Master) distribuye objetivos.
 - Agentes Remotos (Slaves) ejecutan escaneos y devuelven JSON.
 
-## Conceptos Descartados
+### 3. Configuración Persistente
 
-### 1. GUI Web (Flask/Django)
+**Estado**: Planificado
+**Concepto**: Permitir configuración de usuario en `~/.redaudit/config.yaml` para anular valores por defecto (eliminando la necesidad de flags CLI repetitivos).
 
-**Razón**: Incrementa superficie de ataque y peso de dependencias. RedAudit apunta a servidores sin interfaz gráfica y flujos CLI.
-Alternativa: Usar salida JSON para alimentar Dashboards externos (ej: ELK Stack).
+## Hitos Completados
 
-### 2. Explotación Activa
+### v2.6.1 (Completado - Diciembre 2026) -> **ACTUAL**
 
-**Razón**: Fuera de alcance. RedAudit es una herramienta de *auditoría* y *descubrimiento*, no un framework de explotación (como Metasploit).
-**Política**: La herramienta permanecerá estrictamente de solo lectura/no destructiva.
+*Enfoque en seguridad, profesionalismo e integración de herramientas externas.*
 
-```bash
-tests/
-├── test_input_validation.py  # Tests de sanitización (Existente)
-├── test_encryption.py        # Tests de cifrado/descifrado (Existente)
-├── test_network_discovery.py # Mocking de interfaces
-└── test_scan_modes.py        # Mocking de Nmap
-```
-
-> **Acción**: Crear `.github/workflows/tests.yml` para ejecutar estos tests en cada PR.
-
-### 2. Configuración Persistente
-
-Eliminar valores hardcoded y permitir configuración de usuario en `~/.redaudit/config.yaml`.
-
-```yaml
-default:
-  threads: 6
-  rate_limit: 0
-  output_dir: ~/RedAuditReports
-  encrypt_by_default: false
-  language: es
-```
-
-### 3. Nuevos Formatos de Exportación
-
-- 📄 **PDF**: Reportes ejecutivos con gráficos de topología.
-
-- 📊 **CSV**: Para importación en Excel/Pandas.
-- 🌐 **HTML**: Reportes interactivos con tablas y búsqueda.
-
-### 4. Integración de CVEs
-
-Enriquecer los resultados consultando bases de datos de vulnerabilidades.
-
-```python
-if service_version:
-    cves = query_cve_database(service, version)
-    host['potential_vulnerabilities'] = cves
-```
-
-### 5. Comparación de Auditorías (Diffing)
-
-Detectar cambios entre dos escaneos para identificar desviaciones.
-
-```bash
-redaudit --compare scan_ayer.json scan_hoy.json
-# [!] Nuevo puerto detectado: 3306/tcp en 192.168.1.50
-```
-
----
-
-## 🚀 Roadmap Estratégico
+- [x] **Inteligencia de Exploits**: Integrado `searchsploit` para búsqueda automática de exploits basada en versiones.
+- [x] **Auditoría SSL/TLS**: Integrado `testssl.sh` para análisis criptográfico profundo de servicios HTTPS.
+- [x] **Endurecimiento de Seguridad**: Aumentados requisitos de complejidad de contraseñas (12+ chars, mayús/minús, números).
+- [x] **Seguridad CI/CD**: Añadido Dependabot (actualizaciones semanales) y CodeQL (análisis estático) a GitHub Actions.
+- [x] **Mejoras UX**: Añadidas barras de progreso `rich` con fallback elegante.
+- [x] **Documentación**: Añadidos diagramas de arquitectura (Mermaid), matrices de activación y profesionalización de todos los manuales.
 
 ### v2.6 (Completado - Diciembre 2026)
 
@@ -101,43 +54,18 @@ redaudit --compare scan_ayer.json scan_hoy.json
 
 - [x] **Arquitectura Modular**: Refactorizado en estructura de paquete Python
 - [x] **Pipeline CI/CD**: GitHub Actions para testing automatizado (Python 3.9-3.12)
-- [x] **Suite de Tests**: Expandido a 34 tests automatizados
+- [x] **Suite de Tests**: Expandido a 34 tests automatizados (89% de cobertura)
 - [x] **Constantes Nombradas**: Todos los números mágicos reemplazados
 - [x] **Compatibilidad hacia atrás**: `redaudit.py` original preservado como wrapper
 
-### v2.7 (Corto Plazo: Usabilidad de Datos)
-
-### v3.0 (Mediano Plazo: Expansión)
-
-*Enfoque en integración y visualización.*
-
-- [ ] **Dashboard Web**: Servidor ligero (Flask/FastAPI) para visualizar reportes históricos.
-- [ ] **Base de Datos**: Integración opcional con SQLite para historial de escaneos.
-- [ ] **Docker**: Contenedorización oficial de la herramienta.
-- [ ] **API REST**: Exponer el motor de escaneo vía API para integraciones de terceros.
-
-**Estimado**: Q2-Q3 2026
-
-### v4.0 (Largo Plazo: Inteligencia)
-
-*Enfoque en análisis avanzado y gran escala.*
-
-- [ ] **Machine Learning**: Detección de anomalías en patrones de tráfico.
-- [ ] **Modo Distribuido**: Orquestación de múltiples nodos de scanning.
-- [ ] **Integración SIEM**: Conectores nativos para Splunk, ELK, Wazuh.
-
-**Estimado**: 2026+
-
----
-
 ## Conceptos Descartados
-
-Propuestas que evalué pero no implementaré:
 
 | Propuesta | Razón del Descarte |
 | :--- | :--- |
-| **Soporte Nativo Windows** | Demasiado complejo de mantener en solitario. Usar WSL2/Docker. |
-| **GUI (GTK/Qt)** | RedAudit es una herramienta de automatización CLI. Fuera de alcance. |
+| **GUI Web (Controlador)** | Incrementa superficie de ataque y peso de dependencias. RedAudit está diseñado como herramienta CLI "headless" para automatización. |
+| **Explotación Activa** | Fuera de alcance. RedAudit es una herramienta de *auditoría* y *descubrimiento*, no un framework de explotación. |
+| **Soporte Nativo Windows** | Demasiado complejo de mantener en solitario por requisitos de sockets raw. Usar WSL2 o Docker. |
+| **Generación PDF** | Añade dependencias pesadas (LaTeX/ReportLab). La salida JSON debe ser consumida por herramientas de reporte externas. |
 
 ---
 
@@ -150,17 +78,9 @@ Si deseas contribuir a alguna de estas features:
 3. Lee [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
 4. Abre una [Discusión](https://github.com/dorinbadea/RedAudit/discussions) para nuevas ideas.
 
-**Especialmente busco ayuda en:**
-
-- Tests unitarios (ideal para empezar).
-- Traducción a otros idiomas.
-- Documentación y ejemplos de uso.
-
----
-
 <div align="center">
 
-**Mantenimiento Activo**  
+**Mantenimiento Activo**
 *Última actualización: Diciembre 2026*
 
 <sub>Si este documento no se actualiza en >6 meses, el proyecto puede estar pausado. En ese caso, considera hacer un fork o contactarme.</sub>

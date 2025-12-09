@@ -31,7 +31,28 @@ Represents a single targeted IP address.
 {
   "ip": "192.168.1.10",
   "status": "up",
+  "ports": [
+    {
+      "port": 80,
+      "state": "open",
+      "protocol": "tcp",
+      "service": "http",
+      "product": "Apache httpd",
+      "version": "2.4.41",
+      "known_exploits": [
+        {
+          "title": "Apache 2.4.41 - Remote Code Execution",
+          "id": "EDB-12345",
+          "url": "https://www.exploit-db.com/exploits/12345"
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### Deep Scan Object (Optional)
+
 This field appears only if automatic deep scan was triggered.
 
 | Field | Type | Description |
@@ -55,6 +76,7 @@ This field appears only if automatic deep scan was triggered.
 | `pcap_capture.tcpdump_error` | string | (Optional) Error from tcpdump if it failed |
 
 ### DNS Object (Optional)
+
 Appears in host records when DNS/whois enrichment was performed.
 
 | Field | Type | Description |
@@ -63,6 +85,7 @@ Appears in host records when DNS/whois enrichment was performed.
 | `whois_summary` | string | (Optional) Whois information for public IPs (first 25 lines) |
 
 ## Vulnerabilities Array
+
 List of web vulnerability findings. Each entry contains:
 
 | Field | Type | Description |
@@ -75,6 +98,7 @@ List of web vulnerability findings. Each entry contains:
 | `vulnerabilities[].findings` | array | List of vulnerability strings |
 | `vulnerabilities[].whatweb` | string | (Optional) WhatWeb output |
 | `vulnerabilities[].nikto_findings` | array | (Optional) Nikto findings (if FULL mode) |
+| `vulnerabilities[].testssl_analysis` | object | (Optional) TestSSL.sh results (if FULL mode and HTTPS). Contains `weak_ciphers`, `vulnerabilities`, `protocols`. |
 | `vulnerabilities[].curl_headers` | string | (Optional) HTTP headers from curl |
 | `vulnerabilities[].wget_spider` | string | (Optional) Wget spider output |
 | `vulnerabilities[].tls_info` | string | (Optional) OpenSSL TLS certificate info |

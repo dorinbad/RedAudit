@@ -31,6 +31,24 @@ Representa una única dirección IP objetivo.
 {
   "ip": "192.168.1.10",
   "status": "up",
+  "ports": [
+    {
+      "port": 80,
+      "state": "open",
+      "protocol": "tcp",
+      "service": "http",
+      "product": "Apache httpd",
+      "version": "2.4.41",
+      "known_exploits": [
+        {
+          "title": "Apache 2.4.41 - Remote Code Execution",
+          "id": "EDB-12345",
+          "url": "https://www.exploit-db.com/exploits/12345"
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ### Objeto Deep Scan (Opcional)
@@ -80,6 +98,7 @@ Lista de hallazgos de vulnerabilidades web. Cada entrada contiene:
 | `vulnerabilities[].findings` | array | Lista de strings de vulnerabilidades |
 | `vulnerabilities[].whatweb` | string | (Opcional) Salida de WhatWeb |
 | `vulnerabilities[].nikto_findings` | array | (Opcional) Hallazgos de Nikto (si modo FULL) |
+| `vulnerabilities[].testssl_analysis` | object | (Opcional) Resultados de TestSSL.sh (si modo FULL y HTTPS). |
 | `vulnerabilities[].curl_headers` | string | (Opcional) Cabeceras HTTP de curl |
 | `vulnerabilities[].wget_spider` | string | (Opcional) Salida de spider de Wget |
 | `vulnerabilities[].tls_info` | string | (Opcional) Info de certificado TLS de OpenSSL |
