@@ -9,9 +9,9 @@ RedAudit is designed for stateless execution via command-line arguments.
 ### Syntax
 
 ```bash
-sudo redaudit [TARGET] [OPTIONS]
+sudo redaudit [OPTIONS]
 # Or via Python module (v2.6+)
-sudo python -m redaudit [TARGET] [OPTIONS]
+sudo python -m redaudit [OPTIONS]
 ```
 
 ### Core Arguments
@@ -19,28 +19,32 @@ sudo python -m redaudit [TARGET] [OPTIONS]
 | Flag | Description |
 | :--- | :--- |
 | `-t`, `--target` | Target IP, subnet (CIDR), or comma-separated list. |
-| `-m`, `--mode` | Scan intensity: `fast` (ICMP), `normal` (Top ports), `full` (All ports + scripts). |
-| `--deep` | Enable aggressive vulnerability scanning (Web/NSE). Equivalent to `-m full`. |
+| `-m`, `--mode` | Scan intensity: `fast` (discovery), `normal` (top ports), `full` (all ports + scripts). |
 | `-o`, `--output` | Specify output directory. Default: `~/RedAuditReports`. |
-| `-l`, `--lang` | Interface language: `en` (default), `es`. |
+| `--lang` | Interface language: `en` (default), `es`. |
+| `-y`, `--yes` | Skip legal warning confirmation (use with caution). |
 
 ### Performance & Evasion
 
 | Flag | Description |
 | :--- | :--- |
-| `--threads <N>` | Set size of thread pool for concurrent host scanning. |
-| `-r`, `--rate-limit` | Seconds to sleep between thread operations (float). Includes ±30% jitter (v2.7). |
-| `--pcap` | Enable raw packet capture (`tcpdump`) during scan. |
+| `-j`, `--threads <N>` | Set thread pool size for concurrent host scanning (1-16, default: 6). |
+| `--rate-limit` | Seconds to sleep between host scans (float). Includes ±30% jitter (v2.7). |
 | `--prescan` | Enable fast asyncio pre-scan before nmap (v2.7). |
 | `--prescan-ports` | Port range for pre-scan (default: 1-1024). |
 | `--prescan-timeout` | Pre-scan connection timeout in seconds (default: 0.5). |
+| `--no-deep-scan` | Disable adaptive deep scan. |
+| `--no-vuln-scan` | Disable web vulnerability scanning. |
+| `--no-txt-report` | Disable TXT report generation. |
+| `--max-hosts` | Maximum number of hosts to scan (default: all). |
 
 ### Security
 
 | Flag | Description |
 | :--- | :--- |
-| `--encrypt` | Encrypt output artifacts with AES-128. Prompts for password if not provided. |
-| `--version` | Display version information and exit. |
+| `-e`, `--encrypt` | Encrypt output artifacts with AES-128. Prompts for password if not provided. |
+| `--encrypt-password` | Password for encryption (non-interactive mode). |
+| `-V`, `--version` | Display version information and exit. |
 
 ## Examples
 
@@ -48,24 +52,31 @@ sudo python -m redaudit [TARGET] [OPTIONS]
 Enumerates services on a Class C subnet with default concurrency.
 
 ```bash
-sudo redaudit -t 192.168.1.0/24
+sudo redaudit -t 192.168.1.0/24 --mode normal --yes
 ```
 
 **2. High-Stealth Targeted Scan**
 Scans a single host with rate limiting enabled to reduce noise.
 
 ```bash
-sudo redaudit -t 10.0.0.50 --rate-limit 1.5 --mode normal
+sudo redaudit -t 10.0.0.50 --rate-limit 1.5 --mode normal --yes
 ```
 
-**3. Forensics Mode**
-Deep scan with full traffic capture and encrypted reporting for chain-of-custody.
+**3. Full Audit with Encryption**
+Deep scan with encrypted reporting for chain-of-custody.
 
 ```bash
-sudo redaudit -t 192.168.1.100 --deep --pcap --encrypt
+sudo redaudit -t 192.168.1.100 --mode full --encrypt --yes
 ```
 
-### 3. Reports & Encryption
+**4. Fast Pre-scan on Large Range (v2.7)**
+Use asyncio pre-scan for fast port discovery before nmap.
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
+```
+
+### Reports & Encryption
 
 Reports are saved with a timestamp `redaudit_YYYYMMDD_HHMMSS`.
 
@@ -80,7 +91,7 @@ python3 redaudit_decrypt.py /path/to/report.json.enc
 
 This will generate `.decrypted` files (or restore original extension) after password verification.
 
-### 4. Logging
+### Logging
 
 Debug logs are stored in `~/.redaudit/logs/`. Check these files if the scan fails or behaves unexpectedly.
 
@@ -99,10 +110,10 @@ RedAudit allows you to set a delay (in seconds) between scanning hosts. **v2.7 a
 Enable `--prescan` to use asyncio TCP connect for fast port discovery before invoking nmap:
 
 ```bash
-sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024
+sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 ```
 
-**Note on Heartbeat**: If you set a very high delay (e.g., 60s) with many threads, the scan might seem "frozen". Check the "Active hosts" log or the heartbeat status.
+**Note on Heartbeat**: If you set a very high delay (e.g., 60s) with many threads, the scan might seem "frozen". Check the logs or the heartbeat status.
 
 ### CLI Execution Markers
 

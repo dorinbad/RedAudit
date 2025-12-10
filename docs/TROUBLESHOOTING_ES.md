@@ -59,7 +59,7 @@ sudo bash redaudit_install.sh
 ### 6. "Los escaneos parecen colgarse" / Progreso lento
 
 **Síntoma**: La herramienta se pausa 1-2 minutos en un solo host.
-**Explicación**: RedAudit v2.6.1 realiza **Escaneos de Identidad Profundos** en hosts complejos (fingerprinting combinado TCP/UDP/SO).
+**Explicación**: RedAudit v2.7.0 realiza **Escaneos de Identidad Profundos** en hosts complejos (fingerprinting combinado TCP/UDP/SO).
 
 - **Duración**: Estos escaneos pueden legítimamente tomar **90–150 segundos** por host.
 - **Por qué**: Esencial para identificar cajas IoT, firewalls o servidores filtrados que ocultan su SO.

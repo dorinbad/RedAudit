@@ -45,7 +45,15 @@ Controles de seguridad automatizados integrados en el pipeline de desarrollo:
 - **CodeQL**: Análisis estático de vulnerabilidades de seguridad en cada push/PR
 - **Testing Multi-versión**: Compatibilidad verificada en Python 3.9-3.12
 
-## 6. Licencia
+## 6. Arquitectura Modular (v2.6)
+
+El código está organizado en módulos enfocados para mejorar la mantenibilidad y auditabilidad:
+
+- **Módulos core** (`redaudit/core/`): Funcionalidad crítica de seguridad
+- **Utilidades** (`redaudit/utils/`): Constantes e internacionalización
+- **Cobertura de tests**: 34 pruebas automatizadas con pipeline CI/CD
+
+## 7. Licencia
 
 Este modelo de seguridad es parte del proyecto RedAudit y está cubierto por la  
 **GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../LICENSE) para el texto completo.

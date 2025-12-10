@@ -9,9 +9,9 @@ RedAudit está diseñado para ejecución sin estado (stateless) vía argumentos 
 ### Sintaxis
 
 ```bash
-sudo redaudit [TARGET] [OPTIONS]
+sudo redaudit [OPTIONS]
 # O vía módulo Python (v2.6+)
-sudo python -m redaudit [TARGET] [OPTIONS]
+sudo python -m redaudit [OPTIONS]
 ```
 
 ### Argumentos Principales
@@ -19,28 +19,32 @@ sudo python -m redaudit [TARGET] [OPTIONS]
 | Flag | Descripción |
 | :--- | :--- |
 | `-t`, `--target` | IP objetivo, subred (CIDR), o lista separada por comas. |
-| `-m`, `--mode` | Intensidad: `fast` (ICMP), `normal` (Puertos top), `full` (Todos + scripts). |
-| `--deep` | Habilita escaneo de vulnerabilidades agresivo (Web/NSE). Equivale a `-m full`. |
+| `-m`, `--mode` | Intensidad: `fast` (descubrimiento), `normal` (puertos top), `full` (todos + scripts). |
 | `-o`, `--output` | Especificar directorio de salida. Por defecto: `~/RedAuditReports`. |
-| `-l`, `--lang` | Idioma de interfaz: `en` (defecto), `es`. |
+| `--lang` | Idioma de interfaz: `en` (defecto), `es`. |
+| `-y`, `--yes` | Saltar confirmación de advertencia legal (usar con precaución). |
 
 ### Rendimiento y Evasión
 
 | Flag | Descripción |
 | :--- | :--- |
-| `--threads <N>` | Tamaño del pool de hilos para escaneo concurrente. |
-| `-r`, `--rate-limit` | Segundos de espera entre operaciones de hilo (float). Incluye jitter ±30% (v2.7). |
-| `--pcap` | Habilita captura de paquetes raw (`tcpdump`) durante el escaneo. |
+| `-j`, `--threads <N>` | Tamaño del pool de hilos para escaneo concurrente (1-16, defecto: 6). |
+| `--rate-limit` | Segundos de espera entre escaneos de host (float). Incluye jitter ±30% (v2.7). |
 | `--prescan` | Habilita pre-scan asyncio rápido antes de nmap (v2.7). |
 | `--prescan-ports` | Rango de puertos para pre-scan (defecto: 1-1024). |
 | `--prescan-timeout` | Timeout de conexión del pre-scan en segundos (defecto: 0.5). |
+| `--no-deep-scan` | Desactiva el deep scan adaptativo. |
+| `--no-vuln-scan` | Desactiva el escaneo de vulnerabilidades web. |
+| `--no-txt-report` | Desactiva la generación de reporte TXT. |
+| `--max-hosts` | Número máximo de hosts a escanear (defecto: todos). |
 
 ### Seguridad
 
 | Flag | Descripción |
 | :--- | :--- |
-| `--encrypt` | Cifra artefactos de salida con AES-128. Pide contraseña si no se provee. |
-| `--version` | Muestra información de versión y sale. |
+| `-e`, `--encrypt` | Cifra artefactos de salida con AES-128. Pide contraseña si no se provee. |
+| `--encrypt-password` | Contraseña para cifrado (modo no interactivo). |
+| `-V`, `--version` | Muestra información de versión y sale. |
 
 ## Ejemplos
 
@@ -48,24 +52,31 @@ sudo python -m redaudit [TARGET] [OPTIONS]
 Enumera servicios en una subred Clase C con concurrencia por defecto.
 
 ```bash
-sudo redaudit -t 192.168.1.0/24
+sudo redaudit -t 192.168.1.0/24 --mode normal --yes
 ```
 
 **2. Escaneo Dirigido de Alto Sigilo**
 Escanea un único host con rate limiting habilitado para reducir ruido.
 
 ```bash
-sudo redaudit -t 10.0.0.50 --rate-limit 1.5 --mode normal
+sudo redaudit -t 10.0.0.50 --rate-limit 1.5 --mode normal --yes
 ```
 
-**3. Modo Forense**
-Escaneo profundo con captura de tráfico completa y reporte cifrado para cadena de custodia.
+**3. Auditoría Completa con Cifrado**
+Escaneo profundo con reporte cifrado para cadena de custodia.
 
 ```bash
-sudo redaudit -t 192.168.1.100 --deep --pcap --encrypt
+sudo redaudit -t 192.168.1.100 --mode full --encrypt --yes
 ```
 
-### 3. Reportes y Cifrado
+**4. Pre-scan Rápido en Rango Grande (v2.7)**
+Usa pre-scan asyncio para descubrimiento rápido de puertos antes de nmap.
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
+```
+
+### Reportes y Cifrado
 
 Los reportes se guardan con fecha `redaudit_YYYYMMDD_HHMMSS`.
 
@@ -80,7 +91,7 @@ python3 redaudit_decrypt.py /ruta/a/reporte.json.enc
 
 Esto generará archivos `.decrypted` (o restaurará la extensión original) tras verificar la contraseña.
 
-### 4. Logging
+### Logging
 
 Los logs de depuración se guardan en `~/.redaudit/logs/`. Revisa estos archivos si el escaneo falla o se comporta de forma inesperada.
 
@@ -99,7 +110,7 @@ RedAudit permite configurar un retardo (en segundos) entre el escaneo de cada ho
 Habilita `--prescan` para usar TCP connect asyncio para descubrimiento rápido de puertos antes de invocar nmap:
 
 ```bash
-sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024
+sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 ```
 
 **Nota sobre el Heartbeat**: Si usas un retardo alto (ej. 60s) con muchos hilos, el escaneo puede parecer "congelado". Revisa el log o el estado del heartbeat.
