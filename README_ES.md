@@ -47,11 +47,11 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1a365d', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4299e1', 'lineColor': '#a0aec0', 'secondaryColor': '#2d3748', 'tertiaryColor': '#1a202c', 'background': '#0d1117', 'mainBkg': '#0d1117', 'nodeBorder': '#4299e1', 'clusterBkg': '#1a202c', 'clusterBorder': '#4a5568', 'titleColor': '#fff'}}}%%
 flowchart TB
-    subgraph Input["🖥️ Entrada de Usuario"]
+    subgraph Input["Entrada de Usuario"]
         A["CLI / Modo Interactivo"]
     end
     
-    subgraph Core["📦 redaudit/core/"]
+    subgraph Core["redaudit/core/"]
         B["auditor.py<br/>Orquestador"]
         C["scanner.py<br/>Nmap + Deep Scan"]
         C2["prescan.py<br/>Descubrimiento Asyncio"]
@@ -60,32 +60,32 @@ flowchart TB
         F["crypto.py<br/>AES-128 + PBKDF2"]
     end
     
-    subgraph Utils["⚙️ redaudit/utils/"]
+    subgraph Utils["redaudit/utils/"]
         G["constants.py"]
         H["i18n.py"]
     end
     
-    subgraph Scanning["🔍 Descubrimiento"]
+    subgraph Scanning["Descubrimiento de Puertos"]
         I["nmap"]
     end
     
-    subgraph WebAudit["🌐 Recon Web"]
+    subgraph WebAudit["Reconocimiento Web"]
         J["whatweb"]
         K["nikto"]
         L["curl / wget"]
     end
     
-    subgraph SSL["🔒 SSL/TLS"]
+    subgraph SSL["Análisis SSL/TLS"]
         M["testssl.sh"]
         N["openssl"]
     end
     
-    subgraph Traffic["📡 Tráfico"]
+    subgraph Traffic["Captura de Tráfico"]
         O["tcpdump"]
         P["tshark"]
     end
     
-    subgraph Intel["🎯 Threat Intel"]
+    subgraph Intel["Inteligencia de Amenazas"]
         Q["searchsploit"]
         R["dig / whois"]
     end
@@ -99,7 +99,7 @@ flowchart TB
     C --> M & N
     C --> O & P
     C --> Q & R
-    E --> Output[("💾 Reportes Cifrados")]
+    E --> Output[("Reportes Cifrados")]
     F --> Output
 
     style A fill:#4299e1,stroke:#2b6cb0,color:#fff

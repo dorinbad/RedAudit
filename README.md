@@ -47,11 +47,11 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1a365d', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4299e1', 'lineColor': '#a0aec0', 'secondaryColor': '#2d3748', 'tertiaryColor': '#1a202c', 'background': '#0d1117', 'mainBkg': '#0d1117', 'nodeBorder': '#4299e1', 'clusterBkg': '#1a202c', 'clusterBorder': '#4a5568', 'titleColor': '#fff'}}}%%
 flowchart TB
-    subgraph Input["🖥️ User Input"]
+    subgraph Input["User Input"]
         A["CLI / Interactive Mode"]
     end
     
-    subgraph Core["📦 redaudit/core/"]
+    subgraph Core["redaudit/core/"]
         B["auditor.py<br/>Orchestrator"]
         C["scanner.py<br/>Nmap + Deep Scan"]
         C2["prescan.py<br/>Asyncio Discovery"]
@@ -60,32 +60,32 @@ flowchart TB
         F["crypto.py<br/>AES-128 + PBKDF2"]
     end
     
-    subgraph Utils["⚙️ redaudit/utils/"]
+    subgraph Utils["redaudit/utils/"]
         G["constants.py"]
         H["i18n.py"]
     end
     
-    subgraph Scanning["🔍 Port Discovery"]
+    subgraph Scanning["Port Discovery"]
         I["nmap"]
     end
     
-    subgraph WebAudit["🌐 Web Recon"]
+    subgraph WebAudit["Web Reconnaissance"]
         J["whatweb"]
         K["nikto"]
         L["curl / wget"]
     end
     
-    subgraph SSL["🔒 SSL/TLS"]
+    subgraph SSL["SSL/TLS Analysis"]
         M["testssl.sh"]
         N["openssl"]
     end
     
-    subgraph Traffic["📡 Traffic"]
+    subgraph Traffic["Traffic Capture"]
         O["tcpdump"]
         P["tshark"]
     end
     
-    subgraph Intel["🎯 Threat Intel"]
+    subgraph Intel["Threat Intelligence"]
         Q["searchsploit"]
         R["dig / whois"]
     end
@@ -99,7 +99,7 @@ flowchart TB
     C --> M & N
     C --> O & P
     C --> Q & R
-    E --> Output[("💾 Encrypted Reports")]
+    E --> Output[("Encrypted Reports")]
     F --> Output
 
     style A fill:#4299e1,stroke:#2b6cb0,color:#fff
