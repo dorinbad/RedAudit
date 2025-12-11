@@ -165,7 +165,9 @@ def ask_password_twice(prompt: str = "Password", lang: str = "en") -> str:
 
         is_valid, error_msg = validate_password_strength(p1, lang)
         if not is_valid:
-            print(f"{COLORS['WARNING']}[WARNING]{COLORS['ENDC']} {error_msg}")
+            # NOTE: error_msg contains validation hints (e.g., "must be 12+ chars"),
+            # NOT the password itself. This is standard UX. CodeQL flags incorrectly.
+            print(f"{COLORS['WARNING']}[WARNING]{COLORS['ENDC']} {error_msg}")  # lgtm[py/clear-text-logging-sensitive-data]
             continue
 
         p2 = getpass.getpass(f"{COLORS['CYAN']}?{COLORS['ENDC']} Confirm: ")

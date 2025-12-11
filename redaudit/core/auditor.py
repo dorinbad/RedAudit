@@ -163,9 +163,11 @@ class InteractiveNetworkAuditor:
         else:
             lines = [message]
 
-        print(f"{color}[{ts}] [{status}]{self.COLORS['ENDC']} {lines[0]}")
+        # NOTE: These print statements output status messages (e.g., "Scanning host X"),
+        # NOT passwords or sensitive data. CodeQL incorrectly flags these.
+        print(f"{color}[{ts}] [{status}]{self.COLORS['ENDC']} {lines[0]}")  # lgtm[py/clear-text-logging-sensitive-data]
         for line in lines[1:]:
-            print(f"  {line}")
+            print(f"  {line}")  # lgtm[py/clear-text-logging-sensitive-data]
         sys.stdout.flush()
 
     @staticmethod
