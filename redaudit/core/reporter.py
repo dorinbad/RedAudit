@@ -233,11 +233,15 @@ def save_results(
                 print_fn(t_fn("txt_report", txt_path), "OKGREEN")
 
         # Save salt file for encrypted reports
+        # NOTE: The salt is NOT sensitive data - it is a public cryptographic parameter
+        # that MUST be stored alongside encrypted data to allow decryption.
+        # The password is derived using PBKDF2 with this salt, and storing the salt
+        # is standard practice (see NIST SP 800-132). CodeQL flags this incorrectly.
         if encryption_enabled and config.get("encryption_salt"):
-            salt_bytes = base64.b64decode(config["encryption_salt"])
+            salt_bytes = base64.b64decode(config["encryption_salt"])  # lgtm[py/clear-text-storage-sensitive-data]
             salt_path = f"{base}.salt"
             with open(salt_path, "wb") as f:
-                f.write(salt_bytes)
+                f.write(salt_bytes)  # nosec B105 - salt is not sensitive, required for key derivation
             os.chmod(salt_path, SECURE_FILE_MODE)
 
         # Update config with actual output directory for display
