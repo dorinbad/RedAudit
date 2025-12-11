@@ -138,13 +138,14 @@ class TestReporter(unittest.TestCase):
         
         self.assertTrue(result)
         
-        # Check file was created
-        files = os.listdir(self.sample_config["output_dir"])
-        json_files = [f for f in files if f.endswith(".json")]
+        # Check file was created (search recursively due to timestamped subdirs)
+        json_files = []
+        for root, dirs, files in os.walk(self.sample_config["output_dir"]):
+            json_files.extend([os.path.join(root, f) for f in files if f.endswith(".json")])
         self.assertEqual(len(json_files), 1)
         
         # Check file permissions
-        json_path = os.path.join(self.sample_config["output_dir"], json_files[0])
+        json_path = json_files[0]
         mode = os.stat(json_path).st_mode & 0o777
         self.assertEqual(mode, SECURE_FILE_MODE)
         
@@ -166,8 +167,10 @@ class TestReporter(unittest.TestCase):
         
         self.assertTrue(result)
         
-        files = os.listdir(self.sample_config["output_dir"])
-        txt_files = [f for f in files if f.endswith(".txt")]
+        # Search recursively due to timestamped subdirs
+        txt_files = []
+        for root, dirs, files in os.walk(self.sample_config["output_dir"]):
+            txt_files.extend([os.path.join(root, f) for f in files if f.endswith(".txt")])
         self.assertEqual(len(txt_files), 1)
     
     def test_save_results_creates_directory(self):
