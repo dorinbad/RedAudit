@@ -378,31 +378,41 @@ class InteractiveNetworkAuditor:
             "no": False, "n": False,
         }
         while True:
-            ans = input(
-                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}{opts}: "
-            ).strip().lower()
-            if ans == "":
-                return valid.get(default, True)
-            if ans in valid:
-                return valid[ans]
+            try:
+                ans = input(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}{opts}: "
+                ).strip().lower()
+                if ans == "":
+                    return valid.get(default, True)
+                if ans in valid:
+                    return valid[ans]
+            except KeyboardInterrupt:
+                print("")
+                self.signal_handler(None, None)
+                sys.exit(0)
 
     def ask_number(self, question, default=10, min_val=1, max_val=1000):
         """Ask for a number within a range."""
         while True:
-            ans = input(
-                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default}]: "
-            ).strip()
-            if ans == "":
-                return default
-            if ans.lower() in ("todos", "all"):
-                return "all"
             try:
-                num = int(ans)
-                if min_val <= num <= max_val:
-                    return num
-                self.print_status(self.t("val_out_of_range", min_val, max_val), "WARNING")
-            except ValueError:
-                continue
+                ans = input(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default}]: "
+                ).strip()
+                if ans == "":
+                    return default
+                if ans.lower() in ("todos", "all"):
+                    return "all"
+                try:
+                    num = int(ans)
+                    if min_val <= num <= max_val:
+                        return num
+                    self.print_status(self.t("val_out_of_range", min_val, max_val), "WARNING")
+                except ValueError:
+                    continue
+            except KeyboardInterrupt:
+                print("")
+                self.signal_handler(None, None)
+                sys.exit(0)
 
     def ask_choice(self, question, options, default=0):
         """Ask to choose from a list of options."""
@@ -411,32 +421,42 @@ class InteractiveNetworkAuditor:
             marker = f"{self.COLORS['BOLD']}▶{self.COLORS['ENDC']}" if i == default else " "
             print(f"  {marker} {i + 1}. {opt}")
         while True:
-            ans = input(
-                f"\n{self.t('select_opt')} [1-{len(options)}] ({default + 1}): "
-            ).strip()
-            if ans == "":
-                return default
             try:
-                idx = int(ans) - 1
-                if 0 <= idx < len(options):
-                    return idx
-            except ValueError:
-                continue
+                ans = input(
+                    f"\n{self.t('select_opt')} [1-{len(options)}] ({default + 1}): "
+                ).strip()
+                if ans == "":
+                    return default
+                try:
+                    idx = int(ans) - 1
+                    if 0 <= idx < len(options):
+                        return idx
+                except ValueError:
+                    continue
+            except KeyboardInterrupt:
+                print("")
+                self.signal_handler(None, None)
+                sys.exit(0)
 
     def ask_manual_network(self):
         """Ask for manual network CIDR input."""
         while True:
-            net = input(
-                f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} CIDR (e.g. 192.168.1.0/24): "
-            ).strip()
-            if len(net) > MAX_CIDR_LENGTH:
-                self.print_status(self.t("invalid_cidr"), "WARNING")
-                continue
             try:
-                ipaddress.ip_network(net, strict=False)
-                return net
-            except ValueError:
-                self.print_status(self.t("invalid_cidr"), "WARNING")
+                net = input(
+                    f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} CIDR (e.g. 192.168.1.0/24): "
+                ).strip()
+                if len(net) > MAX_CIDR_LENGTH:
+                    self.print_status(self.t("invalid_cidr"), "WARNING")
+                    continue
+                try:
+                    ipaddress.ip_network(net, strict=False)
+                    return net
+                except ValueError:
+                    self.print_status(self.t("invalid_cidr"), "WARNING")
+            except KeyboardInterrupt:
+                print("")
+                self.signal_handler(None, None)
+                sys.exit(0)
 
     # ---------- Network detection ----------
 

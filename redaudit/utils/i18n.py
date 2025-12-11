@@ -101,6 +101,7 @@ TRANSLATIONS = {
         "update_prompt": "Would you like to update now?",
         "update_starting": "Downloading update...",
         "update_skipped": "Update skipped. Continuing with current version.",
+        "update_restarting": "Update installed! Restarting RedAudit...",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -195,6 +196,7 @@ TRANSLATIONS = {
         "update_prompt": "¿Deseas actualizar ahora?",
         "update_starting": "Descargando actualización...",
         "update_skipped": "Actualización omitida. Continuando con la versión actual.",
+        "update_restarting": "¡Actualización instalada! Reiniciando RedAudit...",
     },
 }
 

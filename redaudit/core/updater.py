@@ -270,7 +270,7 @@ def perform_git_update(repo_path: str, logger=None) -> Tuple[bool, str]:
                 for f in files:
                     os.chmod(os.path.join(root, f), 0o644)
             
-            return (True, "Update installed successfully! Restart RedAudit to use the new version.")
+            return (True, "UPDATE_SUCCESS_RESTART")
         else:
             return (True, "Update downloaded. Run 'sudo bash redaudit_install.sh' to complete installation.")
         
@@ -357,7 +357,17 @@ def interactive_update_check(print_fn=None, ask_fn=None, t_fn=None, logger=None)
         success, message = perform_git_update(repo_path, logger)
         
         if success:
-            print_fn(message, "OKGREEN")
+            # v2.8.1: Auto-restart if update was installed to system
+            if message == "UPDATE_SUCCESS_RESTART":
+                print_fn(t_fn("update_restarting"), "OKGREEN")
+                import sys
+                import time
+                time.sleep(1)  # Brief pause before restart
+                # Re-execute the current script
+                python = sys.executable
+                os.execv(python, [python] + sys.argv)
+            else:
+                print_fn(message, "OKGREEN")
             return True
         else:
             print_fn(message, "FAIL")
@@ -365,3 +375,4 @@ def interactive_update_check(print_fn=None, ask_fn=None, t_fn=None, logger=None)
     else:
         print_fn(t_fn("update_skipped"), "INFO")
         return False
+

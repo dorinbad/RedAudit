@@ -43,11 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Auto-Update System**: Enhanced from detection-only to full installation
   - Now performs `git reset --hard` to prevent conflicts
   - Automatically copies updated files to `/usr/local/lib/redaudit/`
+  - Auto-restarts with `os.execv()` after successful update (no manual restart needed)
   - Eliminates the need for manual `git pull` and reinstall
 
 ### Fixed
 
 - **Ctrl+C During Setup**: Fixed hang when pressing Ctrl+C before scan starts
+  - Added `KeyboardInterrupt` handling in all input methods (`ask_yes_no`, `ask_number`, `ask_choice`, `ask_manual_network`)
   - Now exits immediately if interrupted during configuration phase
   - Only attempts graceful shutdown when scan is actually running
 
