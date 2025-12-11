@@ -54,7 +54,18 @@ The codebase is organized into focused modules to improve maintainability and au
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
 - **Test coverage**: 34 automated tests with CI/CD pipeline
 
-## 7. License
+## 7. Secure Auto-Update (v2.8)
+
+RedAudit includes a secure update mechanism that checks GitHub for new releases:
+
+- **No arbitrary downloads**: Uses `git pull` from the official repository
+- **Integrity verification**: Git's built-in hash verification ensures authenticity
+- **User confirmation**: Always prompts before applying updates
+- **Network failure handling**: Graceful degradation if GitHub is unavailable
+- **Local changes protection**: Refuses to update if uncommitted changes exist
+- **Module location**: `redaudit/core/updater.py`
+
+## 8. License
 
 This security model is part of the RedAudit project and is covered by the  
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.

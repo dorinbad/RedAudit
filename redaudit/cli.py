@@ -145,6 +145,19 @@ Examples:
         help="Pre-scan connection timeout (default: 0.5)"
     )
 
+    # v2.8.0 options
+    parser.add_argument(
+        "--udp-mode",
+        choices=["quick", "full"],
+        default="quick",
+        help="UDP scan mode: quick (priority ports) or full (all ports)"
+    )
+    parser.add_argument(
+        "--skip-update-check",
+        action="store_true",
+        help="Skip update check at startup"
+    )
+
     return parser.parse_args()
 
 
@@ -230,6 +243,9 @@ def configure_from_args(app, args) -> bool:
     app.config["prescan_ports"] = args.prescan_ports
     app.config["prescan_timeout"] = args.prescan_timeout
 
+    # Set UDP mode (v2.8.0)
+    app.config["udp_mode"] = args.udp_mode
+
     # Setup encryption if requested
     if args.encrypt:
         app.setup_encryption(non_interactive=True, password=args.encrypt_password)
@@ -247,8 +263,21 @@ def main():
 
     # Import here to avoid circular imports
     from redaudit.core.auditor import InteractiveNetworkAuditor
+    from redaudit.core.updater import interactive_update_check
 
     app = InteractiveNetworkAuditor()
+
+    # Update check at startup (v2.8.0)
+    if not args.skip_update_check:
+        # In interactive mode, ask user
+        if not args.target:
+            if app.ask_yes_no(app.t("update_check_prompt"), default="yes"):
+                interactive_update_check(
+                    print_fn=app.print_status,
+                    ask_fn=app.ask_yes_no,
+                    t_fn=app.t,
+                    logger=app.logger
+                )
 
     # Non-interactive mode if --target is provided
     if args.target:

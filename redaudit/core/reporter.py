@@ -165,6 +165,9 @@ def save_results(
     """
     Save results to JSON and optionally TXT files.
 
+    v2.8.0: Reports are now saved in timestamped subfolders:
+            RedAudit_YYYY-MM-DD_HH-MM-SS/
+
     Args:
         results: Results dictionary
         config: Configuration dictionary
@@ -180,11 +183,15 @@ def save_results(
     """
     prefix = "PARTIAL_" if partial else ""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = config.get("output_dir", os.path.expanduser("~/RedAuditReports"))
+    ts_folder = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    
+    # v2.8.0: Create timestamped subfolder
+    output_base = config.get("output_dir", os.path.expanduser("~/RedAuditReports"))
+    output_dir = os.path.join(output_base, f"RedAudit_{ts_folder}")
     base = os.path.join(output_dir, f"{prefix}redaudit_{ts}")
 
     try:
-        os.makedirs(os.path.dirname(base), exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
 
         # Save JSON report
         json_data = json.dumps(results, indent=2, default=str)
@@ -228,6 +235,9 @@ def save_results(
             with open(salt_path, "wb") as f:
                 f.write(salt_bytes)
             os.chmod(salt_path, SECURE_FILE_MODE)
+
+        # Update config with actual output directory for display
+        config["_actual_output_dir"] = output_dir
 
         return True
 

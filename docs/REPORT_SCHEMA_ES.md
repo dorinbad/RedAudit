@@ -8,7 +8,7 @@ RedAudit genera reportes legibles por máquina en formato JSON. Este documento d
 
 **Tipos de Datos**: Tipos JSON estándar (`string`, `number`, `boolean`, `array`, `object`).
 **Nullable**: Los campos son nullable a menos que se especifique lo contrario.
-**Módulo Fuente**: `redaudit/core/reporter.py` (v2.7+)
+**Módulo Fuente**: `redaudit/core/reporter.py` (v2.8+)
 
 ## Definición del Esquema
 
@@ -47,6 +47,11 @@ Representa una única dirección IP objetivo.
       "service": "http",
       "product": "Apache httpd",
       "version": "2.4.41",
+      "banner": "Apache/2.4.41 (Ubuntu)",
+      "ssl_cert": {
+        "subject": "CN=example.com",
+        "issuer": "Let's Encrypt"
+      },
       "known_exploits": [
         {
           "title": "Apache 2.4.41 - Remote Code Execution",
@@ -59,16 +64,25 @@ Representa una única dirección IP objetivo.
 }
 ```
 
+**Tipos de Estado de Host (v2.8+)**:
+
+- `up`: El host respondió y tiene puertos abiertos
+- `down`: Sin respuesta en absoluto
+- `filtered`: MAC/vendor detectado pero puertos filtrados
+- `no-response`: Deep scan intentado pero sin datos significativos
+
 ### Objeto Deep Scan (Opcional)
 
 Este campo aparece solo si se activó el escaneo profundo automático.
 
 | Campo | Tipo | Descripción |
 |---|---|---|
-| `strategy` | string | Identificador de estrategia ("adaptive_v2.5" - característica introducida en v2.5) |
+| `strategy` | string | Identificador de estrategia (`adaptive_v2.8` para v2.8+, `adaptive_v2.5` para anteriores) |
 | `mac_address` | string | (Opcional) Dirección MAC si se detectó |
 | `vendor` | string | (Opcional) Fabricante de hardware si se detectó |
 | `phase2_skipped` | boolean | True si la Fase 2 (UDP/SO) se omitió porque la Fase 1 encontró identidad |
+| `phase2b_skipped` | boolean | (v2.8+) True si el escaneo UDP completo se omitió (modo quick) |
+| `udp_mode` | string | (v2.8+) Modo de escaneo UDP usado: `quick` o `full` |
 | `commands` | array | Lista de comandos Nmap ejecutados, logs y duraciones |
 | `commands[].command` | string | Línea de comando completa ejecutada |
 | `commands[].returncode` | integer | Código de salida del comando |

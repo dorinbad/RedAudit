@@ -4,7 +4,7 @@
 
 RedAudit is a CLI tool for structured network auditing and hardening on Kali/Debian systems.
 
-![Version](https://img.shields.io/badge/version-2.7.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.8.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 ![CI/CD](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dorinbadea/81671a8fffccee81ca270f14d094e5a1/raw/redaudit-tests.json&style=flat-square&label=CI%2FCD)
@@ -15,7 +15,7 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_ 
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                     v2.7
+                                     v2.8
         Interactive Network Audit Tool
 ```
 
@@ -42,69 +42,74 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 
 ### System Overview
 
-> **Note**: If the diagram below doesn't render (e.g., on mobile), view the [static image](assets/system_overview.png).
+![System Overview](docs/images/system_overview.png)
+
+<details>
+<summary>View Diagram Source (Mermaid)</summary>
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1a365d', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4299e1', 'lineColor': '#a0aec0', 'secondaryColor': '#2d3748', 'tertiaryColor': '#1a202c', 'background': '#0d1117', 'mainBkg': '#0d1117', 'nodeBorder': '#4299e1', 'clusterBkg': '#1a202c', 'clusterBorder': '#4a5568', 'titleColor': '#fff'}}}%%
-flowchart TB
+graph TD
     %% Nodes
-    User([User / CLI])
+    User["User / CLI"]
+    Updater["Updater Module"]
+    Orchestrator["Orchestrator"]
     
-    subgraph Core ["Core Orchestration"]
-        Orchestrator[auditor.py]
-        Scanner[scanner.py]
-        Reporter[reporter.py]
-        Crypto[crypto.py]
+    subgraph Scanning ["Scanning & Enumeration"]
+        Prescan["Async Pre-scan"]
+        Discovery["Host Discovery"]
+        Strategies["Scan Strategy"]
+        Nmap["Nmap Engine"]
+        UDP["Smart UDP Scan"]
+        Web["Web Audit"]
     end
 
-    subgraph Phase1 ["Phase 1: Discovery"]
-        Prescan[prescan.py<br/>Asyncio]
-        Nmap[nmap<br/>Port Scan]
+    subgraph Analysis ["Deep Analysis"]
+        Vuln["Vuln Scanner"]
+        Capture["PCAP Capture"]
     end
 
-    subgraph Phase2 ["Phase 2: Deep Analysis"]
-        direction TB
-        subgraph Web ["Web Recon"]
-            WhatWeb[whatweb]
-            Nikto[nikto]
-            Curl[curl/wget]
-        end
-        
-        subgraph Net ["Network Ops"]
-            TcpDoes[tcpdump<br/>Capture]
-            Tshark[tshark<br/>Analyze]
-            TestSSL[testssl.sh<br/>TLS Audit]
-            Search[searchsploit<br/>Vulns]
-        end
+    subgraph Reporting ["Reporting & Output"]
+        Aggregator["Result Aggregator"]
+        Crypto["Encryption (AES)"]
+        Artifacts[("Encrypted Reports")]
     end
-
-    Output[("Encrypted Reports<br/>JSON + TXT + PCAP")]
 
     %% Flow
-    User ==> Orchestrator
-    Orchestrator --> Prescan
-    Orchestrator --> Scanner
+    User <--> Updater
+    Updater <-->|Check/Update| Orchestrator
+    User <-->|Direct| Orchestrator
     
-    Prescan -.->|Fast Ports| Scanner
-    Scanner --> Nmap
+    Orchestrator <--> Prescan
+    Prescan --> Discovery
+    Discovery --> Strategies
+    Strategies --> Nmap
     
-    Nmap -->|Open Ports| Web
-    Nmap -->|Services| Net
+    Nmap -->|Services| Web
+    Nmap -->|Open Ports| UDP
+    
+    Web --> Vuln
+    UDP --> Capture
+    
+    Vuln --> Aggregator
+    Capture --> Aggregator
+    Nmap --> Aggregator
+    
+    Aggregator --> Crypto
+    Crypto --> Artifacts
 
-    Scanner --> Reporter
-    Reporter --> Crypto
-    Crypto ==> Output
-
-    %% Styling
-    style User fill:#4299e1,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    style Orchestrator fill:#48bb78,stroke:#2f855a,color:#fff,stroke-width:2px
-    style Output fill:#9f7aea,stroke:#805ad5,color:#fff,stroke-width:2px
+    %% Styles
+    classDef user fill:#4299e1,stroke:#2b6cb0,color:#fff,stroke-width:2px;
+    classDef orch fill:#48bb78,stroke:#2f855a,color:#fff,stroke-width:2px;
+    classDef output fill:#9f7aea,stroke:#805ad5,color:#fff,stroke-width:2px;
+    classDef module fill:#2d3748,stroke:#4a5568,color:#fff,stroke-width:1px;
     
-    style Scanner fill:#2d3748,stroke:#4a5568
-    style Prescan fill:#2d3748,stroke:#4a5568
-    style Reporter fill:#2d3748,stroke:#4a5568
-    style Crypto fill:#2d3748,stroke:#4a5568
+    class User user;
+    class Orchestrator orch;
+    class Artifacts output;
+    class Updater,Prescan,Discovery,Strategies,Nmap,UDP,Web,Vuln,Capture,Aggregator,Crypto module;
 ```
+
+</details>
 
 Deep scans are triggered selectively: web auditing modules launch only upon detection of HTTP/HTTPS services, and SSL inspection is reserved for encrypted ports.
 
@@ -171,6 +176,8 @@ sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password
 - `--prescan`: Enable fast asyncio pre-scan before nmap (v2.7)
 - `--prescan-ports`: Port range for pre-scan (default: 1-1024)
 - `--prescan-timeout`: Pre-scan timeout in seconds (default: 0.5)
+- `--udp-mode`: UDP scan mode: quick (default) or full (v2.8)
+- `--skip-update-check`: Skip update check at startup (v2.8)
 - `--yes, -y`: Skip legal warning (use with caution)
 - `--lang`: Language (en/es)
 
@@ -209,7 +216,7 @@ RedAudit applies a smart 2-phase scan to "silent" or complex hosts:
 - **Benefit**: Saves time by skipping Phase 2 if the host is already identified.
 - **Output**: Full logs and MAC/Vendor data in `host.deep_scan`.
 
-## Modular Architecture (v2.7)
+## Modular Architecture (v2.8)
 
 RedAudit is organized as a modular Python package:
 
@@ -221,7 +228,8 @@ redaudit/
 │   ├── scanner.py  # Nmap scanning logic
 │   ├── crypto.py   # AES-128 encryption/decryption
 │   ├── network.py  # Interface detection
-│   └── reporter.py # JSON/TXT + SIEM output
+│   ├── reporter.py # JSON/TXT + SIEM output
+│   └── updater.py  # Secure auto-update (v2.8)
 └── utils/          # Utilities
     ├── constants.py # Configuration constants
     └── i18n.py      # Internationalization
@@ -303,18 +311,20 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 - **"Cryptography missing"**: Run `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Check `~/.redaudit/logs/` or reduce `rate_limit_delay`.
 
-## 13. Changelog (v2.7.0 Summary)
+## 13. Changelog (v2.8.0 Summary)
 
-- **Pre-scan Asyncio Engine**: Fast port discovery using asyncio TCP connect (RustScan-style)
+- **Host Status Accuracy**: New status types (`up`, `down`, `filtered`, `no-response`) with intelligent finalization
+- **Intelligent UDP Scanning**: 3-phase strategy with priority ports for faster scans
+- **Concurrent PCAP Capture**: Traffic captured during scans, not after
+- **Banner Grab Fallback**: Enhanced service identification for `tcpwrapped` ports
+- **Secure Auto-Update**: GitHub-integrated update checking at startup
+- **Timestamped Report Folders**: Reports saved in `RedAudit_YYYY-MM-DD_HH-MM-SS/` subfolders
+
+### Previous (v2.7.x)
+
+- **Pre-scan Asyncio Engine**: Fast port discovery using asyncio TCP connect
 - **SIEM-Compatible Output**: Enhanced JSON reports with `schema_version`, `event_type`, `session_id`
 - **Jitter Rate-Limiting**: ±30% random variance for IDS evasion
-- **Bandit Security Linting**: Static security analysis in CI pipeline
-
-### Previous (v2.6.x)
-
-- **Signal Handling Hotfix**: Proper subprocess cleanup on Ctrl+C
-- **Modular Architecture**: Refactored into organized package structure (8 modules)
-- **CI/CD Pipeline**: GitHub Actions workflow for automated testing
 
 For detailed changelog, see [CHANGELOG.md](CHANGELOG.md)
 

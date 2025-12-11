@@ -37,6 +37,15 @@ from redaudit.utils.constants import (
     HEARTBEAT_FAIL_THRESHOLD,
     MAX_PORTS_DISPLAY,
     DEEP_SCAN_TIMEOUT,
+    UDP_QUICK_TIMEOUT,
+    UDP_PRIORITY_PORTS,
+    UDP_SCAN_MODE_QUICK,
+    UDP_SCAN_MODE_FULL,
+    DEFAULT_UDP_MODE,
+    STATUS_UP,
+    STATUS_DOWN,
+    STATUS_FILTERED,
+    STATUS_NO_RESPONSE,
 )
 from redaudit.utils.i18n import TRANSLATIONS, get_text
 from redaudit.core.crypto import (
@@ -62,6 +71,10 @@ from redaudit.core.scanner import (
     tls_enrichment,
     exploit_lookup,
     ssl_deep_analysis,
+    start_background_capture,
+    stop_background_capture,
+    banner_grab_fallback,
+    finalize_host_status,
 )
 from redaudit.core.reporter import (
     generate_summary,
@@ -102,6 +115,8 @@ class InteractiveNetworkAuditor:
             "prescan_enabled": False,
             "prescan_ports": "1-1024",
             "prescan_timeout": 0.5,
+            # UDP scan config (v2.8)
+            "udp_mode": DEFAULT_UDP_MODE,
         }
 
         self.encryption_enabled = False
@@ -463,58 +478,101 @@ class InteractiveNetworkAuditor:
 
     def deep_scan_host(self, host_ip):
         """
-        Adaptive Deep Scan v2.5
+        Adaptive Deep Scan v2.8.0
+        
+        Improvements over v2.5:
+        - Concurrent traffic capture (starts before scanning, stops after)
+        - Intelligent 3-phase UDP: Priority ports first, then full scan (optional)
+        - Better identity detection with MAC/OS fallback
+        
         Phase 1: TCP Connect + Service Version + Scripts (Aggressive)
-        Phase 2: OS Detection + UDP Scan (only if Phase 1 yields no identity)
+        Phase 2a: UDP Priority Ports scan (quick, common services)
+        Phase 2b: Full UDP scan (only if udp_mode == 'full' and no identity yet)
         """
         safe_ip = sanitize_ip(host_ip)
         if not safe_ip:
             return None
 
         self.current_phase = f"deep:{safe_ip}"
-        deep_obj = {"strategy": "adaptive_v2.5", "commands": []}
+        deep_obj = {"strategy": "adaptive_v2.8", "commands": []}
 
-        self.print_status(self.t("deep_identity_start", safe_ip, "Adaptive (2-Phase)"), "WARNING")
+        self.print_status(self.t("deep_identity_start", safe_ip, "Adaptive (3-Phase v2.8)"), "WARNING")
 
-        # Phase 1: Aggressive TCP
-        cmd_p1 = ["nmap", "-A", "-sV", "-Pn", "-p-", "--open", "--version-intensity", "9", safe_ip]
-        self.print_status(self.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING")
-        rec1 = run_nmap_command(cmd_p1, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
-
-        # Check for Identity
-        has_identity = output_has_identity([rec1])
-        mac, vendor = extract_vendor_mac(rec1.get("stdout", ""))
-
-        if mac:
-            deep_obj["mac_address"] = mac
-        if vendor:
-            deep_obj["vendor"] = vendor
-
-        # Phase 2: UDP + OS (Conditional)
-        if has_identity:
-            self.print_status(self.t("deep_scan_skip"), "OKGREEN")
-            deep_obj["phase2_skipped"] = True
-        else:
-            cmd_p2 = ["nmap", "-O", "-sSU", "-Pn", "-p-", "--max-retries", "2", safe_ip]
-            self.print_status(self.t("deep_identity_cmd", safe_ip, " ".join(cmd_p2), "150-300"), "WARNING")
-            rec2 = run_nmap_command(cmd_p2, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
-            if not mac:
-                m2, v2 = extract_vendor_mac(rec2.get("stdout", ""))
-                if m2:
-                    deep_obj["mac_address"] = m2
-                if v2:
-                    deep_obj["vendor"] = v2
-
-        # Traffic Capture
-        pcap_info = capture_traffic_snippet(
+        # Start background traffic capture BEFORE scanning
+        capture_info = start_background_capture(
             safe_ip,
             self.config["output_dir"],
             self.results.get("network_info", []),
             self.extra_tools,
             logger=self.logger
         )
-        if pcap_info:
-            deep_obj["pcap_capture"] = pcap_info
+
+        try:
+            # Phase 1: Aggressive TCP
+            cmd_p1 = ["nmap", "-A", "-sV", "-Pn", "-p-", "--open", "--version-intensity", "9", safe_ip]
+            self.print_status(self.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING")
+            rec1 = run_nmap_command(cmd_p1, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
+
+            # Check for Identity
+            has_identity = output_has_identity([rec1])
+            mac, vendor = extract_vendor_mac(rec1.get("stdout", ""))
+
+            if mac:
+                deep_obj["mac_address"] = mac
+            if vendor:
+                deep_obj["vendor"] = vendor
+
+            # Phase 2: UDP scanning (Intelligent strategy)
+            if has_identity:
+                self.print_status(self.t("deep_scan_skip"), "OKGREEN")
+                deep_obj["phase2_skipped"] = True
+            else:
+                # Phase 2a: Quick UDP scan of priority ports only
+                udp_mode = self.config.get("udp_mode", DEFAULT_UDP_MODE)
+                cmd_p2a = [
+                    "nmap", "-sU", "-Pn", "-p", UDP_PRIORITY_PORTS,
+                    "--max-retries", "1", "--host-timeout", "120s", safe_ip
+                ]
+                self.print_status(
+                    f"[deep] {safe_ip} → {' '.join(cmd_p2a)} (~60-120s, priority UDP)",
+                    "WARNING"
+                )
+                rec2a = run_nmap_command(cmd_p2a, UDP_QUICK_TIMEOUT, safe_ip, deep_obj)
+                
+                # Extract MAC from Phase 2a if not found yet
+                if not mac:
+                    m2a, v2a = extract_vendor_mac(rec2a.get("stdout", ""))
+                    if m2a:
+                        deep_obj["mac_address"] = m2a
+                        mac = m2a
+                    if v2a:
+                        deep_obj["vendor"] = v2a
+
+                # Phase 2b: Full UDP scan (only if mode is 'full' and still no identity)
+                has_identity_now = output_has_identity(deep_obj.get("commands", []))
+                if udp_mode == UDP_SCAN_MODE_FULL and not has_identity_now and not mac:
+                    cmd_p2b = ["nmap", "-O", "-sSU", "-Pn", "-p-", "--max-retries", "2", safe_ip]
+                    self.print_status(
+                        f"[deep] {safe_ip} → {' '.join(cmd_p2b)} (~300-600s, full UDP)",
+                        "WARNING"
+                    )
+                    rec2b = run_nmap_command(cmd_p2b, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
+                    if not mac:
+                        m2b, v2b = extract_vendor_mac(rec2b.get("stdout", ""))
+                        if m2b:
+                            deep_obj["mac_address"] = m2b
+                        if v2b:
+                            deep_obj["vendor"] = v2b
+                elif udp_mode == UDP_SCAN_MODE_QUICK:
+                    deep_obj["phase2b_skipped"] = True
+                    deep_obj["udp_mode"] = "quick"
+
+        finally:
+            # Stop background capture and collect results
+            if capture_info:
+                pcap_result = stop_background_capture(capture_info, self.extra_tools, self.logger)
+                if pcap_result:
+                    deep_obj["pcap_capture"] = pcap_result
 
         total_dur = sum(c.get("duration_seconds", 0) for c in deep_obj["commands"])
         self.print_status(self.t("deep_identity_done", safe_ip, total_dur), "OKGREEN")
@@ -538,7 +596,14 @@ class InteractiveNetworkAuditor:
         return hosts
 
     def scan_host_ports(self, host):
-        """Scan ports on a single host."""
+        """
+        Scan ports on a single host (v2.8.0).
+        
+        Improvements:
+        - Intelligent status finalization based on deep scan results
+        - Banner grab fallback for unidentified services
+        - Better handling of filtered/no-response hosts
+        """
         safe_ip = sanitize_ip(host)
         if not safe_ip:
             self.logger.warning("Invalid IP: %s", host)
@@ -553,8 +618,12 @@ class InteractiveNetworkAuditor:
         try:
             nm.scan(safe_ip, arguments=args)
             if safe_ip not in nm.all_hosts():
+                # Host didn't respond to initial scan - do deep scan
                 deep = self.deep_scan_host(safe_ip)
-                return {"ip": safe_ip, "status": "down", "deep_scan": deep} if deep else {"ip": safe_ip, "status": "down"}
+                result = {"ip": safe_ip, "status": STATUS_NO_RESPONSE, "deep_scan": deep} if deep else {"ip": safe_ip, "status": STATUS_DOWN}
+                # Finalize status based on deep scan results
+                result["status"] = finalize_host_status(result)
+                return result
 
             data = nm[safe_ip]
             hostname = ""
@@ -569,6 +638,7 @@ class InteractiveNetworkAuditor:
             web_count = 0
             suspicious = False
             any_version = False
+            unknown_ports = []
 
             for proto in data.all_protocols():
                 for p in data[proto]:
@@ -584,6 +654,10 @@ class InteractiveNetworkAuditor:
                         suspicious = True
                     if product or version:
                         any_version = True
+                    
+                    # Track ports with no useful info for banner fallback
+                    if not product and name in ("", "tcpwrapped", "unknown"):
+                        unknown_ports.append(p)
 
                     ports.append({
                         "port": p,
@@ -607,6 +681,26 @@ class InteractiveNetworkAuditor:
                 "status": data.state(),
                 "total_ports_found": total_ports,
             }
+
+            # v2.8.0: Banner grab fallback for unidentified ports
+            if unknown_ports and len(unknown_ports) <= 20:
+                self.print_status(
+                    f"[banner] {safe_ip} → Grabbing banners for {len(unknown_ports)} unidentified ports",
+                    "INFO"
+                )
+                banner_info = banner_grab_fallback(safe_ip, unknown_ports, logger=self.logger)
+                if banner_info:
+                    # Merge banner info into ports
+                    for port_info in ports:
+                        port_num = port_info.get("port")
+                        if port_num in banner_info:
+                            extra = banner_info[port_num]
+                            if extra.get("banner"):
+                                port_info["banner"] = extra["banner"]
+                            if extra.get("service") and not port_info.get("service"):
+                                port_info["service"] = extra["service"]
+                            if extra.get("ssl_cert"):
+                                port_info["ssl_cert"] = extra["ssl_cert"]
 
             # Heuristics for deep identity scan
             trigger_deep = False
@@ -640,6 +734,10 @@ class InteractiveNetworkAuditor:
 
             enrich_host_with_dns(host_record, self.extra_tools)
             enrich_host_with_whois(host_record, self.extra_tools)
+            
+            # v2.8.0: Finalize status based on all collected data
+            host_record["status"] = finalize_host_status(host_record)
+            
             return host_record
 
         except Exception as exc:
@@ -649,6 +747,7 @@ class InteractiveNetworkAuditor:
                 deep = self.deep_scan_host(safe_ip)
                 if deep:
                     result["deep_scan"] = deep
+                    result["status"] = finalize_host_status(result)
             except Exception:
                 pass
             return result

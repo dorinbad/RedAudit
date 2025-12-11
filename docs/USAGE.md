@@ -33,6 +33,8 @@ sudo python -m redaudit [OPTIONS]
 | `--prescan` | Enable fast asyncio pre-scan before nmap (v2.7). |
 | `--prescan-ports` | Port range for pre-scan (default: 1-1024). |
 | `--prescan-timeout` | Pre-scan connection timeout in seconds (default: 0.5). |
+| `--udp-mode` | UDP scan mode: `quick` (default) or `full` (v2.8). |
+| `--skip-update-check` | Skip update check at startup (v2.8). |
 | `--no-deep-scan` | Disable adaptive deep scan. |
 | `--no-vuln-scan` | Disable web vulnerability scanning. |
 | `--no-txt-report` | Disable TXT report generation. |
@@ -78,10 +80,13 @@ sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 
 ### Reports & Encryption
 
-Reports are saved with a timestamp `redaudit_YYYYMMDD_HHMMSS`.
+Reports are saved in timestamped subfolders (v2.8+): `RedAudit_YYYY-MM-DD_HH-MM-SS/`
+
+Each scan session creates its own folder with:
 
 - **Plain**: `.json` and `.txt`.
 - **Encrypted**: `.json.enc`, `.txt.enc`, and `.salt`.
+- **PCAP**: Traffic capture files.
 
 To decrypt results:
 
@@ -117,7 +122,7 @@ sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 
 ### CLI Execution Markers
 
-RedAudit v2.7.0 strictly informs you about the commands being executed:
+RedAudit v2.8.0 strictly informs you about the commands being executed:
 
 - **`[nmap] 192.168.x.x → nmap ...`**: Standard port scan.
 - **`[deep] 192.168.x.x → combined ...`**: Deep Identity Scan execution (expect 90-140s duration).

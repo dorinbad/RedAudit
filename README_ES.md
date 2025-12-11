@@ -4,7 +4,7 @@
 
 RedAudit es una herramienta CLI para auditoría de red estructurada y hardening en sistemas Kali/Debian.
 
-![Version](https://img.shields.io/badge/version-2.7.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-2.8.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 ![CI/CD](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dorinbadea/81671a8fffccee81ca270f14d094e5a1/raw/redaudit-tests.json&style=flat-square&label=CI%2FCD)
@@ -15,7 +15,7 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_ 
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                     v2.7
+                                     v2.8
      Herramienta Interactiva de Auditoría de Red
 ```
 
@@ -42,69 +42,74 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 
 ### Vista General del Sistema
 
-> **Nota**: Si el diagrama no se renderiza (ej: en móvil), ver la [imagen estática](assets/system_overview.png).
+![Visión General del Sistema](docs/images/system_overview_es.png)
+
+<details>
+<summary>Ver Código del Diagrama (Mermaid)</summary>
 
 ```mermaid
-%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#1a365d', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4299e1', 'lineColor': '#a0aec0', 'secondaryColor': '#2d3748', 'tertiaryColor': '#1a202c', 'background': '#0d1117', 'mainBkg': '#0d1117', 'nodeBorder': '#4299e1', 'clusterBkg': '#1a202c', 'clusterBorder': '#4a5568', 'titleColor': '#fff'}}}%%
-flowchart TB
+graph TD
     %% Nodes
-    User([Usuario / CLI])
+    User["Usuario / CLI"]
+    Updater["Módulo Updater"]
+    Orchestrator["Orquestador"]
     
-    subgraph Core ["Orquestación Core"]
-        Orchestrator[auditor.py]
-        Scanner[scanner.py]
-        Reporter[reporter.py]
-        Crypto[crypto.py]
+    subgraph Scanning ["Escaneo y Enumeración"]
+        Prescan["Pre-escaneo Asíncrono"]
+        Discovery["Descubrimiento de Hosts"]
+        Strategies["Estrategia de Escaneo"]
+        Nmap["Motor Nmap"]
+        UDP["Escaneo UDP Inteligente"]
+        Web["Auditoría Web"]
     end
 
-    subgraph Phase1 ["Fase 1: Descubrimiento"]
-        Prescan[prescan.py<br/>Asyncio]
-        Nmap[nmap<br/>Port Scan]
+    subgraph Analysis ["Análisis Profundo"]
+        Vuln["Escaneo de Vulns"]
+        Capture["Captura PCAP"]
     end
 
-    subgraph Phase2 ["Fase 2: Análisis Profundo"]
-        direction TB
-        subgraph Web ["Recon Web"]
-            WhatWeb[whatweb]
-            Nikto[nikto]
-            Curl[curl/wget]
-        end
-        
-        subgraph Net ["Ops de Red"]
-            TcpDoes[tcpdump<br/>Captura]
-            Tshark[tshark<br/>Análisis]
-            TestSSL[testssl.sh<br/>Auditoría TLS]
-            Search[searchsploit<br/>Vulns]
-        end
+    subgraph Reporting ["Informes y Salida"]
+        Aggregator["Agregador de Resultados"]
+        Crypto["Cifrado (AES)"]
+        Artifacts[("Reportes Cifrados")]
     end
-
-    Output[("Reportes Cifrados<br/>JSON + TXT + PCAP")]
 
     %% Flow
-    User ==> Orchestrator
-    Orchestrator --> Prescan
-    Orchestrator --> Scanner
+    User <--> Updater
+    Updater <-->|Verificar/Actualizar| Orchestrator
+    User <-->|Directo| Orchestrator
     
-    Prescan -.->|Fast Ports| Scanner
-    Scanner --> Nmap
+    Orchestrator <--> Prescan
+    Prescan --> Discovery
+    Discovery --> Strategies
+    Strategies --> Nmap
     
-    Nmap -->|Open Ports| Web
-    Nmap -->|Services| Net
+    Nmap -->|Servicios| Web
+    Nmap -->|Puertos Abiertos| UDP
+    
+    Web --> Vuln
+    UDP --> Capture
+    
+    Vuln --> Aggregator
+    Capture --> Aggregator
+    Nmap --> Aggregator
+    
+    Aggregator --> Crypto
+    Crypto --> Artifacts
 
-    Scanner --> Reporter
-    Reporter --> Crypto
-    Crypto ==> Output
-
-    %% Styling
-    style User fill:#4299e1,stroke:#2b6cb0,color:#fff,stroke-width:2px
-    style Orchestrator fill:#48bb78,stroke:#2f855a,color:#fff,stroke-width:2px
-    style Output fill:#9f7aea,stroke:#805ad5,color:#fff,stroke-width:2px
+    %% Styles
+    classDef user fill:#4299e1,stroke:#2b6cb0,color:#fff,stroke-width:2px;
+    classDef orch fill:#48bb78,stroke:#2f855a,color:#fff,stroke-width:2px;
+    classDef output fill:#9f7aea,stroke:#805ad5,color:#fff,stroke-width:2px;
+    classDef module fill:#2d3748,stroke:#4a5568,color:#fff,stroke-width:1px;
     
-    style Scanner fill:#2d3748,stroke:#4a5568
-    style Prescan fill:#2d3748,stroke:#4a5568
-    style Reporter fill:#2d3748,stroke:#4a5568
-    style Crypto fill:#2d3748,stroke:#4a5568
+    class User user;
+    class Orchestrator orch;
+    class Artifacts output;
+    class Updater,Prescan,Discovery,Strategies,Nmap,UDP,Web,Vuln,Capture,Aggregator,Crypto module;
 ```
+
+</details>
 
 Los escaneos profundos se activan selectivamente: los módulos de auditoría web solo se lanzan tras la detección de servicios HTTP/HTTPS, y la inspección SSL se reserva para puertos cifrados.
 
@@ -188,6 +193,8 @@ sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
 - `--prescan`: Activar pre-escaneo rápido asyncio antes de nmap (v2.7)
 - `--prescan-ports`: Rango de puertos para pre-scan (defecto: 1-1024)
 - `--prescan-timeout`: Timeout de pre-scan en segundos (defecto: 0.5)
+- `--udp-mode`: Modo de escaneo UDP: quick (defecto) o full (v2.8)
+- `--skip-update-check`: Omitir verificación de actualizaciones al iniciar (v2.8)
 - `--yes, -y`: Saltar advertencia legal (usar con precaución)
 - `--lang`: Idioma (en/es)
 
@@ -226,7 +233,7 @@ RedAudit aplica un escaneo inteligente de 2 fases a hosts "silenciosos" o comple
 - **Beneficio**: Ahorra tiempo saltando la Fase 2 si el host ya está identificado.
 - **Salida**: Logs completos y datos MAC/Vendor en `host.deep_scan`.
 
-## Arquitectura Modular (v2.7)
+## Arquitectura Modular (v2.8)
 
 RedAudit está organizado como un paquete Python modular:
 
@@ -238,7 +245,8 @@ redaudit/
 │   ├── scanner.py  # Lógica de escaneo Nmap
 │   ├── crypto.py   # Cifrado/descifrado AES-128
 │   ├── network.py  # Detección de interfaces
-│   └── reporter.py # Salida JSON/TXT + SIEM
+│   ├── reporter.py # Salida JSON/TXT + SIEM
+│   └── updater.py  # Auto-actualización segura (v2.8)
 └── utils/          # Utilidades
     ├── constants.py # Constantes de configuración
     └── i18n.py      # Internacionalización
@@ -320,18 +328,20 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 - **"Cryptography missing"**: Ejecuta `sudo apt install python3-cryptography`.
 - **"Scan frozen"**: Revisa `~/.redaudit/logs/` o reduce `rate_limit_delay`.
 
-## 13. Historial de Cambios (Resumen v2.7.0)
+## 13. Historial de Cambios (Resumen v2.8.0)
 
-- **Motor Pre-scan Asyncio**: Descubrimiento rápido de puertos usando TCP connect asyncio (estilo RustScan)
+- **Precisión de Estado de Host**: Nuevos tipos de estado (`up`, `down`, `filtered`, `no-response`) con finalización inteligente
+- **Escaneo UDP Inteligente**: Estrategia de 3 fases con puertos prioritarios para escaneos más rápidos
+- **Captura PCAP Concurrente**: Tráfico capturado durante escaneos, no después
+- **Banner Grab Fallback**: Identificación mejorada de servicios para puertos `tcpwrapped`
+- **Auto-Actualización Segura**: Verificación de actualizaciones integrada con GitHub al iniciar
+- **Carpetas de Reporte con Fecha**: Reportes guardados en subcarpetas `RedAudit_YYYY-MM-DD_HH-MM-SS/`
+
+### Anterior (v2.7.x)
+
+- **Motor Pre-scan Asyncio**: Descubrimiento rápido de puertos usando TCP connect asyncio
 - **Salida Compatible SIEM**: Reportes JSON mejorados con `schema_version`, `event_type`, `session_id`
 - **Rate-Limiting con Jitter**: Varianza aleatoria ±30% para evasión de IDS
-- **Linting de Seguridad Bandit**: Análisis de seguridad estático en pipeline CI
-
-### Anterior (v2.6.x)
-
-- **Hotfix de Señales**: Limpieza correcta de subprocesos en Ctrl+C
-- **Arquitectura Modular**: Refactorizado en estructura de paquete organizada (8 módulos)
-- **Pipeline CI/CD**: Workflow de GitHub Actions para testing automatizado
 
 Para el changelog detallado, consulta [CHANGELOG.md](CHANGELOG.md)
 

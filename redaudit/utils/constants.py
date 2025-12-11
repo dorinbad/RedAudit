@@ -6,7 +6,7 @@ GPLv3 License
 """
 
 # Version
-VERSION = "2.7.0"
+VERSION = "2.8.0"
 
 # Default language (installer may override)
 DEFAULT_LANG = "en"
@@ -16,11 +16,25 @@ MAX_INPUT_LENGTH = 1024  # Maximum length for IP/hostname inputs
 MAX_CIDR_LENGTH = 50     # Maximum length for CIDR ranges
 MAX_SUBPROCESS_RETRIES = 2  # Maximum retries for subprocess calls
 
+# Host status constants (v2.8.0)
+STATUS_UP = "up"
+STATUS_DOWN = "down"
+STATUS_FILTERED = "filtered"
+STATUS_NO_RESPONSE = "no-response"
+
 # Scan timeouts (seconds)
 DEEP_SCAN_TIMEOUT = 400
+DEEP_SCAN_TIMEOUT_EXTENDED = 600  # For full UDP scans
+UDP_QUICK_TIMEOUT = 120  # For priority UDP ports only
 TRAFFIC_CAPTURE_DEFAULT_DURATION = 15
 TRAFFIC_CAPTURE_MAX_DURATION = 120
 TRAFFIC_CAPTURE_PACKETS = 50
+
+# UDP scanning configuration (v2.8.0)
+UDP_PRIORITY_PORTS = "53,67,68,69,123,137,138,139,161,162,445,500,514,520,1900,4500,5353"
+UDP_SCAN_MODE_QUICK = "quick"
+UDP_SCAN_MODE_FULL = "full"
+DEFAULT_UDP_MODE = UDP_SCAN_MODE_QUICK
 
 # Heartbeat thresholds (seconds)
 HEARTBEAT_INTERVAL = 30

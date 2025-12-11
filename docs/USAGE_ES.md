@@ -33,6 +33,8 @@ sudo python -m redaudit [OPTIONS]
 | `--prescan` | Habilita pre-scan asyncio rápido antes de nmap (v2.7). |
 | `--prescan-ports` | Rango de puertos para pre-scan (defecto: 1-1024). |
 | `--prescan-timeout` | Timeout de conexión del pre-scan en segundos (defecto: 0.5). |
+| `--udp-mode` | Modo de escaneo UDP: `quick` (defecto) o `full` (v2.8). |
+| `--skip-update-check` | Omitir verificación de actualizaciones al iniciar (v2.8). |
 | `--no-deep-scan` | Desactiva el deep scan adaptativo. |
 | `--no-vuln-scan` | Desactiva el escaneo de vulnerabilidades web. |
 | `--no-txt-report` | Desactiva la generación de reporte TXT. |
@@ -78,10 +80,13 @@ sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 
 ### Reportes y Cifrado
 
-Los reportes se guardan con fecha `redaudit_YYYYMMDD_HHMMSS`.
+Los reportes se guardan en subcarpetas con fecha (v2.8+): `RedAudit_YYYY-MM-DD_HH-MM-SS/`
+
+Cada sesión de escaneo crea su propia carpeta con:
 
 - **Texto Plano**: `.json` y `.txt`.
 - **Cifrados**: `.json.enc`, `.txt.enc` y `.salt`.
+- **PCAP**: Archivos de captura de tráfico.
 
 Para descifrar resultados:
 
@@ -117,7 +122,7 @@ sudo redaudit -t 192.168.1.0/24 --prescan --prescan-ports 1-1024 --yes
 
 ### Marcadores de Ejecución CLI
 
-RedAudit v2.7.0 te informa estrictamente sobre los comandos que se están ejecutando:
+RedAudit v2.8.0 te informa estrictamente sobre los comandos que se están ejecutando:
 
 - **`[nmap] 192.168.x.x → nmap ...`**: Escaneo de puertos estándar.
 - **`[deep] 192.168.x.x → combined ...`**: Ejecución de Escaneo de Identidad Profundo (espera una duración de 90-140s).

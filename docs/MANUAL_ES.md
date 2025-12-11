@@ -1,8 +1,8 @@
-# Manual de Usuario de RedAudit v2.7.0 (ES)
+# Manual de Usuario de RedAudit v2.8.0 (ES)
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](MANUAL_EN.md)
 
-**Versión:** 2.7.0  
+**Versión:** 2.8.0  
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas y redes  
 **Licencia:** GPLv3
 
@@ -279,6 +279,8 @@ Las opciones más importantes:
 | `--yes`                      | Modo no interactivo: asume "sí" a las preguntas. Imprescindible para automatización.                                    |
 | `--prescan`                  | Activa el pre-escaneo asíncrono (v2.7) antes de lanzar nmap sobre grandes rangos.                                        |
 | `--prescan-ports RANGO`      | Rango de puertos del pre-escaneo. Por defecto: `1-1024`.                                                                 |
+| `--udp-mode {quick,full}`    | Modo de escaneo UDP: `quick` (puertos prioritarios) o `full` (todos). Por defecto: `quick`. (v2.8)                       |
+| `--skip-update-check`        | Omitir la verificación de actualizaciones al iniciar. (v2.8)                                                             |
 | `-V`, `--version`            | Muestra la versión de RedAudit y termina.                                                                               |
 
 Para más ejemplos de uso, consulta [USAGE_ES.md](USAGE_ES.md).
@@ -322,16 +324,18 @@ sudo redaudit \
 
 ### 6.1 Estructura de directorios
 
-Tras cada ejecución, RedAudit crea un directorio con sello temporal, por ejemplo:
+Tras cada ejecución, RedAudit crea un directorio con sello temporal (v2.8+):
 
+```text
+~/RedAuditReports/
+└── RedAudit_2026-01-15_21-30-45/
+    ├── redaudit_20260115_213045.json
+    ├── redaudit_20260115_213045.txt
+    ├── traffic_192_168_1_*.pcap     # capturas opcionales
+    └── *.log                        # logs auxiliares
 ```
-redaudit_reports_2026-01-15_213045/
-├── redaudit_report_2026-01-15_213045.json
-├── redaudit_summary_2026-01-15_213045.txt
-├── *.pcap                      # capturas opcionales
-├── *.tshark.txt               # resúmenes opcionales
-└── *.log                      # logs auxiliares (si se habilitan)
-```
+
+Cada sesión de escaneo obtiene su propia subcarpeta para mejor organización.
 
 Si el cifrado está activado, los informes terminarán en `.enc` y aparecerán ficheros `.salt` asociados.
 

@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2025-12-11 (Completeness & Reliability)
+
+### Added
+
+- **Host Status Accuracy (Phase 1)**: Introduced intelligent status finalization
+  - New status types: `up`, `down`, `filtered`, `no-response`
+  - `finalize_host_status()` evaluates deep scan results to determine accurate status
+  - Hosts with MAC/vendor detected but no initial response now show as `filtered` instead of `down`
+
+- **Intelligent UDP Scanning (Phase 2)**: 3-phase adaptive deep scan strategy
+  - Phase 2a: Quick scan of 17 priority UDP ports (DNS, DHCP, SNMP, NetBIOS, etc.)
+  - Phase 2b: Full UDP scan only in `full` mode and if no identity found
+  - New config: `udp_mode` (default: `quick`)
+  - New constant: `UDP_PRIORITY_PORTS` with most common UDP services
+
+- **Concurrent PCAP Capture (Phase 3)**: Traffic capture synchronized with scanning
+  - `start_background_capture()` - Starts tcpdump before scanning begins
+  - `stop_background_capture()` - Collects results after scanning completes
+  - Captures actual scan traffic instead of empty post-scan windows
+
+- **Banner Grab Fallback (Phase 4)**: Enhanced service identification
+  - `banner_grab_fallback()` - Uses nmap `--script banner,ssl-cert` for unidentified ports
+  - Automatically runs on ports with `tcpwrapped` or `unknown` service
+  - Merges results into port records with `banner` and `ssl_cert` fields
+
+- **Secure Auto-Update System (Phase 5)**: GitHub-integrated update checking
+  - New module: `redaudit/core/updater.py`
+  - Checks GitHub API for latest releases at startup (interactive prompt)
+  - Shows release notes/changelog for new versions
+  - Secure git-based updates with integrity verification
+  - CLI flag: `--skip-update-check` to disable
+  - Translations for update messages in English and Spanish
+
+- **Timestamped Report Folders (Phase 6)**: Organized report structure
+  - Reports now saved in subfolders: `RedAudit_YYYY-MM-DD_HH-MM-SS/`
+  - Each scan session gets its own directory
+  - PCAP files and reports organized together
+
+### Changed
+
+- **Deep Scan Strategy**: Updated from `adaptive_v2.5` to `adaptive_v2.8`
+  - Concurrent traffic capture during entire scan duration
+  - Three-phase UDP strategy for faster typical scans
+  - Improved messaging with phase-specific timing estimates
+
+- **Constants**: Added new constants for v2.8.0 features
+  - `STATUS_UP`, `STATUS_DOWN`, `STATUS_FILTERED`, `STATUS_NO_RESPONSE`
+  - `UDP_PRIORITY_PORTS`, `UDP_SCAN_MODE_QUICK`, `UDP_SCAN_MODE_FULL`
+  - `DEEP_SCAN_TIMEOUT_EXTENDED`, `UDP_QUICK_TIMEOUT`
+
+- **CLI**: New flags `--udp-mode` and `--skip-update-check`
+
+- **Version**: Updated to 2.8.0
+
+### Technical
+
+- New module `redaudit/core/updater.py` with:
+  - `parse_version()`, `compare_versions()`
+  - `fetch_latest_version()`, `check_for_updates()`
+  - `perform_git_update()`, `interactive_update_check()`
+
+- New functions in `scanner.py`:
+  - `start_background_capture()` / `stop_background_capture()`
+  - `banner_grab_fallback()`
+  - `finalize_host_status()`
+
+- Improved `scan_host_ports()`:
+  - Tracks unknown ports for banner fallback
+  - Finalizes status after all enrichment
+
+- Updated `reporter.py`:
+  - Creates timestamped subfolders for reports
+
+---
+
 ## [2.7.0] - 2025-12-09 (Speed & Integration)
 
 ### Added

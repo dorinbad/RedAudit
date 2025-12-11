@@ -91,6 +91,16 @@ TRANSLATIONS = {
         "exploits_found": "⚠️  Found {} known exploits for {}",
         "testssl_analysis": "Running deep SSL/TLS analysis on {}:{} (may take 60s)...",
         "scanning_hosts": "Scanning hosts...",
+        # Update system (v2.8.0)
+        "update_check_prompt": "Check for updates before starting?",
+        "update_checking": "Checking for updates...",
+        "update_check_failed": "Could not check for updates (network issue or GitHub unavailable)",
+        "update_current": "You are running the latest version ({})",
+        "update_available": "Update available! Current: {} → Latest: {}",
+        "update_release_notes": "What's new:",
+        "update_prompt": "Would you like to update now?",
+        "update_starting": "Downloading update...",
+        "update_skipped": "Update skipped. Continuing with current version.",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -175,6 +185,16 @@ TRANSLATIONS = {
         "exploits_found": "⚠️  Encontrados {} exploits conocidos para {}",
         "testssl_analysis": "Ejecutando análisis SSL/TLS profundo en {}:{} (puede tomar 60s)...",
         "scanning_hosts": "Escaneando hosts...",
+        # Sistema de actualizaciones (v2.8.0)
+        "update_check_prompt": "¿Buscar actualizaciones antes de iniciar?",
+        "update_checking": "Buscando actualizaciones...",
+        "update_check_failed": "No se pudo verificar actualizaciones (problema de red o GitHub no disponible)",
+        "update_current": "Estás ejecutando la última versión ({})",
+        "update_available": "¡Actualización disponible! Actual: {} → Nueva: {}",
+        "update_release_notes": "Novedades:",
+        "update_prompt": "¿Deseas actualizar ahora?",
+        "update_starting": "Descargando actualización...",
+        "update_skipped": "Actualización omitida. Continuando con la versión actual.",
     },
 }
 

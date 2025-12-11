@@ -1,8 +1,8 @@
-# RedAudit v2.7.0 – User Manual (EN)
+# RedAudit v2.8.0 – User Manual (EN)
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](MANUAL_ES.md)
 
-**Version:** 2.7.0  
+**Version:** 2.8.0  
 **Target audience:** Security analysts, penetration testers, systems / network administrators  
 **License:** GPLv3
 
@@ -275,6 +275,8 @@ The most important options:
 | `--yes`                     | Non-interactive mode: assume "yes" to prompts. Essential for automation.                                                 |
 | `--prescan`                 | Enable asynchronous pre-scan (v2.7) to reduce nmap calls on very large ranges.                                           |
 | `--prescan-ports RANGE`     | Port range used by the pre-scan. Default: `1-1024`.                                                                      |
+| `--udp-mode {quick,full}`   | UDP scan mode: `quick` (priority ports) or `full` (all ports). Default: `quick`. (v2.8)                                  |
+| `--skip-update-check`       | Skip the update check prompt at startup. (v2.8)                                                                          |
 | `-V`, `--version`           | Print RedAudit version and exit.                                                                                         |
 
 For more usage examples, see [USAGE.md](USAGE.md).
@@ -318,16 +320,18 @@ sudo redaudit \
 
 ### 6.1 Directory layout
 
-After a run, RedAudit creates a timestamped output directory (by default inside the working directory) such as:
+After a run, RedAudit creates a timestamped output directory (v2.8+) such as:
 
+```text
+~/RedAuditReports/
+└── RedAudit_2026-01-15_21-30-45/
+    ├── redaudit_20260115_213045.json
+    ├── redaudit_20260115_213045.txt
+    ├── traffic_192_168_1_*.pcap     # optional packet captures
+    └── *.log                        # auxiliary logs, if enabled
 ```
-redaudit_reports_2026-01-15_213045/
-├── redaudit_report_2026-01-15_213045.json
-├── redaudit_summary_2026-01-15_213045.txt
-├── *.pcap                      # optional packet captures
-├── *.tshark.txt               # optional pcap summaries
-└── *.log                      # auxiliary logs, if enabled
-```
+
+Each scan session gets its own subfolder for organization.
 
 If encryption is enabled, the JSON and TXT files will instead use `.enc` suffixes and have associated `.salt` files.
 

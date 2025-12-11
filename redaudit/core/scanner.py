@@ -23,6 +23,11 @@ from redaudit.utils.constants import (
     WEB_SERVICES_KEYWORDS,
     WEB_SERVICES_EXACT,
     SUSPICIOUS_SERVICE_KEYWORDS,
+    STATUS_UP,
+    STATUS_DOWN,
+    STATUS_FILTERED,
+    STATUS_NO_RESPONSE,
+    UDP_PRIORITY_PORTS,
 )
 
 
@@ -644,3 +649,276 @@ def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None) -
         if logger:
             logger.debug("TestSSL error for %s:%d: %s", safe_ip, port, exc)
         return None
+
+
+def start_background_capture(
+    host_ip: str,
+    output_dir: str,
+    networks: List[Dict],
+    extra_tools: Dict,
+    logger=None
+) -> Optional[Dict]:
+    """
+    Start background traffic capture for concurrent scanning (v2.8.0).
+    
+    Returns capture info dict with 'process' key for the tcpdump subprocess,
+    or None if capture couldn't be started.
+    
+    Args:
+        host_ip: Target IP
+        output_dir: Directory for pcap files
+        networks: Network info list
+        extra_tools: Dict of available tool paths
+        logger: Optional logger
+    
+    Returns:
+        Dict with 'process', 'pcap_file', 'iface' or None
+    """
+    if not extra_tools.get("tcpdump"):
+        return None
+
+    safe_ip = sanitize_ip(host_ip)
+    if not safe_ip:
+        return None
+
+    # Find interface for the IP
+    iface = None
+    try:
+        ip_obj = ipaddress.ip_address(safe_ip)
+        for net in networks:
+            try:
+                net_obj = ipaddress.ip_network(net["network"], strict=False)
+                if ip_obj in net_obj:
+                    iface = net.get("interface")
+                    break
+            except Exception:
+                continue
+    except ValueError:
+        return None
+
+    if not iface:
+        if logger:
+            logger.info("No interface found for host %s, skipping traffic capture", safe_ip)
+        return None
+
+    if not re.match(r"^[a-zA-Z0-9\-_]+$", iface):
+        return None
+
+    ts = datetime.now().strftime("%H%M%S")
+    os.makedirs(output_dir, exist_ok=True)
+    pcap_file = os.path.join(output_dir, f"traffic_{safe_ip.replace('.', '_')}_{ts}.pcap")
+
+    cmd = [
+        extra_tools["tcpdump"],
+        "-i", iface,
+        "host", safe_ip,
+        "-w", pcap_file,
+    ]
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return {"process": proc, "pcap_file": pcap_file, "iface": iface}
+    except Exception as exc:
+        if logger:
+            logger.debug("Failed to start background capture for %s: %s", safe_ip, exc)
+        return None
+
+
+def stop_background_capture(
+    capture_info: Dict,
+    extra_tools: Dict,
+    logger=None
+) -> Optional[Dict]:
+    """
+    Stop background traffic capture and collect results (v2.8.0).
+    
+    Args:
+        capture_info: Dict from start_background_capture with 'process', 'pcap_file', 'iface'
+        extra_tools: Dict of available tool paths
+        logger: Optional logger
+    
+    Returns:
+        PCAP info dict with tshark summary, or None
+    """
+    if not capture_info or "process" not in capture_info:
+        return None
+    
+    proc = capture_info["process"]
+    pcap_file = capture_info.get("pcap_file", "")
+    iface = capture_info.get("iface", "")
+    
+    result = {"pcap_file": pcap_file, "iface": iface}
+    
+    # Terminate the capture process
+    try:
+        proc.terminate()
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        result["tcpdump_error"] = "Process killed after timeout"
+    except Exception as exc:
+        result["tcpdump_error"] = str(exc)
+    
+    # Generate tshark summary if available
+    if extra_tools.get("tshark") and os.path.exists(pcap_file):
+        try:
+            res = subprocess.run(
+                [extra_tools["tshark"], "-r", pcap_file, "-q", "-z", "io,phs"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            summary = (res.stdout or res.stderr or "")[:2000]
+            if summary.strip():
+                result["tshark_summary"] = summary
+        except Exception as exc:
+            result["tshark_error"] = str(exc)
+    
+    return result
+
+
+def banner_grab_fallback(
+    host_ip: str,
+    ports: List[int],
+    extra_tools: Dict = None,
+    timeout: int = 30,
+    logger=None
+) -> Dict[int, Dict]:
+    """
+    Fallback banner grabbing for unidentified services (v2.8.0).
+    
+    Uses nmap --script banner,ssl-cert for additional service info.
+    
+    Args:
+        host_ip: Target IP
+        ports: List of port numbers to scan (max 20)
+        extra_tools: Dict of available tool paths (unused, kept for consistency)
+        timeout: Subprocess timeout
+        logger: Optional logger
+    
+    Returns:
+        Dict mapping port -> {"banner": str, "ssl_cert": str}
+    """
+    safe_ip = sanitize_ip(host_ip)
+    if not safe_ip:
+        return {}
+    
+    if not ports:
+        return {}
+    
+    # Limit to 20 ports max
+    ports = [p for p in ports if isinstance(p, int) and 1 <= p <= 65535][:20]
+    if not ports:
+        return {}
+    
+    port_str = ",".join(str(p) for p in ports)
+    
+    cmd = [
+        "nmap", "-sV", "--script", "banner,ssl-cert",
+        "-p", port_str,
+        "-Pn",
+        "--host-timeout", "60s",
+        safe_ip
+    ]
+    
+    results: Dict[int, Dict] = {}
+    
+    try:
+        res = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        
+        output = res.stdout or ""
+        
+        # Parse output for port info
+        current_port = None
+        for line in output.splitlines():
+            # Match port lines like "80/tcp open http"
+            port_match = re.match(r"(\d+)/tcp\s+\w+\s+(\S+)", line)
+            if port_match:
+                current_port = int(port_match.group(1))
+                results.setdefault(current_port, {})
+                results[current_port]["service"] = port_match.group(2)
+            
+            # Match banner lines
+            if current_port and "banner:" in line.lower():
+                banner = line.split(":", 1)[-1].strip()
+                results[current_port]["banner"] = banner[:500]
+            
+            # Match SSL cert info
+            if current_port and "ssl-cert:" in line.lower():
+                results.setdefault(current_port, {})["ssl_cert"] = line.strip()[:500]
+                
+    except subprocess.TimeoutExpired:
+        if logger:
+            logger.warning("Banner grab timeout for %s ports %s", safe_ip, port_str)
+    except Exception as exc:
+        if logger:
+            logger.debug("Banner grab error for %s: %s", safe_ip, exc)
+    
+    return results
+
+
+def finalize_host_status(host_record: Dict) -> str:
+    """
+    Determine the final host status based on all available data (v2.8.0).
+    
+    Improves accuracy by considering deep scan results, not just initial ping response.
+    
+    Args:
+        host_record: Host record dictionary
+    
+    Returns:
+        Final status string (STATUS_UP, STATUS_FILTERED, STATUS_NO_RESPONSE, STATUS_DOWN)
+    """
+    current_status = host_record.get("status", STATUS_DOWN)
+    
+    # If already up, keep it
+    if current_status == STATUS_UP:
+        return STATUS_UP
+    
+    # Check if we have meaningful data from deep scan
+    deep_scan = host_record.get("deep_scan", {})
+    if not deep_scan:
+        return current_status
+    
+    # Check for MAC/vendor (definite proof of host presence)
+    if deep_scan.get("mac_address") or deep_scan.get("vendor"):
+        return STATUS_FILTERED  # Host exists but filtered initial probes
+    
+    # Check command outputs for any response indicators
+    commands = deep_scan.get("commands", [])
+    for cmd_record in commands:
+        stdout = cmd_record.get("stdout", "") or ""
+        
+        # Host responded in some way
+        if "Host is up" in stdout:
+            return STATUS_FILTERED
+        
+        # Found open ports
+        if re.search(r"\d+/tcp\s+open", stdout):
+            return STATUS_UP
+        
+        # OS detected
+        if "OS details:" in stdout or "Running:" in stdout:
+            return STATUS_FILTERED
+    
+    # Check for ports found
+    if host_record.get("ports") and len(host_record.get("ports", [])) > 0:
+        return STATUS_UP
+    
+    # No meaningful response at all
+    if current_status in ("down", STATUS_DOWN):
+        # But we tried deep scan, so it's at least no-response rather than definitively down
+        if commands:
+            return STATUS_NO_RESPONSE
+    
+    return current_status
+

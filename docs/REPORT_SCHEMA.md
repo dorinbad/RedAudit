@@ -8,7 +8,7 @@ RedAudit generates machine-readable reports in JSON format. This document descri
 
 **Data Types**: Standard JSON types (`string`, `number`, `boolean`, `array`, `object`).
 **Nullable**: Fields are nullable unless specified otherwise.
-**Source Module**: `redaudit/core/reporter.py` (v2.7+)
+**Source Module**: `redaudit/core/reporter.py` (v2.8+)
 
 ## Schema Definition
 
@@ -47,6 +47,11 @@ Represents a single targeted IP address.
       "service": "http",
       "product": "Apache httpd",
       "version": "2.4.41",
+      "banner": "Apache/2.4.41 (Ubuntu)",
+      "ssl_cert": {
+        "subject": "CN=example.com",
+        "issuer": "Let's Encrypt"
+      },
       "known_exploits": [
         {
           "title": "Apache 2.4.41 - Remote Code Execution",
@@ -59,16 +64,25 @@ Represents a single targeted IP address.
 }
 ```
 
+**Host Status Types (v2.8+)**:
+
+- `up`: Host responded and has open ports
+- `down`: No response at all
+- `filtered`: MAC/vendor detected but ports filtered
+- `no-response`: Deep scan attempted but no meaningful data
+
 ### Deep Scan Object (Optional)
 
 This field appears only if automatic deep scan was triggered.
 
 | Field | Type | Description |
 |---|---|---|
-| `strategy` | string | Strategy identifier ("adaptive_v2.5" - feature introduced in v2.5) |
+| `strategy` | string | Strategy identifier (`adaptive_v2.8` for v2.8+, `adaptive_v2.5` for earlier) |
 | `mac_address` | string | (Optional) MAC address if detected |
 | `vendor` | string | (Optional) Hardware vendor if detected |
 | `phase2_skipped` | boolean | True if Phase 2 (UDP/OS) was skipped because Phase 1 found identity |
+| `phase2b_skipped` | boolean | (v2.8+) True if full UDP scan was skipped (quick mode) |
+| `udp_mode` | string | (v2.8+) UDP scan mode used: `quick` or `full` |
 | `commands` | array | List of executed Nmap commands, logs, and durations |
 | `commands[].command` | string | Full command line executed |
 | `commands[].returncode` | integer | Exit code of the command |
