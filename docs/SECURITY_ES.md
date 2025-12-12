@@ -64,7 +64,19 @@ RedAudit incluye un mecanismo de actualización seguro que verifica GitHub para 
 - **Protección de cambios locales**: Rechaza actualizar si hay cambios sin commitear
 - **Ubicación del módulo**: `redaudit/core/updater.py`
 
-## 8. Licencia
+## 8. Almacenamiento de API Key NVD (v3.0.1)
+
+RedAudit soporta almacenar claves API de NVD para correlación CVE:
+
+- **Archivo de Configuración**: `~/.redaudit/config.json` con permisos `0600`
+- **Variable de Entorno**: `NVD_API_KEY` (nunca se registra en logs)
+- **Prioridad**: Flag CLI → Variable de entorno → Archivo de configuración
+- **Sin texto plano en logs**: Las claves API nunca se escriben en archivos de log
+- **Escrituras atómicas**: Las actualizaciones de configuración usan archivo temporal + renombrar para seguridad ante fallos
+
+Los usuarios deben tratar el archivo de configuración como sensible. La clave API otorga límites de velocidad incrementados pero no proporciona acceso a datos privados.
+
+## 9. Licencia
 
 Este modelo de seguridad es parte del proyecto RedAudit y está cubierto por la  
 **GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../LICENSE) para el texto completo.

@@ -95,7 +95,19 @@ RedAudit includes a secure update mechanism that checks GitHub for new releases:
 - **Local changes protection**: Refuses to update if uncommitted changes exist
 - **Module location**: `redaudit/core/updater.py`
 
-## 8. Known Limitations
+## 8. NVD API Key Storage (v3.0.1)
+
+RedAudit supports storing NVD API keys for CVE correlation:
+
+- **Config File**: `~/.redaudit/config.json` with `0600` permissions
+- **Environment Variable**: `NVD_API_KEY` (never logged)
+- **Priority**: CLI flag → Environment → Config file
+- **No plaintext in logs**: API keys are never written to log files
+- **Atomic writes**: Config updates use temp file + rename for crash safety
+
+Users should treat the config file as sensitive. The API key grants increased rate limits but does not provide access to private data.
+
+## 9. Known Limitations
 
 - **Requires root/sudo**: Necessary for raw socket access (nmap, tcpdump)
 - **No sandboxing**: External tools run with full system privileges
