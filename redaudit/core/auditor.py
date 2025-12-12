@@ -42,6 +42,9 @@ from redaudit.utils.constants import (
     UDP_SCAN_MODE_QUICK,
     UDP_SCAN_MODE_FULL,
     DEFAULT_UDP_MODE,
+    UDP_TOP_PORTS,
+    UDP_HOST_TIMEOUT_STRICT,
+    UDP_MAX_RETRIES_LAN,
     STATUS_UP,
     STATUS_DOWN,
     STATUS_FILTERED,
@@ -572,11 +575,18 @@ class InteractiveNetworkAuditor:
                         deep_obj["vendor"] = v2a
 
                 # Phase 2b: Full UDP scan (only if mode is 'full' and still no identity)
+                # v3.0: Optimized to use top-ports instead of full 65535 port scan
                 has_identity_now = output_has_identity(deep_obj.get("commands", []))
                 if udp_mode == UDP_SCAN_MODE_FULL and not has_identity_now and not mac:
-                    cmd_p2b = ["nmap", "-O", "-sSU", "-Pn", "-p-", "--max-retries", "2", safe_ip]
+                    cmd_p2b = [
+                        "nmap", "-O", "-sU", "-Pn",
+                        "--top-ports", str(UDP_TOP_PORTS),
+                        "--max-retries", str(UDP_MAX_RETRIES_LAN),
+                        "--host-timeout", UDP_HOST_TIMEOUT_STRICT,
+                        safe_ip
+                    ]
                     self.print_status(
-                        f"[deep] {safe_ip} → {' '.join(cmd_p2b)} (~300-600s, full UDP)",
+                        f"[deep] {safe_ip} → {' '.join(cmd_p2b)} (~120-180s, top {UDP_TOP_PORTS} UDP)",
                         "WARNING"
                     )
                     rec2b = run_nmap_command(cmd_p2b, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
@@ -910,10 +920,13 @@ class InteractiveNetworkAuditor:
                     pass
 
             # Nikto (only in full mode)
+            # v3.0: Smart-Check integration for false positive filtering
             if self.config["scan_mode"] == "completo" and self.extra_tools.get("nikto"):
                 try:
                     self.current_phase = f"vulns:nikto:{ip}:{port}"
                     import subprocess
+                    from redaudit.core.verify_vuln import filter_nikto_false_positives
+                    
                     res = subprocess.run(
                         [self.extra_tools["nikto"], "-h", url, "-maxtime", "120s", "-Tuning", "x"],
                         capture_output=True, text=True, timeout=150,
@@ -922,7 +935,21 @@ class InteractiveNetworkAuditor:
                     if output:
                         findings_list = [line for line in output.splitlines() if "+ " in line][:20]
                         if findings_list:
-                            finding["nikto_findings"] = findings_list
+                            # v3.0: Filter false positives using Smart-Check
+                            original_count = len(findings_list)
+                            verified = filter_nikto_false_positives(
+                                findings_list, url, self.extra_tools, self.logger
+                            )
+                            if verified:
+                                finding["nikto_findings"] = verified
+                                # Track how many were filtered
+                                filtered = original_count - len(verified)
+                                if filtered > 0:
+                                    finding["nikto_filtered_count"] = filtered
+                                    self.print_status(
+                                        f"[nikto] {ip}:{port} → Filtered {filtered}/{original_count} false positives",
+                                        "INFO"
+                                    )
                 except Exception:
                     pass
 

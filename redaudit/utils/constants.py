@@ -6,7 +6,7 @@ GPLv3 License
 """
 
 # Version
-VERSION = "2.8.1"
+VERSION = "3.0.0"
 
 # Default language (installer may override)
 DEFAULT_LANG = "en"
@@ -30,11 +30,16 @@ TRAFFIC_CAPTURE_DEFAULT_DURATION = 15
 TRAFFIC_CAPTURE_MAX_DURATION = 120
 TRAFFIC_CAPTURE_PACKETS = 50
 
-# UDP scanning configuration (v2.8.0)
+# UDP scanning configuration (v3.0.0)
 UDP_PRIORITY_PORTS = "53,67,68,69,123,137,138,139,161,162,445,500,514,520,1900,4500,5353"
 UDP_SCAN_MODE_QUICK = "quick"
 UDP_SCAN_MODE_FULL = "full"
 DEFAULT_UDP_MODE = UDP_SCAN_MODE_QUICK
+
+# v3.0: Optimized UDP scanning for LAN
+UDP_TOP_PORTS = 100  # Default UDP port count for full scans (vs 65535)
+UDP_HOST_TIMEOUT_STRICT = "300s"  # 5 minutes max per host
+UDP_MAX_RETRIES_LAN = 1  # Single retry for LAN environments
 
 # Heartbeat thresholds (seconds)
 HEARTBEAT_INTERVAL = 30

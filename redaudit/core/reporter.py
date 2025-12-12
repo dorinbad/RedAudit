@@ -16,6 +16,7 @@ from typing import Dict, Optional
 
 from redaudit.utils.constants import VERSION, SECURE_FILE_MODE
 from redaudit.core.crypto import encrypt_data
+from redaudit.core.entity_resolver import reconcile_assets
 
 
 def generate_summary(
@@ -69,6 +70,17 @@ def generate_summary(
         "mode": config.get("scan_mode", "normal")
     }
     results["targets"] = config.get("target_networks", [])
+
+    # v3.0: Entity Resolution - consolidate multi-interface hosts
+    hosts = results.get("hosts", [])
+    if hosts:
+        unified = reconcile_assets(hosts)
+        if unified:
+            results["unified_assets"] = unified
+            # Update summary with unified count
+            multi_interface = sum(1 for a in unified if a.get("interface_count", 1) > 1)
+            summary["unified_asset_count"] = len(unified)
+            summary["multi_interface_devices"] = multi_interface
 
     return summary
 

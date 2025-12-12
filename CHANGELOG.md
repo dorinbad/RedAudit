@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-12-12 (Smart Improvements)
+
+### Added
+
+- **Smart-Check Module (Module A)**: Nikto false positive filtering
+  - New module: `redaudit/core/verify_vuln.py`
+  - Content-Type verification to detect Soft 404s (APIs returning JSON/HTML for all paths)
+  - Size validation to filter suspiciously small "backup" files
+  - Path extraction from Nikto findings with multiple format support
+  - Automatic filtering of unreliable findings with count tracking
+  - Console output shows filtered false positive count per scan
+
+- **Entity Resolution Module (Module C)**: Multi-interface host consolidation
+  - New module: `redaudit/core/entity_resolver.py`
+  - Groups hosts by identity fingerprint (hostname/NetBIOS/mDNS)
+  - Creates unified asset records for devices with multiple interfaces
+  - New JSON field: `unified_assets` array in reports
+  - New summary fields: `unified_asset_count`, `multi_interface_devices`
+  - Asset type guessing (router, workstation, mobile, iot, etc.)
+
+- **New Tests**: 28 unit tests for new modules
+  - `tests/test_verify_vuln.py` - 14 tests for Smart-Check
+  - `tests/test_entity_resolver.py` - 14 tests for Entity Resolution
+
+### Changed
+
+- **UDP Taming (Module B)**: Optimized UDP scanning for 50-80% faster scans
+  - "completo" mode now uses `--max-retries 1` instead of 2
+  - Phase 2b UDP scan uses `--top-ports 100` instead of full `-p-` scan
+  - Strict `--host-timeout 300s` (5 min) per host
+  - Estimated scan time reduced from 300-600s to 120-180s per host
+
+- **Constants**: New UDP optimization constants
+  - `UDP_TOP_PORTS = 100`
+  - `UDP_HOST_TIMEOUT_STRICT = "300s"`
+  - `UDP_MAX_RETRIES_LAN = 1`
+
+- **Version**: Updated to 3.0.0
+
+### Technical
+
+- New functions in `verify_vuln.py`:
+  - `filter_nikto_false_positives()` - Main entry point
+  - `verify_nikto_finding()` - Single finding verification
+  - `verify_content_type()` - HTTP HEAD request verification
+  - `is_false_positive_by_content_type()` / `is_false_positive_by_size()`
+
+- New functions in `entity_resolver.py`:
+  - `reconcile_assets()` - Main entry point
+  - `extract_identity_fingerprint()` - Identity extraction
+  - `create_unified_asset()` - Asset unification
+  - `normalize_hostname()` - Hostname normalization
+
+- Updated `auditor.py`:
+  - Import new UDP constants
+  - Integrate Smart-Check in Nikto processing
+  - Optimized Phase 2b UDP command
+
+- Updated `reporter.py`:
+  - Import and integrate entity resolver
+  - Add unified assets to summary generation
+
+---
+
 ## [2.8.1] - 2025-12-11 (UX Improvements)
 
 ### Added
