@@ -114,6 +114,11 @@ sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password
 - `--skip-update-check`: Skip update check at startup
 - `--yes, -y`: Skip legal warning (use with caution)
 - `--lang`: Language (en/es)
+- `--ipv6`: Enable IPv6-only scanning mode **(v3.0)**
+- `--proxy URL`: SOCKS5 proxy for pivoting (socks5://host:port) **(v3.0)**
+- `--diff OLD NEW`: Compare two JSON reports and show changes **(v3.0)**
+- `--cve-lookup`: Enable CVE correlation via NVD API **(v3.0)**
+- `--nvd-key KEY`: NVD API key for faster rate limits **(v3.0)**
 
 See `redaudit --help` for full details.
 
@@ -172,20 +177,23 @@ RedAudit is organized as a modular Python package:
 
 ```text
 redaudit/
-├── core/           # Core functionality
-│   ├── auditor.py  # Main orchestrator class
-│   ├── prescan.py  # Asyncio fast port discovery
-│   ├── scanner.py  # Nmap scanning logic
-│   ├── crypto.py   # AES-128 encryption/decryption
-│   ├── network.py  # Interface detection
-│   ├── reporter.py # JSON/TXT + SIEM output
-│   ├── updater.py  # Secure auto-update
-│   ├── verify_vuln.py  # Nikto false positive filtering
+├── core/               # Core functionality
+│   ├── auditor.py      # Main orchestrator class
+│   ├── prescan.py      # Asyncio fast port discovery
+│   ├── scanner.py      # Nmap scanning logic + IPv6 support
+│   ├── crypto.py       # AES-128 encryption/decryption
+│   ├── network.py      # Interface detection (IPv4/IPv6)
+│   ├── reporter.py     # JSON/TXT + SIEM output
+│   ├── updater.py      # Secure auto-update (git clone)
+│   ├── verify_vuln.py  # Smart-Check false positive filtering
 │   ├── entity_resolver.py  # Multi-interface host grouping
-│   └── siem.py     # Professional SIEM integration
-└── utils/          # Utilities
-    ├── constants.py # Configuration constants
-    └── i18n.py      # Internationalization
+│   ├── siem.py         # Professional SIEM integration
+│   ├── nvd.py          # CVE correlation via NVD API (v3.0)
+│   ├── diff.py         # Differential analysis module (v3.0)
+│   └── proxy.py        # SOCKS5 proxy support (v3.0)
+└── utils/              # Utilities
+    ├── constants.py    # Configuration constants
+    └── i18n.py         # Internationalization
 ```
 
 ### Secure Auto-Update
@@ -275,7 +283,16 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 
 ## 13. Changelog (v3.0.0)
 
-### Latest Improvements
+### v3.0 Features
+
+- **IPv6 Support**: Full scanning capabilities for IPv6 networks with automatic `-6` flag
+- **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API with 7-day cache
+- **Differential Analysis**: Compare two scan reports to detect network changes (`--diff`)
+- **Proxy Chains (SOCKS5)**: Network pivoting support via proxychains wrapper
+- **Magic Byte Validation**: Enhanced false positive detection with file signature verification
+- **Enhanced Auto-Update**: Git clone approach with verification and home folder copy
+
+### v2.9 Improvements
 
 - **Smart-Check**: Automatic Nikto false positive filtering via Content-Type validation
 - **UDP Taming**: 50-80% faster scans with `--top-ports 100` and strict timeouts
@@ -286,7 +303,6 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
 
 - **Adaptive Deep Scan**: 3-phase strategy (TCP aggressive → Priority UDP → Full UDP)
 - **Concurrent PCAP**: Traffic captured during scans, not after
-- **Secure Auto-Update**: GitHub-integrated with automatic restart
 - **Pre-scan Engine**: Fast asyncio port discovery before nmap
 - **Exploit Intelligence**: SearchSploit integration for version-based lookups
 - **SSL/TLS Analysis**: TestSSL.sh deep vulnerability scanning

@@ -4,18 +4,14 @@
 
 Este documento describe el roadmap técnico, las mejoras arquitectónicas planificadas y los enfoques descartados para RedAudit.
 
-## Roadmap Inmediato (v3.0+)
+## Roadmap Inmediato (v3.1+)
 
 | Prioridad | Característica | Descripción |
 | :--- | :--- | :--- |
-| **Alta** | **Validación Magic Bytes** | Mejorar Smart-Check con verificación de firmas hexadecimales (tar: `ustar`, zip: `PK\x03\x04`) para eliminar falsos positivos de servidores embebidos. |
-| **Alta** | **Soporte IPv6** | Implementar soporte completo `nmap -6` y validación regex IPv6 en el módulo InputSanitizer. |
-| **Alta** | **Correlación CVE** | Profundizar el análisis de vulnerabilidades correlacionando versiones identificadas con NVD (más allá de SearchSploit). |
-| **Media** | **Puertos UDP Configurables** | Añadir flag CLI `--udp-ports N` (rango: 50-500, defecto: 100) para cobertura UDP ajustable por usuario. |
-| **Media** | **Análisis Diferencial** | Crear módulo `diff` para comparar dos reportes JSON y resaltar deltas (nuevos puertos/vulns). |
-| **Media** | **Proxy Chains** | Soporte nativo para proxies SOCKS5 para facilitar pivoting. |
-| **Baja** | **Descubrimiento NetBIOS/mDNS** | Consultas activas de hostname (puerto 137/5353) para mejorar resolución de entidades en redes sin registros PTR DNS. |
-| **Baja** | **Contenedorización** | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
+| **Alta** | **Puertos UDP Configurables** | Añadir flag CLI `--udp-ports N` (rango: 50-500, defecto: 100) para cobertura UDP ajustable. |
+| **Media** | **Descubrimiento NetBIOS/mDNS** | Consultas activas de hostname (puerto 137/5353) para mejorar resolución de entidades. |
+| **Media** | **Contenedorización** | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
+| **Baja** | **Configuración Persistente** | Configuración de usuario en `~/.redaudit/config.yaml` para anular valores por defecto. |
 
 ## Propuestas Arquitectónicas
 
@@ -40,7 +36,18 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 ## Hitos Completados
 
-### v2.9.0 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.0.0 (Completado - Diciembre 2025) -> **ACTUAL**
+
+*Lanzamiento mayor con capacidades avanzadas.*
+
+- [x] **Soporte IPv6**: Capacidades completas de escaneo para redes IPv6.
+- [x] **Validación Magic Bytes**: Detección mejorada de falsos positivos con verificación de firmas.
+- [x] **Correlación CVE (NVD)**: Inteligencia profunda de vulnerabilidades via API NIST NVD con caché de 7 días.
+- [x] **Análisis Diferencial**: Comparar dos reportes JSON para detectar cambios de red.
+- [x] **Proxy Chains (SOCKS5)**: Soporte para pivoting via wrapper proxychains.
+- [x] **Auto-Update Mejorado**: Enfoque git clone con verificación y copia a carpeta home.
+
+### v2.9.0 (Completado - Diciembre 2025)
 
 *Enfoque en inteligencia, eficiencia y documentación profesional.*
 
@@ -48,7 +55,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 - [x] **UDP Taming**: Escaneos 50-80% más rápidos mediante estrategia de 3 fases optimizada.
 - [x] **Entity Resolution**: Agrupación de dispositivos multi-interfaz (Unified Assets).
 - [x] **SIEM Profesional**: Cumplimiento ECS v8.11 y puntuación de riesgo.
-- [x] **Documentación Limpia**: Eliminación completa de etiquetas de versión antiguas y estandarización.
+- [x] **Documentación Limpia**: Eliminación completa de etiquetas de versión antiguas.
 
 ### v2.7-v2.8 (Completado)
 
@@ -94,11 +101,8 @@ Si deseas contribuir a alguna de estas features:
 3. Lee [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
 4. Abre una [Discusión](https://github.com/dorinbadea/RedAudit/discussions) para nuevas ideas.
 
-<div align="center">
+---
 
-**Mantenimiento Activo**
-*Última actualización: Diciembre 2025*
+**Mantenimiento Activo** | *Última actualización: Diciembre 2025*
 
-<sub>Si este documento no se actualiza en >6 meses, el proyecto puede estar pausado. En ese caso, considera hacer un fork o contactarme.</sub>
-
-</div>
+*Si este documento no se actualiza en >6 meses, el proyecto puede estar pausado. En ese caso, considera hacer un fork o contactarme.*

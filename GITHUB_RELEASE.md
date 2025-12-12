@@ -1,22 +1,24 @@
 # RedAudit v3.0.0
 
-## Smart Improvements, UDP Taming & Entity Resolution
+## Major Feature Release
 
-### Highlights
+### v3.0 Highlights
+
+- **IPv6 Support**: Full scanning capabilities for IPv6 networks with automatic `-6` flag.
+- **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API with 7-day cache.
+- **Differential Analysis**: Compare two JSON reports to track network changes over time.
+- **Proxy Chains (SOCKS5)**: Network pivoting support via proxychains wrapper.
+- **Magic Byte Validation**: Enhanced false positive detection with file signature verification.
+- **Enhanced Auto-Update**: Git clone approach with verification and home folder copy.
+
+### Previous (v2.9) Features
 
 - **Smart-Check**: Intelligent false positive filtering for Nikto (90% noise reduction).
 - **UDP Taming**: Optimized 3-phase UDP scanning strategy (50-80% faster).
 - **Entity Resolution**: Intelligent grouping of multi-interface devices into unified assets.
-- **SIEM Professional**: Enhanced JSON schema compliant with ECS v8.11 for usage in Splunk/Elastic.
-- **Clean Documentation**: Complete overhaul of documentation for clarity and consistency.
+- **SIEM Professional**: Enhanced JSON schema compliant with ECS v8.11.
 
-### New Features
-
-- **Smart-Check**: Analyzes Content-Type to suppress irrelevant findings (e.g., Nikto flagging JSON endpoints).
-- **Unified Assets**: Correlates IPs by MAC address to show physical device count.
-- **Risk Scoring**: Dynamic 0-100 risk score per host based on vulnerabilities and open services.
-- **Strict UDP**: New defaults (`--top-ports 100`, `--host-timeout 300s`) prevent scan hangs.
-- **Clean Docs**: Removed confusing historical version tags from all Manuals/READMEs.
+---
 
 ### Installation
 
@@ -26,29 +28,34 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
-### CLI Options
+### New CLI Options (v3.0)
+
+| Flag | Description |
+|:---|:---|
+| `--ipv6` | Enable IPv6-only scanning mode |
+| `--proxy URL` | SOCKS5 proxy for pivoting |
+| `--diff OLD NEW` | Compare two JSON reports |
+| `--cve-lookup` | Enable CVE correlation via NVD API |
+| `--nvd-key KEY` | NVD API key for faster rate limits |
+
+### Core CLI Options
 
 - `--target, -t`: Target network(s) in CIDR notation
 - `--mode, -m`: fast/normal/full (default: normal)
 - `--threads, -j`: 1-16 (default: 6)
-- `--rate-limit`: Delay between hosts in seconds (supports jitter)
-- `--encrypt, -e`: Encrypt reports (Strong password required)
+- `--rate-limit`: Delay between hosts in seconds
+- `--encrypt, -e`: Encrypt reports
 - `--udp-mode`: UDP scan mode (quick/full)
 - `--prescan`: Enable fast asyncio pre-scan
 - `--lang`: Language (en/es)
 
-### Package Structure
+### New Modules (v3.0)
 
 ```text
-redaudit/
-├── core/
-│   ├── auditor.py       # Orchestrator
-│   ├── entity_resolver.py # [NEW] Asset unification
-│   ├── verify_vuln.py   # [NEW] Smart filter
-│   ├── siem.py          # [NEW] SIEM integration
-│   ├── prescan.py       # Asyncio discovery
-│   └── ...
-└── utils/
+redaudit/core/
+├── nvd.py          # CVE correlation via NVD API
+├── diff.py         # Differential analysis engine
+└── proxy.py        # SOCKS5 proxy manager
 ```
 
 ### Testing & Quality
@@ -60,7 +67,7 @@ redaudit/
 
 ### Documentation
 
-Complete bilingual documentation (English/Spanish), now fully standardized:
+Complete bilingual documentation (English/Spanish):
 
 - [README.md](README.md) / [README_ES.md](README_ES.md)
 - [MANUAL_EN.md](docs/MANUAL_EN.md) / [MANUAL_ES.md](docs/MANUAL_ES.md)

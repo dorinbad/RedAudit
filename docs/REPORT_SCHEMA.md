@@ -169,7 +169,7 @@ List of detected network interfaces.
 ]
 ```
 
-## New Features (v2.9.0)
+## New Features (v3.0.0)
 
 ### SIEM Enhancement (ECS Compliance)
 

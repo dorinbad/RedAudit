@@ -4,18 +4,14 @@
 
 This document outlines the technical roadmap, planned architectural improvements, and discarded approaches for RedAudit.
 
-## Immediate Roadmap (v3.0+)
+## Immediate Roadmap (v3.1+)
 
 | Priority | Feature | Description |
 | :--- | :--- | :--- |
-| **High** | **Magic Byte Validation** | Enhance Smart-Check with hex signature verification (tar: `ustar`, zip: `PK\x03\x04`) to eliminate remaining false positives from embedded servers. |
-| **High** | **IPv6 Support** | Implement full `nmap -6` support and IPv6 regex validation in the InputSanitizer module. |
-| **High** | **CVE Correlation** | Deepen vulnerability analysis by correlating identified versions with NVD (beyond SearchSploit). |
-| **Medium** | **Configurable UDP Ports** | Add `--udp-ports N` CLI flag (range: 50-500, default: 100) for user-tunable UDP scan coverage. |
-| **Medium** | **Differential Analysis** | Create a `diff` module to compare two JSON reports and highlight delta (new ports/vulns). |
-| **Medium** | **Proxy Chains** | Native support for SOCKS5 proxies to facilitate pivoting. |
-| **Low** | **NetBIOS/mDNS Discovery** | Active hostname queries (port 137/5353) for improved entity resolution on networks without DNS PTR records. |
-| **Low** | **Containerization** | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
+| **High** | **Configurable UDP Ports** | Add `--udp-ports N` CLI flag (range: 50-500, default: 100) for user-tunable UDP scan coverage. |
+| **Medium** | **NetBIOS/mDNS Discovery** | Active hostname queries (port 137/5353) for improved entity resolution on networks without DNS PTR records. |
+| **Medium** | **Containerization** | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
+| **Low** | **Persistent Configuration** | User config in `~/.redaudit/config.yaml` to override CLI defaults. |
 
 ## Architectural Proposals
 
@@ -40,7 +36,18 @@ This document outlines the technical roadmap, planned architectural improvements
 
 ## Completed Milestones
 
-### v2.9.0 (Completed - December 2025) -> **CURRENT**
+### v3.0.0 (Completed - December 2025) -> **CURRENT**
+
+*Major feature release with advanced capabilities.*
+
+- [x] **IPv6 Support**: Full scanning capabilities for IPv6 networks.
+- [x] **Magic Byte Validation**: Enhanced false positive detection with file signature verification.
+- [x] **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API with 7-day cache.
+- [x] **Differential Analysis**: Compare two JSON reports to detect network changes.
+- [x] **Proxy Chains (SOCKS5)**: Network pivoting support via proxychains wrapper.
+- [x] **Enhanced Auto-Update**: Git clone approach with verification and home folder copy.
+
+### v2.9.0 (Completed - December 2025)
 
 *Focus on intelligence, efficiency, and professional documentation.*
 
@@ -94,11 +101,8 @@ If you wish to contribute to any of these features:
 3. Read [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
 4. Open a [Discussion](https://github.com/dorinbadea/RedAudit/discussions) for new ideas.
 
-<div align="center">
+---
 
-**Active Maintenance**
-*Last Update: December 2025*
+**Active Maintenance** | *Last Update: December 2025*
 
-<sub>If this document is not updated in >6 months, the project may be paused. In that case, consider forking or contacting me.</sub>
-
-</div>
+*If this document is not updated in >6 months, the project may be paused. In that case, consider forking or contacting me.*

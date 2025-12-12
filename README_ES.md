@@ -131,6 +131,11 @@ sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
 - `--skip-update-check`: Omitir verificación de actualizaciones al iniciar
 - `--yes, -y`: Saltar advertencia legal (usar con precaución)
 - `--lang`: Idioma (en/es)
+- `--ipv6`: Activar modo solo IPv6 **(v3.0)**
+- `--proxy URL`: Proxy SOCKS5 para pivoting (socks5://host:port) **(v3.0)**
+- `--diff OLD NEW`: Comparar dos reportes JSON y mostrar cambios **(v3.0)**
+- `--cve-lookup`: Activar correlación CVE vía API NVD **(v3.0)**
+- `--nvd-key KEY`: Clave API NVD para límites de velocidad más rápidos **(v3.0)**
 
 Ver `redaudit --help` para detalles completos.
 
@@ -183,14 +188,17 @@ redaudit/
 ├── core/           # Funcionalidad principal
 │   ├── auditor.py  # Clase orquestadora principal
 │   ├── prescan.py  # Descubrimiento rápido asyncio
-│   ├── scanner.py  # Lógica de escaneo Nmap
+│   ├── scanner.py  # Lógica de escaneo Nmap + soporte IPv6
 │   ├── crypto.py   # Cifrado/descifrado AES-128
-│   ├── network.py  # Detección de interfaces
+│   ├── network.py  # Detección de interfaces (IPv4/IPv6)
 │   ├── reporter.py # Salida JSON/TXT + SIEM
-│   ├── updater.py  # Auto-actualización segura
-│   ├── verify_vuln.py  # Filtrado de falsos positivos Nikto
+│   ├── updater.py  # Auto-actualización segura (git clone)
+│   ├── verify_vuln.py  # Smart-Check filtrado falsos positivos
 │   ├── entity_resolver.py  # Agrupación hosts multi-interfaz
-│   └── siem.py     # Integración SIEM profesional
+│   ├── siem.py     # Integración SIEM profesional
+│   ├── nvd.py      # Correlación CVE vía API NVD (v3.0)
+│   ├── diff.py     # Análisis diferencial (v3.0)
+│   └── proxy.py    # Soporte proxy SOCKS5 (v3.0)
 └── utils/          # Utilidades
     ├── constants.py # Constantes de configuración
     └── i18n.py      # Internacionalización
@@ -283,7 +291,16 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 
 ## 13. Historial de Cambios (v3.0.0)
 
-### Mejoras Recientes
+### Características v3.0
+
+- **Soporte IPv6**: Escaneo completo de redes IPv6 con flag `-6` automático
+- **Correlación CVE (NVD)**: Inteligencia profunda de vulnerabilidades via API NIST NVD con caché de 7 días
+- **Análisis Diferencial**: Comparar dos reportes para detectar cambios de red (`--diff`)
+- **Proxy Chains (SOCKS5)**: Soporte para pivoting via wrapper proxychains
+- **Validación Magic Bytes**: Detección mejorada de falsos positivos con verificación de firmas
+- **Auto-Update Mejorado**: Enfoque git clone con verificación y copia a carpeta home
+
+### Mejoras v2.9
 
 - **Smart-Check**: Filtrado automático de falsos positivos de Nikto via Content-Type
 - **UDP Taming**: Escaneo 50-80% más rápido con `--top-ports 100` y timeouts estrictos
@@ -294,7 +311,6 @@ Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones deta
 
 - **Deep Scan Adaptativo**: Estrategia de 3 fases (TCP agresivo → UDP prioritario → UDP completo)
 - **Captura PCAP Concurrente**: Tráfico capturado durante escaneos
-- **Auto-Actualización Segura**: Integración GitHub con reinicio automático
 - **Motor Pre-scan**: Descubrimiento rápido asyncio antes de nmap
 - **Inteligencia de Exploits**: Integración SearchSploit para versiones detectadas
 - **Análisis SSL/TLS**: Escaneo profundo TestSSL.sh
