@@ -1,0 +1,358 @@
+#!/usr/bin/env python3
+"""
+RedAudit - NVD CVE Correlation Module
+Copyright (C) 2025  Dorin Badea
+GPLv3 License
+
+v3.0: Query NIST NVD API 2.0 for vulnerability correlation.
+Maps detected service versions to CVEs using CPE matching.
+"""
+
+import os
+import re
+import json
+import time
+import hashlib
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
+
+# NVD API Configuration
+NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+NVD_API_TIMEOUT = 30  # seconds
+
+# Rate limiting (without API key: 5 req/30s, with key: 50 req/30s)
+NVD_RATE_LIMIT_NO_KEY = 6.0  # seconds between requests
+NVD_RATE_LIMIT_WITH_KEY = 0.6  # seconds between requests
+
+# Cache configuration
+NVD_CACHE_DIR = os.path.expanduser("~/.redaudit/cache/nvd")
+NVD_CACHE_TTL = 86400 * 7  # 7 days
+
+
+def ensure_cache_dir() -> str:
+    """Create cache directory if it doesn't exist."""
+    os.makedirs(NVD_CACHE_DIR, exist_ok=True)
+    return NVD_CACHE_DIR
+
+
+def get_cache_key(query: str) -> str:
+    """Generate cache key from query string."""
+    return hashlib.md5(query.encode()).hexdigest()
+
+
+def get_cached_result(query: str) -> Optional[Dict]:
+    """
+    Retrieve cached NVD result if exists and not expired.
+    
+    Args:
+        query: The CPE or keyword query
+        
+    Returns:
+        Cached result dict or None
+    """
+    cache_dir = ensure_cache_dir()
+    cache_file = os.path.join(cache_dir, f"{get_cache_key(query)}.json")
+    
+    if not os.path.isfile(cache_file):
+        return None
+    
+    try:
+        mtime = os.path.getmtime(cache_file)
+        if time.time() - mtime > NVD_CACHE_TTL:
+            os.remove(cache_file)
+            return None
+        
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_to_cache(query: str, result: Dict) -> None:
+    """Save NVD result to cache."""
+    cache_dir = ensure_cache_dir()
+    cache_file = os.path.join(cache_dir, f"{get_cache_key(query)}.json")
+    
+    try:
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump(result, f)
+    except Exception:
+        pass
+
+
+def build_cpe_query(product: str, version: str, vendor: str = "*") -> str:
+    """
+    Build CPE 2.3 string for NVD query.
+    
+    Args:
+        product: Software name (e.g., "apache", "openssh")
+        version: Version string (e.g., "2.4.49", "7.9")
+        vendor: Vendor name (default: wildcard)
+        
+    Returns:
+        CPE 2.3 formatted string
+    """
+    # Sanitize inputs
+    product = re.sub(r'[^a-zA-Z0-9_\-]', '', product.lower())[:50]
+    version = re.sub(r'[^a-zA-Z0-9_\-.]', '', version)[:20]
+    vendor = re.sub(r'[^a-zA-Z0-9_\-]', '', vendor.lower())[:50] if vendor != "*" else "*"
+    
+    # CPE 2.3 format: cpe:2.3:part:vendor:product:version:...
+    # Part 'a' = application
+    return f"cpe:2.3:a:{vendor}:{product}:{version}:*:*:*:*:*:*:*"
+
+
+def extract_product_version(service_info: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Extract product name and version from nmap service info.
+    
+    Args:
+        service_info: Service string like "Apache httpd 2.4.49" or "OpenSSH 7.9p1"
+        
+    Returns:
+        Tuple of (product, version) or (None, None)
+    """
+    if not service_info:
+        return None, None
+    
+    # Common patterns
+    patterns = [
+        r'(\w+)\s+httpd?\s+(\d+\.\d+(?:\.\d+)?)',  # Apache httpd 2.4.49
+        r'(\w+)\s+(\d+\.\d+(?:\.\d+)?(?:p\d+)?)',  # OpenSSH 7.9p1
+        r'(\w+)/(\d+\.\d+(?:\.\d+)?)',  # nginx/1.18.0
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, service_info, re.IGNORECASE)
+        if match:
+            return match.group(1), match.group(2)
+    
+    return None, None
+
+
+def query_nvd(
+    keyword: Optional[str] = None,
+    cpe_name: Optional[str] = None,
+    api_key: Optional[str] = None,
+    logger=None
+) -> List[Dict]:
+    """
+    Query NVD API for CVEs.
+    
+    Args:
+        keyword: Keyword search term
+        cpe_name: CPE 2.3 string
+        api_key: Optional NVD API key
+        logger: Optional logger
+        
+    Returns:
+        List of CVE dictionaries
+    """
+    if not keyword and not cpe_name:
+        return []
+    
+    # Check cache first
+    cache_key = keyword or cpe_name
+    cached = get_cached_result(cache_key)
+    if cached:
+        if logger:
+            logger.debug("NVD cache hit for: %s", cache_key[:50])
+        return cached.get("cves", [])
+    
+    # Build query URL
+    params = []
+    if keyword:
+        params.append(f"keywordSearch={keyword}")
+    if cpe_name:
+        params.append(f"cpeName={cpe_name}")
+    
+    url = f"{NVD_API_URL}?{'&'.join(params)}"
+    
+    try:
+        req = Request(url)
+        req.add_header("User-Agent", "RedAudit/3.0")
+        
+        if api_key:
+            req.add_header("apiKey", api_key)
+        
+        with urlopen(req, timeout=NVD_API_TIMEOUT) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                
+                cves = []
+                for vuln in data.get("vulnerabilities", []):
+                    cve_data = vuln.get("cve", {})
+                    cve_id = cve_data.get("id", "")
+                    
+                    # Extract CVSS score
+                    cvss_score = None
+                    cvss_severity = None
+                    
+                    metrics = cve_data.get("metrics", {})
+                    if "cvssMetricV31" in metrics:
+                        cvss = metrics["cvssMetricV31"][0].get("cvssData", {})
+                        cvss_score = cvss.get("baseScore")
+                        cvss_severity = cvss.get("baseSeverity")
+                    elif "cvssMetricV2" in metrics:
+                        cvss = metrics["cvssMetricV2"][0].get("cvssData", {})
+                        cvss_score = cvss.get("baseScore")
+                    
+                    # Extract description
+                    descriptions = cve_data.get("descriptions", [])
+                    description = ""
+                    for desc in descriptions:
+                        if desc.get("lang") == "en":
+                            description = desc.get("value", "")[:500]
+                            break
+                    
+                    cves.append({
+                        "cve_id": cve_id,
+                        "cvss_score": cvss_score,
+                        "cvss_severity": cvss_severity,
+                        "description": description,
+                        "published": cve_data.get("published", ""),
+                    })
+                
+                # Cache result
+                save_to_cache(cache_key, {"cves": cves, "timestamp": datetime.now().isoformat()})
+                
+                return cves
+                
+    except HTTPError as e:
+        if logger:
+            logger.warning("NVD API error: %s", e.code)
+    except URLError as e:
+        if logger:
+            logger.warning("NVD network error: %s", e.reason)
+    except Exception as e:
+        if logger:
+            logger.debug("NVD query failed: %s", e)
+    
+    return []
+
+
+def enrich_port_with_cves(
+    port_info: Dict,
+    api_key: Optional[str] = None,
+    logger=None
+) -> Dict:
+    """
+    Enrich a port record with CVE information.
+    
+    Args:
+        port_info: Port dictionary with 'service', 'version' etc.
+        api_key: Optional NVD API key
+        logger: Optional logger
+        
+    Returns:
+        Port info dict with added 'cves' list
+    """
+    service = port_info.get("service", "")
+    version = port_info.get("version", "")
+    product = port_info.get("product", "")
+    
+    if not version:
+        return port_info
+    
+    # Try to extract product/version if not already separated
+    if not product and service:
+        product, extracted_version = extract_product_version(service)
+        if product and extracted_version:
+            version = extracted_version
+    
+    if not product:
+        product = service.split()[0] if service else ""
+    
+    if not product or not version:
+        return port_info
+    
+    # Rate limiting
+    rate_limit = NVD_RATE_LIMIT_WITH_KEY if api_key else NVD_RATE_LIMIT_NO_KEY
+    
+    # Query NVD
+    cpe = build_cpe_query(product, version)
+    cves = query_nvd(cpe_name=cpe, api_key=api_key, logger=logger)
+    
+    # If CPE query failed, try keyword search
+    if not cves:
+        keyword = f"{product} {version}"
+        cves = query_nvd(keyword=keyword, api_key=api_key, logger=logger)
+        time.sleep(rate_limit)
+    else:
+        time.sleep(rate_limit)
+    
+    if cves:
+        port_info["cves"] = cves[:10]  # Limit to top 10
+        port_info["cve_count"] = len(cves)
+        
+        # Calculate max severity
+        max_score = max((c.get("cvss_score") or 0 for c in cves), default=0)
+        if max_score >= 9.0:
+            port_info["cve_max_severity"] = "CRITICAL"
+        elif max_score >= 7.0:
+            port_info["cve_max_severity"] = "HIGH"
+        elif max_score >= 4.0:
+            port_info["cve_max_severity"] = "MEDIUM"
+        elif max_score > 0:
+            port_info["cve_max_severity"] = "LOW"
+    
+    return port_info
+
+
+def enrich_host_with_cves(
+    host_record: Dict,
+    api_key: Optional[str] = None,
+    logger=None
+) -> Dict:
+    """
+    Enrich a host record with CVE information for all services.
+    
+    Args:
+        host_record: Host dictionary with 'ports' list
+        api_key: Optional NVD API key
+        logger: Optional logger
+        
+    Returns:
+        Host record with CVE-enriched ports
+    """
+    ports = host_record.get("ports", [])
+    
+    for i, port_info in enumerate(ports):
+        # Only check services with version info
+        if port_info.get("version"):
+            ports[i] = enrich_port_with_cves(port_info, api_key, logger)
+    
+    # Calculate host-level CVE summary
+    total_cves = sum(p.get("cve_count", 0) for p in ports)
+    critical_count = sum(1 for p in ports if p.get("cve_max_severity") == "CRITICAL")
+    high_count = sum(1 for p in ports if p.get("cve_max_severity") == "HIGH")
+    
+    if total_cves > 0:
+        host_record["cve_summary"] = {
+            "total": total_cves,
+            "critical": critical_count,
+            "high": high_count,
+        }
+    
+    return host_record
+
+
+def clear_cache() -> int:
+    """
+    Clear the NVD cache directory.
+    
+    Returns:
+        Number of files removed
+    """
+    count = 0
+    try:
+        for f in os.listdir(NVD_CACHE_DIR):
+            filepath = os.path.join(NVD_CACHE_DIR, f)
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+                count += 1
+    except Exception:
+        pass
+    return count

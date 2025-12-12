@@ -123,6 +123,10 @@ class InteractiveNetworkAuditor:
             "prescan_timeout": 0.5,
             # UDP scan config (v2.8)
             "udp_mode": DEFAULT_UDP_MODE,
+            # v3.0 configuration
+            "ipv6_only": False,
+            "cve_lookup_enabled": False,
+            "nvd_api_key": None,
         }
 
         self.encryption_enabled = False
@@ -130,6 +134,9 @@ class InteractiveNetworkAuditor:
         self.cryptography_available = is_crypto_available()
         self.rate_limit_delay = 0.0
         self.extra_tools = {}
+        
+        # v3.0: Proxy manager (set by CLI if --proxy used)
+        self.proxy_manager = None
 
         self.last_activity = datetime.now()
         self.activity_lock = threading.Lock()

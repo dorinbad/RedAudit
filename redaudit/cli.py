@@ -171,6 +171,22 @@ Examples:
         metavar="URL",
         help="SOCKS5 proxy for pivoting (socks5://host:port or socks5://user:pass@host:port)"
     )
+    parser.add_argument(
+        "--ipv6",
+        action="store_true",
+        help="Enable IPv6-only mode (scan only IPv6 networks)"
+    )
+    parser.add_argument(
+        "--nvd-key",
+        type=str,
+        metavar="KEY",
+        help="NVD API key for CVE correlation (faster rate limits)"
+    )
+    parser.add_argument(
+        "--cve-lookup",
+        action="store_true",
+        help="Enable CVE correlation via NVD API (slower, requires internet)"
+    )
 
     return parser.parse_args()
 
@@ -259,6 +275,13 @@ def configure_from_args(app, args) -> bool:
 
     # Set UDP mode (v2.8.0)
     app.config["udp_mode"] = args.udp_mode
+
+    # v3.0: IPv6 mode
+    app.config["ipv6_only"] = args.ipv6 if hasattr(args, 'ipv6') else False
+
+    # v3.0: CVE correlation
+    app.config["cve_lookup_enabled"] = args.cve_lookup if hasattr(args, 'cve_lookup') else False
+    app.config["nvd_api_key"] = args.nvd_key if hasattr(args, 'nvd_key') else None
 
     # Setup encryption if requested
     if args.encrypt:
