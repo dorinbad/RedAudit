@@ -8,10 +8,13 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 | Prioridad | Característica | Descripción |
 | :--- | :--- | :--- |
+| **Alta** | **Validación Magic Bytes** | Mejorar Smart-Check con verificación de firmas hexadecimales (tar: `ustar`, zip: `PK\x03\x04`) para eliminar falsos positivos de servidores embebidos. |
 | **Alta** | **Soporte IPv6** | Implementar soporte completo `nmap -6` y validación regex IPv6 en el módulo InputSanitizer. |
 | **Alta** | **Correlación CVE** | Profundizar el análisis de vulnerabilidades correlacionando versiones identificadas con NVD (más allá de SearchSploit). |
+| **Media** | **Puertos UDP Configurables** | Añadir flag CLI `--udp-ports N` (rango: 50-500, defecto: 100) para cobertura UDP ajustable por usuario. |
 | **Media** | **Análisis Diferencial** | Crear módulo `diff` para comparar dos reportes JSON y resaltar deltas (nuevos puertos/vulns). |
 | **Media** | **Proxy Chains** | Soporte nativo para proxies SOCKS5 para facilitar pivoting. |
+| **Baja** | **Descubrimiento NetBIOS/mDNS** | Consultas activas de hostname (puerto 137/5353) para mejorar resolución de entidades en redes sin registros PTR DNS. |
 | **Baja** | **Contenedorización** | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
 
 ## Propuestas Arquitectónicas

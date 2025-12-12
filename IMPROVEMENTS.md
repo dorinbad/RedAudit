@@ -8,10 +8,13 @@ This document outlines the technical roadmap, planned architectural improvements
 
 | Priority | Feature | Description |
 | :--- | :--- | :--- |
+| **High** | **Magic Byte Validation** | Enhance Smart-Check with hex signature verification (tar: `ustar`, zip: `PK\x03\x04`) to eliminate remaining false positives from embedded servers. |
 | **High** | **IPv6 Support** | Implement full `nmap -6` support and IPv6 regex validation in the InputSanitizer module. |
 | **High** | **CVE Correlation** | Deepen vulnerability analysis by correlating identified versions with NVD (beyond SearchSploit). |
+| **Medium** | **Configurable UDP Ports** | Add `--udp-ports N` CLI flag (range: 50-500, default: 100) for user-tunable UDP scan coverage. |
 | **Medium** | **Differential Analysis** | Create a `diff` module to compare two JSON reports and highlight delta (new ports/vulns). |
 | **Medium** | **Proxy Chains** | Native support for SOCKS5 proxies to facilitate pivoting. |
+| **Low** | **NetBIOS/mDNS Discovery** | Active hostname queries (port 137/5353) for improved entity resolution on networks without DNS PTR records. |
 | **Low** | **Containerization** | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
 
 ## Architectural Proposals
