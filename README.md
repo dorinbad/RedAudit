@@ -187,7 +187,8 @@ redaudit/
 │   └── proxy.py        # SOCKS5 proxy support (v3.0)
 └── utils/              # Utilities
     ├── constants.py    # Configuration constants
-    └── i18n.py         # Internationalization
+    ├── i18n.py         # Internationalization
+    └── config.py       # Persistent configuration (v3.0.1)
 ```
 
 ### Secure Auto-Update
