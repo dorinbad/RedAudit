@@ -17,6 +17,7 @@ from typing import Dict, Optional
 from redaudit.utils.constants import VERSION, SECURE_FILE_MODE
 from redaudit.core.crypto import encrypt_data
 from redaudit.core.entity_resolver import reconcile_assets
+from redaudit.core.siem import enrich_report_for_siem
 
 
 def generate_summary(
@@ -81,6 +82,10 @@ def generate_summary(
             multi_interface = sum(1 for a in unified if a.get("interface_count", 1) > 1)
             summary["unified_asset_count"] = len(unified)
             summary["multi_interface_devices"] = multi_interface
+
+    # v3.0: SIEM Enhancement - ECS compliance, severity scoring, tags, risk scores
+    enriched = enrich_report_for_siem(results, config)
+    results.update(enriched)
 
     return summary
 

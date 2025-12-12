@@ -25,9 +25,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New summary fields: `unified_asset_count`, `multi_interface_devices`
   - Asset type guessing (router, workstation, mobile, iot, etc.)
 
-- **New Tests**: 28 unit tests for new modules
+- **SIEM Professional Enhancement (Module D)**: Enterprise SIEM integration
+  - New module: `redaudit/core/siem.py`
+  - **ECS Compliance**: Elastic Common Schema v8.11 fields (`ecs`, `event`, `host`)
+  - **Severity Scoring**: Automatic severity (critical/high/medium/low/info) with numeric scores
+  - **Risk Scores**: Per-host risk score (0-100) based on ports, exploits, insecure services
+  - **Tags Array**: Auto-generated tags for categorization (web, database, iot, admin, etc.)
+  - **Observable Hash**: SHA256 hash per host for SIEM deduplication
+  - **CEF Format**: Common Event Format generator for ArcSight/McAfee
+  - New summary fields: `max_risk_score`, `avg_risk_score`, `high_risk_hosts`
+
+- **New Tests**: 46 unit tests for new modules
   - `tests/test_verify_vuln.py` - 14 tests for Smart-Check
   - `tests/test_entity_resolver.py` - 14 tests for Entity Resolution
+  - `tests/test_siem.py` - 18 tests for SIEM Enhancement
 
 ### Changed
 
