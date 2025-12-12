@@ -37,7 +37,17 @@ This document outlines the technical roadmap, planned architectural improvements
 
 ## Completed Milestones
 
-### v2.6.1 (Completed - December 2026) -> **CURRENT**
+### v2.9.0 (Completed - December 2026) -> **CURRENT**
+
+*Focus on intelligence, efficiency, and professional documentation.*
+
+- [x] **Smart-Check**: 90% reduction in false positives for web scanning.
+- [x] **UDP Taming**: 50-80% faster scans via optimized 3-phase strategy.
+- [x] **Entity Resolution**: Grouping of multi-interface devices (Unified Assets).
+- [x] **SIEM Professional**: ECS v8.11 compliance and risk scoring.
+- [x] **Clean Documentation**: Complete removal of legacy version tags and standardization.
+
+### v2.6-v2.8 (Completed)
 
 *Focus on security, professionalism, and external tool integration.*
 

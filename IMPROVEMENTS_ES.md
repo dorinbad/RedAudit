@@ -37,7 +37,17 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 ## Hitos Completados
 
-### v2.6.1 (Completado - Diciembre 2026) -> **ACTUAL**
+### v2.9.0 (Completado - Diciembre 2026) -> **ACTUAL**
+
+*Enfoque en inteligencia, eficiencia y documentación profesional.*
+
+- [x] **Smart-Check**: Reducción del 90% de falsos positivos en escaneo web.
+- [x] **UDP Taming**: Escaneos 50-80% más rápidos mediante estrategia de 3 fases optimizada.
+- [x] **Entity Resolution**: Agrupación de dispositivos multi-interfaz (Unified Assets).
+- [x] **SIEM Profesional**: Cumplimiento ECS v8.11 y puntuación de riesgo.
+- [x] **Documentación Limpia**: Eliminación completa de etiquetas de versión antiguas y estandarización.
+
+### v2.6-v2.8 (Completado)
 
 *Enfoque en seguridad, profesionalismo e integración de herramientas externas.*
 

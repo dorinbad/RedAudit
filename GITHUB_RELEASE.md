@@ -1,22 +1,22 @@
-# RedAudit v2.6.1
+# RedAudit v2.9.0
 
-## Security Hardening, Exploit Intelligence & UX Polish
+## Smart Improvements, UDP Taming & Entity Resolution
 
 ### Highlights
 
-- **Exploit Intelligence**: Integrated `searchsploit` for automatic exploit lookup based on service versions.
-- **SSL/TLS Auditing**: Integrated `testssl.sh` for deep cryptographic analysis of HTTPS services.
-- **Security Hardening**: Enforced strong passwords (12+ chars, mixed case, numbers) for encryption.
-- **Enhanced UX**: Added `rich` progress bars with graceful fallback.
-- **CI/CD Security**: Added Dependabot and CodeQL for automated security scanning.
+- **Smart-Check**: Intelligent false positive filtering for Nikto (90% noise reduction).
+- **UDP Taming**: Optimized 3-phase UDP scanning strategy (50-80% faster).
+- **Entity Resolution**: Intelligent grouping of multi-interface devices into unified assets.
+- **SIEM Professional**: Enhanced JSON schema compliant with ECS v8.11 for usage in Splunk/Elastic.
+- **Clean Documentation**: Complete overhaul of documentation for clarity and consistency.
 
 ### New Features
 
-- **Progress Bars**: New visual feedback for concurrent scanning.
-- **Tool Activation Matrix**: Clear documentation on when external tools are triggered.
-- **SearchSploit**: Automatically queries ExploitDB for detected services.
-- **TestSSL**: Deep SSL/TLS analysis in `full` mode.
-- **Architecture Diagrams**: Added Mermaid diagrams to READMEs.
+- **Smart-Check**: Analyzes Content-Type to suppress irrelevant findings (e.g., Nikto flagging JSON endpoints).
+- **Unified Assets**: Correlates IPs by MAC address to show physical device count.
+- **Risk Scoring**: Dynamic 0-100 risk score per host based on vulnerabilities and open services.
+- **Strict UDP**: New defaults (`--top-ports 100`, `--host-timeout 300s`) prevent scan hangs.
+- **Clean Docs**: Removed confusing historical version tags from all Manuals/READMEs.
 
 ### Installation
 
@@ -31,49 +31,43 @@ sudo bash redaudit_install.sh
 - `--target, -t`: Target network(s) in CIDR notation
 - `--mode, -m`: fast/normal/full (default: normal)
 - `--threads, -j`: 1-16 (default: 6)
-- `--rate-limit`: Delay between hosts in seconds
+- `--rate-limit`: Delay between hosts in seconds (supports jitter)
 - `--encrypt, -e`: Encrypt reports (Strong password required)
-- `--output, -o`: Output directory
+- `--udp-mode`: UDP scan mode (quick/full)
+- `--prescan`: Enable fast asyncio pre-scan
 - `--lang`: Language (en/es)
 
 ### Package Structure
 
 ```text
 redaudit/
-├── core/           # Core functionality
-│   ├── auditor.py  # Main orchestrator
-│   ├── crypto.py   # Encryption (PBKDF2, Fernet)
-│   ├── network.py  # Network detection
-│   ├── reporter.py # Report generation
-│   └── scanner.py  # Scanning logic (SearchSploit, TestSSL)
-└── utils/          # Utilities
-    ├── constants.py
-    └── i18n.py
+├── core/
+│   ├── auditor.py       # Orchestrator
+│   ├── entity_resolver.py # [NEW] Asset unification
+│   ├── verify_vuln.py   # [NEW] Smart filter
+│   ├── siem.py          # [NEW] SIEM integration
+│   ├── prescan.py       # Asyncio discovery
+│   └── ...
+└── utils/
 ```
 
 ### Testing & Quality
 
-- **Tests**: 34 automated tests passing
-- **Coverage**: ~60% threshold enforced in CI
+- **Tests**: 86 automated tests passing
+- **Coverage**: ~89%
 - **Security**: CodeQL & Dependabot active
+- **License**: GPLv3
 
 ### Documentation
 
-Complete bilingual documentation (English/Spanish):
+Complete bilingual documentation (English/Spanish), now fully standardized:
 
-- README.md / README_ES.md
-- MANUAL_EN.md / MANUAL_ES.md (Restructured & Professionalized)
-- USAGE.md / USAGE_ES.md
-- SECURITY.md, TROUBLESHOOTING.md, REPORT_SCHEMA.md
-
-### Backward Compatibility
-
-- Original `redaudit.py` preserved as wrapper
-- All existing scripts continue to work
+- [README.md](README.md) / [README_ES.md](README_ES.md)
+- [MANUAL_EN.md](docs/MANUAL_EN.md) / [MANUAL_ES.md](docs/MANUAL_ES.md)
+- [USAGE.md](docs/USAGE.md) / [USAGE_ES.md](docs/USAGE_ES.md)
 
 ### Links
 
 - **Full Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Documentation**: [docs/](docs/)
+- **Release Notes**: [RELEASE_NOTES_v2.9.0.md](RELEASE_NOTES_v2.9.0.md)
 - **Security Specs**: [docs/SECURITY.md](docs/SECURITY.md)
-- **License**: GPLv3
