@@ -2,7 +2,37 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](SECURITY_ES.md)
 
-## Overview
+## Security Policy
+
+### Reporting a Vulnerability
+
+**Please do not report security vulnerabilities through public GitHub issues.**
+
+If you discover a security vulnerability in RedAudit, please report it responsibly:
+
+1. **Email**: Send details to `security@dorinbadea.com`
+2. **Include**:
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact
+   - Suggested fix (if available)
+3. **Response Time**: You will receive an acknowledgment within 48 hours
+4. **Disclosure**: We follow responsible disclosure - we will coordinate with you on public disclosure timing
+
+### Supported Versions
+
+| Version | Supported          | Status |
+| ------- | ------------------ | ------ |
+| 3.0.x   | ✅ Yes             | Current stable |
+| 2.9.x   | ⚠️ Security fixes only | EOL: March 2026 |
+| 2.8.x   | ❌ No              | EOL |
+| < 2.8   | ❌ No              | EOL |
+
+---
+
+## Security Architecture
+
+### Overview
 
 RedAudit implements a "secure by design" philosophy, assuming execution in hostile or untrusted environments. This document outlines the security controls regarding input handling, cryptography, and operational safety.
 
@@ -11,7 +41,7 @@ RedAudit implements a "secure by design" philosophy, assuming execution in hosti
 All external inputs—target ranges, hostnames, interface names—are treated as untrusted and subjected to strict validation.
 
 - **Strict Typing**: Only `str` types accepted for critical parameters.
-- **Regex Allowlisting**: IPs and hostnames must match strict patterns (`^[a-zA-Z0-9\.\-\/]+$`).
+- **Regex Allowlisting**: IPs and hostnames must match strict patterns (`^[a-zA-Z0-9\\.\\-\\/]+$`).
 - **Command Injection Prevention**: `subprocess.run` is used exclusively with argument lists; shell expansion (`shell=True`) is disabled.
 - **Module Location**: `redaudit/core/scanner.py` (`sanitize_ip`, `sanitize_hostname`)
 
@@ -52,20 +82,28 @@ The codebase is organized into focused modules to improve maintainability and au
 
 - **Core modules** (`redaudit/core/`): Security-critical functionality
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
-- **Test coverage**: 34 automated tests with CI/CD pipeline
+- **Test coverage**: 86 automated tests with CI/CD pipeline
 
 ## 7. Secure Auto-Update
 
 RedAudit includes a secure update mechanism that checks GitHub for new releases:
 
-- **No arbitrary downloads**: Uses `git pull` from the official repository
+- **No arbitrary downloads**: Uses `git clone` from the official repository
 - **Integrity verification**: Git's built-in hash verification ensures authenticity
 - **User confirmation**: Always prompts before applying updates
 - **Network failure handling**: Graceful degradation if GitHub is unavailable
 - **Local changes protection**: Refuses to update if uncommitted changes exist
 - **Module location**: `redaudit/core/updater.py`
 
-## 8. License
+## 8. Known Limitations
+
+- **Requires root/sudo**: Necessary for raw socket access (nmap, tcpdump)
+- **No sandboxing**: External tools run with full system privileges
+- **Network visibility**: Scans generate significant network traffic
+
+Users should only run RedAudit in authorized, controlled environments.
+
+## 9. License
 
 This security model is part of the RedAudit project and is covered by the  
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.

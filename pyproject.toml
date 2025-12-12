@@ -1,0 +1,85 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redaudit"
+version = "3.0.0"
+description = "CLI tool for structured network auditing and hardening on Kali/Debian systems"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "Dorin Badea", email = "contact@dorinbadea.com"}
+]
+keywords = [
+    "security",
+    "network-scanner",
+    "pentesting",
+    "audit",
+    "nmap",
+    "vulnerability-scanner"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Monitoring",
+]
+
+dependencies = [
+    "python-nmap>=0.7.1",
+    "cryptography>=41.0.0",
+    "netifaces>=0.11.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "coverage>=7.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "pre-commit>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dorinbadea/RedAudit"
+Documentation = "https://github.com/dorinbadea/RedAudit/blob/main/docs/MANUAL_EN.md"
+Repository = "https://github.com/dorinbadea/RedAudit"
+Issues = "https://github.com/dorinbadea/RedAudit/issues"
+Changelog = "https://github.com/dorinbadea/RedAudit/blob/main/CHANGELOG.md"
+
+[project.scripts]
+redaudit = "redaudit.cli:main"
+
+[tool.setuptools]
+packages = ["redaudit", "redaudit.core", "redaudit.utils"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+
+[tool.coverage.run]
+source = ["redaudit"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+precision = 2
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
