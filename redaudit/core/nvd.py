@@ -6,6 +6,7 @@ GPLv3 License
 
 v3.0: Query NIST NVD API 2.0 for vulnerability correlation.
 Maps detected service versions to CVEs using CPE matching.
+v3.0.1: Integrated with config module for API key persistence.
 """
 
 import os
@@ -18,6 +19,14 @@ from typing import Dict, List, Optional, Tuple
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
+# Import config module for API key management
+try:
+    from redaudit.utils.config import get_nvd_api_key as config_get_nvd_api_key
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config_get_nvd_api_key = None
+
 # NVD API Configuration
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_API_TIMEOUT = 30  # seconds
@@ -29,6 +38,28 @@ NVD_RATE_LIMIT_WITH_KEY = 0.6  # seconds between requests
 # Cache configuration
 NVD_CACHE_DIR = os.path.expanduser("~/.redaudit/cache/nvd")
 NVD_CACHE_TTL = 86400 * 7  # 7 days
+
+
+def get_api_key_from_config() -> Optional[str]:
+    """
+    Get NVD API key from config or environment.
+    
+    Priority:
+    1. Environment variable NVD_API_KEY
+    2. Config file ~/.redaudit/config.json
+    
+    Returns:
+        API key string or None if not configured
+    """
+    if CONFIG_AVAILABLE and config_get_nvd_api_key:
+        return config_get_nvd_api_key()
+    
+    # Fallback: check environment directly
+    env_key = os.environ.get("NVD_API_KEY")
+    if env_key and env_key.strip():
+        return env_key.strip()
+    
+    return None
 
 
 def ensure_cache_dir() -> str:

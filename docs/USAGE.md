@@ -138,6 +138,70 @@ This will generate `.decrypted` files (or restore original extension) after pass
 
 Debug logs are stored in `~/.redaudit/logs/`. Check these files if the scan fails or behaves unexpectedly.
 
+## CVE Correlation Setup (v3.0.1)
+
+RedAudit can enrich scan results with CVE data from NIST's National Vulnerability Database (NVD).
+
+### API Key Configuration
+
+The NVD API has rate limits:
+
+- **Without key**: 5 requests per 30 seconds
+- **With key**: 50 requests per 30 seconds (10x faster)
+
+### Getting an API Key
+
+1. Visit: <https://nvd.nist.gov/developers/request-an-api-key>
+2. Register with your email (FREE)
+3. Receive your UUID-format API key
+
+### Configuration Methods
+
+**Option 1: During Installation**
+
+The installer prompts for the API key:
+
+```bash
+sudo ./redaudit_install.sh
+```
+
+**Option 2: Environment Variable**
+
+Add to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export NVD_API_KEY="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+**Option 3: Config File**
+
+Create `~/.redaudit/config.json`:
+
+```json
+{
+  "version": "3.0.1",
+  "nvd_api_key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+
+**Option 4: Command Line**
+
+Pass the key directly (not persisted):
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --cve-lookup --nvd-key YOUR_KEY
+```
+
+### Usage
+
+```bash
+# With configured key
+sudo redaudit -t 192.168.1.0/24 --cve-lookup
+
+# Without key (slower rate limit)
+sudo redaudit -t 192.168.1.0/24 --cve-lookup
+```
+
 ## Performance & Stealth
 
 ### Rate Limiting

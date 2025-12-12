@@ -151,6 +151,62 @@ chown root:root /usr/local/bin/redaudit
 echo "Wrapper installed at /usr/local/bin/redaudit"
 
 # -------------------------------------------
+# 3b) NVD API Key Setup (Optional)
+# -------------------------------------------
+
+if [[ "$LANG_CODE" == "es" ]]; then
+    MSG_NVD_HEADER="CONFIGURACIÓN DE API KEY DE NVD (Opcional)"
+    MSG_NVD_INFO="La correlación CVE requiere una API key de NVD para consultas más rápidas."
+    MSG_NVD_RATE="Sin key: 5 peticiones/30s | Con key: 50 peticiones/30s"
+    MSG_NVD_REG="Regístrate GRATIS en: https://nvd.nist.gov/developers/request-an-api-key"
+    MSG_NVD_ASK="Introduce tu API key (o ENTER para omitir): "
+    MSG_NVD_SAVED="✓ API key guardada en"
+    MSG_NVD_SKIP="API key omitida. Puedes configurarla después."
+else
+    MSG_NVD_HEADER="NVD API KEY SETUP (Optional)"
+    MSG_NVD_INFO="CVE correlation requires an NVD API key for faster lookups."
+    MSG_NVD_RATE="Without key: 5 requests/30s | With key: 50 requests/30s"
+    MSG_NVD_REG="Register for FREE at: https://nvd.nist.gov/developers/request-an-api-key"
+    MSG_NVD_ASK="Enter your API key (or ENTER to skip): "
+    MSG_NVD_SAVED="✓ API key saved to"
+    MSG_NVD_SKIP="API key skipped. You can configure it later."
+fi
+
+echo ""
+echo "----------------------------------------------"
+echo " $MSG_NVD_HEADER"
+echo "----------------------------------------------"
+echo "$MSG_NVD_INFO"
+echo "$MSG_NVD_RATE"
+echo ""
+echo "$MSG_NVD_REG"
+echo ""
+
+if $AUTO_YES; then
+    NVD_KEY=""
+else
+    read -r -p "$MSG_NVD_ASK" NVD_KEY
+fi
+
+if [[ -n "$NVD_KEY" ]]; then
+    # Validate UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    if [[ "$NVD_KEY" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+        CONFIG_DIR="$REAL_HOME/.redaudit"
+        CONFIG_FILE="$CONFIG_DIR/config.json"
+        mkdir -p "$CONFIG_DIR"
+        chmod 700 "$CONFIG_DIR"
+        echo "{\"version\": \"3.0.1\", \"nvd_api_key\": \"$NVD_KEY\", \"nvd_api_key_storage\": \"config\"}" > "$CONFIG_FILE"
+        chmod 600 "$CONFIG_FILE"
+        chown "$REAL_USER:$REAL_USER" "$CONFIG_DIR" "$CONFIG_FILE"
+        echo "$MSG_NVD_SAVED $CONFIG_FILE"
+    else
+        echo "⚠️  Invalid API key format (expected UUID). Skipping."
+    fi
+else
+    echo "$MSG_NVD_SKIP"
+fi
+
+# -------------------------------------------
 # 4) Alias setup
 # -------------------------------------------
 

@@ -323,6 +323,99 @@ class InteractiveNetworkAuditor:
                 else:
                     raise
 
+    # ---------- NVD API Key Configuration ----------
+
+    def setup_nvd_api_key(self, non_interactive=False, api_key=None):
+        """
+        Setup NVD API key for CVE correlation.
+        
+        v3.0.1: Interactive prompt for API key storage preference.
+        
+        Args:
+            non_interactive: If True, skip interactive prompts
+            api_key: API key to use (from CLI --nvd-key)
+        """
+        # Import config functions
+        try:
+            from redaudit.utils.config import (
+                get_nvd_api_key,
+                set_nvd_api_key,
+                validate_nvd_api_key,
+                is_nvd_api_key_configured,
+            )
+        except ImportError:
+            self.print_status("Config module not available", "WARNING")
+            return
+        
+        # If key provided via CLI, just use it
+        if api_key:
+            if validate_nvd_api_key(api_key):
+                self.config["nvd_api_key"] = api_key
+                self.print_status(self.t("nvd_key_set_cli"), "OKGREEN")
+            else:
+                self.print_status(self.t("nvd_key_invalid"), "WARNING")
+            return
+        
+        # If already configured, use existing
+        existing_key = get_nvd_api_key()
+        if existing_key:
+            self.config["nvd_api_key"] = existing_key
+            return
+        
+        # Non-interactive mode without key - warn but continue
+        if non_interactive:
+            self.print_status(self.t("nvd_key_not_configured"), "WARNING")
+            return
+        
+        # Interactive: ask user
+        if not self.config.get("cve_lookup_enabled"):
+            return  # Only prompt if CVE lookup is enabled
+        
+        print(f"\n{self.COLORS['WARNING']}")
+        print("=" * 60)
+        print(self.t("nvd_setup_header"))
+        print("=" * 60)
+        print(f"{self.COLORS['ENDC']}")
+        print(self.t("nvd_setup_info"))
+        print(f"\n{self.COLORS['CYAN']}https://nvd.nist.gov/developers/request-an-api-key{self.COLORS['ENDC']}\n")
+        
+        options = [
+            self.t("nvd_option_config"),  # Save in config file
+            self.t("nvd_option_env"),     # Use environment variable
+            self.t("nvd_option_skip"),    # Continue without
+        ]
+        
+        choice = self.ask_choice(self.t("nvd_ask_storage"), options, default=2)
+        
+        if choice == 0:  # Save in config file
+            while True:
+                try:
+                    key = input(f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} API Key: ").strip()
+                    if not key:
+                        self.print_status(self.t("nvd_key_skipped"), "INFO")
+                        break
+                    
+                    if validate_nvd_api_key(key):
+                        if set_nvd_api_key(key, "config"):
+                            self.config["nvd_api_key"] = key
+                            self.print_status(self.t("nvd_key_saved"), "OKGREEN")
+                        else:
+                            self.print_status(self.t("nvd_key_save_error"), "WARNING")
+                        break
+                    else:
+                        self.print_status(self.t("nvd_key_invalid_format"), "WARNING")
+                except KeyboardInterrupt:
+                    print("")
+                    break
+        
+        elif choice == 1:  # Environment variable
+            print(f"\n{self.t('nvd_env_instructions')}")
+            print(f"  {self.COLORS['CYAN']}export NVD_API_KEY='your-api-key-here'{self.COLORS['ENDC']}")
+            self.print_status(self.t("nvd_env_set_later"), "INFO")
+        
+        else:  # Skip
+            self.print_status(self.t("nvd_slow_mode"), "WARNING")
+
     # ---------- Dependencies ----------
 
     def check_dependencies(self):
@@ -1135,6 +1228,14 @@ class InteractiveNetworkAuditor:
             self.rate_limit_delay = float(delay)
 
         self.config["scan_vulnerabilities"] = self.ask_yes_no(self.t("vuln_scan_q"), default="yes")
+
+        # v3.0.1: Ask about CVE correlation
+        if self.ask_yes_no(self.t("cve_lookup_q"), default="no"):
+            self.config["cve_lookup_enabled"] = True
+            # Trigger API key setup if not configured
+            self.setup_nvd_api_key()
+        else:
+            self.config["cve_lookup_enabled"] = False
 
         default_reports = os.path.expanduser(DEFAULT_OUTPUT_DIR)
         out_dir = input(
