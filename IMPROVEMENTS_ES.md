@@ -4,7 +4,7 @@
 
 Este documento describe el roadmap técnico, las mejoras arquitectónicas planificadas y los enfoques descartados para RedAudit.
 
-## Roadmap Inmediato (v2.7+)
+## Roadmap Inmediato (v3.0+)
 
 | Prioridad | Característica | Descripción |
 | :--- | :--- | :--- |
@@ -47,18 +47,21 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 - [x] **SIEM Profesional**: Cumplimiento ECS v8.11 y puntuación de riesgo.
 - [x] **Documentación Limpia**: Eliminación completa de etiquetas de versión antiguas y estandarización.
 
-### v2.6-v2.8 (Completado)
+### v2.7-v2.8 (Completado)
 
-*Enfoque en seguridad, profesionalismo e integración de herramientas externas.*
+*Enfoque en concurrencia, seguridad e integración de herramientas externas.*
 
-- [x] **Inteligencia de Exploits**: Integrado `searchsploit` para búsqueda automática de exploits basada en versiones.
-- [x] **Auditoría SSL/TLS**: Integrado `testssl.sh` para análisis criptográfico profundo de servicios HTTPS.
-- [x] **Endurecimiento de Seguridad**: Aumentados requisitos de complejidad de contraseñas (12+ chars, mayús/minús, números).
-- [x] **Seguridad CI/CD**: Añadido Dependabot (actualizaciones semanales) y CodeQL (análisis estático) a GitHub Actions.
-- [x] **Mejoras UX**: Añadidas barras de progreso `rich` con fallback elegante.
-- [x] **Documentación**: Añadidos diagramas de arquitectura (Mermaid), matrices de activación y profesionalización de todos los manuales.
+- [x] **Deep Scan Adaptativo**: Estrategia de 3 fases (TCP agresivo → UDP prioritario → UDP completo)
+- [x] **Captura PCAP Concurrente**: Tráfico capturado durante escaneos
+- [x] **Auto-Actualización Segura**: Integración GitHub con reinicio automático
+- [x] **Motor Pre-scan**: Descubrimiento rápido asyncio antes de nmap
+- [x] **Inteligencia de Exploits**: Integración SearchSploit para versiones detectadas
+- [x] **Análisis SSL/TLS**: Escaneo profundo TestSSL.sh
+- [x] **Endurecimiento de Seguridad**: Requisitos de contraseña fuerte (12+ chars)
+- [x] **Seguridad CI/CD**: Dependabot + análisis estático CodeQL
+- [x] **Mejoras UX**: Barras de progreso rich con fallback elegante
 
-### v2.6 (Completado - Diciembre 2025)
+### v2.6 (Completado)
 
 *Enfoque en calidad de código, testing y modularización.*
 

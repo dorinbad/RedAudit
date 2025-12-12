@@ -4,7 +4,7 @@
 
 This document outlines the technical roadmap, planned architectural improvements, and discarded approaches for RedAudit.
 
-## Immediate Roadmap (v2.7+)
+## Immediate Roadmap (v3.0+)
 
 | Priority | Feature | Description |
 | :--- | :--- | :--- |
@@ -47,18 +47,21 @@ This document outlines the technical roadmap, planned architectural improvements
 - [x] **SIEM Professional**: ECS v8.11 compliance and risk scoring.
 - [x] **Clean Documentation**: Complete removal of legacy version tags and standardization.
 
-### v2.6-v2.8 (Completed)
+### v2.7-v2.8 (Completed)
 
-*Focus on security, professionalism, and external tool integration.*
+*Focus on concurrency, security, and external tool integration.*
 
-- [x] **Exploit Intelligence**: Integrated `searchsploit` for automatic exploit lookup based on service version.
-- [x] **SSL/TLS Auditing**: Integrated `testssl.sh` for deep cryptographic analysis of HTTPS services.
-- [x] **Security Hardening**: Increased password complexity requirements (12+ chars, mixed case, numbers).
-- [x] **CI/CD Security**: Added Dependabot (weekly updates) and CodeQL (static analysis) to GitHub Actions.
-- [x] **UX Improvements**: Added `rich` progress bars with graceful fallback.
-- [x] **Documentation**: Added architecture diagrams (Mermaid), activation matrices, and professionalized all manuals.
+- [x] **Adaptive Deep Scan**: 3-phase strategy (TCP aggressive → Priority UDP → Full UDP)
+- [x] **Concurrent PCAP**: Traffic captured during scans, not after
+- [x] **Secure Auto-Update**: GitHub-integrated with automatic restart
+- [x] **Pre-scan Engine**: Fast asyncio port discovery before nmap
+- [x] **Exploit Intelligence**: SearchSploit integration for version-based lookups
+- [x] **SSL/TLS Analysis**: TestSSL.sh deep vulnerability scanning
+- [x] **Security Hardening**: Strong password requirements (12+ chars)
+- [x] **CI/CD Security**: Dependabot + CodeQL static analysis
+- [x] **UX Improvements**: Rich progress bars with graceful fallback
 
-### v2.6 (Completed - December 2025)
+### v2.6 (Completed)
 
 *Focus on code quality, testing, and modularization.*
 
