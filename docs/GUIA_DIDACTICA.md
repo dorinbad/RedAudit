@@ -1,5 +1,7 @@
 # Guía Didáctica de RedAudit: Manual Profesional para Profesores e Instructores
 
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](DIDACTIC_GUIDE.md)
+
 Esta guía está diseñada para ayudar a profesores, instructores y mentores a explicar el funcionamiento completo de **RedAudit v2.9**. El documento desglosa la herramienta desde una perspectiva pedagógica, combinando teoría, diagramas visuales, ejercicios prácticos y referencias al código.
 
 ---
