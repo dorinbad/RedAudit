@@ -49,6 +49,30 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 
 Deep scans are triggered selectively: web auditing modules launch only upon detection of HTTP/HTTPS services, and SSL inspection is reserved for encrypted ports.
 
+### Project Structure
+
+```text
+redaudit/
+├── core/               # Core functionality
+│   ├── auditor.py      # Main orchestrator class
+│   ├── prescan.py      # Asyncio fast port discovery
+│   ├── scanner.py      # Nmap scanning logic + IPv6 support
+│   ├── crypto.py       # AES-128 encryption/decryption
+│   ├── network.py      # Interface detection (IPv4/IPv6)
+│   ├── reporter.py     # JSON/TXT + SIEM output
+│   ├── updater.py      # Secure auto-update (git clone)
+│   ├── verify_vuln.py  # Smart-Check false positive filtering
+│   ├── entity_resolver.py  # Multi-interface host grouping
+│   ├── siem.py         # Professional SIEM integration
+│   ├── nvd.py          # CVE correlation via NVD API (v3.0)
+│   ├── diff.py         # Differential analysis module (v3.0)
+│   └── proxy.py        # SOCKS5 proxy support (v3.0)
+└── utils/              # Utilities
+    ├── constants.py    # Configuration constants
+    ├── i18n.py         # Internationalization
+    └── config.py       # Persistent configuration (v3.0.1)
+```
+
 ## Installation
 
 RedAudit requires a Debian-based environment (Kali Linux recommended) and `sudo` privileges for raw socket access.
@@ -168,38 +192,12 @@ Faster UDP scanning without sacrificing detection quality:
 - Reduced retries (`--max-retries 1`) for LAN efficiency
 - **Result**: 50-80% faster UDP scans
 
-## Modular Architecture
-
-RedAudit is organized as a modular Python package:
-
-```text
-redaudit/
-├── core/               # Core functionality
-│   ├── auditor.py      # Main orchestrator class
-│   ├── prescan.py      # Asyncio fast port discovery
-│   ├── scanner.py      # Nmap scanning logic + IPv6 support
-│   ├── crypto.py       # AES-128 encryption/decryption
-│   ├── network.py      # Interface detection (IPv4/IPv6)
-│   ├── reporter.py     # JSON/TXT + SIEM output
-│   ├── updater.py      # Secure auto-update (git clone)
-│   ├── verify_vuln.py  # Smart-Check false positive filtering
-│   ├── entity_resolver.py  # Multi-interface host grouping
-│   ├── siem.py         # Professional SIEM integration
-│   ├── nvd.py          # CVE correlation via NVD API (v3.0)
-│   ├── diff.py         # Differential analysis module (v3.0)
-│   └── proxy.py        # SOCKS5 proxy support (v3.0)
-└── utils/              # Utilities
-    ├── constants.py    # Configuration constants
-    ├── i18n.py         # Internationalization
-    └── config.py       # Persistent configuration (v3.0.1)
-```
-
 ### Secure Auto-Update
 
 RedAudit can check for and install updates automatically:
 
 - **Startup Check**: Prompts to check for updates when launching in interactive mode
-- **Auto-Install**: Downloads and installs updates via `git pull`
+- **Auto-Install**: Downloads and installs updates via `git clone`
 - **Auto-Restart**: Automatically restarts with new code using `os.execv()`
 - **Skip Flag**: Use `--skip-update-check` to disable update checking
 
