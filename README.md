@@ -34,9 +34,12 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Core Scanner** | `nmap`, `python3-nmap` | TCP/UDP port scanning, service/version detection, OS fingerprinting. |
 | **Web Recon** | `whatweb`, `curl`, `wget`, `nikto` | Analyzes HTTP headers, technologies, and vulnerabilities. |
 | **Exploit Intel** | `searchsploit` | Automatic ExploitDB lookup for services with detected versions. |
+| **CVE Intelligence** | NVD API | CVE correlation for detected service versions (v3.0). |
 | **SSL/TLS Analysis** | `testssl.sh` | Deep SSL/TLS vulnerability scanning (Heartbleed, POODLE, weak ciphers). |
 | **Traffic Capture** | `tcpdump`, `tshark` | Captures network packets for detailed protocol analysis. |
 | **DNS/Whois** | `dig`, `whois` | Reverse DNS lookups and ownership information for public IPs. |
+| **Diff Analysis** | Built-in | Compare JSON reports to track network changes over time (v3.0). |
+| **Pivoting** | `proxychains` wrapper | SOCKS5 proxy support for internal network access (v3.0). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 
