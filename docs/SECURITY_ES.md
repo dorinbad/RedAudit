@@ -60,6 +60,7 @@ El código está organizado en módulos enfocados para mejorar la mantenibilidad
 RedAudit incluye un mecanismo de actualización seguro que verifica GitHub para nuevas versiones:
 
 - **Sin descargas arbitrarias**: Usa `git pull` desde el repositorio oficial
+- **Fijado a tags**: El flujo de actualización resuelve el tag publicado y verifica el hash del commit antes de instalar
 - **Verificación de integridad**: La verificación de hash integrada de Git asegura autenticidad
 - **Confirmación del usuario**: Siempre pregunta antes de aplicar actualizaciones
 - **Manejo de fallos de red**: Degradación elegante si GitHub no está disponible

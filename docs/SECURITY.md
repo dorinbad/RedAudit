@@ -91,6 +91,7 @@ The codebase is organized into focused modules to improve maintainability and au
 RedAudit includes a secure update mechanism that checks GitHub for new releases:
 
 - **No arbitrary downloads**: Uses `git clone` from the official repository
+- **Pinned to tags**: Update flow resolves the published tag and verifies the commit hash before installing
 - **Integrity verification**: Git's built-in hash verification ensures authenticity
 - **User confirmation**: Always prompts before applying updates
 - **Network failure handling**: Graceful degradation if GitHub is unavailable
