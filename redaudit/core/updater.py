@@ -229,18 +229,35 @@ def perform_git_update(
     GITHUB_CLONE_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}.git"
     target_version = target_version or VERSION
     target_ref = f"v{target_version}"
-    home_dir = os.path.expanduser("~")
-    home_redaudit_path = os.path.join(home_dir, "RedAudit")
+    sudo_user = os.environ.get("SUDO_USER")
+    target_home_dir = os.path.expanduser("~")
+    target_uid = None
+    target_gid = None
+    if os.geteuid() == 0 and sudo_user:
+        try:
+            import pwd
+
+            user_info = pwd.getpwnam(sudo_user)
+            target_home_dir = user_info.pw_dir
+            target_uid = user_info.pw_uid
+            target_gid = user_info.pw_gid
+        except Exception:
+            target_home_dir = os.path.expanduser("~")
+
+    home_redaudit_path = os.path.join(target_home_dir, "RedAudit")
     install_path = "/usr/local/lib/redaudit"
     
     try:
         # Step 1: Determine target commit for the current version tag
         try:
+            git_env = os.environ.copy()
+            git_env["GIT_TERMINAL_PROMPT"] = "0"
+            git_env["GIT_ASKPASS"] = "echo"
             ls_remote = subprocess.check_output(
                 ["git", "ls-remote", "--exit-code", GITHUB_CLONE_URL, target_ref],
                 text=True,
                 timeout=15,
-                env={"GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"},
+                env=git_env,
             ).strip()
             expected_commit = ls_remote.split()[0]
         except Exception:
@@ -375,7 +392,30 @@ def perform_git_update(
                 for f in files:
                     os.chmod(os.path.join(root, f), 0o644)
         
-        # Step 4: Copy to user's home folder with documentation
+        # Step 4: Refuse to overwrite local changes in home repo (if present)
+        if os.path.isdir(home_redaudit_path) and os.path.isdir(os.path.join(home_redaudit_path, ".git")):
+            try:
+                status = subprocess.check_output(
+                    ["git", "status", "--porcelain"],
+                    cwd=home_redaudit_path,
+                    text=True,
+                    timeout=10,
+                    env=git_env,
+                ).strip()
+                if status:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    return (
+                        False,
+                        f"Local changes detected in {home_redaudit_path}. Commit/stash or remove the folder before updating.",
+                    )
+            except Exception:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                return (
+                    False,
+                    f"Could not verify local changes in {home_redaudit_path}. Update aborted for safety.",
+                )
+
+        # Step 5: Copy to user's home folder with documentation
         if logger:
             logger.info("Copying to home folder: %s", home_redaudit_path)
         
@@ -390,23 +430,19 @@ def perform_git_update(
         shutil.copytree(clone_path, home_redaudit_path)
         
         # Fix ownership if running as root
-        if os.geteuid() == 0:
-            import pwd
-            sudo_user = os.environ.get("SUDO_USER")
-            if sudo_user:
-                try:
-                    user_info = pwd.getpwnam(sudo_user)
-                    for root, dirs, files in os.walk(home_redaudit_path):
-                        os.chown(root, user_info.pw_uid, user_info.pw_gid)
-                        for d in dirs:
-                            os.chown(os.path.join(root, d), user_info.pw_uid, user_info.pw_gid)
-                        for f in files:
-                            os.chown(os.path.join(root, f), user_info.pw_uid, user_info.pw_gid)
-                except Exception as e:
-                    if logger:
-                        logger.warning("Could not fix ownership: %s", e)
+        if os.geteuid() == 0 and target_uid is not None and target_gid is not None:
+            try:
+                for root, dirs, files in os.walk(home_redaudit_path):
+                    os.chown(root, target_uid, target_gid)
+                    for d in dirs:
+                        os.chown(os.path.join(root, d), target_uid, target_gid)
+                    for f in files:
+                        os.chown(os.path.join(root, f), target_uid, target_gid)
+            except Exception as e:
+                if logger:
+                    logger.warning("Could not fix ownership: %s", e)
         
-        # Step 5: Verify installation
+        # Step 6: Verify installation
         verification_passed = True
         verification_errors = []
         

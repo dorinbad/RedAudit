@@ -44,6 +44,7 @@ sudo bash redaudit_install.sh
 | `--diff OLD NEW` | Compare two JSON reports |
 | `--cve-lookup` | Enable CVE correlation via NVD API |
 | `--nvd-key KEY` | NVD API key for faster rate limits |
+| `--allow-non-root` | Run in limited mode without sudo/root |
 
 ### Core CLI Options
 
@@ -71,7 +72,7 @@ redaudit/utils/
 ### Testing & Quality
 
 - **Tests**: ![Tests](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)
-- **Coverage**: ~89%
+- **Coverage**: Reported by CI (see Actions/Codecov)
 - **Security**: CodeQL & Dependabot active
 - **License**: GPLv3
 

@@ -253,7 +253,7 @@ Los resultados no se imprimen simplemente en pantalla. Se estructuran en formato
    - **Cliente**: Recibe el TXT legible como resumen ejecutivo.
 
 3. **Equipos DevSecOps** (3-15 profesionales):
-   - **Pipeline CI/CD**: Ejecuta RedAudit automáticamente en entornos de staging.
+   - **Pipeline CI/CD**: Puede ejecutar RedAudit en entornos de staging.
    - **Dashboard centralizado**: Consume el JSON vía API para mostrar tendencias.
    - **Equipo de Desarrollo**: Recibe notificaciones de puertos/servicios no autorizados.
 

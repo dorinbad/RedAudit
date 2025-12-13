@@ -84,7 +84,7 @@ The codebase is organized into focused modules to improve maintainability and au
 
 - **Core modules** (`redaudit/core/`): Security-critical functionality
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
-- **Test coverage**: 86 automated tests with CI/CD pipeline
+- **Tests**: Automated test suite runs in GitHub Actions (`.github/workflows/tests.yml`) across Python 3.9–3.12; the exact test count is tracked by CI rather than hard-coded in docs.
 
 ## 7. Secure Auto-Update
 

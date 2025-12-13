@@ -53,13 +53,13 @@ El código está organizado en módulos enfocados para mejorar la mantenibilidad
 
 - **Módulos core** (`redaudit/core/`): Funcionalidad crítica de seguridad
 - **Utilidades** (`redaudit/utils/`): Constantes e internacionalización
-- **Cobertura de tests**: 34 pruebas automatizadas con pipeline CI/CD
+- **Tests**: La suite automatizada se ejecuta en GitHub Actions (`.github/workflows/tests.yml`) en Python 3.9–3.12; el número exacto de tests lo reporta CI y no se fija en la documentación.
 
 ## 7. Auto-Actualización Segura
 
 RedAudit incluye un mecanismo de actualización seguro que verifica GitHub para nuevas versiones:
 
-- **Sin descargas arbitrarias**: Usa `git pull` desde el repositorio oficial
+- **Sin descargas arbitrarias**: Usa `git clone` desde el repositorio oficial
 - **Fijado a tags**: El flujo de actualización resuelve el tag publicado y verifica el hash del commit antes de instalar
 - **Verificación de integridad**: La verificación de hash integrada de Git asegura autenticidad
 - **Confirmación del usuario**: Siempre pregunta antes de aplicar actualizaciones

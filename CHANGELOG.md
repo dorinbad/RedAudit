@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Version**: Updated to 3.0.1
+- **Auto-update hardening**: Updates now resolve the published tag and verify the commit hash before installation.
+- **Installer hardening**: `testssl.sh` installation is pinned to a known tag/commit and verified.
+- **CVE lookup resilience**: NVD queries retry on transient errors (429/5xx/network) with backoff.
+- **Privileges UX**: Added `--allow-non-root` to run in limited mode without sudo/root.
 
 ---
 

@@ -103,6 +103,7 @@ TRANSLATIONS = {
         "update_starting": "Downloading update...",
         "update_skipped": "Update skipped. Continuing with current version.",
         "update_restarting": "Update installed! Restarting RedAudit...",
+        "update_requires_root": "Update check requires sudo/root (or run with --skip-update-check).",
         # NVD API Key configuration (v3.0.1)
         "nvd_key_set_cli": "✓ NVD API key set from command line",
         "nvd_key_invalid": "⚠️  Invalid NVD API key format",
@@ -216,6 +217,7 @@ TRANSLATIONS = {
         "update_starting": "Descargando actualización...",
         "update_skipped": "Actualización omitida. Continuando con la versión actual.",
         "update_restarting": "¡Actualización instalada! Reiniciando RedAudit...",
+        "update_requires_root": "La comprobación de actualizaciones requiere sudo/root (o usa --skip-update-check).",
         # Configuración de API Key de NVD (v3.0.1)
         "nvd_key_set_cli": "✓ API key de NVD establecida desde línea de comandos",
         "nvd_key_invalid": "⚠️  Formato de API key de NVD inválido",

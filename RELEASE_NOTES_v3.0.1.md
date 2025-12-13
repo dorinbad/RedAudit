@@ -138,6 +138,21 @@ All 25+ documentation files synchronized to v3.0.1:
 
 ---
 
+### 6. Update & Installer Hardening
+
+- **Updater verification**: Auto-update now resolves the published Git tag and verifies the commit hash before installing.
+- **Pinned `testssl.sh`**: The installer pins `testssl.sh` to a known tag/commit and verifies it before linking into `/usr/local/bin/`.
+
+---
+
+### 7. Limited Non-Root Mode
+
+RedAudit still recommends `sudo`/root for full functionality, but now supports a limited mode without root:
+
+- `--allow-non-root` allows running without `sudo` (some features may be skipped or fail depending on the host/tools).
+
+---
+
 ## Technical Details
 
 ### Modified Files
@@ -149,6 +164,8 @@ All 25+ documentation files synchronized to v3.0.1:
 - `redaudit/core/auditor.py` (MODIFIED)
 - `redaudit/utils/i18n.py` (MODIFIED)
 - `redaudit/utils/constants.py` (MODIFIED - VERSION = "3.0.1")
+- `redaudit/cli.py` (MODIFIED)
+- `redaudit/core/updater.py` (MODIFIED)
 
 **Installation Scripts**:
 

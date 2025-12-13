@@ -71,11 +71,13 @@ RedAudit is not an exploit framework and does not perform automatic exploitation
 |---------------|------------------------------------------------------|
 | OS            | Kali Linux, Debian 11+, Ubuntu 20.04+, Parrot OS     |
 | Python        | 3.9+ (system Python)                                 |
-| Privileges    | sudo / root (raw sockets, nmap, tcpdump)             |
+| Privileges    | sudo / root recommended (raw sockets, nmap, tcpdump) |
 | Disk space    | ~50 MB for code and dependencies + space for reports |
 | Network       | Local or routed reachability to targets              |
 
 RedAudit is designed for Linux only. It is not intended to run natively on Windows or macOS.
+
+Note: a limited non-root mode is available via `--allow-non-root`, but some scan features may fail or be skipped.
 
 ---
 
@@ -518,8 +520,8 @@ For long runs, you can leave the terminal attached and simply monitor the heartb
 ### Common issues (summary)
 
 1. **"Permission denied" / root required**
-   - **Cause:** command run without `sudo`.
-   - **Fix:** prepend `sudo` and ensure your user is in sudoers.
+   - **Cause:** command run without `sudo` (full mode requires raw socket operations).
+   - **Fix:** prepend `sudo` and ensure your user is in sudoers, or use `--allow-non-root` for limited mode.
 
 2. **"Command not found" for nmap, whatweb, etc.**
    - **Cause:** missing dependencies (installer skipped or failed).

@@ -14,6 +14,8 @@ sudo redaudit [OPTIONS]
 sudo python -m redaudit [OPTIONS]
 ```
 
+Note: for limited mode without sudo/root, add `--allow-non-root` (some scan features may fail or be skipped).
+
 ### Core Arguments
 
 | Flag | Description |

@@ -355,12 +355,15 @@ def main():
     if not args.skip_update_check:
         # In interactive mode, ask user
         if not args.target:
-            if app.ask_yes_no(app.t("update_check_prompt"), default="yes"):
+            if os.geteuid() != 0:
+                app.print_status(app.t("update_requires_root"), "WARNING")
+            elif app.ask_yes_no(app.t("update_check_prompt"), default="yes"):
                 interactive_update_check(
                     print_fn=app.print_status,
                     ask_fn=app.ask_yes_no,
                     t_fn=app.t,
-                    logger=app.logger
+                    logger=app.logger,
+                    lang=app.lang,
                 )
 
     # Non-interactive mode if --target is provided

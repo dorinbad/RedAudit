@@ -255,7 +255,7 @@ Results aren't simply printed to screen. They're structured in JSON format with 
    - **Client**: Receives readable TXT as executive summary.
 
 3. **DevSecOps Teams** (3-15 professionals):
-   - **CI/CD Pipeline**: Automatically runs RedAudit in staging environments.
+   - **CI/CD Pipeline**: Can run RedAudit in staging environments.
    - **Centralized Dashboard**: Consumes JSON via API to show trends.
    - **Development Team**: Receives notifications of unauthorized ports/services.
 
