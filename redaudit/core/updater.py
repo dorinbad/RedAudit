@@ -234,23 +234,52 @@ def perform_git_update(repo_path: str, lang: str = "en", logger=None) -> Tuple[b
         if logger:
             logger.info("Cloning RedAudit to temp folder: %s", temp_dir)
         
+        # Print progress message
+        print("  → Cloning from GitHub...", flush=True)
+        
         # Ensure git doesn't prompt for credentials or any interaction
         git_env = os.environ.copy()
         git_env["GIT_TERMINAL_PROMPT"] = "0"
         git_env["GIT_ASKPASS"] = "echo"
         
-        result = subprocess.run(
-            ["git", "clone", "--depth", "1", GITHUB_CLONE_URL, clone_path],
-            capture_output=True,
+        # Use Popen for real-time output instead of blocking run
+        process = subprocess.Popen(
+            ["git", "clone", "--depth", "1", "--progress", GITHUB_CLONE_URL, clone_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=120,
             env=git_env,
-            stdin=subprocess.DEVNULL,  # Prevent any interactive prompts
+            stdin=subprocess.DEVNULL,
         )
         
-        if result.returncode != 0:
+        # Read output with timeout monitoring
+        import time
+        start_time = time.time()
+        output_lines = []
+        
+        while True:
+            # Check timeout
+            if time.time() - start_time > 120:
+                process.kill()
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                return (False, "Git clone timed out after 120 seconds")
+            
+            line = process.stdout.readline()
+            if line:
+                output_lines.append(line)
+                # Print progress indicators
+                if "Receiving objects:" in line or "Resolving deltas:" in line:
+                    print(f"  → {line.strip()}", flush=True)
+            elif process.poll() is not None:
+                break
+        
+        returncode = process.wait()
+        
+        if returncode != 0:
             shutil.rmtree(temp_dir, ignore_errors=True)
-            return (False, f"Git clone failed: {result.stderr}")
+            return (False, f"Git clone failed: {''.join(output_lines[-5:])}")
+        
+        print("  → Clone complete!", flush=True)
         
         # Step 2: Run install script with user's language
         install_script = os.path.join(clone_path, "redaudit_install.sh")
