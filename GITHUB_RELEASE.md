@@ -1,8 +1,15 @@
-# RedAudit v3.0.0
+# RedAudit v3.0.1
 
-## Major Feature Release
+## Patch Release - Configuration Management
 
-### v3.0 Highlights
+### v3.0.1 Highlights
+
+- **Persistent NVD API Key Storage**: Secure configuration file (`~/.redaudit/config.json`) for NVD API keys.
+- **Interactive Setup Prompts**: Guided configuration for CVE correlation during installation and first run.
+- **Environment Variable Support**: `NVD_API_KEY` environment variable integration.
+- **Documentation Perfection**: Complete synchronization across all 25+ documentation files.
+
+### v3.0 Major Features
 
 - **IPv6 Support**: Full scanning capabilities for IPv6 networks with automatic `-6` flag.
 - **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API with 7-day cache.
@@ -56,6 +63,9 @@ redaudit/core/
 ├── nvd.py          # CVE correlation via NVD API
 ├── diff.py         # Differential analysis engine
 └── proxy.py        # SOCKS5 proxy manager
+
+redaudit/utils/
+└── config.py       # Persistent configuration (v3.0.1)
 ```
 
 ### Testing & Quality
