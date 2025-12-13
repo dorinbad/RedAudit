@@ -5,7 +5,7 @@
 ### v3.0.1 Highlights
 
 - **Persistent NVD API Key Storage**: Secure configuration file (`~/.redaudit/config.json`) for NVD API keys.
-- **Interactive Setup Prompts**: Guided configuration for CVE correlation during installation and first run.
+- **Interactive Setup Prompts**: Guided configuration for CVE correlation (installer saves to config file, runtime offers more options).
 - **Environment Variable Support**: `NVD_API_KEY` environment variable integration.
 - **Documentation Perfection**: Complete synchronization across all 25+ documentation files.
 
@@ -70,7 +70,7 @@ redaudit/utils/
 
 ### Testing & Quality
 
-- **Tests**: 86 automated tests passing
+- **Tests**: ![Tests](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)
 - **Coverage**: ~89%
 - **Security**: CodeQL & Dependabot active
 - **License**: GPLv3
@@ -86,5 +86,5 @@ Complete bilingual documentation (English/Spanish):
 ### Links
 
 - **Full Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Release Notes**: [RELEASE_NOTES_v3.0.0.md](RELEASE_NOTES_v3.0.0.md)
+- **Release Notes**: [RELEASE_NOTES_v3.0.1.md](RELEASE_NOTES_v3.0.1.md)
 - **Security Specs**: [docs/SECURITY.md](docs/SECURITY.md)
