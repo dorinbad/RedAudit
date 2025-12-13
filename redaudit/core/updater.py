@@ -220,21 +220,33 @@ def perform_git_update(repo_path: str, lang: str = "en", logger=None) -> Tuple[b
         Tuple of (success, message)
     """
     import shutil
-    
+
     GITHUB_CLONE_URL = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}.git"
+    target_ref = f"v{VERSION}"
     home_dir = os.path.expanduser("~")
     home_redaudit_path = os.path.join(home_dir, "RedAudit")
     install_path = "/usr/local/lib/redaudit"
     
     try:
-        # Step 1: Clone to temporary directory
+        # Step 1: Determine target commit for the current version tag
+        try:
+            ls_remote = subprocess.check_output(
+                ["git", "ls-remote", "--exit-code", GITHUB_CLONE_URL, target_ref],
+                text=True,
+                timeout=15,
+                env={"GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"},
+            ).strip()
+            expected_commit = ls_remote.split()[0]
+        except Exception:
+            return (False, f"Could not resolve tag {target_ref} from GitHub.")
+
+        # Step 2: Clone to temporary directory pinned to the tag
         temp_dir = tempfile.mkdtemp(prefix="redaudit_update_")
         clone_path = os.path.join(temp_dir, "RedAudit")
         
         if logger:
             logger.info("Cloning RedAudit to temp folder: %s", temp_dir)
         
-        # Print progress message
         print("  → Cloning from GitHub...", flush=True)
         
         # Ensure git doesn't prompt for credentials or any interaction
@@ -244,7 +256,17 @@ def perform_git_update(repo_path: str, lang: str = "en", logger=None) -> Tuple[b
         
         # Use Popen for real-time output instead of blocking run
         process = subprocess.Popen(
-            ["git", "clone", "--depth", "1", "--progress", GITHUB_CLONE_URL, clone_path],
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                target_ref,
+                "--progress",
+                GITHUB_CLONE_URL,
+                clone_path,
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -279,7 +301,23 @@ def perform_git_update(repo_path: str, lang: str = "en", logger=None) -> Tuple[b
             shutil.rmtree(temp_dir, ignore_errors=True)
             return (False, f"Git clone failed: {''.join(output_lines[-5:])}")
         
-        print("  → Clone complete!", flush=True)
+        # Verify pinned commit
+        cloned_commit = (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=clone_path, text=True
+            ).strip()
+            if os.path.isdir(clone_path)
+            else "unknown"
+        )
+
+        if cloned_commit != expected_commit:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return (
+                False,
+                f"Clone verification failed (expected {expected_commit}, got {cloned_commit})",
+            )
+
+        print("  → Clone complete and verified!", flush=True)
         
         # Step 2: Run install script with user's language
         install_script = os.path.join(clone_path, "redaudit_install.sh")
@@ -497,5 +535,4 @@ def interactive_update_check(print_fn=None, ask_fn=None, t_fn=None, logger=None,
     else:
         print_fn(t_fn("update_skipped"), "INFO")
         return False
-
 

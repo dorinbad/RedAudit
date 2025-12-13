@@ -38,6 +38,8 @@ NVD_RATE_LIMIT_WITH_KEY = 0.6  # seconds between requests
 # Cache configuration
 NVD_CACHE_DIR = os.path.expanduser("~/.redaudit/cache/nvd")
 NVD_CACHE_TTL = 86400 * 7  # 7 days
+NVD_MAX_RETRIES = 3
+NVD_RETRY_BACKOFF = 2.0  # seconds
 
 
 def get_api_key_from_config() -> Optional[str]:
@@ -210,65 +212,85 @@ def query_nvd(
     
     url = f"{NVD_API_URL}?{'&'.join(params)}"
     
-    try:
-        req = Request(url)
-        req.add_header("User-Agent", "RedAudit/3.0")
+    req = Request(url)
+    req.add_header("User-Agent", "RedAudit/3.0.1")
+    
+    if api_key:
+        req.add_header("apiKey", api_key)
+    
+    for attempt in range(1, NVD_MAX_RETRIES + 1):
+        try:
+            with urlopen(req, timeout=NVD_API_TIMEOUT) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode("utf-8"))
+                    
+                    cves = []
+                    for vuln in data.get("vulnerabilities", []):
+                        cve_data = vuln.get("cve", {})
+                        cve_id = cve_data.get("id", "")
+                        
+                        # Extract CVSS score
+                        cvss_score = None
+                        cvss_severity = None
+                        
+                        metrics = cve_data.get("metrics", {})
+                        if "cvssMetricV31" in metrics:
+                            cvss = metrics["cvssMetricV31"][0].get("cvssData", {})
+                            cvss_score = cvss.get("baseScore")
+                            cvss_severity = cvss.get("baseSeverity")
+                        elif "cvssMetricV2" in metrics:
+                            cvss = metrics["cvssMetricV2"][0].get("cvssData", {})
+                            cvss_score = cvss.get("baseScore")
+                        
+                        # Extract description
+                        descriptions = cve_data.get("descriptions", [])
+                        description = ""
+                        for desc in descriptions:
+                            if desc.get("lang") == "en":
+                                description = desc.get("value", "")[:500]
+                                break
+                        
+                        cves.append({
+                            "cve_id": cve_id,
+                            "cvss_score": cvss_score,
+                            "cvss_severity": cvss_severity,
+                            "description": description,
+                            "published": cve_data.get("published", ""),
+                        })
+                    
+                    # Cache result
+                    save_to_cache(cache_key, {"cves": cves, "timestamp": datetime.now().isoformat()})
+                    
+                    return cves
+                    
+        except HTTPError as e:
+            retryable = e.code in (429, 500, 502, 503, 504)
+            if logger:
+                logger.warning(
+                    "NVD API error: %s (attempt %s/%s)",
+                    e.code,
+                    attempt,
+                    NVD_MAX_RETRIES,
+                )
+            if not retryable or attempt == NVD_MAX_RETRIES:
+                break
+        except URLError as e:
+            if logger:
+                logger.warning(
+                    "NVD network error: %s (attempt %s/%s)",
+                    e.reason,
+                    attempt,
+                    NVD_MAX_RETRIES,
+                )
+            if attempt == NVD_MAX_RETRIES:
+                break
+        except Exception as e:
+            if logger:
+                logger.debug("NVD query failed: %s (attempt %s/%s)", e, attempt, NVD_MAX_RETRIES)
+            if attempt == NVD_MAX_RETRIES:
+                break
         
-        if api_key:
-            req.add_header("apiKey", api_key)
-        
-        with urlopen(req, timeout=NVD_API_TIMEOUT) as response:
-            if response.status == 200:
-                data = json.loads(response.read().decode("utf-8"))
-                
-                cves = []
-                for vuln in data.get("vulnerabilities", []):
-                    cve_data = vuln.get("cve", {})
-                    cve_id = cve_data.get("id", "")
-                    
-                    # Extract CVSS score
-                    cvss_score = None
-                    cvss_severity = None
-                    
-                    metrics = cve_data.get("metrics", {})
-                    if "cvssMetricV31" in metrics:
-                        cvss = metrics["cvssMetricV31"][0].get("cvssData", {})
-                        cvss_score = cvss.get("baseScore")
-                        cvss_severity = cvss.get("baseSeverity")
-                    elif "cvssMetricV2" in metrics:
-                        cvss = metrics["cvssMetricV2"][0].get("cvssData", {})
-                        cvss_score = cvss.get("baseScore")
-                    
-                    # Extract description
-                    descriptions = cve_data.get("descriptions", [])
-                    description = ""
-                    for desc in descriptions:
-                        if desc.get("lang") == "en":
-                            description = desc.get("value", "")[:500]
-                            break
-                    
-                    cves.append({
-                        "cve_id": cve_id,
-                        "cvss_score": cvss_score,
-                        "cvss_severity": cvss_severity,
-                        "description": description,
-                        "published": cve_data.get("published", ""),
-                    })
-                
-                # Cache result
-                save_to_cache(cache_key, {"cves": cves, "timestamp": datetime.now().isoformat()})
-                
-                return cves
-                
-    except HTTPError as e:
-        if logger:
-            logger.warning("NVD API error: %s", e.code)
-    except URLError as e:
-        if logger:
-            logger.warning("NVD network error: %s", e.reason)
-    except Exception as e:
-        if logger:
-            logger.debug("NVD query failed: %s", e)
+        time.sleep(NVD_RETRY_BACKOFF * attempt)
     
     return []
 

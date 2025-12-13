@@ -108,17 +108,31 @@ if $INSTALL; then
 fi
 
 # -------------------------------------------
-# 2b) Install testssl.sh from GitHub (not in apt)
+# 2b) Install testssl.sh from GitHub (pinned commit)
 # -------------------------------------------
 
+TESTSSL_REPO="https://github.com/drwetter/testssl.sh.git"
+TESTSSL_VERSION="${TESTSSL_VERSION:-v3.2.2}"
+TESTSSL_COMMIT="${TESTSSL_COMMIT:-3b6c5035bafcd0590f03730f76688bdce5568df0}"
+
 if [[ ! -f "/usr/local/bin/testssl.sh" ]]; then
-    echo "[INFO] Installing testssl.sh from GitHub..."
+    echo "[INFO] Installing testssl.sh ($TESTSSL_VERSION, pinned) from GitHub..."
     if command -v git &> /dev/null; then
         rm -rf /opt/testssl.sh 2>/dev/null
-        git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh
-        ln -sf /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
-        chmod +x /opt/testssl.sh/testssl.sh
-        echo "[OK] testssl.sh installed at /usr/local/bin/testssl.sh"
+        if git clone --depth 1 --branch "$TESTSSL_VERSION" "$TESTSSL_REPO" /opt/testssl.sh; then
+            CLONED_COMMIT=$(git -C /opt/testssl.sh rev-parse HEAD 2>/dev/null || echo "unknown")
+            if [[ "$CLONED_COMMIT" != "$TESTSSL_COMMIT" ]]; then
+                echo "[ERROR] testssl.sh commit mismatch (expected $TESTSSL_COMMIT, got $CLONED_COMMIT). Skipping installation."
+                rm -rf /opt/testssl.sh
+            else
+                ln -sf /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
+                chmod +x /opt/testssl.sh/testssl.sh
+                echo "[OK] testssl.sh installed at /usr/local/bin/testssl.sh"
+            fi
+        else
+            echo "[WARN] git clone failed; skipping testssl.sh installation"
+            rm -rf /opt/testssl.sh
+        fi
     else
         echo "[WARN] git not found, skipping testssl.sh installation"
     fi
@@ -238,12 +252,16 @@ fi
 RC_FILE="$REAL_HOME/.bashrc"
 [[ "$USER_SHELL" == *"zsh"* ]] && RC_FILE="$REAL_HOME/.zshrc"
 
-if ! grep -q "alias redaudit=" "$RC_FILE" 2>/dev/null; then
-    echo "alias redaudit='sudo /usr/local/bin/redaudit'" >> "$RC_FILE"
-    chown "$REAL_USER" "$RC_FILE"
-    echo "$MSG_ALIAS_ADDED $RC_FILE"
+if [[ -w "$RC_FILE" ]]; then
+    if ! grep -q "alias redaudit=" "$RC_FILE" 2>/dev/null; then
+        echo "alias redaudit='sudo /usr/local/bin/redaudit'" >> "$RC_FILE"
+        chown "$REAL_USER" "$RC_FILE"
+        echo "$MSG_ALIAS_ADDED $RC_FILE"
+    else
+        echo "$MSG_ALIAS_EXISTS $RC_FILE"
+    fi
 else
-    echo "$MSG_ALIAS_EXISTS $RC_FILE"
+    echo "[WARN] Could not write alias to $RC_FILE (permissions)."
 fi
 
 

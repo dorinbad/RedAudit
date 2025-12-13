@@ -187,6 +187,11 @@ Examples:
         action="store_true",
         help="Enable CVE correlation via NVD API (slower, requires internet)"
     )
+    parser.add_argument(
+        "--allow-non-root",
+        action="store_true",
+        help="Allow running without root (limited features; some scans may fail)"
+    )
 
     return parser.parse_args()
 
@@ -283,6 +288,7 @@ def configure_from_args(app, args) -> bool:
     # v3.0: CVE correlation
     app.config["cve_lookup_enabled"] = args.cve_lookup if hasattr(args, 'cve_lookup') else False
     app.config["nvd_api_key"] = args.nvd_key if hasattr(args, 'nvd_key') else None
+    app.config["allow_non_root"] = args.allow_non_root
 
     # Setup encryption if requested
     if args.encrypt:
@@ -293,11 +299,13 @@ def configure_from_args(app, args) -> bool:
 
 def main():
     """Main entry point for RedAudit CLI."""
-    if os.geteuid() != 0:
-        print("Error: root privileges (sudo) required.")
-        sys.exit(1)
-
     args = parse_arguments()
+
+    if os.geteuid() != 0 and not getattr(args, "allow_non_root", False):
+        print("Error: root privileges (sudo) required. Use --allow-non-root to proceed in limited mode.")
+        sys.exit(1)
+    elif os.geteuid() != 0:
+        print("⚠️  Running without root: some scans (OS detection, UDP, tcpdump) may fail.")
 
     # v3.0: Handle --diff mode (no scan, just comparison)
     if args.diff:
