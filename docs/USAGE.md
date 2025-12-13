@@ -49,6 +49,7 @@ sudo python -m redaudit [OPTIONS]
 | `--diff OLD NEW` | Compare two JSON reports and generate delta analysis. |
 | `--cve-lookup` | Enable CVE correlation via NVD API. |
 | `--nvd-key KEY` | NVD API key for faster rate limits (optional). |
+| `--allow-non-root` | Run in limited mode without sudo (no OS detection/pcap; some scans may fail). |
 
 ### Security
 

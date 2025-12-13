@@ -49,6 +49,7 @@ sudo python -m redaudit [OPTIONS]
 | `--diff OLD NEW` | Compara dos reportes JSON y genera análisis diferencial. |
 | `--cve-lookup` | Activa correlación CVE vía API NVD. |
 | `--nvd-key KEY` | Clave API NVD para límites de velocidad más rápidos (opcional). |
+| `--allow-non-root` | Ejecuta en modo limitado sin sudo (sin detección de SO/pcap; algunos scans pueden fallar). |
 
 ### Seguridad
 
