@@ -65,6 +65,11 @@ def get_api_key_from_config() -> Optional[str]:
 def ensure_cache_dir() -> str:
     """Create cache directory if it doesn't exist with secure permissions."""
     os.makedirs(NVD_CACHE_DIR, mode=0o700, exist_ok=True)
+    try:
+        os.chmod(NVD_CACHE_DIR, 0o700)
+    except Exception:
+        # Best-effort; not fatal if we cannot chmod
+        pass
     return NVD_CACHE_DIR
 
 
@@ -109,6 +114,10 @@ def save_to_cache(query: str, result: Dict) -> None:
     try:
         with open(cache_file, 'w', encoding='utf-8') as f:
             json.dump(result, f)
+        try:
+            os.chmod(cache_file, 0o600)
+        except Exception:
+            pass
     except Exception:
         pass
 

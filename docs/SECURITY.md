@@ -117,7 +117,7 @@ Users should treat the config file as sensitive. The API key grants increased ra
 
 Users should only run RedAudit in authorized, controlled environments.
 
-## 9. License
+## 10. License
 
 This security model is part of the RedAudit project and is covered by the  
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.
