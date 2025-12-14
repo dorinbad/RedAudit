@@ -62,4 +62,4 @@ git pull
 sudo bash redaudit_install.sh
 ```
 
-For full changelog, see [CHANGELOG.md](CHANGELOG.md)
+For full changelog, see [CHANGELOG.md](../../CHANGELOG.md)

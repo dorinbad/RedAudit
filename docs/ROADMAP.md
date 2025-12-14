@@ -1,6 +1,6 @@
 # Roadmap & Architecture Proposals
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](IMPROVEMENTS_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](ROADMAP_ES.md)
 
 This document outlines the technical roadmap, planned architectural improvements, and discarded approaches for RedAudit.
 
@@ -175,7 +175,7 @@ If you wish to contribute to any of these features:
 
 1. Check existing [Issues](https://github.com/dorinbadea/RedAudit/issues).
 2. Comment before starting to avoid duplication.
-3. Read [CONTRIBUTING.md](https://github.com/dorinbadea/RedAudit/blob/main/CONTRIBUTING.md).
+3. Read [CONTRIBUTING.md](../.github/CONTRIBUTING.md).
 4. Open a [Discussion](https://github.com/dorinbadea/RedAudit/discussions) for new ideas.
 
 ---

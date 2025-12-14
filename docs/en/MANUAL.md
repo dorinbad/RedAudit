@@ -584,7 +584,7 @@ Contributions should:
 - Keep the report schema backward compatible whenever possible.
 - Include tests for new features and changes.
 
-Refer to [CONTRIBUTING.md](../../CONTRIBUTING.md) for detailed guidelines.
+Refer to [CONTRIBUTING.md](../../.github/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
@@ -609,5 +609,5 @@ Using RedAudit against systems without authorisation may be illegal in your juri
 - [SECURITY.md](SECURITY.md) - Security model details
 - [REPORT_SCHEMA.md](REPORT_SCHEMA.md) - JSON report schema
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Problem resolution
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
+- [CONTRIBUTING.md](../../.github/CONTRIBUTING.md) - Contribution guidelines
 - [CHANGELOG.md](../../CHANGELOG.md) - Version history

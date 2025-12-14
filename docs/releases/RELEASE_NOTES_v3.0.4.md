@@ -29,7 +29,7 @@ This release is backward compatible with v3.0.3 and requires no migration steps.
 
 ## Useful Links
 
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **GitHub Release Notes**: [GITHUB_RELEASE.md](GITHUB_RELEASE.md)
-- **User Manual (EN)**: [docs/en/MANUAL.md](docs/en/MANUAL.md)
-- **Manual (ES)**: [docs/es/MANUAL.md](docs/es/MANUAL.md)
+- **Changelog**: [CHANGELOG.md](../../CHANGELOG.md)
+- **GitHub Release Notes**: [GITHUB_RELEASE.md(DRAFT_TEMPLATE.md)
+- **User Manual (EN)**: [docs/en/MANUAL.md](../en/MANUAL.md)
+- **Manual (ES)**: [docs/es/MANUAL.md](../es/MANUAL.md)

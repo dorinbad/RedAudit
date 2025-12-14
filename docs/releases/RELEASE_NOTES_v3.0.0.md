@@ -123,8 +123,8 @@ Or let the auto-update system handle it at next startup.
 
 ## Full Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+See [CHANGELOG.md](../../CHANGELOG.md) for complete version history.
 
 ## License
 
-GPLv3 - See [LICENSE](LICENSE) for details.
+GPLv3 - See [LICENSE(../../LICENSE) for details.

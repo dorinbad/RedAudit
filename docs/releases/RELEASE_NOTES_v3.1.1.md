@@ -55,10 +55,10 @@ This release is backward compatible with v3.1.0 and requires no migration steps.
 
 ## Useful Links
 
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md) / [CHANGELOG_ES.md](CHANGELOG_ES.md)
-- **GitHub Release Notes**: [GITHUB_RELEASE.md](GITHUB_RELEASE.md)
-- **User Manual (EN)**: [docs/en/MANUAL.md](docs/en/MANUAL.md)
-- **Manual (ES)**: [docs/es/MANUAL.md](docs/es/MANUAL.md)
-- **Report Schema (EN)**: [docs/en/REPORT_SCHEMA.md](docs/en/REPORT_SCHEMA.md)
-- **Report Schema (ES)**: [docs/es/REPORT_SCHEMA.md](docs/es/REPORT_SCHEMA.md)
+- **Changelog**: [CHANGELOG.md](../../CHANGELOG.md) / [CHANGELOG_ES.md](../../CHANGELOG_ES.md)
+- **GitHub Release Notes**: [GITHUB_RELEASE.md(DRAFT_TEMPLATE.md)
+- **User Manual (EN)**: [docs/en/MANUAL.md](../en/MANUAL.md)
+- **Manual (ES)**: [docs/es/MANUAL.md](../es/MANUAL.md)
+- **Report Schema (EN)**: [docs/en/REPORT_SCHEMA.md](../en/REPORT_SCHEMA.md)
+- **Report Schema (ES)**: [docs/es/REPORT_SCHEMA.md](../es/REPORT_SCHEMA.md)
 

@@ -32,6 +32,6 @@ During update, RedAudit now prints:
 
 ## Useful Links
 
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **GitHub Release Notes**: [GITHUB_RELEASE.md](GITHUB_RELEASE.md)
-- **Security Specification**: [docs/en/SECURITY.md](docs/en/SECURITY.md)
+- **Changelog**: [CHANGELOG.md](../../CHANGELOG.md)
+- **GitHub Release Notes**: [GITHUB_RELEASE.md(DRAFT_TEMPLATE.md)
+- **Security Specification**: [docs/en/SECURITY.md](../en/SECURITY.md)

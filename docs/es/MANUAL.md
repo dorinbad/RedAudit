@@ -588,7 +588,7 @@ Al contribuir:
 - Evitar cambios disruptivos en el esquema de informes salvo que sea imprescindible.
 - Aportar pruebas para nuevas funcionalidades.
 
-Consulta [CONTRIBUTING_ES.md](../../CONTRIBUTING_ES.md) para las pautas detalladas.
+Consulta [CONTRIBUTING_ES.md](../../.github/CONTRIBUTING_ES.md) para las pautas detalladas.
 
 ---
 
@@ -613,5 +613,5 @@ El uso de RedAudit contra sistemas sin autorización puede constituir un delito.
 - [SECURITY.md](SECURITY.md) - Detalles del modelo de seguridad
 - [REPORT_SCHEMA.md](REPORT_SCHEMA.md) - Esquema del informe JSON
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Resolución de problemas
-- [CONTRIBUTING_ES.md](../../CONTRIBUTING_ES.md) - Guía de contribución
+- [CONTRIBUTING_ES.md](../../.github/CONTRIBUTING_ES.md) - Guía de contribución
 - [CHANGELOG_ES.md](../../CHANGELOG_ES.md) - Historial de versiones
