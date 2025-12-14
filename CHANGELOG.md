@@ -1,6 +1,6 @@
 # Changelog
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md) ![Version](https://img.shields.io/badge/version-3.1.1-blue?style=flat-square)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md)
 
 All notable changes to this project will be documented in this file.
 
@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- (none yet)
-
 ### Changed
 
-- (none yet)
+- **README Restructure**: Added Features section after Overview for immediate capability visibility
+- **README Examples**: Expanded usage examples from 4 to 20 categorized scenarios (v3.0, v3.1, v3.1.1, real-world workflows)
+- **README Troubleshooting**: Expanded from 3 to 17 categorized issues with diagnosis/solution format
+- **README Installation**: Added post-install verification subsection and persistent defaults setup guide
+- **README Glossary**: Simplified to infrastructure/crypto terms only (moved feature details to Features section)
+- **MANUAL SIEM**: Added SIEM Integration subsection (§6.2.1) with JSONL format examples and ingestion commands
+- **CHANGELOG Fix**: Corrected duplicate v2.5.0 entry (renamed to v2.4.0), fixed v3.1.0 date (2025-12-13)
 
 ## [3.1.1] - 2025-12-14 (Topology, Defaults & UDP Coverage)
 

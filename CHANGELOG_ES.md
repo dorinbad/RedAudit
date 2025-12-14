@@ -9,13 +9,15 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Añadido
-
-- (pendiente)
-
 ### Cambiado
 
-- (pendiente)
+- **Reestructuración README**: Añadida sección Features tras Overview para visibilidad inmediata de capacidades
+- **Ejemplos README**: Expandidos de 4 a 20 escenarios categorizados (v3.0, v3.1, v3.1.1, workflows reales)
+- **Troubleshooting README**: Expandido de 3 a 17 problemas categorizados con formato diagnóstico/solución
+- **Instalación README**: Añadida subsección de verificación post-instalación y guía de configuración de defaults persistentes
+- **Glosario README**: Simplificado a solo términos infra/crypto (detalles de features movidos a sección Features)
+- **MANUAL SIEM**: Añadida subsección Integración SIEM (§6.2.1) con ejemplos de formato JSONL y comandos de ingesta
+- **Corrección CHANGELOG**: Corregida entrada duplicada v2.5.0 (renombrada a v2.4.0), corregida fecha v3.1.0 (2025-12-13)
 
 ## [3.1.1] - 2025-12-14 (Topología, defaults y cobertura UDP)
 
