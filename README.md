@@ -4,7 +4,7 @@
 
 RedAudit is a CLI tool for structured network auditing and hardening on Kali/Debian systems.
 
-![Version](https://img.shields.io/badge/version-3.0.3-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-3.0.4-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 ![CI/CD](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg?style=flat-square)
@@ -15,7 +15,7 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_ 
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                     v3.0.3
+                                     v3.0.4
         Interactive Network Audit Tool
 ```
 
@@ -124,7 +124,7 @@ sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password
 - `--encrypt, -e`: Encrypt reports with password
 - `--encrypt-password`: Custom password for encryption (optional, default: random generated)
 - `--output, -o`: Output directory (default: ~/Documents/RedAuditReports)
-- `--max-hosts`: Maximum hosts to scan (default: all)
+- `--max-hosts`: Maximum discovered hosts to scan (default: all)
 - `--no-vuln-scan`: Disable web vulnerability scanning
 - `--no-txt-report`: Disable TXT report generation
 - `--no-deep-scan`: Disable adaptive deep scan

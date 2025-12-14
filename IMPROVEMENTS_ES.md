@@ -36,7 +36,14 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 ## Hitos Completados
 
-### v3.0.3 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.0.4 (Completado - Diciembre 2025) -> **ACTUAL**
+
+*Patch centrado en mejorar la claridad del límite de hosts en modo interactivo y alinear documentación.*
+
+- [x] **Límite de hosts por defecto = todos**: El prompt interactivo escanea todos los hosts encontrados por defecto (ENTER = todos / all).
+- [x] **Texto más claro**: Los números significan un límite máximo global de hosts (no un selector de host/IP).
+
+### v3.0.3 (Completado - Diciembre 2025)
 
 *Patch centrado en transparencia del auto-update y preservación de idioma.*
 

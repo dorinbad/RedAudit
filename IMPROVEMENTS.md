@@ -36,7 +36,14 @@ This document outlines the technical roadmap, planned architectural improvements
 
 ## Completed Milestones
 
-### v3.0.3 (Completed - December 2025) -> **CURRENT**
+### v3.0.4 (Completed - December 2025) -> **CURRENT**
+
+*Patch release focused on clearer interactive host-limit UX and documentation alignment.*
+
+- [x] **Host limit default = all**: Interactive prompt defaults to scanning all discovered hosts (ENTER = all / todos).
+- [x] **Clearer wording**: Numbers now clearly mean a maximum host count (cap), not a host selector.
+
+### v3.0.3 (Completed - December 2025)
 
 *Patch release focused on auto-update transparency and language preservation.*
 

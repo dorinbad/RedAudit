@@ -17,7 +17,7 @@
 
 # RedAudit Installation Verification Script
 
-echo "RedAudit v3.0.3 Installation Verification"
+echo "RedAudit v3.0.4 Installation Verification"
 echo "========================================"
 echo
 

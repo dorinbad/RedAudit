@@ -1,11 +1,11 @@
-# RedAudit v3.0.3
+# RedAudit v3.0.4
 
-## Patch Release - Update UX & Language Preservation
+## Patch Release - Interactive UX Clarifications
 
-### v3.0.3 Highlights
+### v3.0.4 Highlights
 
-- **Language Preserved on Update**: Auto-update keeps the installed language (e.g., Spanish stays Spanish).
-- **More Explicit Auto-Update Output**: Shows target ref/commit, file changes (+/~/-), and explicit install/backup steps.
+- **Clearer host limit prompt**: Interactive default is now all discovered hosts (`todos`/`all`), and the prompt clarifies that numbers apply a global cap (not a host selector).
+- **Documentation alignment**: Updated manuals and usage docs to clarify `--max-hosts` behavior.
 
 ### v3.0 Major Features
 
@@ -49,6 +49,7 @@ sudo bash redaudit_install.sh
 - `--target, -t`: Target network(s) in CIDR notation
 - `--mode, -m`: fast/normal/full (default: normal)
 - `--threads, -j`: 1-16 (default: 6)
+- `--max-hosts`: Maximum number of discovered hosts to scan (default: all)
 - `--rate-limit`: Delay between hosts in seconds
 - `--encrypt, -e`: Encrypt reports
 - `--udp-mode`: UDP scan mode (quick/full)
@@ -85,5 +86,5 @@ Complete bilingual documentation (English/Spanish):
 ### Links
 
 - **Full Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Release Notes**: [RELEASE_NOTES_v3.0.3.md](RELEASE_NOTES_v3.0.3.md)
+- **Release Notes**: [RELEASE_NOTES_v3.0.4.md](RELEASE_NOTES_v3.0.4.md)
 - **Security Specs**: [docs/SECURITY.md](docs/SECURITY.md)

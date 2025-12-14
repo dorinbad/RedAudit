@@ -1,8 +1,8 @@
-# Manual de Usuario de RedAudit v3.0.3 (ES)
+# Manual de Usuario de RedAudit v3.0.4 (ES)
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](MANUAL_EN.md)
 
-**Versión:** 3.0.3  
+**Versión:** 3.0.4  
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas y redes  
 **Licencia:** GPLv3
 
@@ -272,12 +272,13 @@ Las opciones más importantes:
 | `-t`, `--target CIDR`        | Red(es) objetivo en notación CIDR. Se admiten varias separadas por comas.                                              |
 | `-m`, `--mode {fast,normal,full}` | Selección del modo de escaneo (ver tabla anterior). Por defecto: `normal`.                                        |
 | `-j`, `--threads N`          | Número de hilos concurrentes. El rango está limitado por constantes internas seguras.                                  |
+| `--max-hosts N`              | Número máximo de hosts encontrados a escanear. Por defecto: todos. *(Es un límite, no un selector de host/IP.)*        |
 | `--rate-limit SEGUNDOS`      | Retraso entre hosts para reducir ruido. Por defecto: 0.                                                                 |
 | `-e`, `--encrypt`            | Activa el cifrado de los informes generados.                                                                            |
 | `--encrypt-password PASS`    | Contraseña de cifrado en modo no interactivo. Si se omite con `--encrypt`, se pedirá por consola o se generará una aleatoria. |
 | `--no-vuln-scan`             | Desactiva el escaneo de vulnerabilidades web (omite nikto y ciertas pruebas HTTP).                                      |
 | `--no-txt-report`            | Evita generar el informe TXT/Markdown.                                                                                  |
-| `-o`, `--output DIR`         | Directorio destino para los informes. Por defecto se usa un directorio con marca de tiempo.                             |
+| `-o`, `--output DIR`         | Directorio base destino para los informes. Por defecto: `~/Documents/RedAuditReports` (se crea `RedAudit_...` con timestamp). |
 | `--yes`                      | Modo no interactivo: asume "sí" a las preguntas. Imprescindible para automatización.                                    |
 | `--prescan`                  | Activa el pre-escaneo asíncrono antes de lanzar nmap sobre grandes rangos.                                        |
 | `--prescan-ports`            | Rango de puertos para pre-scan (ej: `1-1000` o `top-1000`). Defecto: `1-1024`.                                          |
@@ -290,6 +291,8 @@ Las opciones más importantes:
 | `--cve-lookup`               | Activa correlación CVE vía API NVD. **(v3.0)**                                                                    |
 | `--nvd-key KEY`              | Clave API NVD para límites de velocidad más rápidos (opcional). **(v3.0)**                                        |
 | `-V`, `--version`            | Muestra la versión de RedAudit y termina.                                                                               |
+
+Nota (modo interactivo): cuando se pregunte “Número máximo de hosts a escanear”, pulsa ENTER para escanear **todos** los hosts encontrados, o escribe un número para aplicar un límite global.
 
 Para más ejemplos de uso, consulta [USAGE_ES.md](USAGE_ES.md).
 

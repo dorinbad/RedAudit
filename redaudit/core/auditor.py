@@ -516,14 +516,19 @@ class InteractiveNetworkAuditor:
 
     def ask_number(self, question, default=10, min_val=1, max_val=1000):
         """Ask for a number within a range."""
+        default_return = default
+        default_display = default
+        if isinstance(default, str) and default.lower() in ("all", "todos", "todo"):
+            default_return = "all"
+            default_display = "todos" if self.lang == "es" else "all"
         while True:
             try:
                 ans = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default}]: "
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default_display}]: "
                 ).strip()
                 if ans == "":
-                    return default
-                if ans.lower() in ("todos", "all"):
+                    return default_return
+                if ans.lower() in ("todos", "todo", "all"):
                     return "all"
                 try:
                     num = int(ans)
@@ -1282,7 +1287,7 @@ class InteractiveNetworkAuditor:
         self.config["scan_mode"] = modes_map[self.ask_choice(self.t("scan_mode"), scan_modes, 1)]
 
         if self.config["scan_mode"] != "rapido":
-            limit = self.ask_number(self.t("ask_num_limit"), default=25)
+            limit = self.ask_number(self.t("ask_num_limit"), default="all")
             self.config["max_hosts_value"] = limit
         else:
             self.config["max_hosts_value"] = "all"

@@ -40,7 +40,7 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 | `--no-deep-scan` | Desactiva el deep scan adaptativo. |
 | `--no-vuln-scan` | Desactiva el escaneo de vulnerabilidades web. |
 | `--no-txt-report` | Desactiva la generación de reporte TXT. |
-| `--max-hosts` | Número máximo de hosts a escanear (defecto: todos). |
+| `--max-hosts` | Número máximo de hosts encontrados a escanear (defecto: todos). |
 
 ### Características v3.0
 
@@ -141,7 +141,7 @@ Esto generará archivos `.decrypted` (o restaurará la extensión original) tras
 
 Los logs de depuración se guardan en `~/.redaudit/logs/`. Revisa estos archivos si el escaneo falla o se comporta de forma inesperada.
 
-## Configuración de Correlación CVE (v3.0.3)
+## Configuración de Correlación CVE (v3.0.4)
 
 RedAudit puede enriquecer los resultados del escaneo con datos CVE de la National Vulnerability Database (NVD) del NIST.
 Este enriquecimiento depende de versiones detectadas (o CPEs con versión); si la versión es desconocida, RedAudit omite ese puerto para evitar resultados demasiado amplios.
@@ -183,7 +183,7 @@ Crea `~/.redaudit/config.json`:
 
 ```json
 {
-  "version": "3.0.3",
+  "version": "3.0.4",
   "nvd_api_key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 ```
