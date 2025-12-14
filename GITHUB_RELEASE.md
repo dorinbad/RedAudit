@@ -1,12 +1,18 @@
-# RedAudit v3.1.0
+# RedAudit v3.1.1
 
 [![English](https://img.shields.io/badge/EN-English-blue?style=flat-square)](#english) [![Español](https://img.shields.io/badge/ES-Espa%C3%B1ol-red?style=flat-square)](#espa%C3%B1ol)
 
 ## English
 
-### Feature Release - SIEM & AI Pipeline Enhancements
+### Patch Release - Topology, Persistent Defaults & UDP Coverage
 
-#### v3.1 Highlights
+#### v3.1.1 Highlights
+
+- **Topology Discovery (best-effort)**: Optional ARP/VLAN/LLDP + gateway/routes mapping (`--topology`, `--topology-only`).
+- **Persistent Defaults**: Save common settings to `~/.redaudit/config.json` via `--save-defaults`.
+- **Configurable UDP Coverage**: `--udp-ports N` (50-500) to tune full UDP identity scan coverage.
+
+#### v3.1.0 Highlights (Included)
 
 - **JSONL Exports**: Auto-generated `findings.jsonl`, `assets.jsonl`, and `summary.json` for SIEM/AI pipelines (when report encryption is disabled).
 - **Finding IDs**: Deterministic hashes for finding deduplication across scans.
@@ -40,16 +46,14 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
-#### New in v3.1 - JSON Output
+#### New in v3.1.1 - JSON Output
 
 ```json
 {
   "schema_version": "3.1",
-  "scanner_versions": {"redaudit": "3.1.0", "nmap": "7.95"},
-  "finding_id": "12273fca7e8dbe0e...",
-  "category": "misconfig",
-  "normalized_severity": 7.0,
-  "parsed_observations": ["Missing X-Frame-Options header"]
+  "scanner_versions": {"redaudit": "3.1.1", "nmap": "7.95"},
+  "topology": {"candidate_networks": ["10.0.0.0/8"]},
+  "hosts": [{"ip": "192.168.1.50", "deep_scan": {"udp_top_ports": 200}}]
 }
 ```
 
@@ -59,7 +63,8 @@ sudo bash redaudit_install.sh
 redaudit/core/
 ├── scanner_versions.py  # Tool version detection
 ├── evidence_parser.py   # Nikto/TestSSL parsing
-└── jsonl_exporter.py    # JSONL/JSON export views
+├── jsonl_exporter.py    # JSONL/JSON export views
+└── topology.py          # Topology discovery (ARP/VLAN/LLDP)
 ```
 
 #### CLI Options
@@ -71,6 +76,11 @@ redaudit/core/
 | `--diff OLD NEW` | Compare two JSON reports |
 | `--cve-lookup` | Enable CVE correlation via NVD API |
 | `--nvd-key KEY` | NVD API key for faster rate limits |
+| `--udp-ports N` | Top UDP ports count for full identity scan (50-500) |
+| `--topology` | Enable topology discovery (ARP/VLAN/LLDP + gateway/routes) |
+| `--no-topology` | Disable topology discovery (override persisted defaults) |
+| `--topology-only` | Run topology discovery only (skip host scanning) |
+| `--save-defaults` | Save CLI settings as persistent defaults (~/.redaudit/config.json) |
 | `--allow-non-root` | Run in limited mode without sudo/root |
 
 #### Testing & Quality
@@ -91,16 +101,22 @@ Complete bilingual documentation (English/Spanish):
 #### Links
 
 - **Full Changelog**: [CHANGELOG.md](CHANGELOG.md) / [CHANGELOG_ES.md](CHANGELOG_ES.md)
-- **Release Notes**: [RELEASE_NOTES_v3.1.md](RELEASE_NOTES_v3.1.md) / [RELEASE_NOTES_v3.1_ES.md](RELEASE_NOTES_v3.1_ES.md)
+- **Release Notes**: [RELEASE_NOTES_v3.1.1.md](RELEASE_NOTES_v3.1.1.md) / [RELEASE_NOTES_v3.1.1_ES.md](RELEASE_NOTES_v3.1.1_ES.md)
 - **Security Specs**: [EN](docs/en/SECURITY.md) / [ES](docs/es/SECURITY.md)
 
 ---
 
 ## Español
 
-### Release de features - Mejoras SIEM y pipelines de IA
+### Patch release - Topología, defaults persistentes y cobertura UDP
 
-#### Highlights v3.1
+#### Highlights v3.1.1
+
+- **Descubrimiento de topología (best-effort)**: Mapping opcional ARP/VLAN/LLDP + gateway/rutas (`--topology`, `--topology-only`).
+- **Defaults persistentes**: Guardar ajustes comunes en `~/.redaudit/config.json` mediante `--save-defaults`.
+- **Cobertura UDP configurable**: `--udp-ports N` (50-500) para ajustar la cobertura del UDP full de identidad.
+
+#### Highlights v3.1.0 (incluido)
 
 - **Exportaciones JSONL**: `findings.jsonl`, `assets.jsonl` y `summary.json` auto-generados para pipelines SIEM/IA (cuando el cifrado de reportes está desactivado).
 - **IDs de hallazgo**: Hashes determinísticos para deduplicación/correlación entre escaneos.
@@ -134,16 +150,14 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
-#### Nuevo en v3.1 - Salida JSON
+#### Nuevo en v3.1.1 - Salida JSON
 
 ```json
 {
   "schema_version": "3.1",
-  "scanner_versions": {"redaudit": "3.1.0", "nmap": "7.95"},
-  "finding_id": "12273fca7e8dbe0e...",
-  "category": "misconfig",
-  "normalized_severity": 7.0,
-  "parsed_observations": ["Missing X-Frame-Options header"]
+  "scanner_versions": {"redaudit": "3.1.1", "nmap": "7.95"},
+  "topology": {"candidate_networks": ["10.0.0.0/8"]},
+  "hosts": [{"ip": "192.168.1.50", "deep_scan": {"udp_top_ports": 200}}]
 }
 ```
 
@@ -153,7 +167,8 @@ sudo bash redaudit_install.sh
 redaudit/core/
 ├── scanner_versions.py  # Detección de versiones de herramientas
 ├── evidence_parser.py   # Parsing Nikto/TestSSL
-└── jsonl_exporter.py    # Vistas de exportación JSONL/JSON
+├── jsonl_exporter.py    # Vistas de exportación JSONL/JSON
+└── topology.py          # Descubrimiento de topología (ARP/VLAN/LLDP)
 ```
 
 #### Opciones CLI
@@ -165,6 +180,11 @@ redaudit/core/
 | `--diff OLD NEW` | Compara dos reportes JSON |
 | `--cve-lookup` | Activa correlación CVE vía NVD |
 | `--nvd-key KEY` | API key NVD para rate limits más rápidos |
+| `--udp-ports N` | Número de top puertos UDP para identidad (50-500) |
+| `--topology` | Activa descubrimiento de topología (ARP/VLAN/LLDP + gateway/rutas) |
+| `--no-topology` | Desactiva topología (anula defaults persistentes) |
+| `--topology-only` | Ejecuta solo topología (omite escaneo de hosts) |
+| `--save-defaults` | Guarda ajustes CLI como defaults persistentes (~/.redaudit/config.json) |
 | `--allow-non-root` | Ejecuta sin sudo/root (modo limitado) |
 
 #### Testing y calidad
@@ -185,5 +205,5 @@ Documentación bilingüe (inglés/español):
 #### Links
 
 - **Changelog completo**: [CHANGELOG.md](CHANGELOG.md) / [CHANGELOG_ES.md](CHANGELOG_ES.md)
-- **Release Notes**: [RELEASE_NOTES_v3.1.md](RELEASE_NOTES_v3.1.md) / [RELEASE_NOTES_v3.1_ES.md](RELEASE_NOTES_v3.1_ES.md)
+- **Release Notes**: [RELEASE_NOTES_v3.1.1.md](RELEASE_NOTES_v3.1.1.md) / [RELEASE_NOTES_v3.1.1_ES.md](RELEASE_NOTES_v3.1.1_ES.md)
 - **Especificaciones de seguridad**: [EN](docs/en/SECURITY.md) / [ES](docs/es/SECURITY.md)

@@ -69,7 +69,8 @@ redaudit/
 │   ├── proxy.py        # Soporte proxy SOCKS5
 │   ├── scanner_versions.py  # Detección de versiones (v3.1)
 │   ├── evidence_parser.py   # Extracción de observaciones (v3.1)
-│   └── jsonl_exporter.py    # Exportaciones JSONL (v3.1)
+│   ├── jsonl_exporter.py    # Exportaciones JSONL (v3.1)
+│   └── topology.py     # Descubrimiento de topología (v3.1+)
 └── utils/              # Utilidades
     ├── constants.py    # Constantes de configuración
     ├── i18n.py         # Internacionalización

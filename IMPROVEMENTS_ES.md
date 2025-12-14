@@ -60,7 +60,16 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 
 ## Hitos Completados
 
-### v3.1.0 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.1.1 (Completado - Diciembre 2025) -> **ACTUAL**
+
+*Patch centrado en descubrimiento de topología, defaults persistentes y cobertura UDP configurable.*
+
+- [x] **Descubrimiento de topología (best-effort)**: Mapping ARP/VLAN/LLDP + gateway/rutas (`--topology`, `--topology-only`).
+- [x] **Defaults persistentes**: Guardado de ajustes comunes en `~/.redaudit/config.json` (`--save-defaults`).
+- [x] **Cobertura UDP configurable**: `--udp-ports N` para ajustar la cobertura del UDP full de identidad.
+- [x] **Docs y tests alineados**: Manuales, esquema y tests unitarios actualizados.
+
+### v3.1.0 (Completado - Diciembre 2025)
 
 *Release centrada en integraciones SIEM y exportaciones para pipelines de IA.*
 

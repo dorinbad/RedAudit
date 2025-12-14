@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
-**Versión:** 3.1.0  
+**Versión:** 3.1.1  
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas / redes  
 **Licencia:** GPLv3
 

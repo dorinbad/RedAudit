@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/MANUAL.md)
 
-**Version:** 3.1.0  
+**Version:** 3.1.1  
 **Target audience:** Security analysts, penetration testers, systems / network administrators  
 **License:** GPLv3
 

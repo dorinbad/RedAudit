@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- (none yet)
+
+### Changed
+
+- (none yet)
+
+## [3.1.1] - 2025-12-14 (Topology, Defaults & UDP Coverage)
+
+### Added
+
 - **Topology Discovery (best-effort)**: Optional ARP/VLAN/LLDP + gateway/routes mapping (`--topology`, `--topology-only`)
 - **Persistent Defaults**: Save common settings to `~/.redaudit/config.json` via `--save-defaults` (used as defaults in future runs)
 - **Configurable UDP Coverage**: `--udp-ports N` (50-500) to tune full UDP identity scan coverage

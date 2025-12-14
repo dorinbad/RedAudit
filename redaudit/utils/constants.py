@@ -6,14 +6,14 @@ GPLv3 License
 """
 
 # Version
-VERSION = "3.1.0"
+VERSION = "3.1.1"
 
 # Default language (installer may override)
 DEFAULT_LANG = "en"
 
 # Security constants
 MAX_INPUT_LENGTH = 1024  # Maximum length for IP/hostname inputs
-MAX_CIDR_LENGTH = 50     # Maximum length for CIDR ranges
+MAX_CIDR_LENGTH = 50  # Maximum length for CIDR ranges
 MAX_SUBPROCESS_RETRIES = 2  # Maximum retries for subprocess calls
 
 # Host status constants (v2.8.0)
@@ -62,17 +62,29 @@ MAX_PORTS_DISPLAY = 50
 SECURE_FILE_MODE = 0o600
 
 # Service detection keywords
-WEB_SERVICES_KEYWORDS = [
-    "http", "https", "ssl", "www", "web", "admin", "proxy", "alt", "connect"
-]
+WEB_SERVICES_KEYWORDS = ["http", "https", "ssl", "www", "web", "admin", "proxy", "alt", "connect"]
 
 WEB_SERVICES_EXACT = [
-    "http", "https", "www", "http-proxy", "ssl/http",
-    "ssl/https", "http-alt", "http-admin", "http-connect"
+    "http",
+    "https",
+    "www",
+    "http-proxy",
+    "ssl/http",
+    "ssl/https",
+    "http-alt",
+    "http-admin",
+    "http-connect",
 ]
 
 SUSPICIOUS_SERVICE_KEYWORDS = [
-    "socks", "socks5", "nagios", "nsca", "proxy", "vpn", "tor", "tcpwrapped"
+    "socks",
+    "socks5",
+    "nagios",
+    "nsca",
+    "proxy",
+    "vpn",
+    "tor",
+    "tcpwrapped",
 ]
 
 # Console colors
