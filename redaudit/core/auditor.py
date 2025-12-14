@@ -127,6 +127,8 @@ class InteractiveNetworkAuditor:
             "ipv6_only": False,
             "cve_lookup_enabled": False,
             "nvd_api_key": None,
+            # v2.8: Adaptive deep identity scan
+            "deep_id_scan": True,
         }
 
         self.encryption_enabled = False
@@ -755,7 +757,9 @@ class InteractiveNetworkAuditor:
             nm.scan(safe_ip, arguments=args)
             if safe_ip not in nm.all_hosts():
                 # Host didn't respond to initial scan - do deep scan
-                deep = self.deep_scan_host(safe_ip)
+                deep = None
+                if self.config.get("deep_id_scan", True):
+                    deep = self.deep_scan_host(safe_ip)
                 base = {
                     "ip": safe_ip,
                     "hostname": "",
@@ -833,6 +837,25 @@ class InteractiveNetworkAuditor:
                 "total_ports_found": total_ports,
             }
 
+            # Best-effort identity capture from nmap host data (fast, avoids deep scan for quiet hosts).
+            try:
+                addresses = (data.get("addresses") or {}) if hasattr(data, "get") else {}
+                mac = addresses.get("mac") if isinstance(addresses, dict) else None
+                if mac:
+                    deep_meta = host_record.setdefault("deep_scan", {"strategy": "nmap", "commands": []})
+                    deep_meta["mac_address"] = mac
+                    vendor_map = (data.get("vendor") or {}) if hasattr(data, "get") else {}
+                    if isinstance(vendor_map, dict):
+                        vendor = (
+                            vendor_map.get(mac)
+                            or vendor_map.get(mac.upper())
+                            or vendor_map.get(mac.lower())
+                        )
+                        if vendor:
+                            deep_meta["vendor"] = vendor
+            except Exception:
+                pass
+
             # v2.8.0: Banner grab fallback for unidentified ports
             if unknown_ports and len(unknown_ports) <= 20:
                 self.print_status(
@@ -855,14 +878,20 @@ class InteractiveNetworkAuditor:
 
             # Heuristics for deep identity scan
             trigger_deep = False
-            if total_ports > 8:
-                trigger_deep = True
-            if suspicious:
-                trigger_deep = True
-            if total_ports <= 3:
-                trigger_deep = True
-            if total_ports > 0 and not any_version:
-                trigger_deep = True
+            deep_enabled = self.config.get("deep_id_scan", True)
+            # In full scan mode we already run aggressive nmap; avoid redundant deep scans.
+            allow_deep_heuristic = self.config.get("scan_mode") != "completo"
+            if deep_enabled and allow_deep_heuristic:
+                if total_ports > 8:
+                    trigger_deep = True
+                if suspicious:
+                    trigger_deep = True
+                # Skip deep scan for completely quiet hosts (0 open ports); it tends to add a lot of time
+                # and usually yields little beyond MAC/vendor (which we already capture when available).
+                if 0 < total_ports <= 3:
+                    trigger_deep = True
+                if total_ports > 0 and not any_version:
+                    trigger_deep = True
 
             # SearchSploit exploit lookup for services with version info
             if self.extra_tools.get("searchsploit"):
