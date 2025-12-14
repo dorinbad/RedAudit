@@ -26,6 +26,7 @@ RedAudit now stores configuration persistently in `~/.redaudit/config.json`, eli
 
 - Secure file permissions (`0o600` for config file, `0o700` for directory)
 - Automatic creation on first use
+- Sudo-aware config resolution (when running via `sudo`, RedAudit uses the invoking user’s `~/.redaudit/config.json`)
 - Version tracking (`CONFIG_VERSION = "3.0.1"`)
 - JSON-based format for easy editing
 

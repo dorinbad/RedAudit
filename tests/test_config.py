@@ -27,6 +27,7 @@ from redaudit.utils.config import (
     DEFAULT_CONFIG,
     CONFIG_VERSION,
     ensure_config_dir,
+    get_config_paths,
 )
 
 
@@ -127,18 +128,37 @@ class TestConfigFilePermissions(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = os.path.join(tmpdir, "config.json")
             
-            with patch("redaudit.utils.config.CONFIG_FILE", config_file):
-                with patch("redaudit.utils.config.CONFIG_DIR", tmpdir):
-                    with patch("redaudit.utils.config.ensure_config_dir", return_value=tmpdir):
-                        result = save_config({"test": "value"})
-                        
-                        self.assertTrue(result)
-                        self.assertTrue(os.path.exists(config_file))
-                        
-                        # Check permissions
-                        file_stat = os.stat(config_file)
-                        mode = stat.S_IMODE(file_stat.st_mode)
-                        self.assertEqual(mode, 0o600)
+            with patch("redaudit.utils.config.get_config_paths", return_value=(tmpdir, config_file)):
+                with patch("redaudit.utils.config.ensure_config_dir", return_value=tmpdir):
+                    result = save_config({"test": "value"})
+                    
+                    self.assertTrue(result)
+                    self.assertTrue(os.path.exists(config_file))
+                    
+                    # Check permissions
+                    file_stat = os.stat(config_file)
+                    mode = stat.S_IMODE(file_stat.st_mode)
+                    self.assertEqual(mode, 0o600)
+
+
+class TestSudoConfigPaths(unittest.TestCase):
+    """Tests for sudo-aware config path resolution."""
+
+    @patch.dict(os.environ, {"SUDO_USER": "alice"})
+    @patch("redaudit.utils.config.os.geteuid", return_value=0)
+    def test_get_config_paths_prefers_sudo_user_home(self, _mock_geteuid):
+        def fake_expanduser(path):
+            if path == "~alice":
+                return "/home/alice"
+            if path == "~":
+                return "/root"
+            return path
+
+        with patch("redaudit.utils.config.os.path.expanduser", side_effect=fake_expanduser):
+            config_dir, config_file = get_config_paths()
+
+        self.assertEqual(config_dir, "/home/alice/.redaudit")
+        self.assertEqual(config_file, "/home/alice/.redaudit/config.json")
 
 
 if __name__ == "__main__":

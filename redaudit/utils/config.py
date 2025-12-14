@@ -10,11 +10,13 @@ v3.0.1: Persistent configuration for NVD API key and other settings.
 import os
 import json
 import stat
+try:
+    import pwd  # Unix-only
+except ImportError:  # pragma: no cover
+    pwd = None
 from typing import Dict, Optional, Any
 
-# Config paths
-CONFIG_DIR = os.path.expanduser("~/.redaudit")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+# Config version
 CONFIG_VERSION = "3.0.1"
 
 # Environment variable names
@@ -27,6 +29,65 @@ DEFAULT_CONFIG = {
     "nvd_api_key_storage": None,  # "config", "env", or None
 }
 
+# Backwards-compatible constants (do not rely on these for path resolution).
+# Real path resolution happens via get_config_paths(), which handles sudo.
+CONFIG_DIR = os.path.expanduser("~/.redaudit")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+
+
+def _resolve_config_owner() -> Optional[tuple[int, int]]:
+    """
+    Resolve the intended config owner (uid, gid).
+
+    When running under sudo, RedAudit should store and read configuration from
+    the invoking user’s home directory, not root’s. In that scenario we also
+    prefer config files owned by the invoking user, not root.
+    """
+    try:
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            sudo_user = os.environ.get("SUDO_USER")
+            if sudo_user and pwd is not None:
+                pw = pwd.getpwnam(sudo_user)
+                return pw.pw_uid, pw.pw_gid
+    except Exception:
+        pass
+    return None
+
+
+def get_config_paths() -> tuple[str, str]:
+    """
+    Get the config directory and file path.
+
+    - Normal execution: use the current user’s home (~/.redaudit/config.json)
+    - sudo execution: use the invoking user’s home (~SUDO_USER/.redaudit/config.json)
+    """
+    try:
+        if hasattr(os, "geteuid") and os.geteuid() == 0:
+            sudo_user = os.environ.get("SUDO_USER")
+            if sudo_user:
+                home_dir = os.path.expanduser(f"~{sudo_user}")
+            else:
+                home_dir = os.path.expanduser("~")
+        else:
+            home_dir = os.path.expanduser("~")
+    except Exception:
+        home_dir = os.path.expanduser("~")
+
+    config_dir = os.path.join(home_dir, ".redaudit")
+    config_file = os.path.join(config_dir, "config.json")
+    return config_dir, config_file
+
+
+def _maybe_chown(path: str) -> None:
+    owner = _resolve_config_owner()
+    if not owner:
+        return
+    uid, gid = owner
+    try:
+        os.chown(path, uid, gid)
+    except Exception:
+        pass
+
 
 def ensure_config_dir() -> str:
     """
@@ -35,9 +96,15 @@ def ensure_config_dir() -> str:
     Returns:
         Path to config directory
     """
-    if not os.path.isdir(CONFIG_DIR):
-        os.makedirs(CONFIG_DIR, mode=0o700, exist_ok=True)
-    return CONFIG_DIR
+    config_dir, _ = get_config_paths()
+    if not os.path.isdir(config_dir):
+        os.makedirs(config_dir, mode=0o700, exist_ok=True)
+    try:
+        os.chmod(config_dir, 0o700)
+    except Exception:
+        pass
+    _maybe_chown(config_dir)
+    return config_dir
 
 
 def load_config() -> Dict[str, Any]:
@@ -49,11 +116,12 @@ def load_config() -> Dict[str, Any]:
     """
     ensure_config_dir()
     
-    if not os.path.isfile(CONFIG_FILE):
+    _, config_file = get_config_paths()
+    if not os.path.isfile(config_file):
         return DEFAULT_CONFIG.copy()
     
     try:
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             config = json.load(f)
         
         # Merge with defaults for any missing keys
@@ -76,13 +144,14 @@ def save_config(config: Dict[str, Any]) -> bool:
         True if save succeeded
     """
     ensure_config_dir()
+    config_dir, config_file = get_config_paths()
     
     # Ensure version is current
     config["version"] = CONFIG_VERSION
     
     try:
         # Write to temp file first then rename (atomic)
-        temp_file = CONFIG_FILE + ".tmp"
+        temp_file = config_file + ".tmp"
         with open(temp_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
         
@@ -90,7 +159,9 @@ def save_config(config: Dict[str, Any]) -> bool:
         os.chmod(temp_file, stat.S_IRUSR | stat.S_IWUSR)
         
         # Atomic rename
-        os.replace(temp_file, CONFIG_FILE)
+        os.replace(temp_file, config_file)
+        _maybe_chown(config_dir)
+        _maybe_chown(config_file)
         return True
         
     except (IOError, OSError):
@@ -202,13 +273,14 @@ def get_config_summary() -> Dict[str, Any]:
         Dictionary with config status info
     """
     config = load_config()
+    _, config_file = get_config_paths()
     
     has_env_key = bool(os.environ.get(ENV_NVD_API_KEY))
     has_file_key = bool(config.get("nvd_api_key"))
     
     return {
-        "config_file": CONFIG_FILE,
-        "config_exists": os.path.isfile(CONFIG_FILE),
+        "config_file": config_file,
+        "config_exists": os.path.isfile(config_file),
         "nvd_key_source": "env" if has_env_key else ("config" if has_file_key else None),
         "nvd_key_configured": has_env_key or has_file_key,
     }
