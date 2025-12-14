@@ -45,5 +45,5 @@ This release is backward compatible with v3.0.1 and requires no migration steps.
 ## Useful Links
 
 - **Changelog**: [CHANGELOG.md](../../CHANGELOG.md)
-- **GitHub Release Notes**: [GITHUB_RELEASE.md(DRAFT_TEMPLATE.md)
+- **GitHub Release Notes**: [GitHub Release Draft](DRAFT_TEMPLATE.md)
 - **Security Specification**: [docs/en/SECURITY.md](../en/SECURITY.md)

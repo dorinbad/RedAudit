@@ -74,7 +74,7 @@ redaudit/core/
 ## Enlaces útiles
 
 - **Changelog**: [CHANGELOG.md](../../CHANGELOG.md)
-- **GitHub Release Notes**: [GITHUB_RELEASE.md(DRAFT_TEMPLATE.md)
+- **GitHub Release Notes**: [GitHub Release Draft](DRAFT_TEMPLATE.md)
 - **Manual de usuario (EN)**: [docs/en/MANUAL.md](../en/MANUAL.md)
 - **Manual (ES)**: [docs/es/MANUAL.md](../es/MANUAL.md)
 - **Esquema de reporte (EN)**: [docs/en/REPORT_SCHEMA.md](../en/REPORT_SCHEMA.md)
