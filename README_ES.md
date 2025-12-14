@@ -16,7 +16,7 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_ 
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
                                      v3.0.4
-	     Herramienta Interactiva de Auditoría de Red
+      Herramienta Interactiva de Auditoría de Red
 ```
 
 ## Visión General
@@ -254,9 +254,9 @@ Logs de depuración y auditoría se guardan en `~/.redaudit/logs/`.
 Un hilo en segundo plano (`threading.Thread`) monitoriza el estado del escaneo cada 30 segundos.
 
 - **<60s silencio**: Normal (sin salida).
-- **60-300s silencio**: Registra un **WARNING** indicando que Nmap puede estar ocupado.
-- **>300s silencio**: Registra un **WARNING** con el mensaje "Nmap sigue ejecutándose; esto es normal en hosts lentos o filtrados."
-- **Propósito**: Asegurar al operador que la herramienta sigue viva durante operaciones largas de Nmap (ej: escaneos `-p-`).
+- **60-300s silencio**: Registra un **WARNING** indicando que la herramienta puede estar ocupada.
+- **>300s silencio**: Registra un **WARNING** con el mensaje "La herramienta activa sigue ejecutándose; esto es normal en hosts lentos o filtrados."
+- **Propósito**: Asegurar al operador que la herramienta sigue viva durante operaciones largas (ej: escaneos profundos, nikto, testssl).
 
 ## 10. Script de Verificación
 

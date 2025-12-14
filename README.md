@@ -246,9 +246,9 @@ Debug and audit logs are stored in `~/.redaudit/logs/`.
 A background `threading.Thread` monitors the scan state every 30 seconds.
 
 - **<60s silence**: Normal (no output).
-- **60-300s silence**: Logs a **WARNING** that Nmap might be busy.
-- **>300s silence**: Logs a **WARNING** with message "Nmap is still running; this is normal on slow or filtered hosts."
-- **Purpose**: Assures the operator that the tool is alive during long Nmap operations (e.g., `-p-` scans).
+- **60-300s silence**: Logs a **WARNING** that the tool may be busy.
+- **>300s silence**: Logs a **WARNING** with message "The active tool is still running; this is normal for slow or filtered hosts."
+- **Purpose**: Assures the operator that the tool is alive during long operations (e.g., deep scans, nikto, testssl).
 
 ## 10. Verification Script
 
