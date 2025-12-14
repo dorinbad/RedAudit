@@ -23,7 +23,7 @@ If you discover a security vulnerability in RedAudit, please report it responsib
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 3.0.x   | Yes                | Current stable |
+| 3.1.x   | Yes                | Current stable |
 | 2.9.x   | Security fixes only | EOL: March 2026 |
 | 2.8.x   | No                 | EOL |
 | < 2.8   | No                 | EOL |
