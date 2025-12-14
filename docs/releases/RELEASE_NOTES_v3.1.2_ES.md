@@ -31,6 +31,12 @@ Este release es compatible hacia atrás con v3.1.1 y no requiere pasos de migrac
 - El reinicio intenta relanzar el entrypoint original primero.
 - Si el reinicio falla, RedAudit sale y muestra el comando exacto para relanzar.
 
+### 3. Prompts interactivos más claros
+
+- La cobertura UDP en modo COMPLETO ofrece presets simples (50/100/200/500) y opción personalizada.
+- El texto de “solo topología” aclara que **NO** mantiene el escaneo normal de hosts/puertos + topología.
+- Guardar valores por defecto incluye confirmación y explica qué implica, tanto si eliges sí como no.
+
 ---
 
 ## Enlaces útiles

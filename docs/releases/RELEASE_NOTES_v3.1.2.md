@@ -31,6 +31,12 @@ This release is backward compatible with v3.1.1 and requires no migration steps.
 - Restart attempts to re-run the original entrypoint first.
 - If auto-restart fails, RedAudit exits and prints the exact re-run command.
 
+### 3. Clearer Interactive Prompts
+
+- FULL UDP coverage now offers simple presets (50/100/200/500) plus a custom option.
+- Topology-only wording clarifies that **NO** keeps the normal host/port scan + topology.
+- Saving defaults now includes a confirmation step and explains the impact either way.
+
 ---
 
 ## Useful Links

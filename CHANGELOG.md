@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Updater notes preview**: Terminal-friendly rendering (strip Markdown noise, wrap long lines).
 - **Updater restart**: PATH-aware restart attempts and clear fallback instructions when restart fails.
 
+### Changed
+
+- **Interactive prompts**: Added FULL UDP presets, clarified topology-only mode, and added confirmation/explanations when saving defaults.
+
 ## [3.1.1] - 2025-12-14 (Topology, Defaults & UDP Coverage)
 
 ### Added

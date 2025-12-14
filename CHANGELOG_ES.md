@@ -26,6 +26,10 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - **Vista previa de novedades**: Renderizado legible en terminal (limpia ruido Markdown y hace wrap de líneas largas).
 - **Reinicio tras actualización**: Reinicio más robusto (PATH-aware) y mensajes claros si el reinicio falla.
 
+### Cambiado
+
+- **Prompts interactivos**: Presets de UDP en modo COMPLETO, texto más claro para “solo topología” y confirmación/explicación al guardar valores por defecto.
+
 ## [3.1.1] - 2025-12-14 (Topología, defaults y cobertura UDP)
 
 ### Añadido

@@ -1441,12 +1441,36 @@ class InteractiveNetworkAuditor:
                 persisted_udp_ports if isinstance(persisted_udp_ports, int) else UDP_TOP_PORTS
             )
             udp_ports_default = min(max(udp_ports_default, 50), 500)
-            self.config["udp_top_ports"] = self.ask_number(
-                self.t("udp_ports_q"),
-                default=udp_ports_default,
-                min_val=50,
-                max_val=500,
-            )
+            # Store a sensible default even if UDP mode is QUICK (value is used only in FULL mode).
+            self.config["udp_top_ports"] = udp_ports_default
+            if self.config["udp_mode"] == UDP_SCAN_MODE_FULL:
+                udp_profiles = [
+                    (50, self.t("udp_ports_profile_fast")),
+                    (100, self.t("udp_ports_profile_balanced")),
+                    (200, self.t("udp_ports_profile_thorough")),
+                    (500, self.t("udp_ports_profile_aggressive")),
+                    ("custom", self.t("udp_ports_profile_custom")),
+                ]
+                options = [label for _, label in udp_profiles]
+                default_idx = next(
+                    (
+                        idx
+                        for idx, (value, _) in enumerate(udp_profiles)
+                        if value == udp_ports_default
+                    ),
+                    len(udp_profiles) - 1,
+                )
+                selected_idx = self.ask_choice(self.t("udp_ports_profile_q"), options, default_idx)
+                selected = udp_profiles[selected_idx][0]
+                if selected == "custom":
+                    self.config["udp_top_ports"] = self.ask_number(
+                        self.t("udp_ports_q"),
+                        default=udp_ports_default,
+                        min_val=50,
+                        max_val=500,
+                    )
+                else:
+                    self.config["udp_top_ports"] = selected
 
         # v3.1+: Optional topology discovery
         persisted_topo = persisted_defaults.get("topology_enabled")
@@ -1455,6 +1479,7 @@ class InteractiveNetworkAuditor:
             self.t("topology_q"), default=topo_default
         )
         if self.config["topology_enabled"]:
+            self.print_status(self.t("topology_only_help"), "INFO")
             self.config["topology_only"] = self.ask_yes_no(self.t("topology_only_q"), default="no")
 
         self.setup_encryption()
@@ -1462,7 +1487,15 @@ class InteractiveNetworkAuditor:
         self.show_config_summary()
 
         # v3.1+: Save chosen settings as persistent defaults (optional).
-        if self.ask_yes_no(self.t("save_defaults_q"), default="no"):
+        wants_save_defaults = self.ask_yes_no(self.t("save_defaults_q"), default="no")
+        if wants_save_defaults:
+            self.print_status(self.t("save_defaults_info_yes"), "INFO")
+            wants_save_defaults = self.ask_yes_no(self.t("save_defaults_confirm_yes"), default="yes")
+        else:
+            self.print_status(self.t("save_defaults_info_no"), "INFO")
+            wants_save_defaults = self.ask_yes_no(self.t("save_defaults_confirm_no"), default="no")
+
+        if wants_save_defaults:
             try:
                 from redaudit.utils.config import update_persistent_defaults
 
@@ -1479,8 +1512,12 @@ class InteractiveNetworkAuditor:
                     self.t("defaults_saved") if ok else self.t("defaults_save_error"),
                     "OKGREEN" if ok else "WARNING",
                 )
+                if ok:
+                    self.print_status(self.t("save_defaults_effect"), "INFO")
             except Exception:
                 self.print_status(self.t("defaults_save_error"), "WARNING")
+        else:
+            self.print_status(self.t("defaults_not_saved"), "INFO")
 
         return self.ask_yes_no(self.t("start_audit"), default="yes")
 
