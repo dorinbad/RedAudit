@@ -117,24 +117,107 @@ El asistente te guiará:
 
 Para automatización y scripting:
 
+### Ejemplos de Uso
+
+#### Escaneo Básico
+
 ```bash
-# Escaneo básico
-sudo redaudit --target 192.168.1.0/24 --mode normal
+# 1. Descubrimiento rápido de hosts (modo fast)
+sudo redaudit --target 192.168.1.0/24 --mode fast --yes
 
-# Escaneo completo con cifrado
-sudo redaudit --target 10.0.0.0/24 --mode full --threads 8 --encrypt --output /tmp/reports
+# 2. Auditoría de seguridad estándar
+sudo redaudit --target 192.168.1.0/24 --mode normal --yes
 
-# Múltiples objetivos
-sudo redaudit --target "192.168.1.0/24,10.0.0.0/24" --mode normal --threads 6
+# 3. Auditoría exhaustiva con todas las comprobaciones
+sudo redaudit --target 192.168.1.0/24 --mode full --yes
 
-    # Saltar advertencia legal (para automatización)
-    sudo redaudit --target 192.168.1.0/24 --mode fast --yes
+# 4. Múltiples redes simultáneamente
+sudo redaudit --target "192.168.1.0/24,10.0.0.0/24,172.16.0.0/16" --mode normal --threads 8
+```
 
-    # Con cifrado (contraseña aleatoria generada)
-    sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
+#### Sigilo y Rendimiento
 
-    # Con cifrado (contraseña personalizada)
-    sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --encrypt-password "MiContraseñaSegura123" --yes
+```bash
+# 5. Escaneo sigiloso con rate limiting y jitter
+sudo redaudit --target 10.0.0.0/24 --mode normal --rate-limit 2 --threads 4 --yes
+
+# 6. Escaneo rápido con optimización pre-scan
+sudo redaudit --target 192.168.0.0/16 --prescan --prescan-ports 1-1024 --threads 12 --yes
+
+# 7. Cobertura UDP personalizada para escaneo de identidad
+sudo redaudit --target 192.168.1.0/24 --mode full --udp-mode full --udp-ports 200 --yes
+```
+
+#### Cifrado y Seguridad
+
+```bash
+# 8. Reportes cifrados (contraseña auto-generada)
+sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
+
+# 9. Reportes cifrados (contraseña personalizada)
+sudo redaudit --target 192.168.1.0/24 --mode full --encrypt --encrypt-password "Contr4s3ña!2024" --yes
+```
+
+#### Características Avanzadas v3.0
+
+```bash
+# 10. Escaneo de redes IPv6
+sudo redaudit --target "2001:db8::/64" --ipv6 --mode normal --yes
+
+# 11. Correlación CVE con inteligencia NVD
+sudo redaudit --target 192.168.1.0/24 --mode normal --cve-lookup --nvd-key TU_API_KEY --yes
+
+# 12. Escaneo a través de proxy SOCKS5 (pivoting)
+sudo redaudit --target 10.internal.0.0/24 --proxy socks5://pivot-host:1080 --mode normal --yes
+
+# 13. Análisis diferencial (comparar dos escaneos)
+redaudit --diff ~/reports/baseline_lunes.json ~/reports/actual_viernes.json
+```
+
+#### Integración SIEM v3.1
+
+```bash
+# 14. Generar exportaciones JSONL para SIEM (sin cifrado)
+sudo redaudit --target 192.168.1.0/24 --mode full --yes
+# Salida: findings.jsonl, assets.jsonl, summary.json junto al reporte JSON
+```
+
+#### Topología y Persistencia v3.1.1
+
+```bash
+# 15. Solo descubrimiento de topología (mapeo de red)
+sudo redaudit --target 192.168.1.0/24 --topology-only --yes
+
+# 16. Escaneo completo con contexto de topología
+sudo redaudit --target 192.168.1.0/24 --mode normal --topology --yes
+
+# 17. Guardar ajustes preferidos como defaults
+sudo redaudit --target 192.168.1.0/24 --mode normal --threads 8 \
+  --rate-limit 1 --topology --udp-mode full --save-defaults --yes
+# Las ejecuciones futuras reutilizarán estos ajustes automáticamente
+```
+
+#### Workflows del Mundo Real
+
+```bash
+# 18. Workflow de auditoría semanal
+# Paso 1: Escaneo baseline
+sudo redaudit --target 192.168.0.0/16 --mode normal --yes
+# Paso 2: Comparación semanal
+sudo redaudit --target 192.168.0.0/16 --mode normal --yes
+redaudit --diff ~/Documents/RedAuditReports/RedAudit_BASELINE/redaudit_*.json \
+              ~/Documents/RedAuditReports/RedAudit_LATEST/redaudit_*.json
+
+# 19. Auditoría de red empresarial multi-VLAN
+sudo redaudit --target "10.10.0.0/16,10.20.0.0/16,10.30.0.0/16" \
+  --mode normal --topology --threads 10 --rate-limit 0.5 --yes
+
+# 20. Verificación post-escaneo y exportación
+sudo redaudit --target 192.168.1.0/24 --mode full --cve-lookup --yes
+# Verificar que se generaron exportaciones JSONL
+ls -lh ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl
+# Ingestar en tu SIEM
+cat ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl | tu-herramienta-ingestion-siem
 ```
 
 **Opciones CLI Disponibles:**
