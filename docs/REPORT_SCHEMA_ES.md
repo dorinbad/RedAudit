@@ -18,13 +18,15 @@ El contenedor de nivel superior para la sesión de escaneo.
 
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `schema_version` | `string` | Versión del esquema ("2.0") |
+| `schema_version` | `string` | Versión del esquema ("3.1") |
+| `generated_at` | `string` | Marca de tiempo de generación (ISO 8601) **(v3.1)** |
 | `event_type` | `string` | Tipo de evento para ingesta SIEM ("redaudit.scan.complete") |
 | `session_id` | `string` | UUID único para esta sesión de escaneo |
 | `timestamp` | `string` | Marca de tiempo de inicio (ISO 8601) |
 | `timestamp_end` | `string` | Marca de tiempo de fin (ISO 8601) |
 | `version` | `string` | Versión de RedAudit |
 | `scanner` | `object` | Metadatos del escáner: `name`, `version`, `mode` |
+| `scanner_versions` | `object` | Versiones detectadas de herramientas (nmap, nikto, etc.) **(v3.1)** |
 | `targets` | `array` | Lista de redes objetivo escaneadas |
 | `network_info` | `array` | Lista de objetos de interfaz de red |
 | `hosts` | `array` | Lista de objetos `Host` (ver abajo) |
@@ -147,10 +149,17 @@ Lista de hallazgos de vulnerabilidades web. Cada entrada contiene:
 | `vulnerabilities[].findings` | array | Lista de strings de vulnerabilidades |
 | `vulnerabilities[].whatweb` | string | (Opcional) Salida de WhatWeb |
 | `vulnerabilities[].nikto_findings` | array | (Opcional) Hallazgos de Nikto (si modo FULL) |
-| `vulnerabilities[].testssl_analysis` | object | (Opcional) Resultados de TestSSL.sh (si modo FULL y HTTPS). |
+| `vulnerabilities[].testssl_analysis` | object | (Opcional) Resultados de TestSSL.sh |
+| `vulnerabilities[].severity` | string | Severidad: critical/high/medium/low/info |
+| `vulnerabilities[].severity_score` | integer | Severidad numérica (0-100) |
+| `vulnerabilities[].finding_id` | string | Hash determinístico para deduplicación **(v3.1)** |
+| `vulnerabilities[].category` | string | Clasificación: surface/misconfig/crypto/auth/info-leak/vuln **(v3.1)** |
+| `vulnerabilities[].normalized_severity` | float | Puntuación CVSS (0.0-10.0) **(v3.1)** |
+| `vulnerabilities[].original_severity` | object | Severidad original de la herramienta **(v3.1)** |
+| `vulnerabilities[].parsed_observations` | array | Hallazgos estructurados de Nikto/TestSSL **(v3.1)** |
 | `vulnerabilities[].curl_headers` | string | (Opcional) Cabeceras HTTP de curl |
 | `vulnerabilities[].wget_spider` | string | (Opcional) Salida de spider de Wget |
-| `vulnerabilities[].tls_info` | string | (Opcional) Info de certificado TLS de OpenSSL |
+| `vulnerabilities[].tls_info` | string | (Opcional) Info de certificado TLS |
 
 ## Objeto Scan Summary
 
