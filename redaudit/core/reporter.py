@@ -18,6 +18,8 @@ from redaudit.utils.constants import VERSION, SECURE_FILE_MODE
 from redaudit.core.crypto import encrypt_data
 from redaudit.core.entity_resolver import reconcile_assets
 from redaudit.core.siem import enrich_report_for_siem
+from redaudit.core.scanner_versions import get_scanner_versions
+
 
 
 def generate_summary(
@@ -60,11 +62,16 @@ def generate_summary(
 
     results["summary"] = summary
 
-    # A5: SIEM-compatible fields (v2.7)
-    results["schema_version"] = "2.0"
+    # v3.1: Updated SIEM-compatible fields
+    results["schema_version"] = "3.1"
+    results["generated_at"] = datetime.now().isoformat()
     results["event_type"] = "redaudit.scan.complete"
     results["session_id"] = str(uuid.uuid4())
     results["timestamp_end"] = datetime.now().isoformat()
+    
+    # v3.1: Scanner versions for provenance tracking
+    results["scanner_versions"] = get_scanner_versions()
+    
     results["scanner"] = {
         "name": "RedAudit",
         "version": VERSION,
@@ -72,6 +79,7 @@ def generate_summary(
         "mode_cli": config.get("scan_mode_cli", config.get("scan_mode", "normal")),
     }
     results["targets"] = config.get("target_networks", [])
+
 
     # v2.9: Entity Resolution - consolidate multi-interface hosts
     hosts = results.get("hosts", [])
@@ -302,6 +310,17 @@ def save_results(
 
         # Update config with actual output directory for display
         config["_actual_output_dir"] = output_dir
+
+        # v3.3: Generate JSONL exports for SIEM/AI pipelines
+        try:
+            from redaudit.core.jsonl_exporter import export_all
+            export_stats = export_all(results, output_dir)
+            if print_fn and t_fn:
+                print_fn(f"📊 JSONL exports: {export_stats['findings']} findings, {export_stats['assets']} assets", "OKGREEN")
+        except Exception as jsonl_err:
+            if logger:
+                logger.warning("JSONL export failed: %s", jsonl_err)
+
 
         return True
 
