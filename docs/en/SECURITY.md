@@ -1,6 +1,6 @@
 # Security Architecture & Hardening
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](SECURITY_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/SECURITY.md)
 
 ## Security Policy
 
@@ -122,4 +122,4 @@ Users should only run RedAudit in authorized, controlled environments.
 ## 10. License
 
 This security model is part of the RedAudit project and is covered by the  
-**GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../LICENSE) for the full text.
+**GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../../LICENSE) for the full text.

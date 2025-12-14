@@ -282,7 +282,7 @@ bash redaudit_verify.sh
 
 ## 12. Solución de Problemas
 
-Consulta [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) para soluciones detalladas.
+Consulta [docs/es/TROUBLESHOOTING.md](docs/es/TROUBLESHOOTING.md) para soluciones detalladas.
 
 - **"Permission denied"**: Asegúrate de usar `sudo`.
 - **"Cryptography missing"**: Ejecuta `sudo apt install python3-cryptography`.
@@ -353,4 +353,4 @@ La clave se deriva con PBKDF2-HMAC-SHA256 (480k iteraciones) y se acompaña de u
 Escanear redes sin permiso es ilegal. Al usar esta herramienta, aceptas total responsabilidad por tus acciones y acuerdas usarla solo en sistemas de tu propiedad o para los que tengas autorización explícita.
 
 ---
-[Documentación Completa](docs/) | [Esquema de Reporte](docs/REPORT_SCHEMA.md) | [Especificaciones de Seguridad](docs/SECURITY.md)
+[Documentación Completa](docs/README.md) | [Esquema de Reporte](docs/es/REPORT_SCHEMA.md) | [Especificaciones de Seguridad](docs/es/SECURITY.md)

@@ -21,13 +21,12 @@ from redaudit.core.siem import enrich_report_for_siem
 from redaudit.core.scanner_versions import get_scanner_versions
 
 
-
 def generate_summary(
     results: Dict,
     config: Dict,
     all_hosts: list,
     scanned_results: list,
-    scan_start_time: Optional[datetime]
+    scan_start_time: Optional[datetime],
 ) -> Dict:
     """
     Generate scan summary statistics.
@@ -42,15 +41,8 @@ def generate_summary(
     Returns:
         Summary dictionary
     """
-    duration = (
-        datetime.now() - scan_start_time
-        if scan_start_time is not None
-        else None
-    )
-    total_vulns = sum(
-        len(v.get("vulnerabilities", []))
-        for v in results.get("vulnerabilities", [])
-    )
+    duration = datetime.now() - scan_start_time if scan_start_time is not None else None
+    total_vulns = sum(len(v.get("vulnerabilities", [])) for v in results.get("vulnerabilities", []))
 
     summary = {
         "networks": len(config.get("target_networks", [])),
@@ -68,10 +60,10 @@ def generate_summary(
     results["event_type"] = "redaudit.scan.complete"
     results["session_id"] = str(uuid.uuid4())
     results["timestamp_end"] = datetime.now().isoformat()
-    
+
     # v3.1: Scanner versions for provenance tracking
     results["scanner_versions"] = get_scanner_versions()
-    
+
     results["scanner"] = {
         "name": "RedAudit",
         "version": VERSION,
@@ -79,7 +71,6 @@ def generate_summary(
         "mode_cli": config.get("scan_mode_cli", config.get("scan_mode", "normal")),
     }
     results["targets"] = config.get("target_networks", [])
-
 
     # v2.9: Entity Resolution - consolidate multi-interface hosts
     hosts = results.get("hosts", [])
@@ -138,9 +129,7 @@ def generate_text_report(results: Dict, partial: bool = False) -> str:
         for p in h.get("ports", []):
             service = p.get("service", "")
             version = p.get("version", "") or ""
-            lines.append(
-                f"    - {p['port']}/{p['protocol']}  {service}  {version}\n"
-            )
+            lines.append(f"    - {p['port']}/{p['protocol']}  {service}  {version}\n")
             if p.get("cve_count"):
                 max_sev = p.get("cve_max_severity") or "UNKNOWN"
                 lines.append(f"      CVEs: {p['cve_count']} (max severity: {max_sev})\n")
@@ -224,7 +213,7 @@ def save_results(
     partial: bool = False,
     print_fn=None,
     t_fn=None,
-    logger=None
+    logger=None,
 ) -> bool:
     """
     Save results to JSON and optionally TXT files.
@@ -247,7 +236,7 @@ def save_results(
     """
     prefix = "PARTIAL_" if partial else ""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # v2.8.1: Use pre-created folder if available (ensures PCAP files and reports are together)
     output_dir = config.get("_actual_output_dir")
     if not output_dir:
@@ -255,7 +244,7 @@ def save_results(
         ts_folder = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         output_base = config.get("output_dir", os.path.expanduser("~/Documents/RedAuditReports"))
         output_dir = os.path.join(output_base, f"RedAudit_{ts_folder}")
-    
+
     base = os.path.join(output_dir, f"{prefix}redaudit_{ts}")
 
     try:
@@ -302,10 +291,14 @@ def save_results(
         # The password is derived using PBKDF2 with this salt, and storing the salt
         # is standard practice (see NIST SP 800-132). CodeQL flags this incorrectly.
         if encryption_enabled and config.get("encryption_salt"):
-            salt_bytes = base64.b64decode(config["encryption_salt"])  # lgtm[py/clear-text-storage-sensitive-data]
+            salt_bytes = base64.b64decode(
+                config["encryption_salt"]
+            )  # lgtm[py/clear-text-storage-sensitive-data]
             salt_path = f"{base}.salt"
             with open(salt_path, "wb") as f:
-                f.write(salt_bytes)  # nosec B105 - salt is not sensitive, required for key derivation
+                f.write(
+                    salt_bytes
+                )  # nosec B105 - salt is not sensitive, required for key derivation
             os.chmod(salt_path, SECURE_FILE_MODE)
 
         # Update config with actual output directory for display
@@ -315,10 +308,11 @@ def save_results(
         if not encryption_enabled:
             try:
                 from redaudit.core.jsonl_exporter import export_all
+
                 export_stats = export_all(results, output_dir)
                 if print_fn and t_fn:
                     print_fn(
-                        f"📊 JSONL exports: {export_stats['findings']} findings, {export_stats['assets']} assets",
+                        t_fn("jsonl_exports", export_stats["findings"], export_stats["assets"]),
                         "OKGREEN",
                     )
             except Exception as jsonl_err:
@@ -326,7 +320,6 @@ def save_results(
                     logger.warning("JSONL export failed: %s", jsonl_err)
         elif logger:
             logger.info("JSONL exports skipped (report encryption enabled)")
-
 
         return True
 

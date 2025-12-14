@@ -1,6 +1,6 @@
 # RedAudit v3.1 – User Manual (EN)
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](MANUAL_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/MANUAL.md)
 
 **Version:** 3.1.0  
 **Target audience:** Security analysts, penetration testers, systems / network administrators  
@@ -571,7 +571,7 @@ Contributions should:
 - Keep the report schema backward compatible whenever possible.
 - Include tests for new features and changes.
 
-Refer to [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed guidelines.
+Refer to [CONTRIBUTING.md](../../CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
@@ -590,11 +590,11 @@ Using RedAudit against systems without authorisation may be illegal in your juri
 
 **Related documentation:**
 
-- [README (English)](../README.md)
-- [README (Spanish)](../README_ES.md)
+- [README (English)](../../README.md)
+- [README (Spanish)](../../README_ES.md)
 - [USAGE.md](USAGE.md) - Detailed usage examples
 - [SECURITY.md](SECURITY.md) - Security model details
 - [REPORT_SCHEMA.md](REPORT_SCHEMA.md) - JSON report schema
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Problem resolution
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
-- [CHANGELOG.md](../CHANGELOG.md) - Version history
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
+- [CHANGELOG.md](../../CHANGELOG.md) - Version history

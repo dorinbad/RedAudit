@@ -1,0 +1,548 @@
+# Registro de cambios
+
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](CHANGELOG.md)
+
+Todos los cambios relevantes de este proyecto se documentarán en este archivo.
+
+El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.1.0] - 2025-12-14 (SIEM y pipelines de IA)
+
+### Añadido
+
+- **Vistas de exportación JSONL**: Archivos planos auto-generados para ingesta SIEM/IA (cuando el cifrado de reportes está desactivado)
+  - `findings.jsonl` - Un hallazgo por línea
+  - `assets.jsonl` - Un activo por línea
+  - `summary.json` - Resumen compacto para dashboards
+  - Nuevo módulo: `redaudit/core/jsonl_exporter.py`
+
+- **Deduplicación de hallazgos**: Hashes determinísticos `finding_id`
+  - SHA256 de activo + escáner + puerto + firma + título
+  - Habilita correlación entre escaneos y tracking
+
+- **Clasificación por categoría**: Categorización automática de hallazgos
+  - Categorías: surface, misconfig, crypto, auth, info-leak, vuln
+  - Nueva función: `classify_finding_category()` en `siem.py`
+
+- **Normalización de severidad**: Puntuación estilo CVSS
+  - `normalized_severity`: escala 0.0-10.0
+  - `original_severity`: Preserva el valor original de la herramienta
+  - Enum: `info`, `low`, `medium`, `high`, `critical`
+
+- **Observaciones estructuradas**: Extracción de evidencia con estructura
+  - Nuevo módulo: `redaudit/core/evidence_parser.py`
+  - Extrae hallazgos significativos desde salida raw de Nikto/TestSSL
+  - Outputs grandes externalizados a la carpeta `evidence/` (solo cuando el cifrado está desactivado)
+
+- **Versiones de escáneres**: Tracking de proveniencia de herramientas
+  - Nuevo módulo: `redaudit/core/scanner_versions.py`
+  - Detecta: nmap, nikto, testssl, whatweb, searchsploit
+  - Añadido al reporte como objeto `scanner_versions`
+
+### Cambiado
+
+- **Versión de esquema**: Actualizada de 2.0 a 3.1
+- **Metadatos de reporte**: Añadido timestamp `generated_at`
+- **Versión**: Actualizada a 3.1.0
+
+---
+
+## [3.0.4] - 2025-12-14 (UX interactivo)
+
+### Cambiado
+
+- **Prompt de límite de hosts**: En modo interactivo el default ahora es "all" (`todos`/`all`) y la pregunta aclara que los números definen un máximo global de hosts (no un selector).
+- **Documentación**: Aclara la semántica de `--max-hosts` y actualiza manuales.
+- **Versión**: Actualizada a 3.0.4
+
+---
+
+## [3.0.3] - 2025-12-14 (UX de actualización)
+
+### Añadido
+
+- **Salida de auto-update más explícita**: Muestra ref/commit objetivo, cambios de ficheros (+/~/-) y pasos explícitos de install/backup.
+
+### Corregido
+
+- **Preservación de idioma en actualización**: El auto-update ya no reinicia el idioma instalado (ej. Español permanece en Español).
+
+### Cambiado
+
+- **Versión**: Actualizada a 3.0.3
+
+---
+
+## [3.0.2] - 2025-12-14 (UX, reporting y NVD)
+
+### Añadido
+
+- **Visibilidad de PCAP**: El resumen final incluye un contador de PCAP; los reportes TXT incluyen la ruta del PCAP cuando se captura.
+- **Claridad del TXT**: Secciones de deep scan incluyen conteos de comandos (identity-only vs deep scan ejecutado).
+- **Reporting CVE (TXT)**: Cuando hay enriquecimiento CVE, los reportes TXT incluyen resúmenes de CVE y conteos por puerto.
+
+### Cambiado
+
+- **Versión**: Actualizada a 3.0.2
+- **Salida CLI**: `print` thread-safe + word-wrapping evita cortar palabras y líneas intercaladas en escaneos concurrentes.
+- **UX en Español**: Traducciones completadas para mensajes de estado/progreso y deep scan.
+- **Enriquecimiento NVD**: Omite consultas demasiado amplias (CPE comodín) cuando la versión del servicio es desconocida.
+
+### Corregido
+
+- **Mensajería NVD**: Corrige el origen de la API key (ya no reporta CLI si la key venía de config/env).
+
+---
+
+## [3.0.1] - 2025-12-13 (Configuración y UX)
+
+### Añadido
+
+- **Configuración de API Key NVD**: Almacenamiento persistente para correlación CVE
+  - Nuevo módulo: `redaudit/utils/config.py`
+  - Archivo de config: `~/.redaudit/config.json` (permisos 0600)
+  - Soporte de variable de entorno: `NVD_API_KEY`
+  - Prompt interactivo en auditor con 3 opciones de almacenamiento
+  - El instalador solicita API key durante `redaudit_install.sh`
+  - Traducciones EN/ES para todos los prompts nuevos
+
+- **Prompt interactivo para correlación CVE**: Nueva pregunta en setup interactivo
+  - "Enable CVE correlation via NVD?" (por defecto: no)
+  - Si es sí y no hay key configurada, dispara el flujo de setup
+
+### Cambiado
+
+- **Versión**: Actualizada a 3.0.1
+- **Hardening de auto-update**: Las actualizaciones resuelven el tag publicado y verifican el hash del commit antes de instalar.
+- **Hardening de instalador**: La instalación de `testssl.sh` está fijada a un tag/commit conocido y verificada.
+- **Resiliencia CVE**: Consultas NVD reintentan en errores transitorios (429/5xx/red) con backoff.
+- **UX de privilegios**: Añade `--allow-non-root` para ejecutar en modo limitado sin sudo/root.
+
+---
+
+## [3.0.0] - 2025-12-12 (Release mayor)
+
+### Añadido
+
+- **Soporte IPv6**: Capacidades completas de escaneo para redes IPv6
+  - Helpers `is_ipv6()`, `is_ipv6_network()` en `scanner.py`
+  - `get_nmap_arguments_for_target()` añade `-6` automáticamente para objetivos IPv6
+  - Detección de redes IPv6 en `network.py` (netifaces + fallback)
+  - Flag CLI: `--ipv6` para modo de escaneo solo IPv6
+
+- **Validación de magic bytes**: Detección mejorada de falsos positivos
+  - `verify_magic_bytes()` en `verify_vuln.py`
+  - Descarga los primeros 512 bytes y verifica firmas
+  - Soporta: tar, gzip, zip, pem
+  - Integrado como tercera capa de verificación en Smart-Check
+
+- **Correlación CVE (NVD)**: Inteligencia de vulnerabilidades
+  - Nuevo módulo: `redaudit/core/nvd.py`
+  - Integración con NIST NVD API 2.0
+  - Matching CPE 2.3 para CVE lookup más preciso
+  - Caché de 7 días para uso offline y cumplimiento de rate limit
+  - Flags CLI: `--nvd-key`, `--cve-lookup`
+
+- **Análisis diferencial**: Comparar reportes de escaneo
+  - Nuevo módulo: `redaudit/core/diff.py`
+  - Identifica hosts nuevos, hosts eliminados y cambios de puertos
+  - Genera salida JSON y Markdown
+  - Flag CLI: `--diff OLD NEW`
+
+- **Proxy Chains (SOCKS5)**: Soporte de pivoting en red
+  - Nuevo módulo: `redaudit/core/proxy.py`
+  - Clase `ProxyManager` para gestión de sesión
+  - Integración wrapper con proxychains
+  - Flag CLI: `--proxy URL`
+
+- **Auto-update mejorado**: Sistema de update más fiable
+  - Enfoque `git clone` (reemplaza `git pull`)
+  - Ejecuta instalador con preferencia de idioma del usuario
+  - Copia a `~/RedAudit` con toda la documentación
+  - Verificación de instalación y fix de ownership
+
+### Cambiado
+
+- **Versión**: Bump mayor a 3.0.0
+- **Auditor**: Añade `proxy_manager` y opciones de config v3.0
+
+---
+
+## [2.9.0] - 2025-12-12 (Smart improvements)
+
+### Añadido
+
+- **Módulo Smart-Check**: Filtrado de falsos positivos de Nikto
+  - Nuevo módulo: `redaudit/core/verify_vuln.py`
+  - Verificación Content-Type para detectar Soft 404
+  - Validación de tamaño para archivos sospechosamente pequeños
+  - Filtrado automático con conteo
+
+- **Módulo de entity resolution**: Consolidación de hosts multi-interfaz
+  - Nuevo módulo: `redaudit/core/entity_resolver.py`
+  - Agrupa hosts por fingerprint de identidad (hostname/NetBIOS/mDNS)
+  - Nuevo campo JSON: array `unified_assets`
+  - Inferencia de tipo de activo (router, workstation, mobile, iot, etc.)
+
+- **Mejoras SIEM profesionales**: Integración SIEM enterprise
+  - Nuevo módulo: `redaudit/core/siem.py`
+  - Cumplimiento ECS v8.11 para Elastic
+  - Puntuación de severidad (critical/high/medium/low/info)
+  - Risk scores (0-100) por host
+  - Tags auto-generadas para categorización
+  - Observable hash (SHA256) para dedup
+  - Formato CEF para ArcSight/McAfee
+
+- **Nuevos tests**: 46 tests unitarios para módulos nuevos
+
+### Cambiado
+
+- **UDP Taming**: Optimización de escaneo UDP (50-80% más rápido)
+  - Usa `--top-ports 100` en vez de escaneo completo
+  - `--host-timeout 300s` estricto por host
+  - `--max-retries 1` para eficiencia en LAN
+
+- **Versión**: Actualizada a 2.9.0
+
+---
+
+## [2.8.1] - 2025-12-11 (Mejoras UX)
+
+### Añadido
+
+- **Barra de progreso de vulnerabilidades**: Rich progress bar para fase de vulnerabilidades web
+  - Muestra spinner, porcentaje, completados/total y tiempo transcurrido
+  - Muestra el host actual
+  - Fallback elegante si rich no está disponible
+
+- **Indicadores de módulos**: Feedback visual de la herramienta activa durante vulnerabilidades
+  - Prefijo `[testssl]` para análisis SSL/TLS profundo
+  - Prefijo `[whatweb]` para fingerprinting web
+  - Prefijo `[nikto]` para vulnerabilidades web
+  - Actualiza `current_phase` para monitor de actividad
+
+### Cambiado
+
+- **Organización de PCAP**: PCAPs ahora se guardan dentro de la carpeta de resultados con timestamp
+  - Carpeta creada ANTES de iniciar el escaneo (`_actual_output_dir`)
+  - Todos los outputs (reportes + PCAPs) consolidados en un solo directorio
+  - Corrige el problema donde PCAPs se guardaban en el directorio padre
+
+- **Optimización de tamaño PCAP**: Reduce captura de ilimitada a 200 paquetes
+  - PCAPs ahora ~50-150KB en vez de varios MB
+  - Suficiente para análisis de protocolo sin exceso de almacenamiento
+  - tcpdump se detiene automáticamente tras 200 paquetes
+
+- **Directorio de salida por defecto**: Cambia de `~/RedAuditReports` a `~/Documents/RedAuditReports`
+  - Reportes guardados por defecto en Documents del usuario
+  - Ubicación más intuitiva
+
+- **Versión**: Actualizada a 2.8.1
+
+### Mejorado
+
+- **Sistema de auto-update**: Mejorado de solo detección a instalación completa
+  - Ahora hace `git reset --hard` para evitar conflictos
+  - Copia automáticamente los ficheros a `/usr/local/lib/redaudit/`
+  - Auto-reinicia con `os.execv()` tras update exitoso (no requiere reinicio manual)
+  - Elimina la necesidad de `git pull` y reinstalación manual
+
+### Corregido
+
+- **Ctrl+C durante setup**: Corrige cuelgue al pulsar Ctrl+C antes de iniciar el escaneo
+  - Añade manejo de `KeyboardInterrupt` en todos los métodos de input (`ask_yes_no`, `ask_number`, `ask_choice`, `ask_manual_network`)
+  - Ahora sale inmediatamente si se interrumpe durante la fase de configuración
+  - Solo intenta shutdown elegante cuando el escaneo realmente está corriendo
+
+---
+
+## [2.8.0] - 2025-12-11 (Completitud y fiabilidad)
+
+### Añadido
+
+- **Precisión de estado de host (Fase 1)**: Finalización inteligente de estado
+  - Nuevos tipos de estado: `up`, `down`, `filtered`, `no-response`
+  - `finalize_host_status()` evalúa el deep scan para determinar estado correcto
+  - Hosts con MAC/vendor detectado pero sin respuesta inicial ahora aparecen como `filtered` en vez de `down`
+
+- **Escaneo UDP inteligente (Fase 2)**: Estrategia adaptativa de deep scan en 3 fases
+  - Fase 2a: Escaneo rápido de 17 puertos UDP prioritarios (DNS, DHCP, SNMP, NetBIOS, etc.)
+  - Fase 2b: Escaneo UDP completo solo en modo `full` y si no se detecta identidad
+  - Nueva config: `udp_mode` (por defecto: `quick`)
+  - Nueva constante: `UDP_PRIORITY_PORTS` con servicios UDP más comunes
+
+- **Captura PCAP concurrente (Fase 3)**: Captura sincronizada con el escaneo
+  - `start_background_capture()` - Inicia tcpdump antes de comenzar el escaneo
+  - `stop_background_capture()` - Recoge resultados tras finalizar el escaneo
+  - Captura el tráfico real del escaneo en vez de ventanas vacías post-scan
+
+- **Fallback banner grab (Fase 4)**: Identificación de servicios mejorada
+  - `banner_grab_fallback()` - Usa nmap `--script banner,ssl-cert` para puertos no identificados
+  - Se ejecuta automáticamente en puertos con `tcpwrapped` o servicio `unknown`
+  - Fusiona resultados en registros de puerto con campos `banner` y `ssl_cert`
+
+- **Sistema de auto-update seguro (Fase 5)**: Update checking integrado con GitHub
+  - Nuevo módulo: `redaudit/core/updater.py`
+  - Consulta GitHub API para latest releases al inicio (prompt interactivo)
+  - Muestra release notes/changelog para versiones nuevas
+  - Updates seguros basados en git con verificación de integridad
+  - Flag CLI: `--skip-update-check` para desactivar
+  - Traducciones para mensajes de update en inglés y español
+
+- **Carpetas de reportes con timestamp (Fase 6)**: Estructura organizada
+  - Reportes guardados en subcarpetas: `RedAudit_YYYY-MM-DD_HH-MM-SS/`
+  - Cada sesión tiene su propio directorio
+  - PCAPs y reportes organizados juntos
+
+### Cambiado
+
+- **Estrategia de deep scan**: Actualizada de `adaptive_v2.5` a `adaptive_v2.8`
+  - Captura de tráfico concurrente durante toda la duración del escaneo
+  - Estrategia UDP en tres fases para escaneos típicos más rápidos
+  - Mensajería mejorada con estimaciones por fase
+
+- **Constantes**: Nuevas constantes para features v2.8.0
+  - `STATUS_UP`, `STATUS_DOWN`, `STATUS_FILTERED`, `STATUS_NO_RESPONSE`
+  - `UDP_PRIORITY_PORTS`, `UDP_SCAN_MODE_QUICK`, `UDP_SCAN_MODE_FULL`
+  - `DEEP_SCAN_TIMEOUT_EXTENDED`, `UDP_QUICK_TIMEOUT`
+
+- **CLI**: Nuevos flags `--udp-mode` y `--skip-update-check`
+
+- **Versión**: Actualizada a 2.8.0
+
+### Técnico
+
+- Nuevo módulo `redaudit/core/updater.py` con:
+  - `parse_version()`, `compare_versions()`
+  - `fetch_latest_version()`, `check_for_updates()`
+  - `perform_git_update()`, `interactive_update_check()`
+
+- Nuevas funciones en `scanner.py`:
+  - `start_background_capture()` / `stop_background_capture()`
+  - `banner_grab_fallback()`
+  - `finalize_host_status()`
+
+- Mejoras en `scan_host_ports()`:
+  - Track de puertos unknown para banner fallback
+  - Finaliza estado tras todos los enriquecimientos
+
+- Actualización de `reporter.py`:
+  - Crea subcarpetas con timestamp para reportes
+
+---
+
+## [2.7.0] - 2025-12-09 (Velocidad e integración)
+
+### Añadido
+
+- **Motor de pre-scan Asyncio (A1)**: Descubrimiento rápido usando asyncio TCP connect
+  - Nuevo módulo: `redaudit/core/prescan.py`
+  - Flags CLI: `--prescan`, `--prescan-ports`, `--prescan-timeout`
+  - Hasta 500 checks concurrentes con batching configurable
+  - Parsing de rangos: `1-1024`, `22,80,443`, o combinado `1-100,443,8080-8090`
+
+- **Salida compatible con SIEM (A5)**: Reportes JSON mejorados para Splunk/Elastic
+  - Nuevos campos: `schema_version`, `event_type`, `session_id`, `timestamp_end`
+  - Metadatos del escáner: nombre, versión, modo
+  - Array `targets` para escaneos multi-red
+
+- **Bandit (A4)**: Linting de seguridad estático en CI
+  - Añade Bandit al workflow de GitHub Actions
+  - Escanea problemas de seguridad comunes (checks serie B)
+
+### Cambiado
+
+- **Rate limiting con jitter (A3)**: Añade varianza aleatoria ±30% al delay para evasión IDS
+- **Versión**: Actualizada a 2.7.0
+
+---
+
+## [2.6.2] - 2025-12-09 (Hotfix de señal)
+
+### Corregido
+
+- **Limpieza de subprocess en signal handler (C1)**: SIGINT (Ctrl+C) ahora termina correctamente subprocesses activos (nmap, tcpdump, etc.) en vez de dejar procesos huérfanos
+  - Añade métodos `register_subprocess()`, `unregister_subprocess()`, `kill_all_subprocesses()`
+  - Los procesos hijos reciben SIGTERM y luego SIGKILL si siguen vivos tras 2 segundos
+  - Implementación thread-safe con locks
+
+- **Cancelación de futures (C2)**: Futures pendientes en ThreadPoolExecutor ahora se cancelan cuando hay interrupción
+  - Evita trabajo innecesario si el usuario aborta
+  - Aplicado tanto a rich progress bar como a modo fallback
+
+### Cambiado
+
+- **Versión**: Actualizada a 2.6.2
+
+---
+
+## [2.6.1] - 2025-12-08 (Intel de exploits y análisis SSL/TLS)
+
+### Añadido
+
+- **Integración SearchSploit**: Lookup automático en ExploitDB para servicios con versión detectada
+  - Consulta `searchsploit` para exploits conocidos cuando se identifica producto+versión
+  - Resultados visibles en reportes JSON y TXT
+  - Timeout: 10s por consulta
+  - Corre en todos los modos (fast/normal/completo)
+  - Nueva función: `exploit_lookup()` en `redaudit/core/scanner.py`
+
+- **Integración TestSSL.sh**: Análisis profundo SSL/TLS para servicios HTTPS
+  - Escaneo de vulnerabilidades SSL/TLS (Heartbleed, POODLE, BEAST, etc.)
+  - Detección de cifrados débiles y problemas de protocolo
+  - Solo corre en modo `completo` (timeout 60s por puerto)
+  - Resultados incluyen summary, vulnerabilities, weak ciphers y protocols
+  - Nueva función: `ssl_deep_analysis()` en `redaudit/core/scanner.py`
+
+- **Mejoras de reporting**:
+  - Reportes TXT muestran exploits conocidos por servicio
+  - Reportes TXT muestran hallazgos de vulnerabilidad de TestSSL
+  - Reportes JSON incluyen automáticamente todos los campos nuevos
+
+- **Internacionalización**: Traducciones EN/ES para features nuevas:
+  - `exploits_found` - Notificaciones de descubrimiento de exploits
+  - `testssl_analysis` - Mensajes de progreso SSL/TLS
+
+### Cambiado
+
+- **Instalación**: `redaudit_install.sh` actualizado para instalar `exploitdb` y `testssl.sh`
+- **Verificación**: `redaudit_verify.sh` actualizado para chequear herramientas nuevas
+- **Dependencias**: Añade searchsploit y testssl.sh a la lista de herramientas opcionales (12 en total)
+- **Versión**: Actualizada a 2.6.1
+
+### Filosofía
+
+Ambas herramientas mantienen el enfoque adaptativo de RedAudit:
+
+- **SearchSploit**: Ligero, corre automáticamente cuando hay info de versión
+- **TestSSL**: Análisis pesado, solo en modo full para findings accionables
+
+---
+
+## [2.6.0] - 2025-12-08 (Arquitectura modular)
+
+### Añadido
+
+- **Estructura modular de paquete**: Refactor de `redaudit.py` monolítico (1857 líneas) a un paquete organizado:
+  - `redaudit/core/auditor.py` - Orquestador principal
+  - `redaudit/core/crypto.py` - Utilidades de cifrado/descifrado
+  - `redaudit/core/network.py` - Detección de redes
+  - `redaudit/core/reporter.py` - Generación de reportes
+  - `redaudit/core/scanner.py` - Lógica de escaneo
+  - `redaudit/utils/constants.py` - Constantes con nombre
+  - `redaudit/utils/i18n.py` - Internacionalización
+- **Pipeline CI/CD**: Workflow de GitHub Actions (`.github/workflows/tests.yml`)
+  - Tests en Python 3.9, 3.10, 3.11, 3.12
+  - Integración con Codecov para coverage
+  - Linting con Flake8
+
+- **Nuevas suites de tests**:
+  - `tests/test_network.py` - Tests de detección de red con mocking
+  - `tests/test_reporter.py` - Tests de generación de reportes y permisos de fichero
+- **Entry point del paquete**: Soporte `python -m redaudit`
+
+### Cambiado
+
+- **Constantes con nombre**: Reemplaza magic numbers por constantes descriptivas
+- **Cobertura de tests**: Expandida de ~25 a 34 tests automatizados
+- **Versión**: Actualizada a 2.6.0
+
+### Corregido
+
+- **Compatibilidad Python 3.9**: Corrige sintaxis `str | None` en `test_sanitization.py` usando `Optional[str]`
+- **Imports de tests**: `test_encryption.py` actualizado para usar funciones a nivel módulo (`derive_key_from_password`, `encrypt_data`) en vez de métodos inexistentes
+- **Cumplimiento Flake8**: Resueltos todos los errores:
+  - Eliminados espacios sobrantes en líneas en blanco (W293)
+  - Eliminados 12 imports sin usar en `auditor.py`, `scanner.py`, `reporter.py` (F401)
+  - Añade espacios alrededor de operadores aritméticos (E226)
+  - Renombra variable ambigua `l` a `line` (E741)
+
+### Compatibilidad hacia atrás
+
+- `redaudit.py` original preservado como wrapper fino por compatibilidad
+- Scripts y workflows existentes continúan funcionando sin cambios
+
+---
+
+## [2.5.0] - 2025-12-07 (Hardening de seguridad)
+
+### Añadido
+
+- **Seguridad de permisos de ficheros**: Reportes usan permisos seguros (0o600 - lectura/escritura solo para owner)
+- **Tests de integración**: Suite completa (`test_integration.py`)
+- **Tests de cifrado**: Cobertura completa de cifrado (`test_encryption.py`)
+
+### Cambiado
+
+- **Sanitizers endurecidos**: `sanitize_ip()` y `sanitize_hostname()` ahora:
+  - Validan tipo de entrada (solo se acepta `str`)
+  - Eliminan whitespace automáticamente
+  - Devuelven `None` para tipos inválidos (int, list, etc.)
+  - Aplican límites máximos de longitud
+- **Manejo de cryptography**: Degradación elegante mejorada
+  - `check_dependencies()` ahora verifica disponibilidad de cryptography
+  - `setup_encryption()` soporta modo no interactivo con flag `--encrypt-password`
+  - `setup_encryption()` no pide contraseña si cryptography no está disponible
+  - Generación de contraseña aleatoria en modo no interactivo cuando no se provee
+  - Mensajes de warning claros en inglés y español
+- **Versión**: Actualizada a 2.5.0
+
+### Seguridad
+
+- **Validación de entrada**: Toda entrada del usuario validada por tipo y longitud
+- **Permisos de ficheros**: Todos los reportes generados usan permisos seguros (0o600)
+- **Manejo de errores**: Mejor manejo de excepciones reduce filtración de información
+
+## [2.5.0] - 2025-12-07 (Adaptive Deep Scan)
+
+### Añadido
+
+- **Adaptive Deep Scan (v2.5)**: Implementa estrategia 2 fases (TCP agresivo -> fallback UDP+OS) para maximizar velocidad y datos.
+- **Detección vendor/MAC**: Regex nativo para extraer vendor HW desde output de Nmap.
+- **Instalador**: Refactor de `redaudit_install.sh` a operaciones de copia limpias sin Python embebido.
+
+### Cambiado
+
+- **Heartbeat**: Mensajería más profesional ("Nmap is still running") para reducir ansiedad durante escaneos largos.
+- **Reporting**: Añade campos `vendor` y `mac_address` en reportes JSON/TXT.
+
+## [2.3.1] - 2024-05-20 (Hardening de seguridad)
+
+### Añadido
+
+- **Hardening de seguridad**: Sanitización estricta de inputs (IPs, hostnames, interfaces) para prevenir command injection.
+- **Cifrado de reportes**: Cifrado AES-128 opcional (Fernet) para reportes generados; incluye helper `redaudit_decrypt.py`.
+- **Rate limiting**: Retardo configurable entre escaneos concurrentes para operaciones más sigilosas.
+- **Logging profesional**: Logger rotativo en `~/.redaudit/logs/` para audit trail y debugging.
+- **Truncado de puertos**: Truncado automático si >50 puertos en un host, reduciendo ruido.
+
+### Cambiado
+
+- **Dependencias**: Añade `python3-cryptography` como dependencia core para cifrado.
+- **Configuración**: Setup interactivo actualizado con prompts de cifrado y rate limiting.
+
+## [2.3.0] - 2024-05-18
+
+### Añadido
+
+- **Heartbeat Monitor**: Hilo en background que imprime estado cada 60s y advierte si Nmap se cuelga (>300s).
+- **Salida elegante**: Maneja Ctrl+C (SIGINT) para guardar estado parcial antes de salir.
+- **Deep Scan**: Dispara escaneo nmap agresivo + UDP si un host muestra pocos puertos abiertos.
+- **Captura de tráfico**: Captura snippet PCAP pequeño (50 paquetes) para hosts activos usando `tcpdump`.
+- **Enriquecimiento**:
+  - **WhatWeb**: fingerprinting para servicios web.
+  - **Nikto**: scan de vulnerabilidades web (solo en modo FULL).
+  - **DNS/Whois**: reverse lookup y whois básico para IPs públicas.
+  - **Curl/Wget/OpenSSL**: cabeceras HTTP e info de certificado TLS.
+
+### Cambiado
+
+- **Gestión de dependencias**: Se deja de usar `pip`. Dependencias via `apt` (python3-nmap, etc.) alineado con Kali/Debian.
+- **Networking**: Reemplaza `netifaces` (a menudo ausente) por parsing robusto de `ip addr show` o `ifconfig`.
+- **Arquitectura**: `redaudit_install.sh` ahora despliega el core Python directamente, eliminando descargas de `.py` separado.
+
+### Corregido
+
+- **Tracebacks**: Añade `try/except` extensivos para evitar crashes ante errores de escaneo.
+- **Permisos**: Añade chequeo de `root` (sudo) al inicio.

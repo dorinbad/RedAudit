@@ -177,7 +177,7 @@ Include:
 
 Email: `security@dorinbadea.com`
 
-See [SECURITY.md](docs/SECURITY.md) for our vulnerability disclosure policy.
+See [SECURITY.md](docs/en/SECURITY.md) for our vulnerability disclosure policy.
 
 ---
 

@@ -1,6 +1,6 @@
 # RedAudit Troubleshooting Guide
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](TROUBLESHOOTING_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/TROUBLESHOOTING.md)
 
 ---
 
@@ -133,4 +133,4 @@ curl --socks5 pivot-host:1080 http://example.com
 # Correct: --proxy socks5://host:port
 ```
 
-RedAudit and this troubleshooting guide are part of a GPLv3-licensed project. See [LICENSE](../LICENSE).
+RedAudit and this troubleshooting guide are part of a GPLv3-licensed project. See [LICENSE](../../LICENSE).

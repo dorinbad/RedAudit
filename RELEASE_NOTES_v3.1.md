@@ -1,96 +1,82 @@
-# Release Notes v3.1
+# RedAudit v3.1.0 - Release Notes
 
-## SIEM & AI Pipeline Enhancements
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](RELEASE_NOTES_v3.1_ES.md)
 
-**Release Date**: December 2025
+**Release Date**: December 14, 2025  
+**Type**: Feature Release - SIEM & AI Pipeline Enhancements  
+**Previous Version**: v3.0.4
 
-### Overview
+---
 
-v3.1 introduces enterprise-grade SIEM integration and AI pipeline support. The new schema enables deterministic finding correlation, structured evidence extraction, and flat JSONL exports optimized for streaming ingestion.
+## Overview
 
-### New Features
+Version 3.1.0 introduces enterprise-grade SIEM integration and AI pipeline exports. It adds deterministic finding correlation, severity normalization, structured evidence extraction, and flat JSONL views optimized for streaming ingestion.
 
-#### JSONL Export Views
+This release is backward compatible with v3.0.4 and requires no migration steps. New fields are optional, and JSONL/evidence export views are skipped when report encryption is enabled to avoid plaintext artifacts.
 
-Each scan now auto-generates three flat export files (when report encryption is disabled):
+---
 
-| File | Purpose |
-|:---|:---|
-| `findings.jsonl` | One finding per line for SIEM ingestion |
-| `assets.jsonl` | One asset per line for inventory |
-| `summary.json` | Compact dashboard-ready summary |
+## What's New in v3.1.0
 
-#### Finding Deduplication
+### 1. JSONL Export Views (SIEM/AI Pipelines)
 
-- **`finding_id`**: Deterministic SHA256 hash based on asset, scanner, port, and signature
-- Enables cross-scan correlation and tracking of resolved vs recurring issues
+Each scan can generate three flat export files in the output folder (when report encryption is disabled):
 
-#### Category Classification
+- `findings.jsonl`: one finding per line (SIEM-friendly)
+- `assets.jsonl`: one asset per line (inventory-friendly)
+- `summary.json`: compact dashboard summary
 
-Findings are now automatically classified:
+### 2. Deterministic Finding Correlation (`finding_id`)
 
-| Category | Examples |
-|:---|:---|
-| `surface` | Open port, exposed service |
-| `misconfig` | Missing headers, directory listing |
-| `crypto` | TLS 1.0, weak ciphers, expired cert |
-| `auth` | Default credentials, no auth |
-| `info-leak` | Version disclosure, internal IP |
-| `vuln` | CVE identified |
+Findings now include a stable `finding_id` (deterministic hash) based on:
 
-#### Normalized Severity
+- asset (`observable_hash`)
+- scanner/tool
+- protocol/port
+- signature (CVE/plugin/rule/normalized finding line)
+- normalized title
 
-- **`normalized_severity`**: 0.0-10.0 scale (CVSS-like)
-- **`original_severity`**: Preserved tool-native values
-- Enum: `info`, `low`, `medium`, `high`, `critical`
+This enables cross-scan correlation and deduplication.
 
-#### Parsed Observations
+### 3. Category Classification + Normalized Severity
 
-- **`parsed_observations`**: Structured list extracted from Nikto/TestSSL
-- Reduces noise for AI processing
-- Large raw outputs externalized to `evidence/` folder (only when report encryption is disabled)
+Each finding is enriched with:
 
-#### Scanner Versions
+- `category`: surface/misconfig/crypto/auth/info-leak/vuln
+- `severity`: info/low/medium/high/critical
+- `severity_score`: numeric 0–100 (SIEM-friendly)
+- `normalized_severity`: numeric 0.0–10.0 (CVSS-like)
+- `original_severity`: preserved tool-native value for traceability
 
-- **`scanner_versions`**: Detected tool versions for provenance
-- Example: `{"redaudit": "3.1.0", "nmap": "7.95", "nikto": "2.5.0"}`
+### 4. Parsed Observations + Evidence Handling
 
-### New Modules
+For web/TLS tools (Nikto/TestSSL), RedAudit now extracts:
+
+- `parsed_observations`: short structured list for fast search and AI summarization
+- `raw_tool_output_sha256`: hash of raw output (integrity/dedup)
+- `raw_tool_output_ref`: externalized raw output path (only when encryption is disabled and output is large)
+
+### 5. Tool Provenance (`scanner_versions`)
+
+Reports now include `scanner_versions`, a best-effort map of detected tool versions (e.g., nmap/nikto/testssl/whatweb/searchsploit) plus RedAudit itself.
+
+### 6. New Modules
 
 ```text
 redaudit/core/
 ├── scanner_versions.py  # Tool version detection
 ├── evidence_parser.py   # Nikto/TestSSL observation extraction
-└── jsonl_exporter.py    # JSONL/JSON export generation
+└── jsonl_exporter.py    # JSONL/summary export views
 ```
 
-### JSON Schema Update
+---
 
-```json
-{
-  "schema_version": "3.1",
-  "generated_at": "2025-12-14T18:00:00",
-  "scanner_versions": {"redaudit": "3.1.0", "nmap": "7.95"},
-  "vulnerabilities": [{
-    "host": "192.168.1.1",
-    "vulnerabilities": [{
-      "finding_id": "12273fca7e8dbe0e262589c87708f76f",
-      "category": "misconfig",
-      "severity": "high",
-      "normalized_severity": 7.0,
-      "original_severity": {"tool": "nikto", "value": "HIGH"},
-      "parsed_observations": ["Missing X-Frame-Options header"]
-    }]
-  }]
-}
-```
+## Useful Links
 
-### Upgrade Notes
-
-- **Backward Compatible**: All new fields are optional
-- **No CLI Changes**: Features are automatic
-- **Schema Version**: Updated to 3.1
-
-### Full Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for complete history.
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+- **GitHub Release Notes**: [GITHUB_RELEASE.md](GITHUB_RELEASE.md)
+- **User Manual (EN)**: [docs/en/MANUAL.md](docs/en/MANUAL.md)
+- **Manual (ES)**: [docs/es/MANUAL.md](docs/es/MANUAL.md)
+- **Report Schema (EN)**: [docs/en/REPORT_SCHEMA.md](docs/en/REPORT_SCHEMA.md)
+- **Report Schema (ES)**: [docs/es/REPORT_SCHEMA.md](docs/es/REPORT_SCHEMA.md)
+- **Security Specification**: [EN](docs/en/SECURITY.md) / [ES](docs/es/SECURITY.md)

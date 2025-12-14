@@ -49,7 +49,7 @@ RedAudit now stores configuration persistently in `~/.redaudit/config.json`, eli
 - Config file is created with `0o600` permissions (read/write for owner only)
 - Config directory is created with `0o700` permissions
 - API keys are never logged in plain text
-- See [SECURITY.md](docs/SECURITY.md#8-nvd-api-key-storage-v301) for full security specification
+- See [SECURITY.md](docs/en/SECURITY.md#8-nvd-api-key-storage-v301) for full security specification
 
 ---
 
@@ -229,7 +229,7 @@ Existing workflows using `--nvd-key KEY` will continue to work without modificat
 
 None specific to v3.0.1.
 
-For general troubleshooting, see [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+For general troubleshooting, see [TROUBLESHOOTING.md](docs/en/TROUBLESHOOTING.md).
 
 ---
 
@@ -245,7 +245,7 @@ For general troubleshooting, see [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 - **Full Changelog**: [CHANGELOG.md](CHANGELOG.md)
 - **Previous Release**: [RELEASE_NOTES_v3.0.0.md](RELEASE_NOTES_v3.0.0.md)
 - **Installation Guide**: [README.md#installation](README.md#installation)
-- **Security Policy**: [docs/SECURITY.md](docs/SECURITY.md)
+- **Security Policy**: [docs/en/SECURITY.md](docs/en/SECURITY.md)
 
 ---
 

@@ -274,7 +274,7 @@ bash redaudit_verify.sh
 
 ## 12. Troubleshooting
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for detailed fixes.
+See [docs/en/TROUBLESHOOTING.md](docs/en/TROUBLESHOOTING.md) for detailed fixes.
 
 - **"Permission denied"**: Ensure you run with `sudo`.
 - **"Cryptography missing"**: Run `sudo apt install python3-cryptography`.
@@ -345,4 +345,4 @@ Keys are derived with PBKDF2-HMAC-SHA256 (480k iterations) and a separate `.salt
 Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
 
 ---
-[Full Documentation](docs/) | [Report Schema](docs/REPORT_SCHEMA.md) | [Security Specs](docs/SECURITY.md)
+[Full Documentation](docs/README.md) | [Report Schema](docs/en/REPORT_SCHEMA.md) | [Security Specs](docs/en/SECURITY.md)

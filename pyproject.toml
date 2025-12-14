@@ -54,7 +54,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/dorinbadea/RedAudit"
-Documentation = "https://github.com/dorinbadea/RedAudit/blob/main/docs/MANUAL_EN.md"
+Documentation = "https://github.com/dorinbadea/RedAudit/blob/main/docs/en/MANUAL.md"
 Repository = "https://github.com/dorinbadea/RedAudit"
 Issues = "https://github.com/dorinbadea/RedAudit/issues"
 Changelog = "https://github.com/dorinbadea/RedAudit/blob/main/CHANGELOG.md"

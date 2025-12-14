@@ -1,6 +1,6 @@
 # Esquema de Reportes RedAudit
 
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](REPORT_SCHEMA.md)
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/REPORT_SCHEMA.md)
 
 ## Visión General
 

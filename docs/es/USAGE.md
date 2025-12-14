@@ -1,6 +1,6 @@
 # Guía de Uso RedAudit
 
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](USAGE.md)
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/USAGE.md)
 
 ## Referencia CLI
 
@@ -251,4 +251,4 @@ RedAudit intenta automáticamente un "Deep Scan Adaptativo" en hosts que:
 
 ---
 
-RedAudit se distribuye bajo **GPLv3**. Consulta [LICENSE](../LICENSE) para más detalles.
+RedAudit se distribuye bajo **GPLv3**. Consulta [LICENSE](../../LICENSE) para más detalles.

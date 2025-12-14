@@ -1,6 +1,6 @@
 # RedAudit Usage Guide
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](USAGE_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/USAGE.md)
 
 ## CLI Reference
 
@@ -251,4 +251,4 @@ RedAudit automatically attempts an "Adaptive Deep Scan" on hosts that:
 
 ---
 
-RedAudit is licensed under **GPLv3**. See [LICENSE](../LICENSE) for details.
+RedAudit is licensed under **GPLv3**. See [LICENSE](../../LICENSE) for details.

@@ -1,6 +1,6 @@
 # Manual de Usuario de RedAudit v3.1 (ES)
 
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](MANUAL_EN.md)
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
 **Versión:** 3.1.0  
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas / redes  
@@ -294,7 +294,7 @@ Las opciones más importantes:
 
 Nota (modo interactivo): cuando se pregunte “Número máximo de hosts a escanear”, pulsa ENTER para escanear **todos** los hosts encontrados, o escribe un número para aplicar un límite global.
 
-Para más ejemplos de uso, consulta [USAGE_ES.md](USAGE_ES.md).
+Para más ejemplos de uso, consulta [USAGE.md](USAGE.md).
 
 ---
 
@@ -359,7 +359,7 @@ Por seguridad, las vistas de exportación planas (JSONL/JSON) se generan solo cu
 
 ### 6.2 Estructura del informe JSON
 
-El esquema detallado se documenta en [REPORT_SCHEMA_ES.md](REPORT_SCHEMA_ES.md). A alto nivel:
+El esquema detallado se documenta en [REPORT_SCHEMA.md](REPORT_SCHEMA.md). A alto nivel:
 
 - **Objeto raíz**
   - Metadatos de ejecución: versión de la herramienta, hora de inicio/fin, opciones usadas, estado final.
@@ -435,13 +435,13 @@ El script:
 
 Si se pierde la contraseña, no hay forma de recuperar el contenido de los informes. No existe mecanismo de "reset".
 
-Para más detalles sobre el modelo de seguridad, consulta [SECURITY_ES.md](SECURITY_ES.md).
+Para más detalles sobre el modelo de seguridad, consulta [SECURITY.md](SECURITY.md).
 
 ---
 
 ## 8. Modelo de seguridad
 
-Para documentación completa de seguridad, consulta [SECURITY_ES.md](SECURITY_ES.md).
+Para documentación completa de seguridad, consulta [SECURITY.md](SECURITY.md).
 
 ### 8.1 Seguridad de entrada y comandos
 
@@ -548,7 +548,7 @@ Para ejecuciones largas, basta con vigilar el heartbeat para confirmar que el pr
    - **Causa:** no se ha recargado el shell o el instalador se ejecutó como otro usuario.
    - **Solución:** `source ~/.bashrc` o `source ~/.zshrc`, y asegurarse de ejecutar el instalador desde el usuario final con `sudo`.
 
-Para más detalles, consulta [TROUBLESHOOTING_ES.md](TROUBLESHOOTING_ES.md).
+Para más detalles, consulta [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
@@ -575,7 +575,7 @@ Al contribuir:
 - Evitar cambios disruptivos en el esquema de informes salvo que sea imprescindible.
 - Aportar pruebas para nuevas funcionalidades.
 
-Consulta [CONTRIBUTING_ES.md](../CONTRIBUTING_ES.md) para las pautas detalladas.
+Consulta [CONTRIBUTING_ES.md](../../CONTRIBUTING_ES.md) para las pautas detalladas.
 
 ---
 
@@ -594,11 +594,11 @@ El uso de RedAudit contra sistemas sin autorización puede constituir un delito.
 
 **Documentación relacionada:**
 
-- [README (Inglés)](../README.md)
-- [README (Español)](../README_ES.md)
-- [USAGE_ES.md](USAGE_ES.md) - Ejemplos de uso detallados
-- [SECURITY_ES.md](SECURITY_ES.md) - Detalles del modelo de seguridad
-- [REPORT_SCHEMA_ES.md](REPORT_SCHEMA_ES.md) - Esquema del informe JSON
-- [TROUBLESHOOTING_ES.md](TROUBLESHOOTING_ES.md) - Resolución de problemas
-- [CONTRIBUTING_ES.md](../CONTRIBUTING_ES.md) - Guía de contribución
-- [CHANGELOG.md](../CHANGELOG.md) - Historial de versiones
+- [README (Inglés)](../../README.md)
+- [README (Español)](../../README_ES.md)
+- [USAGE.md](USAGE.md) - Ejemplos de uso detallados
+- [SECURITY.md](SECURITY.md) - Detalles del modelo de seguridad
+- [REPORT_SCHEMA.md](REPORT_SCHEMA.md) - Esquema del informe JSON
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Resolución de problemas
+- [CONTRIBUTING_ES.md](../../CONTRIBUTING_ES.md) - Guía de contribución
+- [CHANGELOG_ES.md](../../CHANGELOG_ES.md) - Historial de versiones

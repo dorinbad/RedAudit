@@ -1,5 +1,7 @@
 # Changelog
 
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md)
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

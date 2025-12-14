@@ -1,8 +1,12 @@
-# RedAudit v3.1
+# RedAudit v3.1.0
 
-## Feature Release - SIEM & AI Pipeline Enhancements
+[![English](https://img.shields.io/badge/EN-English-blue?style=flat-square)](#english) [![Español](https://img.shields.io/badge/ES-Espa%C3%B1ol-red?style=flat-square)](#espa%C3%B1ol)
 
-### v3.1 Highlights
+## English
+
+### Feature Release - SIEM & AI Pipeline Enhancements
+
+#### v3.1 Highlights
 
 - **JSONL Exports**: Auto-generated `findings.jsonl`, `assets.jsonl`, and `summary.json` for SIEM/AI pipelines (when report encryption is disabled).
 - **Finding IDs**: Deterministic hashes for finding deduplication across scans.
@@ -11,7 +15,7 @@
 - **Parsed Observations**: Structured extraction from Nikto/TestSSL raw output.
 - **Scanner Versions**: Provenance tracking with detected tool versions.
 
-### v3.0 Major Features
+#### v3.0 Major Features
 
 - **IPv6 Support**: Full scanning capabilities for IPv6 networks with automatic `-6` flag.
 - **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API with 7-day cache.
@@ -19,7 +23,7 @@
 - **Proxy Chains (SOCKS5)**: Network pivoting support via proxychains wrapper.
 - **Magic Byte Validation**: Enhanced false positive detection with file signature verification.
 
-### Previous (v2.9) Features
+#### Previous (v2.9) Features
 
 - **Smart-Check**: Intelligent false positive filtering for Nikto (90% noise reduction).
 - **UDP Taming**: Optimized 3-phase UDP scanning strategy (50-80% faster).
@@ -28,7 +32,7 @@
 
 ---
 
-### Installation
+#### Installation
 
 ```bash
 git clone https://github.com/dorinbadea/RedAudit.git
@@ -36,7 +40,7 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
-### New in v3.1 - JSON Output
+#### New in v3.1 - JSON Output
 
 ```json
 {
@@ -49,7 +53,7 @@ sudo bash redaudit_install.sh
 }
 ```
 
-### New Modules (v3.1)
+#### New Modules (v3.1)
 
 ```text
 redaudit/core/
@@ -58,7 +62,7 @@ redaudit/core/
 └── jsonl_exporter.py    # JSONL/JSON export views
 ```
 
-### CLI Options
+#### CLI Options
 
 | Flag | Description |
 |:---|:---|
@@ -69,23 +73,117 @@ redaudit/core/
 | `--nvd-key KEY` | NVD API key for faster rate limits |
 | `--allow-non-root` | Run in limited mode without sudo/root |
 
-### Testing & Quality
+#### Testing & Quality
 
 - **Tests**: ![Tests](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)
 - **Coverage**: Reported by CI (see Actions/Codecov)
 - **Security**: CodeQL & Dependabot active
 - **License**: GPLv3
 
-### Documentation
+#### Documentation
 
 Complete bilingual documentation (English/Spanish):
 
 - [README.md](README.md) / [README_ES.md](README_ES.md)
-- [MANUAL_EN.md](docs/MANUAL_EN.md) / [MANUAL_ES.md](docs/MANUAL_ES.md)
-- [USAGE.md](docs/USAGE.md) / [USAGE_ES.md](docs/USAGE_ES.md)
+- [MANUAL (EN)](docs/en/MANUAL.md) / [MANUAL (ES)](docs/es/MANUAL.md)
+- [USAGE (EN)](docs/en/USAGE.md) / [USAGE (ES)](docs/es/USAGE.md)
 
-### Links
+#### Links
 
-- **Full Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Release Notes**: [RELEASE_NOTES_v3.1.md](RELEASE_NOTES_v3.1.md)
-- **Security Specs**: [docs/SECURITY.md](docs/SECURITY.md)
+- **Full Changelog**: [CHANGELOG.md](CHANGELOG.md) / [CHANGELOG_ES.md](CHANGELOG_ES.md)
+- **Release Notes**: [RELEASE_NOTES_v3.1.md](RELEASE_NOTES_v3.1.md) / [RELEASE_NOTES_v3.1_ES.md](RELEASE_NOTES_v3.1_ES.md)
+- **Security Specs**: [EN](docs/en/SECURITY.md) / [ES](docs/es/SECURITY.md)
+
+---
+
+## Español
+
+### Release de features - Mejoras SIEM y pipelines de IA
+
+#### Highlights v3.1
+
+- **Exportaciones JSONL**: `findings.jsonl`, `assets.jsonl` y `summary.json` auto-generados para pipelines SIEM/IA (cuando el cifrado de reportes está desactivado).
+- **IDs de hallazgo**: Hashes determinísticos para deduplicación/correlación entre escaneos.
+- **Clasificación por categoría**: surface/misconfig/crypto/auth/info-leak/vuln.
+- **Severidad normalizada**: Escala 0-10 estilo CVSS con severidad original preservada.
+- **Observaciones estructuradas**: Extracción estructurada desde outputs de Nikto/TestSSL.
+- **Versiones de herramientas**: Proveniencia con versiones detectadas.
+
+#### Características principales v3.0
+
+- **Soporte IPv6**: Escaneo completo de redes IPv6 con flag `-6` automático.
+- **Correlación CVE (NVD)**: Inteligencia de vulnerabilidades via NIST NVD API con caché de 7 días.
+- **Análisis diferencial**: Comparación de dos reportes JSON para detectar cambios.
+- **Proxy Chains (SOCKS5)**: Soporte de pivoting via wrapper proxychains.
+- **Validación Magic Byte**: Detección mejorada de falsos positivos con verificación de firmas.
+
+#### Features previas (v2.9)
+
+- **Smart-Check**: Filtrado inteligente de falsos positivos de Nikto (90% menos ruido).
+- **UDP Taming**: Estrategia optimizada de 3 fases (50-80% más rápido).
+- **Entity Resolution**: Agrupación inteligente de dispositivos multi-interfaz (unified assets).
+- **SIEM profesional**: Esquema JSON enriquecido y alineado con ECS v8.11.
+
+---
+
+#### Instalación
+
+```bash
+git clone https://github.com/dorinbadea/RedAudit.git
+cd RedAudit
+sudo bash redaudit_install.sh
+```
+
+#### Nuevo en v3.1 - Salida JSON
+
+```json
+{
+  "schema_version": "3.1",
+  "scanner_versions": {"redaudit": "3.1.0", "nmap": "7.95"},
+  "finding_id": "12273fca7e8dbe0e...",
+  "category": "misconfig",
+  "normalized_severity": 7.0,
+  "parsed_observations": ["Missing X-Frame-Options header"]
+}
+```
+
+#### Módulos nuevos (v3.1)
+
+```text
+redaudit/core/
+├── scanner_versions.py  # Detección de versiones de herramientas
+├── evidence_parser.py   # Parsing Nikto/TestSSL
+└── jsonl_exporter.py    # Vistas de exportación JSONL/JSON
+```
+
+#### Opciones CLI
+
+| Flag | Descripción |
+|:---|:---|
+| `--ipv6` | Activa modo solo IPv6 |
+| `--proxy URL` | Proxy SOCKS5 para pivoting |
+| `--diff OLD NEW` | Compara dos reportes JSON |
+| `--cve-lookup` | Activa correlación CVE vía NVD |
+| `--nvd-key KEY` | API key NVD para rate limits más rápidos |
+| `--allow-non-root` | Ejecuta sin sudo/root (modo limitado) |
+
+#### Testing y calidad
+
+- **Tests**: ![Tests](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)
+- **Coverage**: Reportado por CI (ver Actions/Codecov)
+- **Seguridad**: CodeQL y Dependabot activos
+- **Licencia**: GPLv3
+
+#### Documentación
+
+Documentación bilingüe (inglés/español):
+
+- [README.md](README.md) / [README_ES.md](README_ES.md)
+- [MANUAL (EN)](docs/en/MANUAL.md) / [MANUAL (ES)](docs/es/MANUAL.md)
+- [USAGE (EN)](docs/en/USAGE.md) / [USAGE (ES)](docs/es/USAGE.md)
+
+#### Links
+
+- **Changelog completo**: [CHANGELOG.md](CHANGELOG.md) / [CHANGELOG_ES.md](CHANGELOG_ES.md)
+- **Release Notes**: [RELEASE_NOTES_v3.1.md](RELEASE_NOTES_v3.1.md) / [RELEASE_NOTES_v3.1_ES.md](RELEASE_NOTES_v3.1_ES.md)
+- **Especificaciones de seguridad**: [EN](docs/en/SECURITY.md) / [ES](docs/es/SECURITY.md)

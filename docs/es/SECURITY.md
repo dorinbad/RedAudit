@@ -1,6 +1,6 @@
 # Arquitectura de Seguridad y Hardening
 
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](SECURITY.md)
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/SECURITY.md)
 
 ## Visión General
 
@@ -83,4 +83,4 @@ Los usuarios deben tratar el archivo de configuración como sensible. La clave A
 ## 9. Licencia
 
 Este modelo de seguridad es parte del proyecto RedAudit y está cubierto por la  
-**GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../LICENSE) para el texto completo.
+**GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../../LICENSE) para el texto completo.
