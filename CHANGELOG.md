@@ -1,6 +1,6 @@
 # Changelog
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md)
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md) ![Version](https://img.shields.io/badge/version-3.1.1-blue?style=flat-square)
 
 All notable changes to this project will be documented in this file.
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deep Scan UDP Phase 2b**: Uses configurable `--top-ports N` and records `udp_top_ports` in deep scan output
 - **Report Schema**: Added optional `topology` block in the root report (when enabled)
 
-## [3.1.0] - 2025-12-14 (SIEM & AI Pipeline)
+## [3.1.0] - 2025-12-13 (SIEM & AI Pipeline)
 
 ### Added
 
@@ -517,7 +517,9 @@ Both tools maintain RedAudit's adaptive approach:
 - **File Permissions**: All generated reports use secure permissions (0o600)
 - **Error Handling**: Better exception handling prevents information leakage
 
-## [2.5.0] - 2025-12-07 (Adaptive Deep Scan)
+---
+
+## [2.4.0] - 2025-12-07 (Adaptive Deep Scan)
 
 ### Added
 
@@ -529,6 +531,9 @@ Both tools maintain RedAudit's adaptive approach:
 
 - **Heartbeat**: Professional messaging ("Nmap is still running") to reduce user anxiety during long scans.
 - **Reporting**: Added `vendor` and `mac_address` fields to JSON/TXT reports.
+- **Version**: Updated to 2.4.0
+
+---
 
 ## [2.3.1] - 2024-05-20 (Security Hardening)
 
