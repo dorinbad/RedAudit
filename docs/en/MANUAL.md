@@ -130,7 +130,7 @@ The script `redaudit_install.sh` performs the following steps:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (for searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (for enhanced discovery)
-   - `snmp`, `ldap-utils`, `samba-common-bin` (for Red Team recon)
+   - `snmp`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy` (for Red Team recon)
 
 3. **Code deployment**
    - Copies the Python package directory `redaudit/` into `/usr/local/lib/redaudit`.
@@ -165,8 +165,9 @@ If you prefer not to use the installer:
    sudo apt update
    sudo apt install curl wget openssl nmap tcpdump tshark \
                     whois bind9-dnsutils python3-nmap \
-                    python3-cryptography python3-netifaces exploitdb \
-                    nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
+                    python3-cryptography python3-netifaces exploitdb git \
+                    nbtscan netdiscover fping avahi-utils arp-scan lldpd \
+                    snmp enum4linux smbclient masscan rpcclient ldap-utils bettercap python3-scapy
    ```
 
 3. Run via Python module:

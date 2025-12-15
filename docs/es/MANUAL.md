@@ -134,7 +134,7 @@ El script `redaudit_install.sh` realiza, de forma resumida, lo siguiente:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (para searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (para descubrimiento mejorado)
-   - `snmp`, `ldap-utils`, `samba-common-bin` (para recon Red Team)
+   - `snmp`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy` (para recon Red Team)
 
 3. **Despliegue del código**
    - Copia el paquete Python `redaudit/` a `/usr/local/lib/redaudit`.

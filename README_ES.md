@@ -63,7 +63,8 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 | **Análisis Diferencial** | Integrado | Compara reportes JSON para rastrear cambios en la red (v3.0). |
 | **Pivoting** | Wrapper `proxychains` | Soporte de proxy SOCKS5 para acceso a redes internas (v3.0). |
 | **Topología** | `arp-scan`, `ip route` | Descubrimiento L2, detección de VLANs y mapeo de gateways (v3.1+). |
-| **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Descubrimiento mejorado broadcast/L2 para redes de invitados (v3.2+). |
+| **Descubrimiento de Red** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Descubrimiento broadcast/L2 mejorado para redes de invitados (v3.2+). |
+| **Recon Red Team** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `scapy` | Enumeración activa opcional (SNMP, SMB, LDAP, ataques L2) para análisis Blue Team profundo (v3.2+). |
 | **Orquestador** | `concurrent.futures` (Python) | Gestiona pools de hilos para escaneo paralelo de hosts. |
 | **Cifrado** | `python3-cryptography` | Cifrado AES-128 para reportes de auditoría sensibles. |
 
