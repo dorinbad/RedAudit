@@ -45,8 +45,8 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **IPv6 + Proxy Support**: Full dual-stack scanning with SOCKS5 pivoting capabilities
 - **Report Encryption**: AES-128-CBC (Fernet) with PBKDF2-HMAC-SHA256 key derivation (480k iterations)
 - **Rate Limiting with Jitter**: Configurable inter-host delay (±30% randomization) for IDS evasion
-- **Subnet Leak Detection**: Automatically identifies potential hidden networks (e.g., Guest zones) by analyzing service leaks (headers, redirects).
-- **Interactive Wizard**: Step-by-step setup with improved UI and auto-save.
+- **Subnet Leak Detection (v3.2.1)**: Automatically identifies potential hidden networks (e.g., Guest zones) by analyzing service leaks (headers, redirects).
+- **Interactive Main Menu (v3.2)**: Friendly wizard for scanning, configuration, and diff analysis (no arguments required).
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture
@@ -87,7 +87,7 @@ redaudit/
 │   ├── crypto.py       # AES-128 encryption/decryption
 │   ├── network.py      # Interface detection (IPv4/IPv6)
 │   ├── reporter.py     # JSON/TXT + SIEM output
-│   ├── updater.py      # Secure auto-update (git clone)
+│   ├── updater.py      # Reliable auto-update (git clone)
 │   ├── verify_vuln.py  # Smart-Check false positive filtering
 │   ├── entity_resolver.py  # Multi-interface host grouping
 │   ├── siem.py         # Professional SIEM integration
@@ -375,14 +375,17 @@ Faster UDP scanning without sacrificing detection quality:
 - Reduced retries (`--max-retries 1`) for LAN efficiency
 - **Result**: 50-80% faster UDP scans
 
-### Secure Auto-Update
+### Reliable Auto-Update
 
 RedAudit can check for and install updates automatically:
 
 - **Startup Check**: Prompts to check for updates when launching in interactive mode
+- **Staged Installation**: Updates use atomic staging with automatic rollback on failure (v3.2.2+)
 - **Auto-Install**: Downloads and installs updates via `git clone`
 - **Auto-Restart**: Automatically restarts with new code using `os.execv()`
 - **Skip Flag**: Use `--skip-update-check` to disable update checking
+
+> **Note**: The updater verifies git commit hashes for integrity but does not perform cryptographic signature verification. See [SECURITY.md](docs/en/SECURITY.md#7-reliable-auto-update) for details.
 
 **Alternative invocation:**
 

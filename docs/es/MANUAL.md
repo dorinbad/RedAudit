@@ -253,7 +253,7 @@ RedAudit dispone de tres modos, con nombres de parámetro en inglés. Es importa
 
 | Modo | Valor CLI | Descripción | Caso de uso típico |
 |---|---|---|---|
-| Rápido | `rapido` | Solo descubrimiento de hosts (`nmap -sn`). | Inventario rápido; verificar accesibilidad. |
+| Rápido | `fast` | Solo descubrimiento de hosts (`nmap -sn`). | Inventario rápido; verificar accesibilidad. |
 | Normal | `normal` | Puertos principales + versiones de servicios. | Auditoría de seguridad estándar. |
 | Completo | `completo` | Puertos extendidos + scripts + web/TLS + **net discovery** (v3.2.1). | Auditoría integral / revisión pre-pentest. |
 

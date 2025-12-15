@@ -46,7 +46,8 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Soporte IPv6 + Proxy**: Escaneo dual-stack completo con capacidades de pivoting SOCKS5
 - **Cifrado de Reportes**: AES-128-CBC (Fernet) con derivación de claves PBKDF2-HMAC-SHA256 (480k iteraciones)
 - **Rate Limiting con Jitter**: Retardo inter-host configurable (randomización ±30%) para evasión IDS
-- **Menú Principal Interactivo (v3.2)**: Asistente amigable para escaneo, configuración y análisis diff (sin argumentos)
+- **Detección de Fugas de Subred (v3.2.1)**: Identifica redes ocultas/invitados analizando fugas HTTP (via redirects y headers) para pivoting.
+- **Menú Principal Interactivo (v3.2)**: Asistente amigable para escaneo, configuración y análisis diff (sin argumentos).
 - **Interfaz Bilingüe**: Localización completa Inglés/Español
 
 ## Arquitectura
@@ -87,7 +88,7 @@ redaudit/
 │   ├── crypto.py       # Cifrado/descifrado AES-128
 │   ├── network.py      # Detección de interfaces (IPv4/IPv6)
 │   ├── reporter.py     # Salida JSON/TXT + SIEM
-│   ├── updater.py      # Auto-actualización segura (git clone)
+│   ├── updater.py      # Auto-actualización fiable (git clone)
 │   ├── verify_vuln.py  # Smart-Check filtrado falsos positivos
 │   ├── entity_resolver.py  # Agrupación hosts multi-interfaz
 │   ├── siem.py         # Integración SIEM profesional
@@ -379,14 +380,17 @@ RedAudit aplica un escaneo adaptativo inteligente de 3 fases para maximizar la r
 - **Activación**: Automática según heurísticas (pocos puertos, servicios sospechosos, etc.)
 - **Salida**: Logs completos, datos MAC/Vendor, y (si se captura) metadata PCAP en `host.deep_scan.pcap_capture`
 
-### Auto-Actualización Segura
+### Auto-Actualización Fiable
 
 RedAudit puede verificar e instalar actualizaciones automáticamente:
 
 - **Verificación al Inicio**: Pregunta si deseas buscar actualizaciones en modo interactivo
+- **Instalación Staged**: Las actualizaciones usan staging atómico con rollback automático en caso de fallo (v3.2.2+)
 - **Auto-Instalación**: Descarga e instala actualizaciones vía `git clone`
 - **Auto-Reinicio**: Se reinicia automáticamente con el nuevo código usando `os.execv()`
 - **Flag de Omisión**: Usa `--skip-update-check` para desactivar la verificación
+
+> **Nota**: El actualizador verifica hashes de commit de git para integridad pero no realiza verificación de firmas criptográficas. Ver [SECURITY.md](docs/es/SECURITY.md#7-auto-actualización-fiable) para detalles.
 
 **Invocación alternativa:**
 
