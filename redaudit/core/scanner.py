@@ -208,6 +208,36 @@ def extract_vendor_mac(text: str) -> tuple:
     return None, None
 
 
+def extract_os_detection(text: str) -> Optional[str]:
+    """
+    Extract OS detection information from Nmap output.
+    
+    v3.1.4: New function to capture OS fingerprint data.
+
+    Args:
+        text: Nmap output text
+
+    Returns:
+        OS string or None if not detected
+    """
+    if not text:
+        return None
+    
+    patterns = [
+        r"OS details: (.+)",
+        r"Running: (.+)",
+        r"OS CPE: cpe:/o:([^\s]+)",
+        r"Aggressive OS guesses: ([^,]+)",
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()[:100]
+    
+    return None
+
+
 def output_has_identity(records: List[Dict]) -> bool:
     """
     Check if scan records contain sufficient identity information (MAC/OS).
@@ -371,7 +401,9 @@ def capture_traffic_snippet(
         "-w", pcap_file,
     ]
 
-    info = {"pcap_file": pcap_file, "iface": iface}
+    # v3.1.4: Use relative path for portability, keep absolute for internal use
+    pcap_filename = os.path.basename(pcap_file)
+    info = {"pcap_file": pcap_filename, "pcap_file_abs": pcap_file, "iface": iface}
 
     try:
         subprocess.run(
@@ -605,15 +637,18 @@ def exploit_lookup(service_name: str, version: str, extra_tools: Dict, logger=No
         return []
 
 
-def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None) -> Optional[Dict]:
+def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None, timeout: int = 90) -> Optional[Dict]:
     """
     Perform comprehensive SSL/TLS security analysis using testssl.sh.
+    
+    v3.1.4: Increased default timeout to 90s and made it configurable.
 
     Args:
         host_ip: Target IP address
         port: Target port (typically 443)
         extra_tools: Dict of available tool paths
         logger: Optional logger
+        timeout: Analysis timeout in seconds (default: 90)
 
     Returns:
         Dictionary with SSL/TLS analysis results or None
@@ -642,7 +677,7 @@ def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None) -
             cmd,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=timeout,
         )
         
         output = res.stdout or res.stderr or ""
@@ -699,8 +734,8 @@ def ssl_deep_analysis(host_ip: str, port: int, extra_tools: Dict, logger=None) -
     
     except subprocess.TimeoutExpired:
         if logger:
-            logger.warning("TestSSL timeout for %s:%d", safe_ip, port)
-        return {"error": "Analysis timeout after 60s", "target": f"{safe_ip}:{port}"}
+            logger.warning("TestSSL timeout for %s:%d after %ds", safe_ip, port, timeout)
+        return {"error": f"Analysis timeout after {timeout}s", "target": f"{safe_ip}:{port}"}
     except Exception as exc:
         if logger:
             logger.debug("TestSSL error for %s:%d: %s", safe_ip, port, exc)

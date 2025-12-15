@@ -351,11 +351,77 @@ def build_ecs_host(host_record: Dict) -> Dict:
     return ecs_host
 
 
+def is_rfc1918_address(ip_str: str) -> bool:
+    """
+    Check if an IP address is in RFC-1918 private range.
+    
+    v3.1.4: Used for adjusting severity of internal IP disclosure findings.
+    
+    Args:
+        ip_str: IP address string
+        
+    Returns:
+        True if RFC-1918 private address
+    """
+    import ipaddress
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        return ip.is_private
+    except ValueError:
+        return False
+
+
+def detect_nikto_false_positives(vuln_record: Dict) -> List[str]:
+    """
+    Detect potential Nikto false positives by cross-validating with curl/wget headers.
+    
+    v3.1.4: Cross-validation to reduce false positives.
+    
+    Args:
+        vuln_record: Vulnerability record with nikto_findings and headers
+        
+    Returns:
+        List of potential false positive descriptions
+    """
+    false_positives = []
+    
+    # Get captured headers
+    curl_headers = (vuln_record.get("curl_headers") or "").lower()
+    wget_headers = (vuln_record.get("wget_headers") or "").lower()
+    all_headers = curl_headers + wget_headers
+    
+    if not all_headers:
+        return []
+    
+    nikto_findings = vuln_record.get("nikto_findings", [])
+    
+    for finding in nikto_findings:
+        finding_lower = finding.lower()
+        
+        # Check X-Content-Type-Options
+        if "x-content-type-options" in finding_lower and "not set" in finding_lower:
+            if "x-content-type-options: nosniff" in all_headers:
+                false_positives.append("X-Content-Type-Options: Header present in response but Nikto reports missing")
+        
+        # Check X-Frame-Options
+        if "x-frame-options" in finding_lower and "not present" in finding_lower:
+            if "x-frame-options:" in all_headers:
+                false_positives.append("X-Frame-Options: Header present in response but Nikto reports missing")
+        
+        # Check HSTS
+        if "strict-transport-security" in finding_lower and "not defined" in finding_lower:
+            if "strict-transport-security:" in all_headers:
+                false_positives.append("HSTS: Header present in response but Nikto reports missing")
+    
+    return false_positives
+
+
 def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict:
     """
     Enrich a vulnerability record with severity scoring, finding_id, and category.
     
     v3.1: Added finding_id for dedup, category for classification, normalized_severity.
+    v3.1.4: Added RFC-1918 severity adjustment and cross-validation for false positives.
     
     Args:
         vuln_record: Vulnerability dictionary
@@ -371,6 +437,7 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
     max_score = 0
     all_categories = set()
     primary_finding = ""
+    has_rfc1918_finding = False
     
     # Check Nikto findings
     for finding in vuln_record.get("nikto_findings", []):
@@ -385,6 +452,10 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
         cat = classify_finding_category(finding)
         if cat != "surface":
             all_categories.add(cat)
+        
+        # Track RFC-1918 findings
+        if "rfc-1918" in finding.lower() and "ip address found" in finding.lower():
+            has_rfc1918_finding = True
     
     # Check TestSSL vulnerabilities
     testssl = vuln_record.get("testssl_analysis", {})
@@ -402,6 +473,21 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
             max_score = 50
             max_severity = "medium"
         all_categories.add("crypto")
+    
+    # v3.1.4: Adjust severity for RFC-1918 findings on private networks
+    url = vuln_record.get("url", "")
+    if has_rfc1918_finding and url:
+        try:
+            from urllib.parse import urlparse
+            host = urlparse(url).hostname
+            if host and is_rfc1918_address(host):
+                # Internal IP disclosure on internal network is informational, not high
+                if max_score >= 50:
+                    max_score = 30
+                    max_severity = "low"
+                enriched["severity_note"] = "RFC-1918 disclosure on private network (reduced severity)"
+        except Exception:
+            pass
     
     # Set severity fields
     enriched["severity"] = max_severity
@@ -429,9 +515,13 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
     else:
         enriched["category"] = "surface"
     
+    # v3.1.4: Detect potential false positives via cross-validation
+    fps = detect_nikto_false_positives(vuln_record)
+    if fps:
+        enriched["potential_false_positives"] = fps
+    
     # v3.1: Generate finding_id for deduplication
     port = vuln_record.get("port", 0)
-    url = vuln_record.get("url", "")
     
     # Extract signature from CVE, Nikto plugin ID, or URL
     signature = ""

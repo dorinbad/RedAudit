@@ -197,17 +197,53 @@ def export_all(results: Dict, output_dir: str) -> Dict[str, Any]:
 
 
 def _extract_title(vuln: Dict) -> str:
-    """Extract a title from vulnerability record."""
-    # Try URL first
-    url = vuln.get("url", "")
-    if url:
-        return f"Finding on {url}"
-
-    # Try first observation
+    """
+    Extract a descriptive title from vulnerability record.
+    
+    v3.1.4: Generate human-readable titles based on finding type
+    instead of generic "Finding on URL" messages.
+    """
+    import re
+    
     obs = vuln.get("parsed_observations", [])
-    if obs:
-        return obs[0][:80]
-
-    # Fallback to port
+    
+    # Generate descriptive title based on observations
+    for observation in obs:
+        obs_lower = observation.lower()
+        
+        # Security headers
+        if "missing hsts" in obs_lower or "strict-transport-security" in obs_lower:
+            return "Missing HTTP Strict Transport Security Header"
+        if "x-frame-options" in obs_lower and ("missing" in obs_lower or "not present" in obs_lower):
+            return "Missing X-Frame-Options Header (Clickjacking Risk)"
+        if "x-content-type" in obs_lower and ("missing" in obs_lower or "not set" in obs_lower):
+            return "Missing X-Content-Type-Options Header"
+        
+        # SSL/TLS issues
+        if "ssl hostname mismatch" in obs_lower or "does not match certificate" in obs_lower:
+            return "SSL Certificate Hostname Mismatch"
+        if "certificate expired" in obs_lower or ("expired" in obs_lower and "ssl" in obs_lower):
+            return "SSL Certificate Expired"
+        if "self-signed" in obs_lower or "self signed" in obs_lower:
+            return "Self-Signed SSL Certificate"
+        
+        # CVE references
+        if "cve-" in obs_lower:
+            match = re.search(r'(cve-\d{4}-\d+)', obs_lower)
+            if match:
+                return f"Known Vulnerability: {match.group(1).upper()}"
+        
+        # Information disclosure
+        if "rfc-1918" in obs_lower or "private ip" in obs_lower:
+            return "Internal IP Address Disclosed in Headers"
+        if "server banner" in obs_lower and "no banner" not in obs_lower:
+            return "Server Version Disclosed in Banner"
+    
+    # Fallback to URL-based title with port
+    url = vuln.get("url", "")
     port = vuln.get("port", 0)
-    return f"Finding on port {port}"
+    
+    if url:
+        return f"Web Service Finding on Port {port}"
+    
+    return f"Service Finding on Port {port}"

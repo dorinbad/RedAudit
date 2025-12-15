@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
+## [3.1.4] - 2025-12-15 (Output Quality)
+
+### Added
+
+- **Descriptive Finding Titles**: Generate human-readable titles based on finding type (e.g., "Missing X-Frame-Options Header" instead of "Finding on URL")
+- **OS Fingerprint Extraction**: New `extract_os_detection()` function captures OS info from Nmap output
+- **Nikto Cross-Validation**: `detect_nikto_false_positives()` compares Nikto findings with curl/wget headers to identify contradictions
+- **RFC-1918 Severity Adjustment**: `is_rfc1918_address()` reduces severity for internal IP disclosure findings on private networks
+- **Schema Version Constant**: New `SCHEMA_VERSION` constant separate from app `VERSION` for report schema versioning
+
+### Changed
+
+- **TestSSL Timeout**: Increased default from 60s to 90s, now configurable via `timeout` parameter
+- **PCAP Paths**: Reports now use relative paths (`pcap_file`) for portability, with `pcap_file_abs` for internal use
+- **siem.py**: `enrich_vulnerability_severity()` adds `severity_note` and `potential_false_positives` fields when applicable
+
 ## [3.1.3] - 2025-12-15 (Async UDP & Topology)
 
 ### Added
