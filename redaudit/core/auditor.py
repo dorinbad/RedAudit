@@ -140,6 +140,13 @@ class InteractiveNetworkAuditor:
             "net_discovery_enabled": False,
             "net_discovery_protocols": None,  # None = all, or list like ["dhcp", "netbios"]
             "net_discovery_redteam": False,
+            "net_discovery_interface": None,
+            "net_discovery_max_targets": 50,
+            "net_discovery_snmp_community": "public",
+            "net_discovery_dns_zone": None,
+            "net_discovery_kerberos_realm": None,
+            "net_discovery_kerberos_userlist": None,
+            "net_discovery_active_l2": False,
         }
 
         self.encryption_enabled = False
@@ -658,6 +665,41 @@ class InteractiveNetworkAuditor:
         else:
             self.print_status(self.t("no_nets_auto"), "WARNING")
             return [self.ask_manual_network()]
+
+    def _select_net_discovery_interface(self) -> Optional[str]:
+        explicit = self.config.get("net_discovery_interface")
+        if isinstance(explicit, str) and explicit.strip():
+            return explicit.strip()
+
+        nets = self.results.get("network_info", []) or []
+        targets = []
+        for token in self.config.get("target_networks", []) or []:
+            try:
+                targets.append(ipaddress.ip_network(str(token), strict=False))
+            except Exception:
+                continue
+
+        for t in targets:
+            for n in nets:
+                iface = n.get("interface")
+                net_str = n.get("network")
+                if not iface or not net_str:
+                    continue
+                try:
+                    net_obj = ipaddress.ip_network(str(net_str), strict=False)
+                    if net_obj.version != t.version:
+                        continue
+                    if t.overlaps(net_obj):
+                        return iface
+                except Exception:
+                    continue
+
+        for n in nets:
+            iface = n.get("interface")
+            if iface:
+                return iface
+
+        return None
 
     # ---------- Scanning ----------
 
@@ -1657,11 +1699,22 @@ class InteractiveNetworkAuditor:
 
                     self.current_phase = "net_discovery"
                     self.print_status(self.t("net_discovery_start"), "INFO")
+
+                    iface = self._select_net_discovery_interface()
+                    redteam_options = {
+                        "max_targets": self.config.get("net_discovery_max_targets", 50),
+                        "snmp_community": self.config.get("net_discovery_snmp_community", "public"),
+                        "dns_zone": self.config.get("net_discovery_dns_zone"),
+                        "kerberos_realm": self.config.get("net_discovery_kerberos_realm"),
+                        "kerberos_userlist": self.config.get("net_discovery_kerberos_userlist"),
+                        "active_l2": bool(self.config.get("net_discovery_active_l2", False)),
+                    }
                     self.results["net_discovery"] = discover_networks(
                         target_networks=self.config.get("target_networks", []),
-                        interface=None,  # Auto-detect
+                        interface=iface,  # Best-effort auto-detect
                         protocols=self.config.get("net_discovery_protocols"),
                         redteam=self.config.get("net_discovery_redteam", False),
+                        redteam_options=redteam_options,
                         extra_tools=self.extra_tools,
                         logger=self.logger,
                     )

@@ -6,6 +6,16 @@
 
 RedAudit implementa una filosofía de "seguro por diseño", asumiendo la ejecución en entornos hostiles o no confiables. Este documento describe los controles de seguridad relacionados con el manejo de entrada, criptografía y seguridad operacional.
 
+## Versiones soportadas
+
+| Versión | Soportada | Estado |
+| ------- | --------- | ------ |
+| 3.2.x   | Sí        | Estable actual |
+| 3.1.x   | Solo fixes de seguridad | Mantenimiento |
+| 2.9.x   | Solo fixes de seguridad | EOL: Marzo 2026 |
+| 2.8.x   | No        | EOL |
+| < 2.8   | No        | EOL |
+
 ## 1. Sanitización de Entrada
 
 Todas las entradas externas—rangos objetivo, nombres de host, nombres de interfaz—se tratan como no confiables y se someten a validación estricta.
@@ -80,7 +90,14 @@ RedAudit soporta almacenar claves API de NVD para correlación CVE:
 
 Los usuarios deben tratar el archivo de configuración como sensible. La clave API otorga límites de velocidad incrementados pero no proporciona acceso a datos privados.
 
-## 9. Licencia
+## 9. Limitaciones conocidas
+
+- **Requiere root/sudo**: Necesario para sockets raw (nmap, tcpdump)
+- **Sin sandboxing**: Las herramientas externas se ejecutan con privilegios del sistema
+- **Huella de red**: Los escaneos generan tráfico significativo
+- **Recon opcional**: `--net-discovery` / `--redteam` pueden invocar tooling broadcast/L2 adicional (best-effort; solo con autorización explícita)
+
+## 10. Licencia
 
 Este modelo de seguridad es parte del proyecto RedAudit y está cubierto por la  
 **GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../../LICENSE) para el texto completo.

@@ -1,8 +1,8 @@
-# Manual de Usuario de RedAudit v3.1.4 (ES)
+# Manual de Usuario de RedAudit v3.2.0 (ES)
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
-**Versión:** 3.1.4  
+**Versión:** 3.2.0  
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas / redes  
 **Licencia:** GPLv3
 
@@ -63,6 +63,7 @@ RedAudit no explota vulnerabilidades por sí mismo. Su función es ofrecer visib
 - Limitación de velocidad y jitter configurables.
 - Defaults persistentes guardados en `~/.redaudit/config.json` (opcional, para automatización).
 - Descubrimiento de topología opcional (ARP/VLAN/LLDP + gateway/rutas) para contexto L2 y pistas de "redes ocultas".
+- Descubrimiento de red mejorado opcional (`--net-discovery`) con señales broadcast/L2 y un bloque de recon `--redteam` (best-effort).
 - Mensajes bilingües (inglés / español).
 
 ---
@@ -294,6 +295,15 @@ Las opciones más importantes:
 | `--no-topology`              | Desactiva descubrimiento de topología (anula defaults persistentes). **(v3.1+)**                                       |
 | `--topology-only`            | Ejecuta solo topología (omite escaneo de hosts). **(v3.1+)**                                                           |
 | `--save-defaults`            | Guarda ajustes CLI como defaults persistentes (`~/.redaudit/config.json`). **(v3.1+)**                                  |
+| `--net-discovery [PROTO,...]` | Activa descubrimiento de red mejorado (all, o lista: dhcp,netbios,mdns,upnp,arp,fping). **(v3.2+)**                 |
+| `--redteam`                  | Incluye bloque opt-in de recon Red Team en net discovery (best-effort, más lento/más ruido). **(v3.2+)**              |
+| `--net-discovery-interface IFACE` | Interfaz para net discovery y capturas L2 (ej: eth0). **(v3.2+)**                                                 |
+| `--redteam-max-targets N`    | Máximo de IPs muestreadas para checks redteam (1-500, defecto: 50). **(v3.2+)**                                       |
+| `--snmp-community COMMUNITY` | Comunidad SNMP para SNMP walking (defecto: public). **(v3.2+)**                                                       |
+| `--dns-zone ZONE`            | Pista de zona DNS para intento AXFR (ej: corp.local). **(v3.2+)**                                                     |
+| `--kerberos-realm REALM`     | Pista de realm Kerberos (ej: CORP.LOCAL). **(v3.2+)**                                                                 |
+| `--kerberos-userlist PATH`   | Lista opcional de usuarios para userenum Kerberos (requiere kerbrute; solo con autorización). **(v3.2+)**             |
+| `--redteam-active-l2`        | Activa checks L2 adicionales potencialmente más ruidosos (bettercap/scapy sniff; requiere root). **(v3.2+)**          |
 | `--skip-update-check`        | Omitir la verificación de actualizaciones al iniciar.                                                             |
 | `--ipv6`                     | Activa modo solo IPv6. **(v3.0)**                                                                                 |
 | `--proxy URL`                | Proxy SOCKS5 para pivoting (ej: `socks5://host:1080`). **(v3.0)**                                                 |
@@ -339,6 +349,16 @@ sudo redaudit \
   --rate-limit 2 \
   --prescan \
   --yes
+```
+
+**4. Descubrimiento de red mejorado (v3.2)**
+
+```bash
+# Solo descubrimiento broadcast
+sudo redaudit --target 192.168.1.0/24 --net-discovery --yes
+
+# Con recon redteam opt-in (best-effort)
+sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
 ```
 
 ---
@@ -558,10 +578,20 @@ RedAudit orquesta varias herramientas de terceros. Resumen:
 | `wget`       | Puerto HTTP/HTTPS detectado             | Todos                | `vulnerabilities[].wget_headers`         |
 | `openssl`    | Puerto HTTPS detectado                  | Todos                | `vulnerabilities[].tls_info`             |
 | `testssl.sh` | Puerto HTTPS detectado                  | `full`               | `vulnerabilities[].testssl_analysis`     |
-| `tcpdump`    | Escaneo profundo y herramienta disponible | Todos (si aplica)  | `deep_scan.pcap_capture`                 |
+| `tcpdump`    | Escaneo profundo (PCAP) o captura L2 con `--redteam` | Todos (si aplica) | `deep_scan.pcap_capture` / `net_discovery.redteam.*` |
 | `tshark`     | Tras capturar con tcpdump               | Todos (si aplica)    | `deep_scan.pcap_capture.tshark_summary`  |
 | `dig` / `host` | Tras el escaneo de puertos            | Todos                | `host.dns`                               |
 | `whois`      | Solo para IPs públicas                  | Todos                | `host.dns.whois_summary`                 |
+| `fping`      | `--net-discovery` activado              | Todos                | `net_discovery.alive_hosts`              |
+| `nbtscan`    | `--net-discovery netbios` activado      | Todos                | `net_discovery.netbios_hosts`            |
+| `netdiscover` | `--net-discovery arp` activado         | Todos                | `net_discovery.arp_hosts`                |
+| `avahi-browse` | `--net-discovery mdns` activado        | Todos                | `net_discovery.mdns_services`            |
+| `snmpwalk`   | `--redteam` activado                    | Todos                | `net_discovery.redteam.snmp`             |
+| `enum4linux` | `--redteam` activado (SMB)              | Todos                | `net_discovery.redteam.smb`              |
+| `rpcclient`  | `--redteam` activado (RPC)              | Todos                | `net_discovery.redteam.rpc`              |
+| `ldapsearch` | `--redteam` activado (LDAP)             | Todos                | `net_discovery.redteam.ldap`             |
+| `kerbrute`   | `--redteam` activado (Kerberos; lista)  | Todos                | `net_discovery.redteam.kerberos.userenum` |
+| `masscan`    | `--redteam` activado (opcional)         | Todos                | `net_discovery.redteam.masscan`          |
 
 RedAudit no modifica la configuración de estas herramientas; las invoca con parámetros explícitos y analiza su salida.
 

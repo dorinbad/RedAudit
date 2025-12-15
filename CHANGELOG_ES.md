@@ -11,6 +11,18 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (pendiente)
 
+## [3.2.0] - 2025-12-15 (Descubrimiento de Red Mejorado)
+
+### Añadido
+
+- **Descubrimiento de Red Mejorado (v3.2)**: Nuevo bloque `net_discovery` en reportes con descubrimiento DHCP/NetBIOS/mDNS/UPNP/ARP/fping y análisis de VLANs candidatas (`--net-discovery`).
+- **Recon Red Team (con guardas)**: Recon opt-in bajo `--redteam` con best-effort SNMP/SMB/RPC/LDAP/Kerberos/DNS + señales L2 pasivas en `net_discovery.redteam`.
+- **Nuevos flags de tuning**: `--net-discovery-interface`, `--redteam-max-targets`, `--snmp-community`, `--dns-zone`, `--kerberos-realm`, `--kerberos-userlist`, `--redteam-active-l2`.
+
+### Cambiado
+
+- **Versión**: Actualizada a 3.2.0.
+
 ## [3.1.4] - 2025-12-15 (Calidad de salida)
 
 ### Añadido

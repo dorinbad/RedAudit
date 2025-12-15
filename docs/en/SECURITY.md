@@ -23,7 +23,8 @@ If you discover a security vulnerability in RedAudit, please report it responsib
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 3.1.x   | Yes                | Current stable |
+| 3.2.x   | Yes                | Current stable |
+| 3.1.x   | Security fixes only | Maintenance |
 | 2.9.x   | Security fixes only | EOL: March 2026 |
 | 2.8.x   | No                 | EOL |
 | < 2.8   | No                 | EOL |
@@ -116,6 +117,7 @@ Users should treat the config file as sensitive. The API key grants increased ra
 - **Requires root/sudo**: Necessary for raw socket access (nmap, tcpdump)
 - **No sandboxing**: External tools run with full system privileges
 - **Network visibility**: Scans generate significant network traffic
+- **Optional recon features**: `--net-discovery` / `--redteam` may invoke additional broadcast/L2 tooling (best-effort; use only with explicit authorization)
 
 Users should only run RedAudit in authorized, controlled environments.
 

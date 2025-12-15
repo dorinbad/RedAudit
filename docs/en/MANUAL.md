@@ -1,8 +1,8 @@
-# RedAudit v3.1.4 – User Manual (EN)
+# RedAudit v3.2.0 – User Manual (EN)
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/MANUAL.md)
 
-**Version:** 3.1.4  
+**Version:** 3.2.0  
 **Target audience:** Security analysts, penetration testers, systems / network administrators  
 **License:** GPLv3
 
@@ -63,6 +63,7 @@ RedAudit is not an exploit framework and does not perform automatic exploitation
 - Rate-limiting and jitter to control scan noise.
 - Persistent defaults stored in `~/.redaudit/config.json` (optional, for automation).
 - Optional topology discovery (ARP/VLAN/LLDP + gateway/routes) for L2 context and "hidden network" hints.
+- Optional enhanced network discovery (`--net-discovery`) with broadcast/L2 signals and an opt-in `redteam` recon block (best-effort).
 - Bilingual messages (English / Spanish).
 
 ---
@@ -290,6 +291,15 @@ The most important options:
 | `--no-topology`             | Disable topology discovery (override persisted defaults). **(v3.1+)**                                                 |
 | `--topology-only`           | Run topology discovery only (skip host scanning). **(v3.1+)**                                                         |
 | `--save-defaults`           | Save current CLI settings as persistent defaults (`~/.redaudit/config.json`). **(v3.1+)**                             |
+| `--net-discovery [PROTO,...]` | Enable enhanced network discovery (all, or comma-separated: dhcp,netbios,mdns,upnp,arp,fping). **(v3.2+)**       |
+| `--redteam`                 | Include opt-in Red Team recon block for net discovery (best-effort, slower/noisier). **(v3.2+)**                      |
+| `--net-discovery-interface IFACE` | Interface for net discovery and L2 captures (e.g., eth0). **(v3.2+)**                                           |
+| `--redteam-max-targets N`   | Max target IPs sampled for redteam checks (1-500, default: 50). **(v3.2+)**                                           |
+| `--snmp-community COMMUNITY` | SNMP community for SNMP walking (default: public). **(v3.2+)**                                                       |
+| `--dns-zone ZONE`           | DNS zone hint for AXFR attempt (e.g., corp.local). **(v3.2+)**                                                        |
+| `--kerberos-realm REALM`    | Kerberos realm hint (e.g., CORP.LOCAL). **(v3.2+)**                                                                   |
+| `--kerberos-userlist PATH`  | Optional userlist for Kerberos userenum (requires kerbrute; use only with authorization). **(v3.2+)**                 |
+| `--redteam-active-l2`       | Enable additional L2-focused checks that may be noisier (bettercap/scapy sniff; requires root). **(v3.2+)**           |
 | `--skip-update-check`       | Skip the update check prompt at startup.                                                                          |
 | `--ipv6`                    | Enable IPv6-only scanning mode. **(v3.0)**                                                                        |
 | `--proxy URL`               | SOCKS5 proxy for pivoting (e.g., `socks5://host:1080`). **(v3.0)**                                                |
@@ -335,6 +345,16 @@ sudo redaudit \
   --rate-limit 2 \
   --prescan \
   --yes
+```
+
+**4. Enhanced network discovery (v3.2)**
+
+```bash
+# Broadcast discovery only
+sudo redaudit --target 192.168.1.0/24 --net-discovery --yes
+
+# With opt-in redteam recon (best-effort)
+sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
 ```
 
 ---
@@ -554,10 +574,20 @@ RedAudit orchestrates multiple third-party tools. The following list is not exha
 | `wget`       | HTTP/HTTPS port detected                 | All                  | `vulnerabilities[].wget_headers`         |
 | `openssl`    | HTTPS port detected                      | All                  | `vulnerabilities[].tls_info`             |
 | `testssl.sh` | HTTPS port detected                      | `full`               | `vulnerabilities[].testssl_analysis`     |
-| `tcpdump`    | Deep scan enabled and tcpdump available  | All (if triggered)   | `deep_scan.pcap_capture`                 |
+| `tcpdump`    | Deep scan enabled (PCAP) or `--redteam` L2 capture | All (if triggered) | `deep_scan.pcap_capture` / `net_discovery.redteam.*` |
 | `tshark`     | After tcpdump capture                    | All (if triggered)   | `deep_scan.pcap_capture.tshark_summary`  |
 | `dig` / `host` | After port scan                        | All                  | `host.dns`                               |
 | `whois`      | Public IPs only                          | All                  | `host.dns.whois_summary`                 |
+| `fping`      | `--net-discovery` enabled                | All                  | `net_discovery.alive_hosts`              |
+| `nbtscan`    | `--net-discovery netbios` enabled        | All                  | `net_discovery.netbios_hosts`            |
+| `netdiscover` | `--net-discovery arp` enabled           | All                  | `net_discovery.arp_hosts`                |
+| `avahi-browse` | `--net-discovery mdns` enabled          | All                  | `net_discovery.mdns_services`            |
+| `snmpwalk`   | `--redteam` enabled                      | All                  | `net_discovery.redteam.snmp`             |
+| `enum4linux` | `--redteam` enabled (SMB)                | All                  | `net_discovery.redteam.smb`              |
+| `rpcclient`  | `--redteam` enabled (RPC)                | All                  | `net_discovery.redteam.rpc`              |
+| `ldapsearch` | `--redteam` enabled (LDAP)               | All                  | `net_discovery.redteam.ldap`             |
+| `kerbrute`   | `--redteam` enabled (Kerberos; userlist) | All                  | `net_discovery.redteam.kerberos.userenum` |
+| `masscan`    | `--redteam` enabled (optional)           | All                  | `net_discovery.redteam.masscan`          |
 
 RedAudit does not modify the configuration of these tools; it calls them with explicit arguments and parses their output.
 

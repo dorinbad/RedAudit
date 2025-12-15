@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, Optional
 
-from redaudit.utils.constants import VERSION, SECURE_FILE_MODE
+from redaudit.utils.constants import SCHEMA_VERSION, VERSION, SECURE_FILE_MODE
 from redaudit.core.crypto import encrypt_data
 from redaudit.core.entity_resolver import reconcile_assets
 from redaudit.core.siem import enrich_report_for_siem
@@ -54,8 +54,8 @@ def generate_summary(
 
     results["summary"] = summary
 
-    # v3.1: Updated SIEM-compatible fields
-    results["schema_version"] = "3.1"
+    # v3.1+: Updated SIEM-compatible fields
+    results["schema_version"] = SCHEMA_VERSION
     results["generated_at"] = datetime.now().isoformat()
     results["event_type"] = "redaudit.scan.complete"
     results["session_id"] = str(uuid.uuid4())

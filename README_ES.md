@@ -4,7 +4,7 @@
 
 RedAudit es una herramienta CLI para auditoría de red estructurada y hardening en sistemas Kali/Debian.
 
-![Version](https://img.shields.io/badge/version-3.1.4-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-3.2.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-red?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 ![CI/CD](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg?style=flat-square)
@@ -15,7 +15,7 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_ 
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.1.4
+                                      v3.2.0
       Herramienta Interactiva de Auditoría de Red
 ```
 
@@ -33,6 +33,7 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Filtrado Smart-Check de Falsos Positivos**: Verificación de 3 capas (Content-Type, checks de tamaño, validación magic bytes) reduce ruido Nikto en 90%
 - **Cross-Validation (v3.1.4)**: Detecta falsos positivos de Nikto comparando hallazgos con cabeceras curl/wget
 - **Títulos Descriptivos (v3.1.4)**: Los títulos de hallazgos ahora describen el tipo de problema, no solo la URL
+- **Descubrimiento de Red Mejorado (v3.2)**: Descubrimiento broadcast/L2 opcional (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) + bloque de recon Red Team con guardas en reportes
 - **Descubrimiento de Topología de Red**: Mapeo best-effort L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas
 - **Inteligencia CVE**: Integración NVD API 2.0 con matching CPE 2.3, caché de 7 días, y finding IDs determinísticos
 - **Exportaciones SIEM**: Auto-generación de archivos planos JSONL (findings, assets, summary) con cumplimiento ECS v8.11
@@ -133,7 +134,7 @@ Verifica la integridad de la instalación:
 which redaudit  # Debe devolver: /usr/local/bin/redaudit
 
 # 2. Verificar versión
-redaudit --version  # Debe mostrar: RedAudit v3.1.4
+redaudit --version  # Debe mostrar: RedAudit v3.2.0
 
 # 3. Verificar dependencias core
 command -v nmap && command -v tcpdump && command -v python3  # Todos deben existir
@@ -246,10 +247,27 @@ sudo redaudit --target 192.168.1.0/24 --mode normal --threads 8 \
 # Las ejecuciones futuras reutilizarán estos ajustes automáticamente
 ```
 
+#### Descubrimiento de Red Mejorado v3.2
+
+```bash
+# 18. Descubrimiento basado en broadcast (DHCP/NetBIOS/mDNS/UPNP/ARP/fping)
+sudo redaudit --target 192.168.1.0/24 --net-discovery --yes
+
+# 19. Seleccionar solo algunos protocolos
+sudo redaudit --target 192.168.1.0/24 --net-discovery dhcp,netbios --yes
+
+# 20. Incluir bloque opcional de recon Red Team (best-effort)
+sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam --yes
+
+# 21. Tuning opcional (interfaz + límites)
+sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam \
+  --net-discovery-interface eth0 --redteam-max-targets 50 --snmp-community public --yes
+```
+
 #### Workflows del Mundo Real
 
 ```bash
-# 18. Workflow de auditoría semanal
+# 22. Workflow de auditoría semanal
 # Paso 1: Escaneo baseline
 sudo redaudit --target 192.168.0.0/16 --mode normal --yes
 # Paso 2: Comparación semanal
@@ -257,11 +275,11 @@ sudo redaudit --target 192.168.0.0/16 --mode normal --yes
 redaudit --diff ~/Documents/RedAuditReports/RedAudit_BASELINE/redaudit_*.json \
               ~/Documents/RedAuditReports/RedAudit_LATEST/redaudit_*.json
 
-# 19. Auditoría de red empresarial multi-VLAN
+# 23. Auditoría de red empresarial multi-VLAN
 sudo redaudit --target "10.10.0.0/16,10.20.0.0/16,10.30.0.0/16" \
   --mode normal --topology --threads 10 --rate-limit 0.5 --yes
 
-# 20. Verificación post-escaneo y exportación
+# 24. Verificación post-escaneo y exportación
 sudo redaudit --target 192.168.1.0/24 --mode full --cve-lookup --yes
 # Verificar que se generaron exportaciones JSONL
 ls -lh ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl
@@ -291,6 +309,15 @@ cat ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl | tu-herramienta-inges
 - `--no-topology`: Desactivar descubrimiento de topología (anula defaults persistentes) **(v3.1+)**
 - `--topology-only`: Ejecutar solo topología (omitir escaneo de hosts) **(v3.1+)**
 - `--save-defaults`: Guardar ajustes CLI como defaults persistentes (`~/.redaudit/config.json`) **(v3.1+)**
+- `--net-discovery [PROTO,...]`: Activar descubrimiento de red mejorado (all, o lista: dhcp,netbios,mdns,upnp,arp,fping) **(v3.2+)**
+- `--redteam`: Incluir bloque opcional de recon Red Team en net discovery **(v3.2+)**
+- `--net-discovery-interface IFACE`: Interfaz para net discovery y capturas L2 (ej: eth0) **(v3.2+)**
+- `--redteam-max-targets N`: Máximo de IPs muestreadas para checks redteam (1-500, defecto: 50) **(v3.2+)**
+- `--snmp-community COMMUNITY`: Comunidad SNMP para SNMP walking (defecto: public) **(v3.2+)**
+- `--dns-zone ZONE`: Pista de zona DNS para intento AXFR (ej: corp.local) **(v3.2+)**
+- `--kerberos-realm REALM`: Pista de realm Kerberos (ej: CORP.LOCAL) **(v3.2+)**
+- `--kerberos-userlist PATH`: Lista opcional de usuarios para userenum Kerberos (requiere kerbrute) **(v3.2+)**
+- `--redteam-active-l2`: Activar checks L2 adicionales potencialmente más ruidosos (bettercap/scapy sniff; requiere root) **(v3.2+)**
 - `--skip-update-check`: Omitir verificación de actualizaciones al iniciar
 - `--yes, -y`: Saltar advertencia legal (usar con precaución)
 - `--lang`: Idioma (en/es)

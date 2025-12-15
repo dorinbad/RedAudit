@@ -266,7 +266,54 @@ Examples:
     parser.add_argument(
         "--redteam",
         action="store_true",
-        help="Include Red Team discovery techniques (SNMP/SMB enum, slower/noisier)",
+        help="Include Red Team discovery techniques (best-effort, slower/noisier)",
+    )
+    parser.add_argument(
+        "--net-discovery-interface",
+        type=str,
+        metavar="IFACE",
+        default=None,
+        help="Network interface for net discovery and L2 captures (e.g., eth0)",
+    )
+    parser.add_argument(
+        "--redteam-max-targets",
+        type=int,
+        metavar="N",
+        default=50,
+        help="Max target IPs sampled for redteam checks (1-500, default: 50)",
+    )
+    parser.add_argument(
+        "--snmp-community",
+        type=str,
+        metavar="COMMUNITY",
+        default="public",
+        help="SNMP community for SNMP walking (default: public)",
+    )
+    parser.add_argument(
+        "--dns-zone",
+        type=str,
+        metavar="ZONE",
+        default=None,
+        help="DNS zone for AXFR attempt (e.g., corp.local). If omitted, DHCP domain is used when available",
+    )
+    parser.add_argument(
+        "--kerberos-realm",
+        type=str,
+        metavar="REALM",
+        default=None,
+        help="Kerberos realm hint (e.g., CORP.LOCAL). If omitted, attempts best-effort discovery",
+    )
+    parser.add_argument(
+        "--kerberos-userlist",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="Optional userlist for Kerberos userenum (requires kerbrute; use only with authorization)",
+    )
+    parser.add_argument(
+        "--redteam-active-l2",
+        action="store_true",
+        help="Enable additional L2-focused checks that may be noisier (bettercap/scapy sniff; requires root)",
     )
 
     return parser.parse_args()
@@ -384,6 +431,16 @@ def configure_from_args(app, args) -> bool:
         else:
             app.config["net_discovery_protocols"] = None  # All protocols
     app.config["net_discovery_redteam"] = args.redteam
+    app.config["net_discovery_interface"] = (
+        args.net_discovery_interface.strip() if args.net_discovery_interface else None
+    )
+    if isinstance(args.redteam_max_targets, int) and 1 <= args.redteam_max_targets <= 500:
+        app.config["net_discovery_max_targets"] = args.redteam_max_targets
+    app.config["net_discovery_snmp_community"] = args.snmp_community
+    app.config["net_discovery_dns_zone"] = args.dns_zone
+    app.config["net_discovery_kerberos_realm"] = args.kerberos_realm
+    app.config["net_discovery_kerberos_userlist"] = args.kerberos_userlist
+    app.config["net_discovery_active_l2"] = bool(args.redteam_active_l2)
 
     # Setup encryption if requested
     if args.encrypt:

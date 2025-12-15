@@ -28,7 +28,7 @@ El contenedor de nivel superior para la sesión de escaneo.
 
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `schema_version` | `string` | Versión del esquema ("3.1") |
+| `schema_version` | `string` | Versión del esquema ("3.2") |
 | `generated_at` | `string` | Marca de tiempo de generación (ISO 8601) **(v3.1)** |
 | `event_type` | `string` | Tipo de evento para ingesta SIEM ("redaudit.scan.complete") |
 | `session_id` | `string` | UUID único para esta sesión de escaneo |
@@ -65,7 +65,7 @@ El descubrimiento de red es **best-effort**: herramientas faltantes reducirán l
 | `mdns_services` | array | Servicios mDNS/Bonjour descubiertos |
 | `upnp_devices` | array | Dispositivos UPNP descubiertos |
 | `candidate_vlans` | array | Potenciales redes de invitados/VLANs detectadas |
-| `redteam` | object | (Opcional) Resultados de descubrimiento Red Team (SNMP/SMB/masscan) |
+| `redteam` | object | (Opcional) Resultados de recon Red Team (SNMP/SMB/RPC/LDAP/Kerberos/DNS + señales L2 pasivas) |
 | `errors` | array | Errores best-effort encontrados |
 
 **Entradas dhcp_servers[]:**
@@ -76,6 +76,8 @@ El descubrimiento de red es **best-effort**: herramientas faltantes reducirán l
 | `subnet` | string | Máscara de subred ofrecida |
 | `gateway` | string | Gateway por defecto ofrecido |
 | `dns` | array | Servidores DNS ofrecidos |
+| `domain` | string | (Opcional) Pista de dominio desde DHCP (best-effort) |
+| `domain_search` | string | (Opcional) Pista de búsqueda de dominio desde DHCP (best-effort) |
 
 **Entradas netbios_hosts[]:**
 
@@ -99,12 +101,25 @@ El descubrimiento de red es **best-effort**: herramientas faltantes reducirán l
 
 | Campo | Tipo | Descripción |
 |---|---|---|
+| `enabled` | boolean | Siempre true cuando el bloque está presente |
+| `interface` | string | (Opcional) Interfaz usada para capturas L2 (si se define) |
 | `targets_considered` | integer | Número de objetivos candidatos seleccionados para checks Red Team |
 | `targets_sample` | array | Muestra de IPs objetivo (primeras 10) |
 | `snmp` | object | Resumen de enumeración SNMP (best-effort, solo lectura) |
 | `smb` | object | Resumen de enumeración SMB (best-effort, solo lectura) |
+| `rpc` | object | Resumen de enumeración RPC (best-effort) |
+| `ldap` | object | Resumen RootDSE LDAP (best-effort) |
+| `kerberos` | object | Descubrimiento de realm Kerberos + userenum opcional (best-effort) |
+| `dns_zone_transfer` | object | Resumen de intento AXFR DNS (best-effort; requiere pista de zona) |
 | `masscan` | object | Resumen opcional de masscan (requiere root; se omite en rangos grandes) |
-| `vlan_enum` | object | Estado de probing VLAN (omitido por defecto) |
+| `vlan_enum` | object | Pistas de VLAN/DTP (pasivo; requiere tcpdump + root) |
+| `stp_topology` | object | Pistas BPDU STP (pasivo; requiere tcpdump + root) |
+| `hsrp_vrrp` | object | Pistas presencia HSRP/VRRP (pasivo; requiere tcpdump + root) |
+| `llmnr_nbtns` | object | Muestras de queries LLMNR/NBT-NS (pasivo; requiere tcpdump + root) |
+| `router_discovery` | object | Routers multicast candidatos (best-effort) |
+| `ipv6_discovery` | object | Muestra caché de vecinos IPv6 (best-effort) |
+| `bettercap_recon` | object | Salida opcional de bettercap (requiere opt-in explícito) |
+| `scapy_custom` | object | Bloque opcional de sniff pasivo con scapy (requiere opt-in explícito) |
 
 ### Objeto Host
 

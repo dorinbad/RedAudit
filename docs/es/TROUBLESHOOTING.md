@@ -133,4 +133,23 @@ curl --socks5 pivot-host:1080 http://example.com
 # Correcto: --proxy socks5://host:port
 ```
 
+### 12. Net discovery / redteam muestra muchos "tool_missing" (v3.2)
+
+**Síntoma**: El bloque `net_discovery` contiene errores como `tool_missing`, o sub-bloques de redteam aparecen como omitidos.
+
+**Causa**: El descubrimiento de red mejorado es best-effort y depende de herramientas del sistema (opcionales). Algunas capturas L2 también requieren root.
+
+**Resolución** (los nombres de paquetes pueden variar por distro):
+
+```bash
+sudo apt update
+sudo apt install -y fping nbtscan netdiscover avahi-utils snmp ldap-utils samba-common-bin dnsutils tcpdump masscan
+```
+
+Si la captura L2 se omite por detección de interfaz, especifícala:
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
+```
+
 RedAudit y esta guía de solución de problemas son parte de un proyecto licenciado bajo GPLv3. Consulta [LICENSE](../../LICENSE).

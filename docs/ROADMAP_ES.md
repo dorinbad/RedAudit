@@ -10,7 +10,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 | :--- | :--- | :--- | :--- |
 | **Alta** | **Descubrimiento de Topología de Red** | ✅ Implementado (best-effort) | Descubrimiento de topología opcional (ARP/VLAN/LLDP + gateway/rutas) orientado a pistas de "redes ocultas" y contexto L2. |
 | **Alta** | **Puertos UDP Configurables** | ✅ Implementado | Añadido flag CLI `--udp-ports N` (rango: 50-500, defecto: 100) para cobertura UDP ajustable en modo UDP full de identidad. |
-| **Alta** | **Descubrimiento de Red Mejorado (v3.2)** | 🔄 EN PROGRESO | Descubrimiento activo de redes de invitados y VLANs vía protocolos broadcast. Módulo core implementado, Red Team pendiente. |
+| **Alta** | **Descubrimiento de Red Mejorado (v3.2)** | ✅ Implementado (best-effort) | Descubrimiento activo de redes de invitados y VLANs vía protocolos broadcast (estándar + recon Red Team opcional). |
 | **Media** | **Descubrimiento NetBIOS/mDNS** | ✅ Implementado (v3.2) | Consultas activas de hostname (puerto 137/5353) para mejorar resolución de entidades. |
 | **Media** | **Contenedorización** | Aparcado | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
 | **Baja** | **Ampliar Configuración Persistente** | ✅ Implementado (inicial) | Extendido `~/.redaudit/config.json` más allá de la clave NVD (defaults comunes: hilos/salida/rate-limit/UDP/topología/idioma). |
@@ -19,10 +19,10 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 
 **Objetivo**: Detectar redes de invitados, VLANs ocultas y servidores DHCP adicionales no visibles desde el segmento de red principal.
 
-**Progreso Actual (v3.2-dev)**:
+**Progreso Actual (v3.2)**:
 
 - ✅ Módulo core: `redaudit/core/net_discovery.py`
-- ✅ Flags CLI: `--net-discovery`, `--redteam`
+- ✅ Flags CLI: `--net-discovery`, `--redteam` (+ flags opcionales de tuning)
 - ✅ Descubrimiento DHCP vía nmap
 - ✅ Sweep Fping
 - ✅ Descubrimiento NetBIOS (nbtscan/nmap)
@@ -30,7 +30,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 - ✅ Descubrimiento de dispositivos UPNP
 - ✅ Escaneo ARP Netdiscover
 - ✅ Análisis de VLANs candidatas
-- ✅ Red Team básico (v3.2): enumeración SNMP/SMB + sweep masscan con guardas
+- ✅ Recon Red Team (v3.2): SNMP/SMB/RPC/LDAP/Kerberos/DNS + capturas L2 pasivas (con guardas; best-effort)
 
 **Herramientas de Descubrimiento Estándar (Implementadas)**:
 
@@ -43,25 +43,25 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 | **Sweep Fping** | `fping -a -g <rango>` | ✅ |
 | **Descubrimiento UPNP** | `nmap --script broadcast-upnp-info` | ✅ |
 
-**Técnicas Red Team / Pentesting (Planificadas/En Progreso)**:
+**Técnicas Red Team / Pentesting (Implementadas - best-effort)**:
 
 | Técnica | Herramienta | Estado | Qué Detecta |
 | :--- | :--- | :--- | :--- |
 | **SNMP Walking** | `snmpwalk -v2c -c public <ip>` | ✅ Implementado (v3.2) | Mapeo de puertos de switch, asignaciones VLAN, tablas ARP |
 | **Enumeración SMB** | `enum4linux -a <ip>` / `crackmapexec smb` | ✅ Implementado (v3.2) | Shares Windows, usuarios, políticas de contraseña, dominios |
-| **Enumeración VLAN** | `yersinia -G` / `frogger` | 🔲 Planificado | IDs VLAN 802.1Q, negociación DTP, puertos trunk |
-| **Topología STP** | `yersinia -I eth0 -G stp` | 🔲 Planificado | Root bridges Spanning Tree, topología de red |
-| **Descubrimiento HSRP/VRRP** | `nmap --script broadcast-eigrp-discovery` | 🔲 Planificado | Redundancia de gateway, IPs virtuales, prioridades |
-| **LLMNR/NBT-NS** | `responder --analyze` (modo pasivo) | 🔲 Planificado | Peticiones de resolución de nombres Windows (solo recon) |
-| **Bettercap Recon** | `bettercap -eval "net.recon on"` | 🔲 Planificado | Descubrimiento de hosts, fingerprinting OS, análisis de tráfico |
-| **Masscan** | `masscan -p1-65535 --rate 10000` | 🔄 Parcial (con guardas) | Descubrimiento de puertos ultra-rápido en rangos grandes |
-| **Descubrimiento de Routers** | `nmap --script broadcast-igmp-discovery` | 🔲 Planificado | Routers multicast, IGMP snooping |
-| **Descubrimiento IPv6** | `nmap -6 --script targets-ipv6-multicast-*` | 🔲 Planificado | Hosts IPv6 vía multicast (link-local) |
-| **Scapy Custom** | Scripts Python Scapy | 🔲 Planificado | Paquetes 802.1Q personalizados, intentos de VLAN hopping |
-| **Enumeración RPC** | `rpcclient -U "" <ip>` | 🔲 Planificado | Servicios RPC Windows, enumeración de usuarios |
-| **Enumeración LDAP** | `ldapsearch` / `nmap --script ldap-*` | 🔲 Planificado | Info de Active Directory, usuarios, grupos |
-| **Enumeración Kerberos** | `kerbrute` / `nmap --script krb5-enum-users` | 🔲 Planificado | Usuarios AD válidos, objetivos Kerberoasting |
-| **Transferencia de Zona DNS** | `dig axfr @<dns> <dominio>` | 🔲 Planificado | Registros DNS internos, hostnames |
+| **Enumeración VLAN** | `tcpdump` (pasivo) / `scapy` (sniff pasivo opt-in) | ✅ Implementado (v3.2) | IDs VLAN 802.1Q observados + pistas DTP (best-effort) |
+| **Topología STP** | `tcpdump` (captura BPDU pasiva) | ✅ Implementado (v3.2) | Pistas de Spanning Tree (root/bridge IDs si son visibles) |
+| **Descubrimiento HSRP/VRRP** | `tcpdump` (captura pasiva) | ✅ Implementado (v3.2) | Presencia de protocolos de redundancia de gateway (best-effort) |
+| **LLMNR/NBT-NS** | `tcpdump` (captura pasiva) | ✅ Implementado (v3.2) | Peticiones de resolución de nombres Windows (solo recon) |
+| **Bettercap Recon** | `bettercap` (opt-in) | ✅ Implementado (v3.2) | Salida de recon opcional (con guardas; requiere flag explícito) |
+| **Masscan** | `masscan` | ✅ Implementado (con guardas) | Pistas rápidas de puertos para muestreo de objetivos (requiere root) |
+| **Descubrimiento de Routers** | `nmap --script broadcast-igmp-discovery` / `tcpdump` | ✅ Implementado (v3.2) | Routers multicast candidatos (best-effort) |
+| **Descubrimiento IPv6** | `ping6` + `ip -6 neigh` | ✅ Implementado (v3.2) | Vecinos IPv6 vía multicast + caché de vecinos (best-effort) |
+| **Scapy Custom** | `scapy` (solo sniff pasivo) | ✅ Implementado (v3.2) | Extensión de sniff 802.1Q pasiva (sin inyección de paquetes) |
+| **Enumeración RPC** | `rpcclient` / `nmap --script msrpc-enum` | ✅ Implementado (v3.2) | Pistas de servicios RPC Windows (best-effort) |
+| **Enumeración LDAP** | `ldapsearch` / `nmap --script ldap-rootdse` | ✅ Implementado (v3.2) | Info RootDSE AD/LDAP (best-effort) |
+| **Enumeración Kerberos** | `nmap --script krb5-info` (+ opcional `kerbrute userenum`) | ✅ Implementado (v3.2) | Descubrimiento de realm + userenum opcional (requiere lista explícita) |
+| **Transferencia de Zona DNS** | `dig axfr` (desde DNS por DHCP) | ✅ Implementado (v3.2) | Intento AXFR (requiere zona explícita o pista por DHCP) |
 | **Web Fingerprint** | `whatweb` / `wappalyzer` | ✅ (scanner.py) | Tecnologías web, frameworks, versiones |
 | **Análisis SSL/TLS** | `testssl.sh` | ✅ (scanner.py) | Problemas de certificados, debilidades de cifrado |
 
@@ -70,7 +70,14 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 ```bash
 redaudit --net-discovery --target 192.168.0.0/16 --yes   # Descubrimiento broadcast completo
 redaudit --net-discovery dhcp,netbios --target 10.0.0.0/8  # Solo protocolos específicos
-redaudit --net-discovery --redteam --target 10.0.0.0/8   # Incluir técnicas Red Team (más lento, más ruido)
+redaudit --net-discovery --redteam --target 10.0.0.0/8   # Incluir recon Red Team (más lento / más ruido)
+
+# Tuning opcional (v3.2)
+redaudit --net-discovery --redteam --net-discovery-interface eth0 --target 10.0.0.0/8 --yes
+redaudit --net-discovery --redteam --snmp-community public --redteam-max-targets 50 --target 10.0.0.0/8 --yes
+redaudit --net-discovery --redteam --dns-zone corp.local --target 10.0.0.0/8 --yes
+redaudit --net-discovery --redteam --kerberos-realm CORP.LOCAL --kerberos-userlist users.txt --target 10.0.0.0/8 --yes
+redaudit --net-discovery --redteam --redteam-active-l2 --net-discovery-interface eth0 --target 10.0.0.0/8 --yes
 ```
 
 **Salida**: Nuevo bloque `net_discovery` en el reporte JSON con servidores detectados, redes de invitados, mapeos VLAN y observaciones cross-VLAN.
@@ -121,7 +128,16 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 
 ## Hitos Completados
 
-### v3.1.4 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.2.0 (Completado - Diciembre 2025) -> **ACTUAL**
+
+*Versión centrada en descubrimiento de red mejorado (estándar + recon Red Team opcional), con documentación alineada.*
+
+- [x] **Descubrimiento de Red Mejorado**: `--net-discovery` añade descubrimiento DHCP/NetBIOS/mDNS/UPNP/ARP/fping con análisis de VLANs candidatas.
+- [x] **Recon Red Team (con guardas)**: SNMP/SMB/RPC/LDAP/Kerberos/DNS y capturas L2 pasivas detrás de `--redteam`.
+- [x] **Nuevos flags de tuning**: Selección de interfaz y límites seguros (`--net-discovery-interface`, `--redteam-max-targets`, etc.).
+- [x] **Documentación de esquema actualizada**: Bloques `net_discovery` y `redteam` documentados para v3.2.
+
+### v3.1.4 (Completado - Diciembre 2025)
 
 *Patch centrado en mejoras de calidad de salida para máximo scoring SIEM/IA.*
 

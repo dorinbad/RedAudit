@@ -59,9 +59,21 @@ def _check_tools() -> Dict[str, bool]:
         "nbtscan": bool(shutil.which("nbtscan")),
         "netdiscover": bool(shutil.which("netdiscover")),
         "avahi-browse": bool(shutil.which("avahi-browse")),
+        "tcpdump": bool(shutil.which("tcpdump")),
         "snmpwalk": bool(shutil.which("snmpwalk")),
         "enum4linux": bool(shutil.which("enum4linux")),
         "masscan": bool(shutil.which("masscan")),
+        "rpcclient": bool(shutil.which("rpcclient")),
+        "ldapsearch": bool(shutil.which("ldapsearch")),
+        "kerbrute": bool(shutil.which("kerbrute")),
+        "dig": bool(shutil.which("dig")),
+        "responder": bool(shutil.which("responder")),
+        "bettercap": bool(shutil.which("bettercap")),
+        "yersinia": bool(shutil.which("yersinia")),
+        "frogger": bool(shutil.which("frogger")),
+        "ip": bool(shutil.which("ip")),
+        "ping6": bool(shutil.which("ping6")),
+        "ping": bool(shutil.which("ping")),
     }
 
 
@@ -136,6 +148,21 @@ def dhcp_discover(
             match = re.search(r"Domain Name Server:\s*(\S+)", line)
             if match:
                 current_server.setdefault("dns", []).append(match.group(1))
+
+        # Best-effort domain hints (useful for DNS/AD enumeration).
+        if re.search(r"^Domain Name:\s*", line, re.IGNORECASE):
+            match = re.search(r"Domain Name:\s*(.+)", line, re.IGNORECASE)
+            if match:
+                domain = match.group(1).strip().strip('"')
+                if domain and domain.lower() != "local":
+                    current_server["domain"] = domain[:200]
+
+        if re.search(r"^Domain Search:\s*", line, re.IGNORECASE):
+            match = re.search(r"Domain Search:\s*(.+)", line, re.IGNORECASE)
+            if match:
+                search = match.group(1).strip().strip('"')
+                if search:
+                    current_server["domain_search"] = search[:200]
     
     if current_server.get("ip"):
         result["servers"].append(current_server)
@@ -418,6 +445,7 @@ def discover_networks(
     interface: Optional[str] = None,
     protocols: Optional[List[str]] = None,
     redteam: bool = False,
+    redteam_options: Optional[Dict[str, Any]] = None,
     extra_tools: Optional[Dict[str, str]] = None,
     logger=None,
 ) -> Dict[str, Any]:
@@ -517,7 +545,13 @@ def discover_networks(
     
     # Red Team techniques (optional)
     if redteam:
-        _run_redteam_discovery(result, target_networks, logger)
+        _run_redteam_discovery(
+            result,
+            target_networks,
+            interface=interface,
+            redteam_options=redteam_options,
+            logger=logger,
+        )
     
     return result
 
@@ -553,6 +587,8 @@ def _analyze_vlans(discovery_result: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _run_redteam_discovery(
     result: Dict[str, Any],
     target_networks: List[str],
+    interface: Optional[str] = None,
+    redteam_options: Optional[Dict[str, Any]] = None,
     logger=None,
 ) -> None:
     """
@@ -561,18 +597,80 @@ def _run_redteam_discovery(
     """
     tools = result.get("tools") or _check_tools()
 
-    target_ips = _gather_redteam_targets(result, max_targets=50)
+    options = redteam_options if isinstance(redteam_options, dict) else {}
+
+    max_targets = options.get("max_targets", 50)
+    if not isinstance(max_targets, int) or max_targets < 1 or max_targets > 500:
+        max_targets = 50
+
+    iface = _sanitize_iface(interface)
+
+    snmp_community = options.get("snmp_community", "public")
+    if not isinstance(snmp_community, str) or not snmp_community.strip():
+        snmp_community = "public"
+    snmp_community = snmp_community.strip()[:64]
+
+    dns_zone = _sanitize_dns_zone(options.get("dns_zone"))
+    kerberos_realm = _sanitize_dns_zone(options.get("kerberos_realm"))
+    kerberos_userlist = options.get("kerberos_userlist")
+    if not isinstance(kerberos_userlist, str) or not kerberos_userlist.strip():
+        kerberos_userlist = None
+
+    active_l2 = bool(options.get("active_l2", False))
+
+    target_ips = _gather_redteam_targets(result, max_targets=max_targets)
+
+    masscan = _redteam_masscan_sweep(target_networks, tools=tools, logger=logger)
+    open_tcp = _index_open_tcp_ports(masscan)
+
+    smb_targets = _filter_targets_by_port(target_ips, open_tcp, port=445, fallback_max=15)
+    rpc_targets = _filter_targets_by_any_port(target_ips, open_tcp, ports=[445, 135], fallback_max=15)
+    ldap_targets = _filter_targets_by_any_port(target_ips, open_tcp, ports=[389, 636], fallback_max=10)
+    kerberos_targets = _filter_targets_by_port(target_ips, open_tcp, port=88, fallback_max=10)
+
     redteam: Dict[str, Any] = {
         "enabled": True,
+        "interface": iface,
         "targets_considered": len(target_ips),
         "targets_sample": target_ips[:10],
-        "snmp": _redteam_snmp_walk(target_ips, tools=tools, logger=logger),
-        "smb": _redteam_smb_enum(target_ips, tools=tools, logger=logger),
-        "masscan": _redteam_masscan_sweep(target_networks, tools=tools, logger=logger),
-        "vlan_enum": {
-            "status": "skipped",
-            "reason": "Active VLAN/DTP/STP probing is intentionally not run by default.",
-        },
+        "masscan": masscan,
+        "snmp": _redteam_snmp_walk(
+            target_ips,
+            tools=tools,
+            community=snmp_community,
+            logger=logger,
+        ),
+        "smb": _redteam_smb_enum(smb_targets, tools=tools, logger=logger),
+        "rpc": _redteam_rpc_enum(rpc_targets, tools=tools, logger=logger),
+        "ldap": _redteam_ldap_enum(ldap_targets, tools=tools, logger=logger),
+        "kerberos": _redteam_kerberos_enum(
+            kerberos_targets,
+            tools=tools,
+            realm=kerberos_realm,
+            userlist_path=kerberos_userlist,
+            logger=logger,
+        ),
+        "dns_zone_transfer": _redteam_dns_zone_transfer(
+            result,
+            tools=tools,
+            zone=dns_zone,
+            logger=logger,
+        ),
+        "vlan_enum": _redteam_vlan_enum(iface, tools=tools, logger=logger),
+        "stp_topology": _redteam_stp_topology(iface, tools=tools, logger=logger),
+        "hsrp_vrrp": _redteam_hsrp_vrrp_discovery(iface, tools=tools, logger=logger),
+        "llmnr_nbtns": _redteam_llmnr_nbtns_capture(iface, tools=tools, logger=logger),
+        "router_discovery": _redteam_router_discovery(iface, tools=tools, logger=logger),
+        "ipv6_discovery": _redteam_ipv6_discovery(iface, tools=tools, logger=logger),
+        "bettercap_recon": _redteam_bettercap_recon(
+            iface, tools=tools, active_l2=active_l2, logger=logger
+        ),
+        "scapy_custom": _redteam_scapy_custom(
+            iface,
+            tools=tools,
+            active_l2=active_l2,
+            logger=logger,
+        ),
     }
     result["redteam"] = redteam
 
@@ -621,6 +719,76 @@ def _gather_redteam_targets(discovery_result: Dict[str, Any], max_targets: int =
                 candidates.append(ip_str)
 
     return _dedupe_preserve_order(candidates)[:max_targets]
+
+
+_IFACE_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9\-_]{0,31}$")
+
+
+def _sanitize_iface(iface: Optional[str]) -> Optional[str]:
+    if not isinstance(iface, str):
+        return None
+    iface = iface.strip()
+    if not iface or not _IFACE_RE.match(iface):
+        return None
+    return iface
+
+
+def _sanitize_dns_zone(zone: Any) -> Optional[str]:
+    if not isinstance(zone, str):
+        return None
+    zone = zone.strip().strip(".")
+    if not zone or len(zone) > 253:
+        return None
+    if ".." in zone:
+        return None
+    if not re.match(r"^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$", zone):
+        return None
+    return zone
+
+
+def _index_open_tcp_ports(masscan_result: Dict[str, Any]) -> Dict[str, set[int]]:
+    idx: Dict[str, set[int]] = {}
+    for entry in (masscan_result or {}).get("open_ports", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        ip_str = entry.get("ip")
+        port = entry.get("port")
+        proto = (entry.get("protocol") or "").lower()
+        if not isinstance(ip_str, str) or not _is_ipv4(ip_str):
+            continue
+        if not isinstance(port, int) or not (1 <= port <= 65535):
+            continue
+        if proto and proto != "tcp":
+            continue
+        idx.setdefault(ip_str, set()).add(port)
+    return idx
+
+
+def _filter_targets_by_port(
+    target_ips: List[str],
+    open_tcp: Dict[str, set[int]],
+    port: int,
+    fallback_max: int,
+) -> List[str]:
+    if not isinstance(port, int) or not (1 <= port <= 65535):
+        return target_ips[:fallback_max]
+    filtered = [ip for ip in target_ips if port in open_tcp.get(ip, set())]
+    return filtered[:fallback_max] if filtered else target_ips[:fallback_max]
+
+
+def _filter_targets_by_any_port(
+    target_ips: List[str],
+    open_tcp: Dict[str, set[int]],
+    ports: List[int],
+    fallback_max: int,
+) -> List[str]:
+    safe_ports = [p for p in ports if isinstance(p, int) and (1 <= p <= 65535)]
+    if not safe_ports:
+        return target_ips[:fallback_max]
+    filtered = [
+        ip for ip in target_ips if any(p in open_tcp.get(ip, set()) for p in safe_ports)
+    ]
+    return filtered[:fallback_max] if filtered else target_ips[:fallback_max]
 
 
 _SNMP_OID_MAP = {
@@ -804,7 +972,7 @@ def _redteam_masscan_sweep(
     Safety defaults:
     - Requires root
     - Skips if targets are too large (to avoid accidental large-scale scans)
-    - Scans only a small port set used by redteam discovery (SMB/SNMP)
+    - Scans only a small port set used by redteam discovery
     """
     if not target_networks:
         return {"status": "no_targets"}
@@ -828,10 +996,11 @@ def _redteam_masscan_sweep(
     if total_addrs > 4096:
         return {"status": "skipped_too_large", "total_addresses": total_addrs}
 
+    port_spec = "T:53,T:88,T:135,T:389,T:445,T:636,U:161"
     cmd = [
         "masscan",
         "-p",
-        "445,161",
+        port_spec,
         "--rate",
         "500",
         "--wait",
@@ -858,9 +1027,778 @@ def _redteam_masscan_sweep(
 
     payload: Dict[str, Any] = {
         "status": "ok" if open_ports else "no_data",
-        "ports_scanned": [161, 445],
+        "ports_scanned": [53, 88, 135, 389, 445, 636, 161],
+        "ports_scanned_spec": port_spec,
         "open_ports": open_ports[:200],
     }
     if rc != 0 and err.strip():
         payload["error"] = err.strip()[:200]
+    return payload
+
+
+def _safe_truncate(text: str, limit: int) -> str:
+    if not isinstance(text, str):
+        return ""
+    if limit <= 0:
+        return ""
+    return text if len(text) <= limit else text[:limit]
+
+
+def _tcpdump_capture(
+    iface: str,
+    bpf_expr: str,
+    tools: Dict[str, bool],
+    timeout_s: int,
+    packets: int = 50,
+    logger=None,
+) -> Dict[str, Any]:
+    if not iface:
+        return {"status": "skipped_no_interface"}
+    if not tools.get("tcpdump") or not shutil.which("tcpdump"):
+        return {"status": "tool_missing", "tool": "tcpdump"}
+    if not _is_root():
+        return {"status": "skipped_requires_root"}
+
+    if not isinstance(packets, int) or packets < 1:
+        packets = 50
+    if packets > 200:
+        packets = 200
+
+    cmd = ["tcpdump", "-i", iface, "-n", "-e", "-vv", "-c", str(packets)]
+    if isinstance(bpf_expr, str) and bpf_expr.strip():
+        cmd.append(bpf_expr.strip())
+
+    rc, out, err = _run_cmd(cmd, timeout_s=timeout_s, logger=logger)
+    text = (out or "") + "\n" + (err or "")
+    snippet = text.strip()
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if snippet else "no_data",
+        "returncode": rc,
+    }
+    if snippet:
+        payload["raw_sample"] = _safe_truncate(snippet, 1600)
+    if rc != 0 and err.strip():
+        payload["error"] = _safe_truncate(err.strip(), 300)
+    return payload
+
+
+def _redteam_rpc_enum(
+    target_ips: List[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    if not target_ips:
+        return {"status": "no_targets", "hosts": []}
+
+    has_rpcclient = tools.get("rpcclient") and shutil.which("rpcclient")
+    has_nmap = tools.get("nmap") and shutil.which("nmap")
+    if not has_rpcclient and not has_nmap:
+        return {"status": "tool_missing", "tool": "rpcclient/nmap", "hosts": []}
+
+    tool = "rpcclient" if has_rpcclient else "nmap"
+    results: List[Dict[str, Any]] = []
+
+    for ip_str in target_ips[:15]:
+        if tool == "rpcclient":
+            cmd = ["rpcclient", "-U", "", "-N", ip_str, "-c", "srvinfo"]
+            rc, out, err = _run_cmd(cmd, timeout_s=12, logger=logger)
+            text = (out or "") + "\n" + (err or "")
+            snippet = text.strip()
+            if not snippet:
+                continue
+
+            parsed: Dict[str, Any] = {}
+            patterns = {
+                "os_version": r"(?i)^\s*os version\s*:\s*(.+)$",
+                "server_type": r"(?i)^\s*server type\s*:\s*(.+)$",
+                "comment": r"(?i)^\s*comment\s*:\s*(.+)$",
+                "domain": r"(?i)^\s*domain\s*:\s*(.+)$",
+            }
+            for key, pat in patterns.items():
+                m = re.search(pat, snippet, re.MULTILINE)
+                if m:
+                    parsed[key] = m.group(1).strip()[:200]
+
+            if parsed:
+                results.append({"ip": ip_str, "tool": "rpcclient", **parsed})
+            else:
+                results.append({"ip": ip_str, "tool": "rpcclient", "raw": _safe_truncate(snippet, 1200)})
+        else:
+            cmd = ["nmap", "-p", "135", "--script", "msrpc-enum", ip_str]
+            rc, out, err = _run_cmd(cmd, timeout_s=20, logger=logger)
+            text = (out or "") + "\n" + (err or "")
+            snippet = text.strip()
+            if snippet:
+                results.append({"ip": ip_str, "tool": "nmap", "raw": _safe_truncate(snippet, 1200)})
+
+    return {"status": "ok" if results else "no_data", "tool": tool, "hosts": results}
+
+
+def _parse_ldap_rootdse(text: str) -> Dict[str, Any]:
+    parsed: Dict[str, Any] = {}
+    naming_contexts: List[str] = []
+    sasl: List[str] = []
+    versions: List[str] = []
+
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
+        key, val = line.split(":", 1)
+        key = key.strip()
+        val = val.strip()
+        if not key or not val:
+            continue
+
+        if key in ("defaultNamingContext", "rootDomainNamingContext", "dnsHostName", "ldapServiceName"):
+            parsed[key] = val[:250]
+        elif key == "namingContexts":
+            naming_contexts.append(val[:250])
+        elif key == "supportedLDAPVersion":
+            versions.append(val[:50])
+        elif key == "supportedSASLMechanisms":
+            sasl.append(val[:100])
+
+    if naming_contexts:
+        parsed["namingContexts"] = naming_contexts[:20]
+    if versions:
+        parsed["supportedLDAPVersion"] = versions[:10]
+    if sasl:
+        parsed["supportedSASLMechanisms"] = sasl[:20]
+
+    return parsed
+
+
+def _redteam_ldap_enum(
+    target_ips: List[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    if not target_ips:
+        return {"status": "no_targets", "hosts": []}
+
+    has_ldapsearch = tools.get("ldapsearch") and shutil.which("ldapsearch")
+    has_nmap = tools.get("nmap") and shutil.which("nmap")
+    if not has_ldapsearch and not has_nmap:
+        return {"status": "tool_missing", "tool": "ldapsearch/nmap", "hosts": []}
+
+    tool = "ldapsearch" if has_ldapsearch else "nmap"
+    results: List[Dict[str, Any]] = []
+
+    for ip_str in target_ips[:10]:
+        if tool == "ldapsearch":
+            attrs = [
+                "defaultNamingContext",
+                "rootDomainNamingContext",
+                "namingContexts",
+                "dnsHostName",
+                "ldapServiceName",
+                "supportedLDAPVersion",
+                "supportedSASLMechanisms",
+            ]
+            cmd = [
+                "ldapsearch",
+                "-x",
+                "-LLL",
+                "-H",
+                f"ldap://{ip_str}",
+                "-s",
+                "base",
+                "-b",
+                "",
+                "(objectClass=*)",
+            ] + attrs
+            rc, out, err = _run_cmd(cmd, timeout_s=12, logger=logger)
+            text = (out or "") + "\n" + (err or "")
+            parsed = _parse_ldap_rootdse(text)
+            if parsed:
+                results.append({"ip": ip_str, "tool": "ldapsearch", **parsed})
+            else:
+                snippet = text.strip()
+                if snippet:
+                    results.append({"ip": ip_str, "tool": "ldapsearch", "raw": _safe_truncate(snippet, 1200)})
+        else:
+            cmd = ["nmap", "-p", "389,636", "--script", "ldap-rootdse", ip_str]
+            rc, out, err = _run_cmd(cmd, timeout_s=18, logger=logger)
+            text = (out or "") + "\n" + (err or "")
+            parsed = _parse_ldap_rootdse(text)
+            if parsed:
+                results.append({"ip": ip_str, "tool": "nmap", **parsed})
+            else:
+                snippet = text.strip()
+                if snippet:
+                    results.append({"ip": ip_str, "tool": "nmap", "raw": _safe_truncate(snippet, 1200)})
+
+    return {"status": "ok" if results else "no_data", "tool": tool, "hosts": results}
+
+
+def _parse_nmap_krb5_info(text: str) -> List[str]:
+    realms: List[str] = []
+    for line in (text or "").splitlines():
+        m = re.search(r"(?i)\brealm:\s*([A-Za-z0-9.-]+)", line)
+        if not m:
+            continue
+        realm = m.group(1).strip().strip(".")
+        if realm and realm not in realms:
+            realms.append(realm[:200])
+    return realms
+
+
+def _redteam_kerberos_enum(
+    target_ips: List[str],
+    tools: Dict[str, bool],
+    realm: Optional[str] = None,
+    userlist_path: Optional[str] = None,
+    logger=None,
+) -> Dict[str, Any]:
+    if not target_ips:
+        return {"status": "no_targets", "hosts": []}
+
+    has_nmap = tools.get("nmap") and shutil.which("nmap")
+    has_kerbrute = tools.get("kerbrute") and shutil.which("kerbrute")
+    if not has_nmap and not has_kerbrute:
+        return {"status": "tool_missing", "tool": "nmap/kerbrute", "hosts": []}
+
+    results: List[Dict[str, Any]] = []
+    detected_realms: List[str] = []
+
+    if has_nmap:
+        for ip_str in target_ips[:10]:
+            cmd = ["nmap", "-p", "88", "--script", "krb5-info", ip_str]
+            rc, out, err = _run_cmd(cmd, timeout_s=18, logger=logger)
+            text = (out or "") + "\n" + (err or "")
+            realms = _parse_nmap_krb5_info(text)
+            if realms:
+                for r in realms:
+                    if r not in detected_realms:
+                        detected_realms.append(r)
+                results.append({"ip": ip_str, "tool": "nmap", "realms": realms[:10]})
+            else:
+                snippet = text.strip()
+                if snippet:
+                    results.append({"ip": ip_str, "tool": "nmap", "raw": _safe_truncate(snippet, 800)})
+
+    userenum: Dict[str, Any] = {"status": "skipped_no_userlist"}
+    if userlist_path:
+        if not has_kerbrute:
+            userenum = {"status": "tool_missing", "tool": "kerbrute"}
+        elif not os.path.exists(userlist_path):
+            userenum = {"status": "error", "error": "kerberos_userlist not found"}
+        else:
+            used_realm = realm or (detected_realms[0] if detected_realms else None)
+            if not used_realm:
+                userenum = {"status": "skipped_no_realm"}
+            else:
+                dc_ip = target_ips[0]
+                cmd = ["kerbrute", "userenum", "-d", used_realm, "--dc", dc_ip, userlist_path]
+                rc, out, err = _run_cmd(cmd, timeout_s=25, logger=logger)
+                text = (out or "") + "\n" + (err or "")
+                valid_users: List[str] = []
+                for line in text.splitlines():
+                    if "VALID USERNAME" not in line.upper():
+                        continue
+                    m = re.search(r"(?i)valid username:\s*([^\s@]+)@", line)
+                    if m:
+                        u = m.group(1).strip()
+                        if u and u not in valid_users:
+                            valid_users.append(u[:120])
+                    if len(valid_users) >= 50:
+                        break
+                userenum = {
+                    "status": "ok" if valid_users else "no_data",
+                    "tool": "kerbrute",
+                    "realm": used_realm,
+                    "dc": dc_ip,
+                    "valid_users_sample": valid_users[:50],
+                }
+                if rc != 0 and err.strip():
+                    userenum["error"] = _safe_truncate(err.strip(), 200)
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if results else ("no_data" if has_nmap else userenum.get("status", "no_data")),
+        "detected_realms": detected_realms[:10],
+        "hosts": results,
+        "userenum": userenum,
+    }
+    if realm:
+        payload["realm_hint"] = realm
+    return payload
+
+
+def _extract_dhcp_dns_servers(discovery_result: Dict[str, Any]) -> List[str]:
+    servers: List[str] = []
+    for dhcp in discovery_result.get("dhcp_servers", []) or []:
+        if not isinstance(dhcp, dict):
+            continue
+        for ip_str in dhcp.get("dns", []) or []:
+            if isinstance(ip_str, str) and _is_ipv4(ip_str) and ip_str not in servers:
+                servers.append(ip_str)
+    return servers
+
+
+def _extract_dhcp_domains(discovery_result: Dict[str, Any]) -> List[str]:
+    domains: List[str] = []
+    for dhcp in discovery_result.get("dhcp_servers", []) or []:
+        if not isinstance(dhcp, dict):
+            continue
+        for key in ("domain", "domain_search"):
+            val = dhcp.get(key)
+            if isinstance(val, str) and val.strip():
+                dom = _sanitize_dns_zone(val.strip())
+                if dom and dom not in domains:
+                    domains.append(dom)
+    return domains
+
+
+def _redteam_dns_zone_transfer(
+    discovery_result: Dict[str, Any],
+    tools: Dict[str, bool],
+    zone: Optional[str] = None,
+    logger=None,
+) -> Dict[str, Any]:
+    if not tools.get("dig") or not shutil.which("dig"):
+        return {"status": "tool_missing", "tool": "dig"}
+
+    dns_servers = _extract_dhcp_dns_servers(discovery_result)
+    if not dns_servers:
+        return {"status": "no_targets", "reason": "no_dns_servers"}
+
+    zone_hint = _sanitize_dns_zone(zone) if zone else None
+    if not zone_hint:
+        domains = _extract_dhcp_domains(discovery_result)
+        zone_hint = domains[0] if domains else None
+
+    if not zone_hint:
+        return {"status": "skipped_no_zone", "dns_servers": dns_servers[:5]}
+
+    attempts: List[Dict[str, Any]] = []
+    errors: List[str] = []
+    for dns_ip in dns_servers[:3]:
+        cmd = ["dig", "+time=2", "+tries=1", "axfr", zone_hint, f"@{dns_ip}"]
+        rc, out, err = _run_cmd(cmd, timeout_s=12, logger=logger)
+        text = (out or "") + "\n" + (err or "")
+        lines = []
+        for line in (out or "").splitlines():
+            line = line.strip()
+            if not line or line.startswith(";"):
+                continue
+            lines.append(line[:300])
+            if len(lines) >= 50:
+                break
+
+        success = bool(re.search(r"\bXFR size:\s*\d+", out or "", re.IGNORECASE))
+        if not success and "transfer failed" in (text or "").lower():
+            errors.append(f"{dns_ip}: transfer failed")
+        attempts.append(
+            {
+                "dns_server": dns_ip,
+                "success": success,
+                "records_sample": lines,
+                "raw_sample": _safe_truncate(text.strip(), 900) if not success else None,
+            }
+        )
+
+    status = "ok" if any(a.get("success") for a in attempts) else "no_data"
+    payload: Dict[str, Any] = {
+        "status": status,
+        "zone": zone_hint,
+        "dns_servers": dns_servers[:5],
+        "attempts": attempts,
+    }
+    if errors:
+        payload["errors"] = errors[:10]
+    return payload
+
+
+def _redteam_vlan_enum(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    cap = _tcpdump_capture(
+        safe_iface or "",
+        "vlan or ether proto 0x8100 or ether dst 01:00:0c:cc:cc:cc",
+        tools=tools,
+        timeout_s=8,
+        packets=60,
+        logger=logger,
+    )
+    if cap.get("status") != "ok":
+        return cap
+
+    raw = cap.get("raw_sample", "") or ""
+    vlan_ids: List[int] = []
+    for m in re.finditer(r"\bvlan\s+(\d{1,4})\b", raw, re.IGNORECASE):
+        try:
+            vid = int(m.group(1))
+        except Exception:
+            continue
+        if 1 <= vid <= 4094 and vid not in vlan_ids:
+            vlan_ids.append(vid)
+    dtp_observed = bool(
+        re.search(r"(?i)\bDTP\b|01:00:0c:cc:cc:cc", raw)
+    )
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if vlan_ids or dtp_observed else "no_data",
+        "vlan_ids": vlan_ids[:50],
+        "dtp_observed": dtp_observed,
+    }
+    if cap.get("raw_sample"):
+        payload["raw_sample"] = cap["raw_sample"]
+    if cap.get("error"):
+        payload["error"] = cap["error"]
+    return payload
+
+
+def _redteam_stp_topology(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    cap = _tcpdump_capture(
+        safe_iface or "",
+        "ether dst 01:80:c2:00:00:00",
+        tools=tools,
+        timeout_s=8,
+        packets=40,
+        logger=logger,
+    )
+    if cap.get("status") != "ok":
+        return cap
+
+    raw = cap.get("raw_sample", "") or ""
+    root_ids: List[str] = []
+    bridge_ids: List[str] = []
+
+    for m in re.finditer(r"(?i)\broot id\s+([0-9a-f:.]+)", raw):
+        val = m.group(1).strip()
+        if val and val not in root_ids:
+            root_ids.append(val[:200])
+    for m in re.finditer(r"(?i)\bbridge id\s+([0-9a-f:.]+)", raw):
+        val = m.group(1).strip()
+        if val and val not in bridge_ids:
+            bridge_ids.append(val[:200])
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if (root_ids or bridge_ids) else "no_data",
+        "root_ids": root_ids[:10],
+        "bridge_ids": bridge_ids[:10],
+        "raw_sample": cap.get("raw_sample"),
+    }
+    if cap.get("error"):
+        payload["error"] = cap["error"]
+    return payload
+
+
+def _redteam_hsrp_vrrp_discovery(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    cap = _tcpdump_capture(
+        safe_iface or "",
+        "udp port 1985 or udp port 2029 or ip proto 112",
+        tools=tools,
+        timeout_s=8,
+        packets=60,
+        logger=logger,
+    )
+    if cap.get("status") != "ok":
+        return cap
+
+    raw = cap.get("raw_sample", "") or ""
+    protocols: List[str] = []
+    if re.search(r"(?i)\bHSRP\b", raw):
+        protocols.append("hsrp")
+    if re.search(r"(?i)\bVRRP\b|ip proto 112", raw):
+        protocols.append("vrrp")
+
+    src_ips: List[str] = []
+    for m in re.finditer(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b", raw):
+        ip_str = m.group(1)
+        if ip_str and ip_str not in src_ips:
+            src_ips.append(ip_str)
+        if len(src_ips) >= 20:
+            break
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if protocols else "no_data",
+        "protocols_observed": protocols,
+        "ip_candidates": src_ips[:20],
+        "raw_sample": cap.get("raw_sample"),
+    }
+    if cap.get("error"):
+        payload["error"] = cap["error"]
+    return payload
+
+
+def _redteam_llmnr_nbtns_capture(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    cap = _tcpdump_capture(
+        safe_iface or "",
+        "udp port 5355 or udp port 137",
+        tools=tools,
+        timeout_s=10,
+        packets=80,
+        logger=logger,
+    )
+    if cap.get("status") != "ok":
+        return cap
+
+    raw = cap.get("raw_sample", "") or ""
+    llmnr: List[str] = []
+    nbns: List[str] = []
+
+    for line in raw.splitlines():
+        l = line.strip()
+        if not l:
+            continue
+        if ".5355" in l or " 5355" in l:
+            m = re.search(r"\?\s*([A-Za-z0-9._-]+)", l)
+            if m:
+                q = m.group(1).strip()
+                if q and q not in llmnr:
+                    llmnr.append(q[:200])
+        if ".137" in l or " 137" in l:
+            m = re.search(r"\?\s*([A-Za-z0-9._-]+)", l)
+            if m:
+                q = m.group(1).strip()
+                if q and q not in nbns:
+                    nbns.append(q[:200])
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if (llmnr or nbns) else "no_data",
+        "llmnr_queries_sample": llmnr[:30],
+        "nbns_queries_sample": nbns[:30],
+        "raw_sample": cap.get("raw_sample"),
+    }
+    if cap.get("error"):
+        payload["error"] = cap["error"]
+    return payload
+
+
+def _redteam_router_discovery(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    has_nmap = tools.get("nmap") and shutil.which("nmap")
+    if has_nmap:
+        cmd = ["nmap", "--script", "broadcast-igmp-discovery"]
+        if safe_iface:
+            cmd.extend(["-e", safe_iface])
+        rc, out, err = _run_cmd(cmd, timeout_s=15, logger=logger)
+        text = (out or "") + "\n" + (err or "")
+        snippet = text.strip()
+        if snippet:
+            ips = []
+            for m in re.finditer(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b", snippet):
+                ip_str = m.group(1)
+                if ip_str and ip_str not in ips:
+                    ips.append(ip_str)
+                if len(ips) >= 20:
+                    break
+            return {
+                "status": "ok" if ips else "no_data",
+                "tool": "nmap",
+                "router_candidates": ips[:20],
+                "raw_sample": _safe_truncate(snippet, 1400),
+            }
+
+    # Fallback: passive IGMP capture
+    cap = _tcpdump_capture(
+        safe_iface or "",
+        "igmp",
+        tools=tools,
+        timeout_s=8,
+        packets=50,
+        logger=logger,
+    )
+    if cap.get("status") != "ok":
+        return cap
+    raw = cap.get("raw_sample", "") or ""
+    ips = []
+    for m in re.finditer(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b", raw):
+        ip_str = m.group(1)
+        if ip_str and ip_str not in ips:
+            ips.append(ip_str)
+        if len(ips) >= 20:
+            break
+    return {
+        "status": "ok" if ips else "no_data",
+        "tool": "tcpdump",
+        "router_candidates": ips[:20],
+        "raw_sample": cap.get("raw_sample"),
+        "error": cap.get("error"),
+    }
+
+
+def _parse_ip6_neighbors(text: str) -> List[Dict[str, Any]]:
+    neigh: List[Dict[str, Any]] = []
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # ip -6 neigh: fe80::1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE
+        parts = line.split()
+        entry: Dict[str, Any] = {"raw": line[:250]}
+        if parts:
+            entry["ip"] = parts[0]
+        if "lladdr" in parts:
+            try:
+                entry["mac"] = parts[parts.index("lladdr") + 1].lower()
+            except Exception:
+                pass
+        if "dev" in parts:
+            try:
+                entry["dev"] = parts[parts.index("dev") + 1]
+            except Exception:
+                pass
+        if entry.get("ip"):
+            neigh.append(entry)
+    return neigh
+
+
+def _redteam_ipv6_discovery(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    if not safe_iface:
+        return {"status": "skipped_no_interface"}
+
+    if not _is_root():
+        # On many systems, ICMPv6 + neighbor listing are restricted without CAP_NET_RAW.
+        return {"status": "skipped_requires_root"}
+
+    errors: List[str] = []
+
+    # Stimulate neighbor discovery (best-effort).
+    if tools.get("ping6") and shutil.which("ping6"):
+        rc, out, err = _run_cmd(
+            ["ping6", "-c", "2", "-I", safe_iface, "ff02::1"],
+            timeout_s=6,
+            logger=logger,
+        )
+        if rc != 0 and err.strip():
+            errors.append(_safe_truncate(err.strip(), 200))
+    elif tools.get("ping") and shutil.which("ping"):
+        rc, out, err = _run_cmd(
+            ["ping", "-6", "-c", "2", "-I", safe_iface, "ff02::1"],
+            timeout_s=6,
+            logger=logger,
+        )
+        if rc != 0 and err.strip():
+            errors.append(_safe_truncate(err.strip(), 200))
+
+    neigh: List[Dict[str, Any]] = []
+    if tools.get("ip") and shutil.which("ip"):
+        rc, out, err = _run_cmd(["ip", "-6", "neigh", "show", "dev", safe_iface], timeout_s=4, logger=logger)
+        neigh = _parse_ip6_neighbors((out or "") + "\n" + (err or ""))
+    else:
+        # macOS fallback
+        if shutil.which("ndp"):
+            rc, out, err = _run_cmd(["ndp", "-an"], timeout_s=4, logger=logger)
+            neigh = _parse_ip6_neighbors((out or "") + "\n" + (err or ""))
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if neigh else "no_data",
+        "neighbors": neigh[:50],
+    }
+    if errors:
+        payload["errors"] = errors[:10]
+    return payload
+
+
+def _redteam_bettercap_recon(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    active_l2: bool = False,
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    if not safe_iface:
+        return {"status": "skipped_no_interface"}
+    if not active_l2:
+        return {"status": "skipped_disabled", "reason": "active_l2_false"}
+    if not tools.get("bettercap") or not shutil.which("bettercap"):
+        return {"status": "tool_missing", "tool": "bettercap"}
+    if not _is_root():
+        return {"status": "skipped_requires_root"}
+
+    cmd = [
+        "bettercap",
+        "-iface",
+        safe_iface,
+        "-eval",
+        "net.recon on; net.probe on; net.show; quit",
+    ]
+    rc, out, err = _run_cmd(cmd, timeout_s=15, logger=logger)
+    text = (out or "") + "\n" + (err or "")
+    snippet = text.strip()
+    payload: Dict[str, Any] = {
+        "status": "ok" if snippet else "no_data",
+        "tool": "bettercap",
+    }
+    if snippet:
+        payload["raw_sample"] = _safe_truncate(snippet, 1600)
+    if rc != 0 and err.strip():
+        payload["error"] = _safe_truncate(err.strip(), 200)
+    return payload
+
+
+def _redteam_scapy_custom(
+    iface: Optional[str],
+    tools: Dict[str, bool],
+    active_l2: bool = False,
+    logger=None,
+) -> Dict[str, Any]:
+    safe_iface = _sanitize_iface(iface)
+    if not safe_iface:
+        return {"status": "skipped_no_interface"}
+    if not active_l2:
+        return {"status": "skipped_disabled", "reason": "active_l2_false"}
+    if not _is_root():
+        return {"status": "skipped_requires_root"}
+
+    try:
+        import scapy  # type: ignore
+        from scapy.all import Dot1Q, Ether, sniff  # type: ignore
+    except Exception:
+        return {"status": "tool_missing", "tool": "scapy"}
+
+    vlan_ids: List[int] = []
+
+    def _on_pkt(pkt) -> None:  # type: ignore[no-untyped-def]
+        try:
+            if pkt.haslayer(Dot1Q):
+                vid = int(pkt[Dot1Q].vlan)
+                if 1 <= vid <= 4094 and vid not in vlan_ids:
+                    vlan_ids.append(vid)
+        except Exception:
+            return
+
+    try:
+        sniff(iface=safe_iface, timeout=3, prn=_on_pkt, store=False)
+    except Exception as exc:
+        return {"status": "error", "error": _safe_truncate(str(exc), 200)}
+
+    payload: Dict[str, Any] = {
+        "status": "ok" if vlan_ids else "no_data",
+        "tool": "scapy",
+        "scapy_version": getattr(scapy, "__version__", None),
+        "vlan_ids": vlan_ids[:50],
+        "note": "Passive sniff only (no packet injection).",
+    }
     return payload

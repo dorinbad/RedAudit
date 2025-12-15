@@ -28,7 +28,7 @@ The top-level container for the scan session.
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `schema_version` | `string` | Schema version ("3.1") |
+| `schema_version` | `string` | Schema version ("3.2") |
 | `generated_at` | `string` | Report generation timestamp (ISO 8601) **(v3.1)** |
 | `event_type` | `string` | Event type for SIEM ingestion ("redaudit.scan.complete") |
 | `session_id` | `string` | Unique UUID for this scan session |
@@ -65,7 +65,7 @@ Network discovery is **best-effort**: missing tools will reduce visibility but s
 | `mdns_services` | array | mDNS/Bonjour services discovered |
 | `upnp_devices` | array | UPNP devices discovered |
 | `candidate_vlans` | array | Potential guest networks/VLANs detected |
-| `redteam` | object | (Optional) Red Team discovery results (SNMP/SMB/masscan) |
+| `redteam` | object | (Optional) Red Team recon results (SNMP/SMB/RPC/LDAP/Kerberos/DNS + passive L2 signals) |
 | `errors` | array | Best-effort errors encountered |
 
 **dhcp_servers[]** entries:
@@ -76,6 +76,8 @@ Network discovery is **best-effort**: missing tools will reduce visibility but s
 | `subnet` | string | Subnet mask offered |
 | `gateway` | string | Default gateway offered |
 | `dns` | array | DNS servers offered |
+| `domain` | string | (Optional) DHCP domain name hint (best-effort) |
+| `domain_search` | string | (Optional) DHCP domain search hint (best-effort) |
 
 **netbios_hosts[]** entries:
 
@@ -99,12 +101,25 @@ Network discovery is **best-effort**: missing tools will reduce visibility but s
 
 | Field | Type | Description |
 |---|---|---|
+| `enabled` | boolean | Always true when the block is present |
+| `interface` | string | (Optional) Interface used for L2 captures (if set) |
 | `targets_considered` | integer | Number of candidate targets selected for Red Team checks |
 | `targets_sample` | array | Sample of target IPs (first 10) |
 | `snmp` | object | SNMP enumeration summary (best-effort, read-only) |
 | `smb` | object | SMB enumeration summary (best-effort, read-only) |
+| `rpc` | object | RPC enumeration summary (best-effort) |
+| `ldap` | object | LDAP RootDSE summary (best-effort) |
+| `kerberos` | object | Kerberos realm discovery + optional userenum (best-effort) |
+| `dns_zone_transfer` | object | DNS AXFR attempt summary (best-effort; requires zone hint) |
 | `masscan` | object | Optional masscan summary (requires root; skipped on large ranges) |
-| `vlan_enum` | object | VLAN probing status (skipped by default) |
+| `vlan_enum` | object | VLAN ID/DTP hints (passive; requires tcpdump + root) |
+| `stp_topology` | object | STP BPDU hints (passive; requires tcpdump + root) |
+| `hsrp_vrrp` | object | HSRP/VRRP presence hints (passive; requires tcpdump + root) |
+| `llmnr_nbtns` | object | LLMNR/NBT-NS query samples (passive; requires tcpdump + root) |
+| `router_discovery` | object | Multicast router candidates (best-effort) |
+| `ipv6_discovery` | object | IPv6 neighbor cache sample (best-effort) |
+| `bettercap_recon` | object | Optional bettercap output (requires explicit opt-in) |
+| `scapy_custom` | object | Optional scapy passive sniff block (requires explicit opt-in) |
 
 ### Host Object
 

@@ -63,6 +63,20 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 | `--topology-only` | Run topology discovery only (skip host scanning). |
 | `--save-defaults` | Save current CLI settings as persistent defaults (`~/.redaudit/config.json`). |
 
+### v3.2+ Features
+
+| Flag | Description |
+| :--- | :--- |
+| `--net-discovery [PROTO,...]` | Enable enhanced network discovery (all, or comma-separated: dhcp,netbios,mdns,upnp,arp,fping). |
+| `--redteam` | Include opt-in Red Team recon block in net discovery (best-effort, slower/noisier). |
+| `--net-discovery-interface IFACE` | Network interface for net discovery and L2 captures (e.g., eth0). |
+| `--redteam-max-targets N` | Max target IPs sampled for redteam checks (1-500, default: 50). |
+| `--snmp-community COMMUNITY` | SNMP community for SNMP walking (default: public). |
+| `--dns-zone ZONE` | DNS zone hint for AXFR attempt (e.g., corp.local). |
+| `--kerberos-realm REALM` | Kerberos realm hint (e.g., CORP.LOCAL). |
+| `--kerberos-userlist PATH` | Optional userlist for Kerberos userenum (requires kerbrute; use only with authorization). |
+| `--redteam-active-l2` | Enable additional L2-focused checks that may be noisier (bettercap/scapy sniff; requires root). |
+
 ### Security
 
 | Flag | Description |
@@ -129,6 +143,14 @@ Enrich results with NIST NVD vulnerability data.
 sudo redaudit -t 192.168.1.0/24 --cve-lookup --nvd-key YOUR_KEY --yes
 ```
 
+**9. Enhanced Net Discovery (v3.2)**
+Broadcast-based discovery to reveal additional DHCP servers, hostnames, and L2 signals.
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --net-discovery --yes
+sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
+```
+
 ### Reports & Encryption
 
 Reports are saved in timestamped subfolders (v2.8+): `RedAudit_YYYY-MM-DD_HH-MM-SS/`
@@ -145,6 +167,12 @@ Each scan session creates its own folder with:
 - `severity_note`: Explanation when severity was adjusted (e.g., "RFC-1918 disclosure on private network")
 - `potential_false_positives`: Array of detected contradictions from cross-validation
 - `pcap_file`: Portable relative filename for PCAP captures
+
+**New fields in v3.2.0**:
+
+- `net_discovery`: Optional enhanced network discovery block (only when `--net-discovery` is enabled)
+- `net_discovery.dhcp_servers[].domain` / `net_discovery.dhcp_servers[].domain_search`: Best-effort domain hints from DHCP responses
+- `net_discovery.redteam`: Extended recon output when `--redteam` is enabled (SNMP/SMB/RPC/LDAP/Kerberos/DNS + passive L2 signals)
 
 To decrypt results:
 
@@ -200,7 +228,7 @@ Create `~/.redaudit/config.json`:
 
 ```json
 {
-  "version": "3.1.4",
+  "version": "3.2.0",
   "nvd_api_key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "defaults": {
     "threads": 6,
