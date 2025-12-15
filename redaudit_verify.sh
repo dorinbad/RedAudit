@@ -100,7 +100,7 @@ check_cmd snmpwalk
 check_cmd enum4linux
 check_cmd smbclient
 check_cmd masscan
-check_cmd rpcclient
+check_cmd rpcclient  # Part of smbclient package
 check_cmd ldapsearch
 check_cmd bettercap
 
