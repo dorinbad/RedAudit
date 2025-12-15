@@ -28,6 +28,8 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 ## Features
 
 - **3-Phase Adaptive Deep Scan**: Intelligent escalation (TCP aggressive → Priority UDP → Full UDP identity) triggered by host ambiguity
+- **Async UDP Priority Probe (v3.1.3)**: Fast concurrent asyncio probing of priority UDP ports during deep scan for rapid service triage
+- **Async Topology Discovery (v3.1.3)**: Parallelized L2/L3 collection (ARP/VLAN/LLDP + gateway/routes) for faster network mapping
 - **Smart-Check False Positive Filtering**: 3-layer verification (Content-Type, size checks, magic byte validation) reduces Nikto noise by 90%
 - **Network Topology Discovery**: Best-effort L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection
 - **CVE Intelligence**: NVD API 2.0 integration with CPE 2.3 matching, 7-day caching, and deterministic finding IDs

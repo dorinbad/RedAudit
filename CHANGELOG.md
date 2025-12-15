@@ -21,8 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **README Structure**: Added `udp_probe.py` module to project structure
+- **README Features**: Added Async UDP Priority Probe and Async Topology Discovery to Features section
 - **README Topology**: Updated topology.py description to reflect async implementation
 - **ROADMAP Update**: Added v3.1.2/v3.1.3 milestones, marked v3.1.3 as CURRENT
+- **DIDACTIC_GUIDE**: Updated version references from v3.1.1 to v3.1.3
 
 ## [3.1.2] - 2025-12-14 (Update UX)
 

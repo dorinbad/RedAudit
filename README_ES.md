@@ -28,6 +28,8 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 ## Características
 
 - **Deep Scan Adaptativo de 3 Fases**: Escalado inteligente (TCP agresivo → UDP prioritario → UDP identidad completa) disparado por ambigüedad del host
+- **Sondeo UDP Prioritario Async (v3.1.3)**: Sondeo asyncio concurrente rápido de puertos UDP prioritarios durante deep scan para triage de servicios
+- **Descubrimiento de Topología Async (v3.1.3)**: Recolección L2/L3 paralelizada (ARP/VLAN/LLDP + gateway/rutas) para mapeo de red más rápido
 - **Filtrado Smart-Check de Falsos Positivos**: Verificación de 3 capas (Content-Type, checks de tamaño, validación magic bytes) reduce ruido Nikto en 90%
 - **Descubrimiento de Topología de Red**: Mapeo best-effort L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas
 - **Inteligencia CVE**: Integración NVD API 2.0 con matching CPE 2.3, caché de 7 días, y finding IDs determinísticos
