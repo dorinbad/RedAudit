@@ -84,5 +84,15 @@ check_cmd searchsploit
 check_cmd testssl.sh
 
 echo
+echo "Network Discovery tools (v3.2+):"
+echo "-----------------------------------"
+check_cmd nbtscan
+check_cmd netdiscover
+check_cmd fping
+check_cmd avahi-browse
+check_cmd arp-scan
+check_cmd lldpctl
+
+echo
 echo "========================================"
 echo "Verification complete!"
