@@ -243,11 +243,11 @@ RedAudit dispone de tres modos, con nombres de parámetro en inglés. Es importa
 - La opción CLI se pasa como `fast`, `normal` o `full`.
 - La interfaz puede mostrar etiquetas localizadas ("Rápido", "Normal", "Completo"), pero el valor del parámetro es siempre en inglés.
 
-| Modo     | Valor CLI | Descripción                                        | Caso de uso típico                     |
-|----------|-----------|---------------------------------------------------|----------------------------------------|
-| Rápido   | `fast`    | Solo descubrimiento de hosts (`nmap -sn`).         | Inventario rápido / ver alcance.       |
-| Normal   | `normal`  | Puertos más comunes + detección de servicios.      | Auditoría estándar de una red.         |
-| Completo | `full`    | Más puertos + scripts + análisis web/TLS profundo. | Auditoría exhaustiva / pre-pentest.    |
+| Modo | Valor CLI | Descripción | Caso de uso típico |
+|---|---|---|---|
+| Rápido | `rapido` | Solo descubrimiento de hosts (`nmap -sn`). | Inventario rápido; verificar accesibilidad. |
+| Normal | `normal` | Puertos principales + versiones de servicios. | Auditoría de seguridad estándar. |
+| Completo | `completo` | Puertos extendidos + scripts + web/TLS + **net discovery** (v3.2.1). | Auditoría integral / revisión pre-pentest. |
 
 El modo elegido afecta a cuántos puertos se analizan y qué herramientas externas se activan.
 

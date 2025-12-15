@@ -131,12 +131,14 @@ Uses a fast ping sweep (`nmap -sn -T4 --max-retries 1`) to identify which hosts 
 
 **Function in code**: [`net_discovery.py`](../../redaudit/core/net_discovery.py)
 
-If enabled (`--net-discovery`), RedAudit goes beyond ICMP and uses L2 protocols:
+**v3.2.1**: **Auto-enabled in Full mode** (no flag needed). Also available via `--net-discovery` in other modes.
+
+RedAudit goes beyond ICMP and uses L2 protocols:
 
 - **ARP / Netdiscover**: Detects silent hosts on the local link.
 - **mDNS / Bonjour**: Discovers Apple/Linux devices and services (e.g., printers, Chromecast).
 - **NetBIOS / Nbtscan**: Resolves Windows hostnames and workgroups.
-- **Red Team (Opt-in)**: Active probing (SNMP, SMB, Kerberos) and passive listening (STP, CDP, LLMNR).
+- **Red Team (Opt-in)**: Active probing (SNMP, SMB, Kerberos) and passive listening (STP, CDP, LLMNR). Requires `--redteam` flag.
 
 This phase enriches the report with data invisible to a standard IP scanner.
 

@@ -243,7 +243,7 @@ RedAudit exposes three scan modes. The CLI mode names are in English and must be
 |--------|-----------|--------------------------------------------------------|----------------------------------------|
 | Fast   | `fast`    | Host discovery only (`nmap -sn`).                       | Quick inventory; verify reachability.  |
 | Normal | `normal`  | Top ports + service versions.                           | Standard security audit of a network.  |
-| Full   | `full`    | Extended ports + scripts + web/TLS deep analysis.       | Comprehensive audit / pre-pentest review. |
+| Full   | `full`    | Extended ports + scripts + web/TLS + **net discovery** (v3.2.1). | Comprehensive audit / pre-pentest review. |
 
 Changing the mode affects how aggressively external tools are invoked and how many ports/probes are used.
 
