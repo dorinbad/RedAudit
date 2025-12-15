@@ -763,7 +763,7 @@ def start_background_capture(
         logger: Optional logger
     
     Returns:
-        Dict with 'process', 'pcap_file', 'iface' or None
+        Dict with 'process', 'pcap_file', 'pcap_file_abs', 'iface' or None
     """
     if not extra_tools.get("tcpdump"):
         return None
@@ -814,7 +814,9 @@ def start_background_capture(
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        return {"process": proc, "pcap_file": pcap_file, "iface": iface}
+        # v3.1.4: Keep reports portable by storing relative filename; keep absolute for internal use.
+        pcap_filename = os.path.basename(pcap_file)
+        return {"process": proc, "pcap_file": pcap_filename, "pcap_file_abs": pcap_file, "iface": iface}
     except Exception as exc:
         if logger:
             logger.debug("Failed to start background capture for %s: %s", safe_ip, exc)
@@ -841,10 +843,17 @@ def stop_background_capture(
         return None
     
     proc = capture_info["process"]
-    pcap_file = capture_info.get("pcap_file", "")
+    pcap_file_abs = capture_info.get("pcap_file_abs") or capture_info.get("pcap_file", "")
     iface = capture_info.get("iface", "")
     
-    result = {"pcap_file": pcap_file, "iface": iface}
+    pcap_file = capture_info.get("pcap_file")
+    if not pcap_file:
+        pcap_file = os.path.basename(pcap_file_abs) if pcap_file_abs else ""
+    # If older capture_info stored an absolute path in pcap_file, normalize to portable filename.
+    if pcap_file and ("/" in pcap_file or "\\" in pcap_file):
+        pcap_file = os.path.basename(pcap_file)
+
+    result = {"pcap_file": pcap_file, "pcap_file_abs": pcap_file_abs, "iface": iface}
     
     # Terminate the capture process
     try:
@@ -857,17 +866,17 @@ def stop_background_capture(
         result["tcpdump_error"] = str(exc)
     
     # Generate tshark summary if available
-    if os.path.exists(pcap_file):
+    if pcap_file_abs and os.path.exists(pcap_file_abs):
         # Ensure PCAP is stored with secure permissions (best-effort).
         try:
-            os.chmod(pcap_file, 0o600)
+            os.chmod(pcap_file_abs, 0o600)
         except Exception:
             pass
 
-    if extra_tools.get("tshark") and os.path.exists(pcap_file):
+    if extra_tools.get("tshark") and pcap_file_abs and os.path.exists(pcap_file_abs):
         try:
             res = subprocess.run(
-                [extra_tools["tshark"], "-r", pcap_file, "-q", "-z", "io,phs"],
+                [extra_tools["tshark"], "-r", pcap_file_abs, "-q", "-z", "io,phs"],
                 capture_output=True,
                 text=True,
                 timeout=10,

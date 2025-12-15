@@ -105,7 +105,8 @@ This field appears only if automatic deep scan was triggered.
 | `commands[].duration_seconds` | float | Execution time in seconds |
 | `commands[].error` | string | (Optional) Error message if command failed |
 | `pcap_capture` | object | (Optional) Details about the micro-traffic capture |
-| `pcap_capture.pcap_file` | string | Absolute path to the generated .pcap file |
+| `pcap_capture.pcap_file` | string | Portable relative filename (e.g., `traffic_192.168.1.1.pcap`) **(v3.1.4)** |
+| `pcap_capture.pcap_file_abs` | string | (Optional) Absolute path - for internal use **(v3.1.4)** |
 | `pcap_capture.iface` | string | Network interface used for capture |
 | `pcap_capture.tshark_summary` | string | (Optional) High-level protocol stats if tshark is installed |
 | `pcap_capture.tshark_error` | string | (Optional) Error from tshark if it failed |
@@ -202,7 +203,7 @@ List of web vulnerability findings. Each entry contains:
 | `vulnerabilities[].raw_tool_output_sha256` | string | (Optional) Hash of raw output **(v3.1)** |
 | `vulnerabilities[].raw_tool_output_ref` | string | (Optional) Path to externalized output **(v3.1)** |
 | `vulnerabilities[].curl_headers` | string | (Optional) HTTP headers from curl |
-| `vulnerabilities[].wget_spider` | string | (Optional) Wget spider output |
+| `vulnerabilities[].wget_headers` | string | (Optional) Wget spider output (response headers from stderr) |
 | `vulnerabilities[].tls_info` | string | (Optional) OpenSSL TLS certificate info |
 | `vulnerabilities[].nikto_filtered_count` | integer | Number of Nikto false positives filtered |
 | `vulnerabilities[].severity_note` | string | (Optional) Explanation when severity was adjusted **(v3.1.4)** |
