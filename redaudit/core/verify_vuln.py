@@ -245,7 +245,7 @@ def verify_magic_bytes(url: str, expected_ext: str, extra_tools: Optional[Dict] 
         else:
             # Check if it looks like HTML/JSON (common false positive)
             if data.startswith(b'<!') or data.startswith(b'<html') or data.startswith(b'{'):
-                return False, f"filtered:magic_mismatch:got_html_or_json"
+                return False, "filtered:magic_mismatch:got_html_or_json"
             return False, f"filtered:magic_mismatch:expected_{magic_key}"
     
     except Exception as e:

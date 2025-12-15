@@ -23,6 +23,7 @@ import textwrap
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging.handlers import RotatingFileHandler
+from typing import Optional
 
 from redaudit.utils.constants import (
     VERSION,
