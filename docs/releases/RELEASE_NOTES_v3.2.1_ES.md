@@ -47,7 +47,13 @@ El prompt de topología de múltiples pasos anterior se ha consolidado en una el
 - Añadidas más de 60 nuevas claves de traducción para cubrir cadenas en Inglés previamente hardcodeadas (errores de proxy, validación de objetivos, mensajes de generación de contraseñas aleatorias).
 - Soporte completo en Inglés (EN) y Español (ES) para todos los nuevos menús e interfaces del wizard.
 
-### 6. Detección de Fugas de Subred (Análisis de Invitados)
+### 6. Soporte de Herramientas
+
+- **Detección de Fugas**: Nuevo análisis heurístico para encontrar fugas de IPs privadas en cabeceras HTTP.
+- **UI Mejorada**: Prompts interactivos más limpios con separadores coloreados.
+- **Actualizaciones del Instalador**: Soporte nativo para instalar `kerbrute` y `proxychains4`.
+
+### 7. Detección de Fugas de Subred (Análisis de Invitados)
 
 Un nuevo módulo de post-procesamiento detecta automáticamente **Redes Ocultas Potenciales** (como VLANs de Invitados o subredes de Gestión) analizando "fugas" en servicios HTTP:
 

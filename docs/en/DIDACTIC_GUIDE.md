@@ -274,6 +274,19 @@ Professional pentesters often find hidden networks not by scanning ranges, but b
 3. **Correlation**: If `192.168.189.1` is private but NOT in your target range, it reports a **Leak**.
 
 **Educational Value**: This teaches students that "Network Discovery" isn't just sending packets—it's also listening to what services *say* about their environment.
+
+### Technique Spotlight: Active Identity Probing (Red Team)
+
+*New in v3.2.1*
+
+For authorized assessments, finding usernames is key to lateral movement.
+
+**How RedAudit does it**:
+
+1. **Kerberos Enumeration**: Uses `kerbrute` (if trusted list provided) to validate users against the Domain Controller without locking accounts (Pre-Auth check).
+2. **SOCKS Proxying**: Uses `proxychains4` to route tools through compromised hosts if pivoting is enabled.
+
+**Risk**: High. Unlike leak detection, this actively touches the Domain Controller and generates logs (Event 4771).
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap` | Optional deep enumeration (SNMP walking, SMB shares, LDAP queries, fast port scanning) for comprehensive Blue Team analysis (v3.2+) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
 | **Web Recon** | `whatweb`, `curl`, `nikto` | Web application analysis | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Encryption and certificate auditing | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |

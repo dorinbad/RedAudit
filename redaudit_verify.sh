@@ -82,6 +82,7 @@ check_cmd whois
 check_cmd dig
 check_cmd searchsploit
 check_cmd testssl.sh
+check_cmd proxychains4
 
 echo
 echo "Network Discovery tools (v3.2+):"
@@ -103,6 +104,7 @@ check_cmd masscan
 check_cmd rpcclient  # Part of smbclient package
 check_cmd ldapsearch
 check_cmd bettercap
+check_cmd kerbrute
 
 echo
 echo "Python modules (optional):"

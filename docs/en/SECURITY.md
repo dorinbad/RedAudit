@@ -141,6 +141,8 @@ RedAudit v3.2 introduces **Active Reconnaissance** capabilities (`--redteam`, `-
 | `ldapsearch` | LDAP/AD queries for organizational structure | **Medium** - LDAP server logs queries | ✅ Directory admin approval |
 | `bettercap` | Multi-purpose L2 attack framework (ARP spoofing, MITM, injection) | **Critical** - Active network attacks, illegal without authorization | ✅ Executive + legal approval |
 | `scapy` (passive) | Passive packet sniffing for 802.1Q VLAN tags | **Low** - Passive only (no injection) | ⚠️ Requires promiscuous mode (root) |
+| `kerbrute` | Kerberos user enumeration via pre-auth checks | **High** - Generates Failed Logons (Event 4771) on DC | ✅ Domain admin approval |
+| `proxychains4` | Routes traffic through SOCKS5 proxies | **Medium** - Evades network controls / firewall logging | ✅ Network security approval |
 
 ### Best Practices for Red Team Features
 

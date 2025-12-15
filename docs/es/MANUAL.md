@@ -134,7 +134,8 @@ El script `redaudit_install.sh` realiza, de forma resumida, lo siguiente:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (para searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (para descubrimiento mejorado)
-   - `snmp`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy` (para recon Red Team)
+   - `snmp`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (para recon Red Team)
+   - `kerbrute` (descargado desde GitHub)
 
 3. **Despliegue del código**
    - Copia el paquete Python `redaudit/` a `/usr/local/lib/redaudit`.
@@ -170,10 +171,17 @@ Si prefieres evitar el instalador:
    sudo apt install curl wget openssl nmap tcpdump tshark \
                     whois bind9-dnsutils python3-nmap \
                     python3-cryptography python3-netifaces exploitdb \
-                    nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
+                    nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin proxychains4
    ```
 
-3. Ejecuta RedAudit como módulo:
+3. Instalar `kerbrute` (paso manual):
+
+   ```bash
+   sudo wget -O /usr/local/bin/kerbrute https://github.com/ropnop/kerbrute/releases/download/v1.0.3/kerbrute_linux_amd64
+   sudo chmod +x /usr/local/bin/kerbrute
+   ```
+
+4. Ejecuta RedAudit como módulo:
 
    ```bash
    sudo python3 -m redaudit

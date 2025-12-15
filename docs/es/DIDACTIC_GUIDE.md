@@ -273,6 +273,19 @@ Los pentesters profesionales a menudo encuentran redes ocultas no escaneando ran
 3. **Correlación**: Si `192.168.189.1` es privada pero NO está en tu rango objetivo, reporta una **Fuga** (Leak).
 
 **Valor Educativo**: Esto enseña a los estudiantes que el "Descubrimiento de Red" no es solo enviar paquetes—es también escuchar lo que los servicios *dicen* sobre su entorno.
+
+### Técnica Destacada: Sondeo Activo de Identidad (Red Team)
+
+*Nuevo en v3.2.1*
+
+Para evaluaciones autorizadas, encontrar nombres de usuario es clave para el movimiento lateral.
+
+**Cómo lo hace RedAudit**:
+
+1. **Enumeración Kerberos**: Usa `kerbrute` (si se provee lista confiable) para validar usuarios contra el Controlador de Dominio sin bloquear cuentas (Pre-Auth check).
+2. **Proxy SOCKS**: Usa `proxychains4` para enrutar herramientas a través de hosts comprometidos si el pivoting está habilitado.
+
+**Riesgo**: Alto. A diferencia de la detección de fugas, esto toca activamente el Controlador de Dominio y genera logs (Evento 4771).
 | **Recon Web** | `whatweb`, `curl`, `nikto` | Análisis de aplicaciones web | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Auditoría de cifrado y certificados | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
 | **Tráfico** | `tcpdump`, `tshark` | Captura de evidencia forense (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |

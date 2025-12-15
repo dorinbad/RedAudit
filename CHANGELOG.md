@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Defaults control flags**: `--defaults {ask,use,ignore}`, `--use-defaults`, `--ignore-defaults`.
 - **Locale language fallback**: CLI detects ES/EN from env/locale when no stored preference exists.
 - **Subnet Leak Detection**: Report section identifying hidden networks from HTTP header/redirect leaks (pivoting recon).
+- **Installer Support**: Automated installation of `kerbrute` (GitHub binary) and `proxychains4`.
 - **UI Polish**: Added colored separator lines and spacing to interactive wizard prompts.
 
 ### Fixed

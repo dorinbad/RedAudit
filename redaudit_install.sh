@@ -84,7 +84,7 @@ echo "$MSG_INSTALL"
 # 2) Dependencies
 # -------------------------------------------
 
-EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp enum4linux smbclient masscan ldap-utils bettercap python3-scapy"
+EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient masscan ldap-utils bettercap python3-scapy proxychains4"
 
 echo ""
 echo "$MSG_PKGS"
@@ -138,6 +138,23 @@ if [[ ! -f "/usr/local/bin/testssl.sh" ]]; then
     fi
 else
     echo "[OK] testssl.sh already installed"
+fi
+
+# -------------------------------------------
+# 2c) Install kerbrute (Red Team / Kerberos)
+# -------------------------------------------
+
+if [[ ! -f "/usr/local/bin/kerbrute" ]]; then
+    echo "[INFO] Installing kerbrute (v1.0.3)..."
+    KERBRUTE_URL="https://github.com/ropnop/kerbrute/releases/download/v1.0.3/kerbrute_linux_amd64"
+    if wget -q -O /usr/local/bin/kerbrute "$KERBRUTE_URL"; then
+        chmod +x /usr/local/bin/kerbrute
+        echo "[OK] kerbrute installed at /usr/local/bin/kerbrute"
+    else
+        echo "[WARN] Failed to download kerbrute from GitHub. Skipping."
+    fi
+else
+    echo "[OK] kerbrute already installed"
 fi
 
 # -------------------------------------------
