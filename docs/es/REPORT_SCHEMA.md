@@ -40,9 +40,59 @@ El contenedor de nivel superior para la sesión de escaneo.
 | `targets` | `array` | Lista de redes objetivo escaneadas |
 | `network_info` | `array` | Lista de objetos de interfaz de red |
 | `topology` | `object` | (Opcional) Salida best-effort de descubrimiento de topología (ARP/VLAN/LLDP + gateway/rutas) **(v3.1+)** |
+| `net_discovery` | `object` | (Opcional) Salida de descubrimiento de red mejorado (DHCP/NetBIOS/mDNS/UPNP) **(v3.2+)** |
 | `hosts` | `array` | Lista de objetos `Host` (ver abajo) |
 | `vulnerabilities` | `array` | Lista de hallazgos de vulnerabilidades |
 | `summary` | `object` | Estadísticas agregadas |
+
+### Objeto Net Discovery (Opcional) (v3.2+)
+
+Este campo aparece solo si el descubrimiento de red fue habilitado (CLI: `--net-discovery`).
+
+El descubrimiento de red es **best-effort**: herramientas faltantes reducirán la visibilidad pero no fallarán el escaneo.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `enabled` | boolean | Siempre true cuando el bloque está presente |
+| `generated_at` | string | Marca de tiempo (ISO 8601) |
+| `protocols_used` | array | Lista de protocolos usados (dhcp, netbios, mdns, upnp, arp, fping) |
+| `redteam_enabled` | boolean | True si las técnicas Red Team fueron habilitadas |
+| `tools` | object | Flags de disponibilidad de herramientas (nmap, fping, nbtscan, etc.) |
+| `dhcp_servers` | array | Servidores DHCP descubiertos (ver abajo) |
+| `alive_hosts` | array | IPs respondiendo al sweep fping |
+| `netbios_hosts` | array | Hosts Windows descubiertos vía NetBIOS |
+| `arp_hosts` | array | Hosts descubiertos vía ARP/netdiscover |
+| `mdns_services` | array | Servicios mDNS/Bonjour descubiertos |
+| `upnp_devices` | array | Dispositivos UPNP descubiertos |
+| `candidate_vlans` | array | Potenciales redes de invitados/VLANs detectadas |
+| `errors` | array | Errores best-effort encontrados |
+
+**Entradas dhcp_servers[]:**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `ip` | string | Dirección IP del servidor DHCP |
+| `subnet` | string | Máscara de subred ofrecida |
+| `gateway` | string | Gateway por defecto ofrecido |
+| `dns` | array | Servidores DNS ofrecidos |
+
+**Entradas netbios_hosts[]:**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `ip` | string | Dirección IP del host |
+| `name` | string | Nombre NetBIOS |
+| `workgroup` | string | (Opcional) Grupo de trabajo Windows |
+| `mac` | string | (Opcional) Dirección MAC |
+
+**Entradas candidate_vlans[]:**
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `source` | string | Método de detección (ej: "dhcp_server") |
+| `gateway` | string | IP del gateway de la potencial VLAN |
+| `subnet` | string | Máscara de subred |
+| `description` | string | Descripción legible |
 
 ### Objeto Host
 

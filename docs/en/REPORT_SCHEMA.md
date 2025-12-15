@@ -40,9 +40,59 @@ The top-level container for the scan session.
 | `targets` | `array` | List of target networks scanned |
 | `network_info` | `array` | List of network interface objects |
 | `topology` | `object` | (Optional) Best-effort topology discovery output (ARP/VLAN/LLDP + gateway/routes) **(v3.1+)** |
+| `net_discovery` | `object` | (Optional) Enhanced network discovery output (DHCP/NetBIOS/mDNS/UPNP) **(v3.2+)** |
 | `hosts` | `array` | List of `Host` objects (see below) |
 | `vulnerabilities` | `array` | List of vulnerability findings |
 | `summary` | `object` | Aggregated statistics |
+
+### Net Discovery Object (Optional) (v3.2+)
+
+This field appears only if network discovery was enabled (CLI: `--net-discovery`).
+
+Network discovery is **best-effort**: missing tools will reduce visibility but should not fail the scan.
+
+| Field | Type | Description |
+|---|---|---|
+| `enabled` | boolean | Always true when the block is present |
+| `generated_at` | string | Timestamp (ISO 8601) |
+| `protocols_used` | array | List of protocols used (dhcp, netbios, mdns, upnp, arp, fping) |
+| `redteam_enabled` | boolean | True if Red Team techniques were enabled |
+| `tools` | object | Tool availability flags (nmap, fping, nbtscan, netdiscover, etc.) |
+| `dhcp_servers` | array | Discovered DHCP servers (see below) |
+| `alive_hosts` | array | IPs responding to fping sweep |
+| `netbios_hosts` | array | Windows hosts discovered via NetBIOS |
+| `arp_hosts` | array | Hosts discovered via ARP/netdiscover |
+| `mdns_services` | array | mDNS/Bonjour services discovered |
+| `upnp_devices` | array | UPNP devices discovered |
+| `candidate_vlans` | array | Potential guest networks/VLANs detected |
+| `errors` | array | Best-effort errors encountered |
+
+**dhcp_servers[]** entries:
+
+| Field | Type | Description |
+|---|---|---|
+| `ip` | string | DHCP server IP address |
+| `subnet` | string | Subnet mask offered |
+| `gateway` | string | Default gateway offered |
+| `dns` | array | DNS servers offered |
+
+**netbios_hosts[]** entries:
+
+| Field | Type | Description |
+|---|---|---|
+| `ip` | string | Host IP address |
+| `name` | string | NetBIOS hostname |
+| `workgroup` | string | (Optional) Windows workgroup |
+| `mac` | string | (Optional) MAC address |
+
+**candidate_vlans[]** entries:
+
+| Field | Type | Description |
+|---|---|---|
+| `source` | string | Detection method (e.g., "dhcp_server") |
+| `gateway` | string | Gateway IP of the potential VLAN |
+| `subnet` | string | Subnet mask |
+| `description` | string | Human-readable description |
 
 ### Host Object
 

@@ -10,8 +10,8 @@ This document outlines the technical roadmap, planned architectural improvements
 | :--- | :--- | :--- | :--- |
 | **High** | **Network Topology Discovery** | ✅ Implemented (best-effort) | Optional topology discovery (ARP/VLAN/LLDP + gateway/routes) focused on "hidden network" hints and L2 context. |
 | **High** | **Configurable UDP Ports** | ✅ Implemented | Added `--udp-ports N` CLI flag (range: 50-500, default: 100) for user-tunable UDP scan coverage in full UDP identity mode. |
-| **High** | **Enhanced Net Discovery (v3.2)** | Planned | Active discovery of guest networks and VLANs via broadcast protocols. See details below. |
-| **Medium** | **NetBIOS/mDNS Discovery** | Planned | Active hostname queries (port 137/5353) for improved entity resolution on networks without DNS PTR records. |
+| **High** | **Enhanced Net Discovery (v3.2)** | 🔄 IN PROGRESS | Active discovery of guest networks and VLANs via broadcast protocols. Core module implemented, Red Team pending. |
+| **Medium** | **NetBIOS/mDNS Discovery** | ✅ Implemented (v3.2) | Active hostname queries (port 137/5353) for improved entity resolution. |
 | **Medium** | **Containerization** | Paused | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
 | **Low** | **Expand Persistent Configuration** | ✅ Implemented (initial) | Extended `~/.redaudit/config.json` beyond NVD key (persist common defaults like threads/output/rate-limit/UDP/topology/lang). |
 
@@ -19,35 +19,53 @@ This document outlines the technical roadmap, planned architectural improvements
 
 **Goal**: Detect guest networks, hidden VLANs, and additional DHCP servers not visible from the primary network segment.
 
-**Proposed Tools/Techniques**:
+**Current Progress (v3.2-dev)**:
 
-| Technique | Tool | What It Detects |
+- ✅ Core module: `redaudit/core/net_discovery.py`
+- ✅ CLI flags: `--net-discovery`, `--redteam`
+- ✅ DHCP discovery via nmap
+- ✅ Fping sweep
+- ✅ NetBIOS discovery (nbtscan/nmap)
+- ✅ mDNS/Bonjour discovery
+- ✅ UPNP device discovery
+- ✅ Netdiscover ARP scan
+- ✅ VLAN candidate analysis
+- 🔲 Red Team techniques (in progress)
+
+**Standard Discovery Tools (Implemented)**:
+
+| Technique | Tool | Status |
 | :--- | :--- | :--- |
-| **DHCP Discovery** | `nmap --script broadcast-dhcp-discover` | DHCP servers on all VLANs, including guest networks |
-| **NetBIOS Discovery** | `nbtscan` / `nmap --script nbstat` | Windows hostnames, workgroups, domain membership |
-| **mDNS/Bonjour** | `avahi-browse` / `nmap --script dns-service-discovery` | Apple devices, printers, IoT (port 5353) |
-| **Netdiscover** | `netdiscover -r <range> -P` | Passive/active ARP reconnaissance (fast L2 mapping) |
-| **Broadcast ARP** | `nmap --script broadcast-arp` | All reachable hosts via ARP broadcast |
-| **UPNP Discovery** | `nmap --script broadcast-upnp-info` | Routers, NAS, media devices advertising via UPNP |
+| **DHCP Discovery** | `nmap --script broadcast-dhcp-discover` | ✅ |
+| **NetBIOS Discovery** | `nbtscan` / `nmap --script nbstat` | ✅ |
+| **mDNS/Bonjour** | `avahi-browse` / `nmap --script dns-service-discovery` | ✅ |
+| **Netdiscover** | `netdiscover -r <range> -P` | ✅ |
+| **Fping Sweep** | `fping -a -g <range>` | ✅ |
+| **UPNP Discovery** | `nmap --script broadcast-upnp-info` | ✅ |
 
-**Red Team / Penetration Testing Techniques**:
+**Red Team / Penetration Testing Techniques (Planned/In Progress)**:
 
-| Technique | Tool | What It Detects |
-| :--- | :--- | :--- |
-| **VLAN Enumeration** | `yersinia -G` / `frogger` | 802.1Q VLAN IDs, DTP negotiation, trunk ports |
-| **STP Topology** | `yersinia -I eth0 -G stp` | Spanning Tree root bridges, network topology |
-| **SNMP Walking** | `snmpwalk -v2c -c public <ip>` | Switch port mappings, VLAN assignments, ARP tables |
-| **HSRP/VRRP Discovery** | `nmap --script broadcast-eigrp-discovery` | Gateway redundancy, virtual IPs, priorities |
-| **SMB Enumeration** | `enum4linux -a <ip>` / `crackmapexec smb` | Windows shares, users, password policies, domains |
-| **LLMNR/NBT-NS** | `responder --analyze` (passive mode) | Windows name resolution requests (recon only) |
-| **Bettercap Recon** | `bettercap -eval "net.recon on"` | Live host discovery, OS fingerprinting, traffic analysis |
-| **Masscan** | `masscan -p1-65535 --rate 10000` | Ultra-fast port discovery across large ranges |
-| **Fping Sweep** | `fping -a -g <range>` | Fast ICMP host discovery |
-| **Router Discovery** | `nmap --script broadcast-igmp-discovery` | Multicast routers, IGMP snooping |
-| **IPv6 Discovery** | `nmap -6 --script targets-ipv6-multicast-*` | IPv6 hosts via multicast (link-local) |
-| **Scapy Custom** | Python Scapy scripts | Custom 802.1Q tagged packets, VLAN hopping attempts |
+| Technique | Tool | Status | What It Detects |
+| :--- | :--- | :--- | :--- |
+| **SNMP Walking** | `snmpwalk -v2c -c public <ip>` | 🔲 Pending | Switch port mappings, VLAN assignments, ARP tables |
+| **SMB Enumeration** | `enum4linux -a <ip>` / `crackmapexec smb` | 🔲 Pending | Windows shares, users, password policies, domains |
+| **VLAN Enumeration** | `yersinia -G` / `frogger` | 🔲 Planned | 802.1Q VLAN IDs, DTP negotiation, trunk ports |
+| **STP Topology** | `yersinia -I eth0 -G stp` | 🔲 Planned | Spanning Tree root bridges, network topology |
+| **HSRP/VRRP Discovery** | `nmap --script broadcast-eigrp-discovery` | 🔲 Planned | Gateway redundancy, virtual IPs, priorities |
+| **LLMNR/NBT-NS** | `responder --analyze` (passive mode) | 🔲 Planned | Windows name resolution requests (recon only) |
+| **Bettercap Recon** | `bettercap -eval "net.recon on"` | 🔲 Planned | Live host discovery, OS fingerprinting, traffic analysis |
+| **Masscan** | `masscan -p1-65535 --rate 10000` | 🔲 Planned | Ultra-fast port discovery across large ranges |
+| **Router Discovery** | `nmap --script broadcast-igmp-discovery` | 🔲 Planned | Multicast routers, IGMP snooping |
+| **IPv6 Discovery** | `nmap -6 --script targets-ipv6-multicast-*` | 🔲 Planned | IPv6 hosts via multicast (link-local) |
+| **Scapy Custom** | Python Scapy scripts | 🔲 Planned | Custom 802.1Q tagged packets, VLAN hopping attempts |
+| **RPC Enumeration** | `rpcclient -U "" <ip>` | 🔲 Planned | Windows RPC services, user enumeration |
+| **LDAP Enumeration** | `ldapsearch` / `nmap --script ldap-*` | 🔲 Planned | Active Directory info, users, groups |
+| **Kerberos Enum** | `kerbrute` / `nmap --script krb5-enum-users` | 🔲 Planned | Valid AD usernames, Kerberoasting targets |
+| **DNS Zone Transfer** | `dig axfr @<dns> <domain>` | 🔲 Planned | Internal DNS records, hostnames |
+| **Web Fingerprint** | `whatweb` / `wappalyzer` | ✅ (scanner.py) | Web technologies, frameworks, versions |
+| **SSL/TLS Analysis** | `testssl.sh` | ✅ (scanner.py) | Certificate issues, cipher weaknesses |
 
-**CLI Options (Proposed)**:
+**CLI Options (Implemented)**:
 
 ```bash
 redaudit --net-discovery --target 192.168.0.0/16 --yes   # Full broadcast discovery
