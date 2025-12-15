@@ -121,7 +121,16 @@ Users should treat the config file as sensitive. The API key grants increased ra
 
 Users should only run RedAudit in authorized, controlled environments.
 
-## 10. License
+## 11. Red Team & Active Recon Safety
+
+RedAudit v3.2 introduces **Active Reconnaissance** capabilities (`--redteam`, `--net-discovery`) that differ from standard scanning:
+
+- **Broadcasting**: These modes send L2 broadcast/multicast packets (ARP, mDNS, NetBIOS).
+- **Probing**: Active interaction with services (SNMP, SMB, Kerberos) occurs if detected.
+- **Traceability**: Unlike passive listening, these actions **will generate logs** on target systems and may trigger IDS/IPS rules.
+- **Authorization**: Ensure you have explicit permission for **active** internal discovery, not just external vulnerability scanning.
+
+## 12. License
 
 This security model is part of the RedAudit project and is covered by the  
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../../LICENSE) for the full text.

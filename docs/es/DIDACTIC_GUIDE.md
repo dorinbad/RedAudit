@@ -15,11 +15,12 @@ Esta guía está diseñada para ayudar a profesores, instructores y mentores a e
 3. [Lógica de Deep Scan y Heurística](#3-lógica-de-deep-scan-y-heurística)
 4. [Componentes y Herramientas](#4-componentes-y-herramientas)
 5. [Guía para Desarrolladores: Internals en Python](#5-guía-para-desarrolladores-internals-en-python)
-6. [Ejemplos de Salida Real](#6-ejemplos-de-salida-real)
-7. [Casos de Uso Educativos](#7-casos-de-uso-educativos)
-8. [Ejercicios Prácticos para Estudiantes](#8-ejercicios-prácticos-para-estudiantes)
-9. [Glosario Técnico](#9-glosario-técnico)
-10. [Referencias al Código Fuente](#10-referencias-al-código-fuente)
+6. [Seguridad y Gestión de Archivos](#6-seguridad-y-gestión-de-archivos)
+7. [Ejemplos de Salida Real](#7-ejemplos-de-salida-real)
+8. [Casos de Uso Educativos](#8-casos-de-uso-educativos)
+9. [Ejercicios Prácticos para Estudiantes](#9-ejercicios-prácticos-para-estudiantes)
+10. [Glosario Técnico](#10-glosario-técnico)
+11. [Referencias al Código Fuente](#11-referencias-al-código-fuente)
 
 ---
 
@@ -110,6 +111,19 @@ Si se elige escanear, el asistente solicita:
 Utiliza un ping sweep rápido (`nmap -sn -T4 --max-retries 1`) para identificar qué hosts están `UP` en el rango objetivo. Esto evita perder tiempo escaneando IPs vacías.
 
 **Tiempo estimado**: ~1-5 segundos por cada /24 (256 IPs).
+
+### Fase 2b: Descubrimiento de Red Avanzado (v3.2)
+
+**Función en código**: [`net_discovery.py`](../../redaudit/core/net_discovery.py)
+
+Si se habilita (`--net-discovery`), RedAudit va más allá de ICMP y utiliza protocolos de capa 2:
+
+- **ARP / Netdiscover**: Detecta hosts silencios en el enlace local.
+- **mDNS / Bonjour**: Descubre servicios y dispositivos (e.g., impresoras, Apple TV).
+- **NetBIOS / Nbtscan**: Resuelve nombres de host Windows y grupos de trabajo.
+- **Red Team (Opt-in)**: Sondeo activo (SNMP, SMB, Kerberos) y escucha pasiva (STP, CDP, LLMNR).
+
+Esta fase enriquece el reporte con datos invisibles para un escáner IP estándar.
 
 ### Fase 3: Enumeración de Puertos (Concurrent)
 
@@ -228,6 +242,7 @@ RedAudit actúa como un "pegamento" inteligente entre herramientas externas.
 | Componente | Herramienta Externa | Función en RedAudit | Código Fuente |
 |:---|:---|:---|:---|
 | **Escáner Core** | `nmap` | Motor principal de escaneo de paquetes | [scanner.py](../../redaudit/core/scanner.py) |
+| **Net Discovery** | `netdiscover`, `nbtscan` | Hallazgos de descubrimiento L2/L3 (v3.2) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
 | **Web Recon** | `whatweb`, `curl`, `nikto` | Análisis de aplicaciones web | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Auditoría de cifrado y certificados | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
 | **Tráfico** | `tcpdump`, `tshark` | Captura de evidencia forense (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |
@@ -315,7 +330,7 @@ Cliente → Recibe:
 - `tags[]`: Auto-etiquetado (`high-risk`, `web-vulnerable`, `outdated-ssl`)
 - `vulnerability.severity`: Mapeado a escala CVSS
 
-**Ejemplo 1: Integración con Elasticsearch (ELK Stack)**
+#### Ejemplo 1: Integración con Elasticsearch (ELK Stack)
 
 ```bash
 # Script de ingesta automática
@@ -341,7 +356,7 @@ done
 }
 ```
 
-**Ejemplo 2: Integración con Splunk**
+#### Ejemplo 2: Integración con Splunk
 
 ```bash
 # Enviar JSON a Splunk HEC (HTTP Event Collector)
@@ -361,7 +376,7 @@ index="security" sourcetype="redaudit"
 | sort -count
 ```
 
-**Ejemplo 3: Integración con Wazuh**
+#### Ejemplo 3: Integración con Wazuh
 
 ```bash
 # Copiar JSON al directorio monitoreado por Wazuh
@@ -548,7 +563,7 @@ RedAudit centraliza todos los valores configurables en un único archivo. Esto p
 | `HEARTBEAT_WARN_THRESHOLD` | 60s | Scans muy rápidos (falsos warnings) | 120s |
 | `UDP_TOP_PORTS` | 100 | Necesitas cobertura UDP exhaustiva | 1000 |
 
-**Ejemplo 1: Aumentar límite de PCAP para análisis forense**
+#### Ejemplo 1: Aumentar límite de PCAP para análisis forense
 
 ```python
 # Caso: Estás investigando un incidente de seguridad y necesitas 
@@ -561,7 +576,7 @@ TRAFFIC_CAPTURE_MAX_DURATION = 60  # Era 120s, reducir a 60s para compensar
 
 **Resultado**: PCAPs de ~100-150KB (vs ~20-50KB), pero con información completa de negociación SSL.
 
-**Ejemplo 2: Optimizar para redes corporativas lentas**
+#### Ejemplo 2: Optimizar para redes corporativas lentas
 
 ```python
 # Caso: Red con firewalls restrictivos que demoran respuestas
@@ -571,7 +586,7 @@ DEEP_SCAN_TIMEOUT = 600  # Era 400s, dar 50% más tiempo
 HEARTBEAT_WARN_THRESHOLD = 120  # Era 60s, evitar warnings prematuros
 ```
 
-**Ejemplo 3: Laboratorio educativo con hardware antiguo**
+#### Ejemplo 3: Laboratorio educativo con hardware antiguo
 
 ```python
 # Caso: PCs de aula con CPUs de <2GHz, el cifrado es lento

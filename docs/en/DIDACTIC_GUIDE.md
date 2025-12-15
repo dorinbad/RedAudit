@@ -17,11 +17,12 @@ This guide is designed to help professors, instructors, and mentors explain the 
 3. [Deep Scan Logic and Heuristics](#3-deep-scan-logic-and-heuristics)
 4. [Components and Tools](#4-components-and-tools)
 5. [Developer's Guide: Python Internals](#5-developers-guide-python-internals)
-6. [Real Output Examples](#6-real-output-examples)
-7. [Educational Use Cases](#7-educational-use-cases)
-8. [Practical Exercises for Students](#8-practical-exercises-for-students)
-9. [Technical Glossary](#9-technical-glossary)
-10. [Source Code References](#10-source-code-references)
+6. [Security and File Management](#6-security-and-file-management)
+7. [Real Output Examples](#7-real-output-examples)
+8. [Educational Use Cases](#8-educational-use-cases)
+9. [Practical Exercises for Students](#9-practical-exercises-for-students)
+10. [Technical Glossary](#10-technical-glossary)
+11. [Source Code References](#11-source-code-references)
 
 ---
 
@@ -112,6 +113,19 @@ If converting to scan, the wizard requests:
 Uses a fast ping sweep (`nmap -sn -T4 --max-retries 1`) to identify which hosts are `UP` in the target range. This avoids wasting time scanning empty IPs.
 
 **Estimated time**: ~1-5 seconds per /24 (256 IPs).
+
+### Phase 2b: Advanced Network Discovery (v3.2)
+
+**Function in code**: [`net_discovery.py`](../../redaudit/core/net_discovery.py)
+
+If enabled (`--net-discovery`), RedAudit goes beyond ICMP and uses L2 protocols:
+
+- **ARP / Netdiscover**: Detects silent hosts on the local link.
+- **mDNS / Bonjour**: Discovers Apple/Linux devices and services (e.g., printers, Chromecast).
+- **NetBIOS / Nbtscan**: Resolves Windows hostnames and workgroups.
+- **Red Team (Opt-in)**: Active probing (SNMP, SMB, Kerberos) and passive listening (STP, CDP, LLMNR).
+
+This phase enriches the report with data invisible to a standard IP scanner.
 
 ### Phase 3: Port Enumeration (Concurrent)
 
@@ -230,6 +244,7 @@ RedAudit acts as intelligent "glue" between external tools.
 | Component | External Tool | Function in RedAudit | Source Code |
 |:---|:---|:---|:---|
 | **Core Scanner** | `nmap` | Main packet scanning engine | [scanner.py](../../redaudit/core/scanner.py) |
+| **Net Discovery** | `netdiscover`, `nbtscan` | Enhanced L2/L3 discovery findings (v3.2) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
 | **Web Recon** | `whatweb`, `curl`, `nikto` | Web application analysis | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Encryption and certificate auditing | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
 | **Traffic** | `tcpdump`, `tshark` | Forensic evidence capture (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |
@@ -317,7 +332,7 @@ Client → Receives:
 - `tags[]`: Auto-tagging (`high-risk`, `web-vulnerable`, `outdated-ssl`)
 - `vulnerability.severity`: Mapped to CVSS scale
 
-**Example 1: Integration with Elasticsearch (ELK Stack)**
+#### Example 1: Integration with Elasticsearch (ELK Stack)
 
 ```bash
 # Automated ingestion script
@@ -343,7 +358,7 @@ done
 }
 ```
 
-**Example 2: Integration with Splunk**
+#### Example 2: Integration with Splunk
 
 ```bash
 # Send JSON to Splunk HEC (HTTP Event Collector)
@@ -363,7 +378,7 @@ index="security" sourcetype="redaudit"
 | sort -count
 ```
 
-**Example 3: Integration with Wazuh**
+#### Example 3: Integration with Wazuh
 
 ```bash
 # Copy JSON to Wazuh-monitored directory
@@ -550,7 +565,7 @@ RedAudit centralizes all configurable values in a single file. This allows **beh
 | `HEARTBEAT_WARN_THRESHOLD` | 60s | Very fast scans (false warnings) | 120s |
 | `UDP_TOP_PORTS` | 100 | Need exhaustive UDP coverage | 1000 |
 
-**Example 1: Increase PCAP limit for forensic analysis**
+#### Example 1: Increase PCAP limit for forensic analysis
 
 ```python
 # Case: Investigating a security incident and need to
@@ -563,7 +578,7 @@ TRAFFIC_CAPTURE_MAX_DURATION = 60  # Was 120s, reduce to 60s to compensate
 
 **Result**: PCAPs of ~100-150KB (vs ~20-50KB), but with complete SSL negotiation information.
 
-**Example 2: Optimize for slow corporate networks**
+#### Example 2: Optimize for slow corporate networks
 
 ```python
 # Case: Network with restrictive firewalls that delay responses
@@ -573,7 +588,7 @@ DEEP_SCAN_TIMEOUT = 600  # Was 400s, give 50% more time
 HEARTBEAT_WARN_THRESHOLD = 120  # Was 60s, avoid premature warnings
 ```
 
-**Example 3: Educational lab with old hardware**
+#### Example 3: Educational lab with old hardware
 
 ```python
 # Case: Classroom PCs with <2GHz CPUs, encryption is slow

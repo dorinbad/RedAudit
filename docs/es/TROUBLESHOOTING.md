@@ -96,7 +96,7 @@ sudo apt install python3-cryptography
 sudo bash redaudit_install.sh -y
 ```
 
-### 9. El escaneo IPv6 no funciona (v3.0)
+### 9. Escaneo IPv6 no funciona (v3.0)
 
 **Síntoma**: Los objetivos IPv6 no devuelven resultados o dan errores.
 **Causa**: IPv6 no habilitado en el sistema o Nmap compilado sin soporte IPv6.
@@ -133,23 +133,24 @@ curl --socks5 pivot-host:1080 http://example.com
 # Correcto: --proxy socks5://host:port
 ```
 
-### 12. Net discovery / redteam muestra muchos "tool_missing" (v3.2)
+### 12. Net Discovery: Herramientas faltantes / "tool_missing" (v3.2)
 
-**Síntoma**: El bloque `net_discovery` contiene errores como `tool_missing`, o sub-bloques de redteam aparecen como omitidos.
-
-**Causa**: El descubrimiento de red mejorado es best-effort y depende de herramientas del sistema (opcionales). Algunas capturas L2 también requieren root.
-
-**Resolución** (los nombres de paquetes pueden variar por distro):
+**Síntoma**: Advertencias durante el Descubrimiento de Red sobre herramientas faltantes (`nbtscan`, `netdiscover`) o bloques de Red Team omitidos.
+**Causa**: El descubrimiento mejorado depende de herramientas externas no incluidas en nmap estándar.
+**Resolución**:
 
 ```bash
-sudo apt update
-sudo apt install -y fping nbtscan netdiscover avahi-utils snmp ldap-utils samba-common-bin dnsutils tcpdump masscan
+sudo apt update && sudo apt install nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
 ```
 
-Si la captura L2 se omite por detección de interfaz, especifícala:
+### 13. Net Discovery: "Permission denied" / Fallos L2 (v3.2)
 
-```bash
-sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
-```
+**Síntoma**: Módulos de `scapy`, `bettercap` o `netdiscover` fallan o no devuelven nada.
+**Causa**: Spoofing y sniffing L2 requieren privilegios de root y capacidades de inyección (`CAP_NET_RAW` a menudo no es suficiente para inyección).
+**Resolución**:
+
+- Ejecutar siempre con `sudo`.
+- Verificar que no haya filtrado MAC en el switch/interfaz.
+- Seleccionar interfaz explícitamente: `--net-discovery-interface eth0`.
 
 RedAudit y esta guía de solución de problemas son parte de un proyecto licenciado bajo GPLv3. Consulta [LICENSE](../../LICENSE).

@@ -133,23 +133,24 @@ curl --socks5 pivot-host:1080 http://example.com
 # Correct: --proxy socks5://host:port
 ```
 
-### 12. Net discovery / redteam shows many "tool_missing" results (v3.2)
+### 12. Net Discovery: Missing tools / "tool_missing" (v3.2)
 
-**Symptom**: The `net_discovery` block contains errors like `tool_missing`, or redteam sub-blocks are reported as skipped.
-
-**Cause**: Enhanced net discovery is best-effort and depends on optional system tools. Some L2 captures also require root.
-
-**Resolution** (package names may vary by distro):
+**Symptom**: Warnings during Network Discovery about missing tools (`nbtscan`, `netdiscover`), or skipped Red Team blocks.
+**Cause**: Enhanced discovery relies on external system tools not included in standard nmap.
+**Resolution**:
 
 ```bash
-sudo apt update
-sudo apt install -y fping nbtscan netdiscover avahi-utils snmp ldap-utils samba-common-bin dnsutils tcpdump masscan
+sudo apt update && sudo apt install nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
 ```
 
-If L2 capture is skipped due to interface detection, set it explicitly:
+### 13. Net Discovery: "Permission denied" / L2 failures (v3.2)
 
-```bash
-sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
-```
+**Symptom**: `scapy`, `bettercap`, or `netdiscover` modules fail or show no results.
+**Cause**: L2 spoofing, sniffing, and ARP injection require root privileges and specific packet injection capabilities (`CAP_NET_RAW` is often insufficient for injection).
+**Resolution**:
+
+- Always run with `sudo`.
+- Ensure no MAC filtering is blocking your interface.
+- Select the correct interface explicitly: `--net-discovery-interface eth0`.
 
 RedAudit and this troubleshooting guide are part of a GPLv3-licensed project. See [LICENSE](../../LICENSE).

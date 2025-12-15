@@ -97,7 +97,16 @@ Los usuarios deben tratar el archivo de configuración como sensible. La clave A
 - **Huella de red**: Los escaneos generan tráfico significativo
 - **Recon opcional**: `--net-discovery` / `--redteam` pueden invocar tooling broadcast/L2 adicional (best-effort; solo con autorización explícita)
 
-## 10. Licencia
+## 11. Seguridad en Red Team y Reconocimiento Activo
+
+RedAudit v3.2 introduce capacidades de **Reconocimiento Activo** (`--redteam`, `--net-discovery`) que difieren del escaneo estándar:
+
+- **Difusión**: Estos modos envían paquetes L2 broadcast/multicast (ARP, mDNS, NetBIOS).
+- **Sondeo**: Ocurre interacción activa con servicios (SNMP, SMB, Kerberos) si se detectan.
+- **Trazabilidad**: A diferencia de la escucha pasiva, estas acciones **generarán logs** en los sistemas objetivo y pueden activar reglas IDS/IPS.
+- **Autorización**: Asegúrese de tener permiso explícito para descubrimiento interno **activo**, no solo para escaneo de vulnerabilidades externo.
+
+## 12. Licencia
 
 Este modelo de seguridad es parte del proyecto RedAudit y está cubierto por la  
 **GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../../LICENSE) para el texto completo.

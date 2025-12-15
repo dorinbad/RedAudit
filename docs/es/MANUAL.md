@@ -133,6 +133,8 @@ El script `redaudit_install.sh` realiza, de forma resumida, lo siguiente:
    - `whois`, `bind9-dnsutils`
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (para searchsploit)
+   - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (para descubrimiento mejorado)
+   - `snmp`, `ldap-utils`, `samba-common-bin` (para recon Red Team)
 
 3. **Despliegue del código**
    - Copia el paquete Python `redaudit/` a `/usr/local/lib/redaudit`.
@@ -167,7 +169,8 @@ Si prefieres evitar el instalador:
    sudo apt update
    sudo apt install curl wget openssl nmap tcpdump tshark \
                     whois bind9-dnsutils python3-nmap \
-                    python3-cryptography python3-netifaces exploitdb
+                    python3-cryptography python3-netifaces exploitdb \
+                    nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
    ```
 
 3. Ejecuta RedAudit como módulo:
@@ -198,13 +201,21 @@ Los principios de diseño de RedAudit son:
 
 En un ciclo normal de ejecución, RedAudit realiza:
 
-1. **Descubrimiento**
+1. **Configuración Interactiva (Asistente)**
+   - Si se ejecuta interactivamente, el usuario selecciona una acción desde el **Menú Principal**.
+   - Input de rangos objetivo y selección de **Modo Topología** (Full, Standard o Topology Only).
+
+2. **Descubrimiento de Red (Opcional, v3.2)**
+   - Si se activa (`--net-discovery`), lanza sondas broadcast vía ARP, mDNS, NetBIOS y DHCP para encontrar hosts ocultos.
+   - Puede realizar recon Red Team (SNMP, LDAP) si se solicita.
+
+3. **Descubrimiento**
    - Uso de `nmap -sn` para detectar hosts vivos en los rangos indicados.
 
-2. **Descubrimiento de topología (opcional, v3.1+)**
+4. **Descubrimiento de topología (Opcional, v3.1+)**
    - Mapping best-effort de gateway/rutas + pistas L2 (ARP/VLAN/LLDP) cuando hay herramientas y privilegios.
 
-3. **Escaneo de puertos y servicios**
+5. **Escaneo de puertos y servicios**
    - Uso de `nmap -sV` para descubrir puertos abiertos y versiones de servicios.
    - En modo `full`, el escaneo es más exhaustivo (más puertos y scripts adicionales).
 
@@ -266,10 +277,10 @@ Si eliges escanear, el asistente te guiará por:
 - Modo de Escaneo (Fast, Normal, Full).
 - Opciones adicionales (Cifrado, Defaults).
 
-# Modo no interactivo (automatización)
+### Modo no interactivo (automatización)
 
+```bash
 sudo redaudit --target 192.168.1.0/24 --mode normal --yes
-
 ```
 
 También se puede invocar como módulo:

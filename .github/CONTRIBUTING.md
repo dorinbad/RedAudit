@@ -94,7 +94,7 @@ flake8 redaudit/ tests/ --max-line-length=100
 
 The codebase is organized as a Python package:
 
-- `redaudit/core/`: Core functionality (auditor, scanner, crypto, reporter, network, nvd, diff, proxy)
+- `redaudit/core/`: Core functionality (auditor, scanner, net_discovery, crypto, reporter, network, nvd, diff, proxy)
 - `redaudit/utils/`: Utilities (constants, i18n, config)
 - `tests/`: Test suites with unittest
 

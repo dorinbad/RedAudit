@@ -44,6 +44,7 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **IPv6 + Proxy Support**: Full dual-stack scanning with SOCKS5 pivoting capabilities
 - **Report Encryption**: AES-128-CBC (Fernet) with PBKDF2-HMAC-SHA256 key derivation (480k iterations)
 - **Rate Limiting with Jitter**: Configurable inter-host delay (±30% randomization) for IDS evasion
+- **Interactive Main Menu (v3.2)**: User-friendly wizard for scanning, configuration, and diff analysis (no arguments needed)
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture
@@ -62,6 +63,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Diff Analysis** | Built-in | Compare JSON reports to track network changes over time (v3.0). |
 | **Pivoting** | `proxychains` wrapper | SOCKS5 proxy support for internal network access (v3.0). |
 | **Topology** | `arp-scan`, `ip route` | L2 discovery, VLAN detection, and gateway mapping (v3.1+). |
+| **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Enhanced broadcast/L2 discovery for guest networks (v3.2+). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 
@@ -93,7 +95,8 @@ redaudit/
 │   ├── evidence_parser.py   # Observation extraction (v3.1)
 │   ├── jsonl_exporter.py    # JSONL exports (v3.1)
 │   ├── udp_probe.py     # Async UDP probing (v3.1.3)
-│   └── topology.py      # Async topology discovery (v3.1+)
+│   ├── topology.py      # Async topology discovery (v3.1+)
+│   └── net_discovery.py # Enhanced network discovery (v3.2+)
 └── utils/              # Utilities
     ├── constants.py    # Configuration constants
     ├── i18n.py         # Internationalization
@@ -460,44 +463,44 @@ For comprehensive troubleshooting, see [docs/en/TROUBLESHOOTING.md](docs/en/TROU
 
 ### Common Installation Issues
 
-**1. "Permission denied" / Root privileges required**
+#### 1. "Permission denied" / Root privileges required
 
 - **Cause**: Running without `sudo` (nmap requires raw sockets)
 - **Fix**: Prepend `sudo` to command, or use `--allow-non-root` for limited mode
 - **Verify**: `id -u` should return 0 when running with sudo
 
-**2. "nmap: command not found"**
+#### 2. "nmap: command not found"
 
 - **Cause**: nmap not installed or not in PATH
 - **Fix**: `sudo apt update && sudo apt install nmap`
 - **Verify**: `which nmap` should show `/usr/bin/nmap`
 
-**3. "ModuleNotFoundError: cryptography"**
+#### 3. "ModuleNotFoundError: cryptography"
 
 - **Cause**: Python dependencies missing
 - **Fix**: `sudo bash redaudit_install.sh` or `sudo apt install python3-cryptography python3-nmap python3-netifaces`
 
-**4. Alias not working after installation**
+#### 4. Alias not working after installation
 
 - **Cause**: Shell configuration not reloaded
 - **Fix**: Run `source ~/.zshrc` (Kali) or `source ~/.bashrc` (Debian/Ubuntu), or open new terminal
 
 ### Scanning Issues
 
-**5. "Scan appears frozen" / Long pauses**
+#### 5. "Scan appears frozen" / Long pauses
 
 - **Cause**: Deep scan legitimately takes 90-150s per complex host
 - **Check**: Look for `[deep]` marker in output - this is normal
 - **Monitor**: Check `~/.redaudit/logs/` for heartbeat messages
 - **Workaround**: Use `--no-deep-scan` or reduce `--threads` to 4
 
-**6. "Too many hosts, scan never finishes"**
+#### 6. "Too many hosts, scan never finishes"
 
 - **Cause**: Scanning large /16 networks without optimization
 - **Fix**: Use `--prescan` for faster discovery, or `--max-hosts N` to limit scope
 - **Example**: `sudo redaudit -t 192.168.0.0/16 --prescan --max-hosts 100 --yes`
 
-**7. Heartbeat warnings in logs**
+#### 7. Heartbeat warnings in logs
 
 - **Cause**: Nikto/TestSSL running slowly on filtered hosts
 - **Status**: Normal - tools are still running
@@ -505,13 +508,13 @@ For comprehensive troubleshooting, see [docs/en/TROUBLESHOOTING.md](docs/en/TROU
 
 ### Encryption & Decryption
 
-**8. "Decryption failed: Invalid token"**
+#### 8. "Decryption failed: Invalid token"
 
 - **Cause**: Wrong password or corrupted `.salt` file
 - **Fix**: Verify password (case-sensitive), ensure `.salt` file exists in same directory
 - **Check**: `.salt` file should be 16 bytes: `ls -lh *.salt`
 
-**9. "Cryptography not available" warning**
+#### 9. "Cryptography not available" warning
 
 - **Cause**: `python3-cryptography` package missing
 - **Impact**: Encryption options will be disabled
@@ -519,19 +522,19 @@ For comprehensive troubleshooting, see [docs/en/TROUBLESHOOTING.md](docs/en/TROU
 
 ### Network & Connectivity
 
-**10. IPv6 scanning not working**
+#### 10. IPv6 scanning not working
 
 - **Cause**: IPv6 disabled on system or nmap built without IPv6 support
 - **Verify**: `ip -6 addr show` and `nmap -6 ::1`
 - **Fix**: Enable IPv6 in `/etc/sysctl.conf` or use IPv4 targets
 
-**11. NVD API rate limit errors**
+#### 11. NVD API rate limit errors
 
 - **Cause**: Using NVD API without key (limited to 5 requests/30s)
 - **Fix**: Get free API key from <https://nvd.nist.gov/developers/request-an-api-key>
 - **Usage**: `--nvd-key YOUR_KEY` or store in `~/.redaudit/config.json`
 
-**12. Proxy connection failed**
+#### 12. Proxy connection failed
 
 - **Cause**: `proxychains` not installed or proxy unreachable
 - **Fix**: `sudo apt install proxychains4` and test proxy: `curl --socks5 host:port http://example.com`
@@ -539,31 +542,31 @@ For comprehensive troubleshooting, see [docs/en/TROUBLESHOOTING.md](docs/en/TROU
 
 ### Output & Reports
 
-**13. JSONL exports not generated**
+#### 13. JSONL exports not generated
 
 - **Cause**: Report encryption is enabled (JSONL only generated when encryption is off)
 - **Fix**: Run without `--encrypt` flag to generate `findings.jsonl`, `assets.jsonl`, `summary.json`
 
-**14. "Output directory not found"**
+#### 14. "Output directory not found"
 
 - **Cause**: Custom output path doesn't exist
 - **Fix**: Create directory first: `mkdir -p /path/to/output` or let RedAudit use default (`~/Documents/RedAuditReports`)
 
 ### Performance Tuning
 
-**15. Scans too slow on large networks**
+#### 15. Scans too slow on large networks
 
 - **Optimization 1**: Use `--prescan` for asyncio fast discovery
 - **Optimization 2**: Increase `--threads` to 12-16 (but watch for network congestion)
 - **Optimization 3**: Use `--mode fast` for quick inventory, then targeted `full` scans
 - **Example**: `sudo redaudit -t 10.0.0.0/16 --prescan --threads 12 --mode fast --yes`
 
-**16. High CPU/memory usage**
+#### 16. High CPU/memory usage
 
 - **Cause**: Too many concurrent threads or deep scans on many hosts
 - **Fix**: Reduce `--threads` to 4-6, use `--no-deep-scan`, or add `--rate-limit 1`
 
-**17. Network congestion / IDS alerts**
+#### 17. Network congestion / IDS alerts
 
 - **Cause**: Aggressive scanning triggering security systems
 - **Fix**: Add `--rate-limit 2` (with ±30% jitter) and reduce `--threads` to 4

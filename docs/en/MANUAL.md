@@ -129,6 +129,8 @@ The script `redaudit_install.sh` performs the following steps:
    - `whois`, `bind9-dnsutils`
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (for searchsploit)
+   - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (for enhanced discovery)
+   - `snmp`, `ldap-utils`, `samba-common-bin` (for Red Team recon)
 
 3. **Code deployment**
    - Copies the Python package directory `redaudit/` into `/usr/local/lib/redaudit`.
@@ -163,7 +165,8 @@ If you prefer not to use the installer:
    sudo apt update
    sudo apt install curl wget openssl nmap tcpdump tshark \
                     whois bind9-dnsutils python3-nmap \
-                    python3-cryptography python3-netifaces exploitdb
+                    python3-cryptography python3-netifaces exploitdb \
+                    nbtscan netdiscover fping avahi-utils snmp ldap-utils samba-common-bin
    ```
 
 3. Run via Python module:
@@ -194,19 +197,21 @@ RedAudit's design philosophy is:
 
 At a high level, a run of RedAudit follows this sequence:
 
-At a high level, a run of RedAudit follows this sequence:
-
 1. **Interactive Setup (Wizard)**
    - If running interactively, the user selects an action from the **Main Menu**.
    - Input of target ranges and selection of **Topology Mode** (Full, Standard, or Topology Only).
 
-2. **Discovery**
+2. **Network Discovery (Optional, v3.2)**
+   - If enabled (`--net-discovery`), broadcasts probes via ARP, mDNS, NetBIOS, and DHCP to find hidden hosts.
+   - Can optionally perform Red Team recon (SNMP, LDAP) if requested.
+
+3. **Discovery**
    - Uses `nmap -sn` (host discovery) to find live hosts in the target range.
 
-2. **Topology discovery (optional, v3.1+)**
+4. **Topology discovery (Optional, v3.1+)**
    - Best-effort gateway/routes mapping plus L2 hints (ARP/VLAN/LLDP) when tools and privileges are available.
 
-3. **Port & service scan**
+5. **Port & service scan**
    - Uses `nmap -sV` (service/version detection) on discovered hosts.
    - For `full` mode, scans a wider port range and additional scripts.
 
@@ -267,10 +272,10 @@ If you choose to scan, you will be guided through:
 - Scan Mode (Fast, Normal, Full).
 - Additional options (Encryption, Defaults).
 
-# Non-interactive mode (automation)
+### Non-interactive mode (automation)
 
+```bash
 sudo redaudit --target 192.168.1.0/24 --mode normal --yes
-
 ```
 
 The module can also be invoked directly:
