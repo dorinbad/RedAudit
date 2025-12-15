@@ -632,6 +632,25 @@ RedAudit does not modify the configuration of these tools; it calls them with ex
 
 ---
 
+### 6.4. Potential Hidden Networks (Leak Detection)
+
+*Added in v3.2.1*
+
+RedAudit automatically analyzes HTTP headers (`Location`, `Content-Security-Policy`) and redirect chains to identify internal IP addresses that likely belong to other subnets (e.g., Guest Networks, Admin VLANs).
+
+**Example Output**:
+
+```text
+⚠️  POTENTIAL HIDDEN NETWORKS (LEAKS DETECTED):
+   (Professional Pivot / Discovery Tip: These networks are referenced in headers/redirects but were not scanned)
+   - Host 192.168.178.1 leaks internal IP 192.168.189.1 (Potential Network: 192.168.189.0/24)
+```
+
+**What to do**:
+
+- This indicates a **Pivoting Opportunity**. The target host can reach a network you cannot see.
+- Investigate if you can route traffic to that subnet or if the host is dual-homed.
+
 ## 10. Monitoring & troubleshooting
 
 ### Monitoring

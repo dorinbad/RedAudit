@@ -47,6 +47,14 @@ El prompt de topología de múltiples pasos anterior se ha consolidado en una el
 - Añadidas más de 60 nuevas claves de traducción para cubrir cadenas en Inglés previamente hardcodeadas (errores de proxy, validación de objetivos, mensajes de generación de contraseñas aleatorias).
 - Soporte completo en Inglés (EN) y Español (ES) para todos los nuevos menús e interfaces del wizard.
 
+### 6. Detección de Fugas de Subred (Análisis de Invitados)
+
+Un nuevo módulo de post-procesamiento detecta automáticamente **Redes Ocultas Potenciales** (como VLANs de Invitados o subredes de Gestión) analizando "fugas" en servicios HTTP:
+
+- **Análisis de Redirecciones**: Investiga cabeceras `Location` que apuntan a IPs privadas fuera del rango de escaneo.
+- **Análisis de Contenido**: Revisa `Content-Security-Policy` y mensajes de error.
+- **Reporte**: Marca automáticamente estos hallazgos como "Potential Hidden Networks" en el informe final, facilitando el pivoting profesional.
+
 ---
 
 ## Notas de Actualización

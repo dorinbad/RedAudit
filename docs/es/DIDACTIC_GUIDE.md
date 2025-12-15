@@ -259,6 +259,20 @@ RedAudit actúa como un "pegamento" inteligente entre herramientas externas.
 | **Escáner Core** | `nmap` | Motor principal de escaneo de paquetes | [scanner.py](../../redaudit/core/scanner.py) |
 | **Descubrimiento de Red** | `netdiscover`, `nbtscan` | Hallazgos de descubrimiento L2/L3 mejorado (v3.2) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
 | **Recon Red Team** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap` | Enumeración profunda opcional (SNMP walking, recursos SMB, consultas LDAP, escaneo rápido de puertos) para análisis Blue Team integral (v3.2+) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
+
+### Técnica Destacada: Descubrimiento Pasivo de Pivote (Redes de Invitados)
+
+*Nuevo en v3.2.1*
+
+Los pentesters profesionales a menudo encuentran redes ocultas no escaneando rangos, sino observando **fugas** en servicios disponibles.
+
+**Cómo lo hace RedAudit**:
+
+1. **Análisis de Cabeceras**: Revisa cabeceras `Location` en redirecciones HTTP (ej: `Location: http://192.168.189.1/login`).
+2. **Análisis de Contenido**: Escanea `Content-Security-Policy` y mensajes de error.
+3. **Correlación**: Si `192.168.189.1` es privada pero NO está en tu rango objetivo, reporta una **Fuga** (Leak).
+
+**Valor Educativo**: Esto enseña a los estudiantes que el "Descubrimiento de Red" no es solo enviar paquetes—es también escuchar lo que los servicios *dicen* sobre su entorno.
 | **Recon Web** | `whatweb`, `curl`, `nikto` | Análisis de aplicaciones web | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Auditoría de cifrado y certificados | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
 | **Tráfico** | `tcpdump`, `tshark` | Captura de evidencia forense (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |

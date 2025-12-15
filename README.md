@@ -44,7 +44,8 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **IPv6 + Proxy Support**: Full dual-stack scanning with SOCKS5 pivoting capabilities
 - **Report Encryption**: AES-128-CBC (Fernet) with PBKDF2-HMAC-SHA256 key derivation (480k iterations)
 - **Rate Limiting with Jitter**: Configurable inter-host delay (±30% randomization) for IDS evasion
-- **Interactive Main Menu (v3.2)**: User-friendly wizard for scanning, configuration, and diff analysis (no arguments needed)
+- **Subnet Leak Detection**: Automatically identifies potential hidden networks (e.g., Guest zones) by analyzing service leaks (headers, redirects).
+- **Interactive Wizard**: Step-by-step setup with improved UI and auto-save.
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture

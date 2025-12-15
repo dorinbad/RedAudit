@@ -636,7 +636,7 @@ RedAudit no modifica la configuración de estas herramientas; las invoca con par
 
 ---
 
-## 10. Monitorización y resolución de problemas
+## 10. Solución de Problemas
 
 ### Monitorización
 

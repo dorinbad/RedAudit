@@ -47,6 +47,14 @@ The previous multi-step topology prompt has been consolidated into a single, cle
 - Added 60+ new translation keys to cover previously hardcoded English strings (proxy errors, target validation, random password generation messages).
 - Full English (EN) and Spanish (ES) support for all new menu and wizard interfaces.
 
+### 6. Subnet Leak Detection (Guest Analysis)
+
+A new post-processing module automatically detects potential **Hidden Networks** (like Guest VLANs or Admin Management subnets) by analyzing "leaks" in HTTP services:
+
+- **Redirect Analysis**: Investigates `Location` headers pointing to private IPs outside the scan range.
+- **Content Analysis**: Checks `Content-Security-Policy` and error messages.
+- **Reporting**: Automatically flags these as "Potential Hidden Networks" in the final report, facilitating professional pivoting.
+
 ---
 
 ## Upgrade Notes

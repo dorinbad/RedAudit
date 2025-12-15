@@ -564,7 +564,7 @@ class InteractiveNetworkAuditor:
         }
         while True:
             try:
-                print("")
+                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
                 ans = (
                     input(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}{opts}: ")
                     .strip()
@@ -588,7 +588,7 @@ class InteractiveNetworkAuditor:
             default_display = "todos" if self.lang == "es" else "all"
         while True:
             try:
-                print("")
+                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
                 ans = input(
                     f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default_display}]: "
                 ).strip()
@@ -610,7 +610,7 @@ class InteractiveNetworkAuditor:
 
     def ask_choice(self, question, options, default=0):
         """Ask to choose from a list of options."""
-        print("")
+        print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
         print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
         for i, opt in enumerate(options):
             marker = f"{self.COLORS['BOLD']}▶{self.COLORS['ENDC']}" if i == default else " "
