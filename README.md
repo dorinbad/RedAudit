@@ -35,6 +35,7 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **Cross-Validation (v3.1.4)**: Detects Nikto false positives by comparing findings with curl/wget headers
 - **Descriptive Titles (v3.1.4)**: Finding titles now describe the issue type, not just the URL
 - **Enhanced Net Discovery (v3.2)**: Broadcast/L2 discovery (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — **auto-enabled in `full` mode** (v3.2.1). Red Team recon available with `--redteam` flag.
+- **Staged Atomic Installation with Rollback (v3.2.2)**: Updates use atomic staging with automatic rollback on failure.
 - **Network Topology Discovery**: Best-effort L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection
 - **CVE Intelligence**: NVD API 2.0 integration with CPE 2.3 matching, 7-day caching, and deterministic finding IDs
 - **SIEM-Ready Exports**: Auto-generated JSONL flat files (findings, assets, summary) with ECS v8.11 compliance
@@ -140,7 +141,7 @@ Verify installation integrity:
 which redaudit  # Should return: /usr/local/bin/redaudit
 
 # 2. Verify version
-redaudit --version  # Should show: RedAudit v3.2.1
+redaudit --version  # Should show: RedAudit v3.2.2
 
 # 3. Check core dependencies
 command -v nmap && command -v tcpdump && command -v python3  # All should succeed

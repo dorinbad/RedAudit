@@ -35,8 +35,8 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Cross-Validation (v3.1.4)**: Detecta falsos positivos de Nikto comparando hallazgos con cabeceras curl/wget
 - **Títulos Descriptivos (v3.1.4)**: Los títulos de hallazgos ahora describen el tipo de problema, no solo la URL
 - **Descubrimiento de Red Mejorado (v3.2)**: Descubrimiento broadcast/L2 (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — **auto-habilitado en modo `completo`** (v3.2.1). Recon Red Team disponible con flag `--redteam`.
-- **Descubrimiento de Red Mejorado (v3.2)**: Descubrimiento broadcast/L2 (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — **auto-habilitado en modo `completo`** (v3.2.1). Recon Red Team disponible con flag `--redteam`.
 - **Detección de Fugas de Subred (v3.2.1)**: Identifica redes ocultas/invitados analizando fugas HTTP (via redirects y headers) para pivoting.
+- **Instalación Atómica con Rollback (v3.2.2)**: Las actualizaciones usan staging atómico con rollback automático en caso de fallo.
 - **Descubrimiento de Topología de Red**: Mapeo best-effort L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas
 - **Inteligencia CVE**: Integración NVD API 2.0 con matching CPE 2.3, caché de 7 días, y finding IDs determinísticos
 - **Exportaciones SIEM**: Auto-generación de archivos planos JSONL (findings, assets, summary) con cumplimiento ECS v8.11
@@ -141,7 +141,7 @@ Verifica la integridad de la instalación:
 which redaudit  # Debe devolver: /usr/local/bin/redaudit
 
 # 2. Verificar versión
-redaudit --version  # Debe mostrar: RedAudit v3.2.1
+redaudit --version  # Debe mostrar: RedAudit v3.2.2
 
 # 3. Verificar dependencias core
 command -v nmap && command -v tcpdump && command -v python3  # Todos deben existir

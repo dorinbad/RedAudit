@@ -228,7 +228,7 @@ Create `~/.redaudit/config.json`:
 
 ```json
 {
-  "version": "3.2.1",
+  "version": "3.2.2",
   "nvd_api_key": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "defaults": {
     "threads": 6,

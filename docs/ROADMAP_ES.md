@@ -128,7 +128,7 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 
 ## Hitos Completados
 
-### v3.2.1 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.2.2 (Completado - Diciembre 2025) -> **ACTUAL**
 
 *Release centrado en pulido de UX, Menú Principal Interactivo y simplificación de Topología.*
 
