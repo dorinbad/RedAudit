@@ -11,6 +11,7 @@ import os
 import json
 import stat
 import copy
+import logging
 
 try:
     import pwd  # Unix-only
@@ -46,6 +47,8 @@ DEFAULT_CONFIG = {
 CONFIG_DIR = os.path.expanduser("~/.redaudit")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
+logger = logging.getLogger("RedAudit")
+
 
 def _resolve_config_owner() -> Optional[tuple[int, int]]:
     """
@@ -62,6 +65,7 @@ def _resolve_config_owner() -> Optional[tuple[int, int]]:
                 pw = pwd.getpwnam(sudo_user)
                 return pw.pw_uid, pw.pw_gid
     except Exception:
+        logger.debug("Failed to resolve config owner", exc_info=True)
         pass
     return None
 
@@ -83,6 +87,7 @@ def get_config_paths() -> tuple[str, str]:
         else:
             home_dir = os.path.expanduser("~")
     except Exception:
+        logger.debug("Failed to resolve config paths; using fallback home directory", exc_info=True)
         home_dir = os.path.expanduser("~")
 
     config_dir = os.path.join(home_dir, ".redaudit")
@@ -98,6 +103,7 @@ def _maybe_chown(path: str) -> None:
     try:
         os.chown(path, uid, gid)
     except Exception:
+        logger.debug("Failed to chown config path: %s", path, exc_info=True)
         pass
 
 
@@ -114,6 +120,7 @@ def ensure_config_dir() -> str:
     try:
         os.chmod(config_dir, 0o700)
     except Exception:
+        logger.debug("Failed to chmod config dir: %s", config_dir, exc_info=True)
         pass
     _maybe_chown(config_dir)
     return config_dir
@@ -142,6 +149,7 @@ def load_config() -> Dict[str, Any]:
         return merged
 
     except (json.JSONDecodeError, IOError):
+        logger.debug("Failed to load config file; using defaults", exc_info=True)
         return copy.deepcopy(DEFAULT_CONFIG)
 
 
@@ -177,6 +185,7 @@ def save_config(config: Dict[str, Any]) -> bool:
         return True
 
     except (IOError, OSError):
+        logger.debug("Failed to save config file", exc_info=True)
         return False
 
 

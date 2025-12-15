@@ -272,6 +272,8 @@ class InteractiveNetworkAuditor:
             try:
                 self.heartbeat_thread.join(timeout=1.0)
             except RuntimeError:
+                if self.logger:
+                    self.logger.debug("Heartbeat thread join failed", exc_info=True)
                 pass
             self.heartbeat_thread = None
 
@@ -734,6 +736,10 @@ class InteractiveNetworkAuditor:
                         if 1 <= pi <= 65535:
                             priority_ports.append(pi)
                     except Exception:
+                        if self.logger:
+                            self.logger.debug(
+                                "Skipping invalid UDP priority port token: %r", p, exc_info=True
+                            )
                         continue
                 self.print_status(
                     self.t(
@@ -839,6 +845,7 @@ class InteractiveNetworkAuditor:
             nm.scan(hosts=network, arguments=args)
         except Exception as exc:
             self.logger.error("Discovery failed on %s: %s", network, exc)
+            self.logger.debug("Discovery exception details for %s", network, exc_info=True)
             self.print_status(self.t("scan_error", exc), "FAIL")
             return []
         hosts = [h for h in nm.all_hosts() if nm[h].state() == "up"]
@@ -895,6 +902,8 @@ class InteractiveNetworkAuditor:
                 if hostnames:
                     hostname = hostnames[0].get("name") or ""
             except Exception:
+                if self.logger:
+                    self.logger.debug("Failed to parse hostnames for %s", safe_ip, exc_info=True)
                 hostname = ""
 
             ports = []
@@ -970,7 +979,10 @@ class InteractiveNetworkAuditor:
                         if vendor:
                             deep_meta["vendor"] = vendor
             except Exception:
-                pass
+                if self.logger:
+                    self.logger.debug(
+                        "Failed to read nmap identity metadata for %s", safe_ip, exc_info=True
+                    )
 
             # v2.8.0: Banner grab fallback for unidentified ports
             if unknown_ports and len(unknown_ports) <= 20:
@@ -1042,6 +1054,8 @@ class InteractiveNetworkAuditor:
                     result["deep_scan"] = deep
                     result["status"] = finalize_host_status(result)
             except Exception:
+                if self.logger:
+                    self.logger.debug("Deep scan fallback failed for %s", safe_ip, exc_info=True)
                 pass
             return result
 
@@ -1104,6 +1118,9 @@ class InteractiveNetworkAuditor:
                             results.append(res)
                         except Exception as exc:
                             self.logger.error("Worker error for %s: %s", host_ip, exc)
+                            self.logger.debug(
+                                "Worker exception details for %s", host_ip, exc_info=True
+                            )
                         done += 1
                         progress.update(
                             task,
@@ -1124,6 +1141,7 @@ class InteractiveNetworkAuditor:
                         results.append(res)
                     except Exception as exc:
                         self.logger.error("Worker error for %s: %s", host_ip, exc)
+                        self.logger.debug("Worker exception details for %s", host_ip, exc_info=True)
                     done += 1
                     if total and done % max(1, total // 10) == 0:
                         self.print_status(
@@ -1187,7 +1205,8 @@ class InteractiveNetworkAuditor:
                     if res.stdout.strip():
                         finding["whatweb"] = res.stdout.strip()[:2000]
                 except Exception:
-                    pass
+                    if self.logger:
+                        self.logger.debug("WhatWeb scan failed for %s", url, exc_info=True)
 
             # Nikto (only in full mode)
             # v2.9: Smart-Check integration for false positive filtering
@@ -1223,7 +1242,8 @@ class InteractiveNetworkAuditor:
                                         "INFO",
                                     )
                 except Exception:
-                    pass
+                    if self.logger:
+                        self.logger.debug("Nikto scan failed for %s", url, exc_info=True)
 
             if len(finding) > 2:
                 vulns.append(finding)
@@ -1291,6 +1311,9 @@ class InteractiveNetworkAuditor:
                                     self.print_status(self.t("vulns_found", res["host"]), "WARNING")
                         except Exception as exc:
                             self.logger.error("Vuln worker error for %s: %s", host_ip, exc)
+                            self.logger.debug(
+                                "Vuln worker exception details for %s", host_ip, exc_info=True
+                            )
                         done += 1
                         progress.update(
                             task,
@@ -1312,6 +1335,10 @@ class InteractiveNetworkAuditor:
                             self.print_status(self.t("vulns_found", res["host"]), "WARNING")
                     except Exception as exc:
                         self.print_status(self.t("worker_error", exc), "WARNING")
+                        if self.logger:
+                            self.logger.debug(
+                                "Vuln worker exception details for %s", host_ip, exc_info=True
+                            )
                     done += 1
 
     # ---------- Reporting ----------
@@ -1375,6 +1402,8 @@ class InteractiveNetworkAuditor:
 
             persisted_defaults = get_persistent_defaults()
         except Exception:
+            if self.logger:
+                self.logger.debug("Failed to load persisted defaults", exc_info=True)
             persisted_defaults = {}
 
         default_lang = persisted_defaults.get("lang")
@@ -1545,6 +1574,8 @@ class InteractiveNetworkAuditor:
                     self.print_status(self.t("save_defaults_effect"), "INFO")
             except Exception:
                 self.print_status(self.t("defaults_save_error"), "WARNING")
+                if self.logger:
+                    self.logger.debug("Failed to persist defaults", exc_info=True)
         else:
             self.print_status(self.t("defaults_not_saved"), "INFO")
 
@@ -1570,6 +1601,8 @@ class InteractiveNetworkAuditor:
                 try:
                     self.detect_all_networks()
                 except Exception:
+                    if self.logger:
+                        self.logger.debug("Failed to detect local networks", exc_info=True)
                     pass
 
             # v3.1+: Optional topology discovery (best-effort)
@@ -1588,6 +1621,7 @@ class InteractiveNetworkAuditor:
                 except Exception as exc:
                     if self.logger:
                         self.logger.warning("Topology discovery failed: %s", exc)
+                        self.logger.debug("Topology discovery exception details", exc_info=True)
                     self.results["topology"] = {"enabled": True, "error": str(exc)}
 
                 if self.config.get("topology_only"):
@@ -1632,6 +1666,8 @@ class InteractiveNetworkAuditor:
                     self.results["hosts"] = results
                 except Exception:
                     # Best-effort: CVE enrichment should never break scans
+                    if self.logger:
+                        self.logger.debug("CVE enrichment failed (best-effort)", exc_info=True)
                     pass
 
             if self.config.get("scan_vulnerabilities") and not self.interrupted:
@@ -1673,7 +1709,7 @@ class InteractiveNetworkAuditor:
                             proc.wait()
                 except Exception as exc:
                     if self.logger:
-                        self.logger.debug("Error killing subprocess: %s", exc)
+                        self.logger.debug("Error killing subprocess: %s", exc, exc_info=True)
             self._active_subprocesses.clear()
 
     def signal_handler(self, sig, frame):
