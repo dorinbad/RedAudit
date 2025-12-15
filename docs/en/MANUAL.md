@@ -130,7 +130,7 @@ The script `redaudit_install.sh` performs the following steps:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (for searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (for enhanced discovery)
-   - `snmp`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (for Red Team recon)
+   - `snmp`, `snmp-mibs-downloader`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (for Red Team recon)
    - `kerbrute` (downloaded from GitHub)
 
 3. **Code deployment**

@@ -47,11 +47,11 @@ El prompt de topología de múltiples pasos anterior se ha consolidado en una el
 - Añadidas más de 60 nuevas claves de traducción para cubrir cadenas en Inglés previamente hardcodeadas (errores de proxy, validación de objetivos, mensajes de generación de contraseñas aleatorias).
 - Soporte completo en Inglés (EN) y Español (ES) para todos los nuevos menús e interfaces del wizard.
 
-### 6. Soporte de Herramientas
+### 6. Mejoras del Instalador
 
 - **Detección de Fugas**: Nuevo análisis heurístico para encontrar fugas de IPs privadas en cabeceras HTTP.
 - **UI Mejorada**: Prompts interactivos más limpios con separadores coloreados.
-- **Actualizaciones del Instalador**: Soporte nativo para instalar `kerbrute` y `proxychains4`.
+- **Nuevas Herramientas**: Soporte nativo para instalar `kerbrute` (binario GitHub) y `proxychains4` (proxy SOCKS5).
 
 ### 7. Detección de Fugas de Subred (Análisis de Invitados)
 

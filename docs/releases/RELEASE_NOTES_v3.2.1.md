@@ -24,11 +24,11 @@ The CLI now presents a professional main menu when run without arguments, servin
 - **[3] Diff Reports (JSON)**: New interface to compare two previous scan reports.
 - **[0] Exit**: Clean exit.
 
-### 2. Tool Support
+### 2. Installer Enhancements
 
 - **Leak Detection**: New heuristic analysis to find private IP leakage in HTTP headers.
 - **Improved UI**: Cleaner interactive prompts with colored separators.
-- **Installer Updates**: Native support for installing `kerbrute` and `proxychains4`.
+- **New Tools**: Native support for installing `kerbrute` (GitHub binary) and `proxychains4` (SOCKS5 proxy).
 
 ### 3. Streamlined Topology Workflow
 
