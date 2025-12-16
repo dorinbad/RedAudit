@@ -69,6 +69,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Topology** | `arp-scan`, `ip route` | L2 discovery, VLAN detection, and gateway mapping (v3.1+). |
 | **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Enhanced broadcast/L2 discovery for guest networks (v3.2+). |
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `kerbrute`, `scapy` | Optional active enumeration (SNMP, SMB, LDAP, Kerberos, L2 attacks) for deep Blue Team analysis (v3.2+). |
+| **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT broadcast, aggressive ARP (v3.2.3). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 
@@ -101,7 +102,8 @@ redaudit/
 │   ├── jsonl_exporter.py    # JSONL exports (v3.1)
 │   ├── udp_probe.py     # Async UDP probing (v3.1.3)
 │   ├── topology.py      # Async topology discovery (v3.1+)
-│   └── net_discovery.py # Enhanced network discovery (v3.2+)
+│   ├── net_discovery.py # Enhanced network discovery (v3.2+)
+│   └── hyperscan.py     # Ultra-fast parallel discovery (v3.2.3)
 └── utils/              # Utilities
     ├── constants.py    # Configuration constants
     ├── i18n.py         # Internationalization

@@ -70,6 +70,7 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 | **Topología** | `arp-scan`, `ip route` | Descubrimiento L2, detección de VLANs y mapeo de gateways (v3.1+). |
 | **Descubrimiento de Red** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Descubrimiento broadcast/L2 mejorado para redes de invitados (v3.2+). |
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `kerbrute`, `scapy` | Enumeración activa opcional (SNMP, SMB, LDAP, Kerberos, ataques L2) para análisis Blue Team profundo (v3.2+). |
+| **HyperScan** | Python `asyncio` | Descubrimiento paralelo ultrarrápido: batch TCP, broadcast UDP IoT, ARP agresivo (v3.2.3). |
 | **Orquestador** | `concurrent.futures` (Python) | Gestiona pools de hilos para escaneo paralelo de hosts. |
 | **Cifrado** | `python3-cryptography` | Cifrado AES-128 para reportes de auditoría sensibles. |
 
@@ -102,7 +103,8 @@ redaudit/
 │   ├── jsonl_exporter.py    # Exportaciones JSONL (v3.1)
 │   ├── udp_probe.py     # Sondeo UDP asíncrono (v3.1.3)
 │   ├── topology.py      # Descubrimiento de topología async (v3.1+)
-│   └── net_discovery.py # Descubrimiento de red mejorado (v3.2+)
+│   ├── net_discovery.py # Descubrimiento de red mejorado (v3.2+)
+│   └── hyperscan.py     # Descubrimiento paralelo ultrarrápido (v3.2.3)
 └── utils/              # Utilidades
     ├── constants.py    # Constantes de configuración
     ├── i18n.py         # Internacionalización
