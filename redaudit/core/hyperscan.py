@@ -354,9 +354,11 @@ def _build_mdns_query() -> bytes:
 
 
 def _build_wiz_discovery() -> bytes:
-    """Build WiZ smart bulb discovery packet."""
+    """Build WiZ smart bulb discovery packet (UDP 38899)."""
     import json
-    payload = {"method": "getPilot", "params": {}}
+    # WiZ bulbs respond to registration and getPilot queries
+    # Using registration method for broader compatibility
+    payload = {"method": "registration", "params": {"phoneMac": "AABBCCDDEEFF", "register": False, "phoneIp": "1.2.3.4"}}
     return json.dumps(payload).encode()
 
 
@@ -386,10 +388,13 @@ def hyperscan_udp_broadcast(
     except ValueError:
         return discovered
     
-    # Protocol-specific probes
+    # Protocol-specific probes for IoT discovery
     probes = [
-        (1900, _build_ssdp_msearch(), "ssdp"),
-        (38899, _build_wiz_discovery(), "wiz"),
+        (1900, _build_ssdp_msearch(), "ssdp"),        # UPNP/SSDP (Chromecast, routers)
+        (38899, _build_wiz_discovery(), "wiz"),       # WiZ smart bulbs
+        (55443, b'{"id":1,"method":"get_prop","params":["power"]}', "yeelight"),  # Yeelight bulbs
+        (20002, b'\\x02\\x00\\x00\\x01', "tapo"),      # TP-Link Tapo/Kasa devices
+        (5353, _build_mdns_query(), "mdns"),          # mDNS (Apple devices, Chromecasts)
     ]
     
     for port, packet, protocol in probes:
@@ -446,7 +451,9 @@ def hyperscan_udp_broadcast(
             for port, packet, protocol in probes:
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    sock.settimeout(0.1)
+                    # WiZ bulbs are slow - need longer timeout
+                    iot_timeout = 0.3 if protocol == "wiz" else 0.1
+                    sock.settimeout(iot_timeout)
                     sock.sendto(packet, (ip, port))
                     try:
                         data, addr = sock.recvfrom(1024)
