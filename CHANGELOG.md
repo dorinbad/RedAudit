@@ -11,16 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
-## [3.2.3] - 2025-12-16 (HyperScan Fast Discovery)
+## [3.2.3] - 2025-12-16 (HyperScan + Stealth Mode)
 
 ### Added
 
-- **HyperScan Module**: New `redaudit/core/hyperscan.py` for ultra-fast parallel discovery.
-- **Batch TCP Scanning**: 3000 concurrent connections using asyncio semaphores.
-- **Full UDP Sweep**: 45+ ports with protocol-specific payloads (DNS, NTP, SNMP, NetBIOS, mDNS, SSDP, SIP, etc.).
-- **UDP IoT Broadcast**: Targeted probes for WiZ bulbs, SSDP, Chromecast, Yeelight, LIFX.
-- **Aggressive ARP**: 3-retry sweep with arp-scan + arping fallback.
-- **Backdoor Detection**: Flags suspicious ports (31337, 4444, 6666, etc.) with severity levels.
+- **HyperScan Module**: New `redaudit/core/hyperscan.py` (~1000 lines) for ultra-fast parallel discovery.
+  - Batch TCP scanning with 3000 concurrent connections using asyncio
+  - Full UDP sweep across 45+ ports with protocol-specific payloads
+  - UDP IoT broadcast probes (WiZ, SSDP, Chromecast, Yeelight, LIFX)
+  - Aggressive ARP sweep with 3 retries using arp-scan + arping fallback
+  - Backdoor detection with severity levels for suspicious ports (31337, 4444, 6666, etc.)
+  - Deep scan mode: full 65535-port scan on suspicious hosts
+
+- **Stealth Mode**: New `--stealth` CLI flag for enterprise networks with IDS/rate limiters.
+  - Uses nmap `-T1` paranoid timing template
+  - Forces single-threaded sequential scanning
+  - Enforces minimum 5 second delay between probes
+  - Random jitter already built into rate limiting
+
+- **CLI Logging**: Added visible progress messages for HyperScan results showing ARP/UDP/TCP host counts and duration.
+
+### Fixed
+
+- **Network Deduplication**: "Scan ALL" now correctly removes duplicate CIDRs when same network is detected on multiple interfaces (e.g., eth0 + eth1).
+- **Defaults Display**: Interactive configuration review now shows 10 fields (was 6) including scan_mode, web_vulns, cve_lookup, txt_report.
+- **Config Persistence**: `DEFAULT_CONFIG` expanded to 12 fields for complete settings preservation.
 
 ## [3.2.2b] - 2025-12-16 (IoT & Enterprise Discovery)
 

@@ -11,18 +11,31 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (pendiente)
 
-## [3.2.3] - 2025-12-16 (HyperScan - Descubrimiento Rápido)
+## [3.2.3] - 2025-12-16 (HyperScan + Modo Sigiloso)
 
 ### Añadido
 
-- **Módulo HyperScan**: Nuevo `redaudit/core/hyperscan.py` para descubrimiento paralelo ultrarrápido.
-- **Escaneo TCP Batch**: 3000 conexiones concurrentes usando asyncio semaphores.
-- **Barrido UDP Completo**: 45+ puertos con payloads específicos (DNS, NTP, SNMP, NetBIOS, mDNS, SSDP, SIP, etc.).
-- **Broadcast UDP IoT**: Probes dirigidos para bombillas WiZ, SSDP, Chromecast, Yeelight, LIFX.
-- **ARP Agresivo**: Barrido con 3 reintentos usando arp-scan + arping fallback.
-- **Detección de Backdoors**: Marca puertos sospechosos (31337, 4444, 6666, etc.) con niveles de severidad.
-- **Deep Scan 65535**: Escaneo de TODOS los puertos en hosts sospechosos.
-- **Integración nmap**: Enriquecimiento con detección de servicios para análisis de anomalías.
+- **Módulo HyperScan**: Nuevo `redaudit/core/hyperscan.py` (~1000 líneas) para descubrimiento paralelo ultrarrápido.
+  - Escaneo TCP batch con 3000 conexiones concurrentes usando asyncio
+  - Barrido UDP completo en 45+ puertos con payloads específicos por protocolo
+  - Broadcast UDP IoT (WiZ, SSDP, Chromecast, Yeelight, LIFX)
+  - Barrido ARP agresivo con 3 reintentos usando arp-scan + arping fallback
+  - Detección de backdoors con niveles de severidad para puertos sospechosos (31337, 4444, 6666, etc.)
+  - Modo deep scan: escaneo completo de 65535 puertos en hosts sospechosos
+
+- **Modo Sigiloso**: Nuevo flag CLI `--stealth` para redes empresariales con IDS/rate limiters.
+  - Usa template de timing nmap `-T1` (paranoid)
+  - Fuerza escaneo secuencial con un solo hilo
+  - Impone retardo mínimo de 5 segundos entre sondas
+  - Jitter aleatorio ya integrado en rate limiting
+
+- **Logging CLI**: Añadidos mensajes de progreso visibles para resultados de HyperScan mostrando conteos de hosts ARP/UDP/TCP y duración.
+
+### Corregido
+
+- **Deduplicación de Redes**: "Escanear TODAS" ahora elimina correctamente CIDRs duplicados cuando la misma red se detecta en múltiples interfaces (ej: eth0 + eth1).
+- **Visualización de Defaults**: La revisión de configuración interactiva ahora muestra 10 campos (antes 6) incluyendo scan_mode, web_vulns, cve_lookup, txt_report.
+- **Persistencia de Config**: `DEFAULT_CONFIG` expandido a 12 campos para preservar ajustes completos.
 
 ## [3.2.2b] - 2025-12-16 (IoT & Descubrimiento Enterprise)
 
