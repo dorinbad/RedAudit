@@ -18,6 +18,9 @@ from datetime import datetime
 # ECS Version for Elastic integration
 ECS_VERSION = "8.11"
 
+# v3.2.3: Schema version for JSONL/ECS output stability
+SCHEMA_VERSION = "1.0"
+
 # Severity levels with numeric scores for SIEM correlation
 SEVERITY_LEVELS = {
     "critical": {"score": 90, "color": "red"},
@@ -309,6 +312,7 @@ def build_ecs_event(scan_mode: str, scan_duration: str = None) -> Dict:
         ECS event dictionary
     """
     return {
+        "schema_version": SCHEMA_VERSION,
         "ecs": {"version": ECS_VERSION},
         "event": {
             "kind": "enrichment",

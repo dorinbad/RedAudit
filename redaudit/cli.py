@@ -153,6 +153,17 @@ Examples:
         default=default_lang,
         help="Language: en (English) or es (Español)",
     )
+    # v3.2.3: DX improvements
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output (auto-detected for non-TTY)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print commands that would be executed without running them",
+    )
     parser.add_argument("--version", "-V", action="version", version=f"RedAudit v{VERSION}")
 
     # Pre-scan options (v2.7)

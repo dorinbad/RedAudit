@@ -40,7 +40,7 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          coverage report --fail-under=20
+          coverage report --fail-under=40
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -60,16 +60,19 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: Install linters
-        run: pip install flake8 bandit
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       
-      - name: Run flake8
-        run: flake8 redaudit/ --max-line-length=120 --ignore=E501,W503,E203
-        continue-on-error: true
-      
-      - name: Run Bandit security scan
-        run: bandit -r redaudit/ -ll --exclude tests
-        continue-on-error: true
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: '.'
+          severity: warning
 
   update-badge:
     needs: test
