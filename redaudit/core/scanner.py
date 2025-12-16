@@ -147,6 +147,40 @@ def is_suspicious_service(name: str) -> bool:
     return any(k in lname for k in SUSPICIOUS_SERVICE_KEYWORDS)
 
 
+def is_port_anomaly(port: int, service_name: str) -> bool:
+    """
+    v3.2.2b: Detect anomalous services on standard ports.
+    
+    A standard port with an unexpected service may indicate a backdoor,
+    hijacked service, or misconfiguration worth investigating.
+    
+    Args:
+        port: Port number
+        service_name: Service name detected by nmap
+        
+    Returns:
+        True if service doesn't match expected for this port
+    """
+    from redaudit.utils.constants import STANDARD_PORT_SERVICES
+    
+    if not service_name or port not in STANDARD_PORT_SERVICES:
+        return False
+    
+    expected = STANDARD_PORT_SERVICES.get(port, [])
+    if not expected:
+        return False
+    
+    svc_lower = service_name.lower()
+    # Check if any expected keyword appears in the service name
+    for exp in expected:
+        if exp in svc_lower:
+            return False
+    
+    # Service doesn't match any expected - anomaly!
+    return True
+
+
+
 def get_nmap_arguments(mode: str) -> str:
     """
     Get nmap arguments for the specified scan mode.

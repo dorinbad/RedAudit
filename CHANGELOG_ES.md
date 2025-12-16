@@ -11,6 +11,27 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (pendiente)
 
+## [3.2.2b] - 2025-12-16 (IoT & Descubrimiento Enterprise)
+
+### Añadido
+
+- **Descubrimiento UPNP Mejorado**: Timeout aumentado (10s → 25s), mecanismo de reintentos (2 intentos), fallback SSDP M-SEARCH.
+- **Escaneo ARP Activo**: `netdiscover` ahora usa modo activo por defecto (flag `-f`), con soporte de interface para setups multi-homed.
+- **Nuevo `arp_scan_active()`**: Función dedicada usando `arp-scan` con reintentos para descubrimiento IoT más fiable.
+- **Descubrimiento ARP Dual**: Usa tanto `arp-scan` como `netdiscover` con deduplicación automática para máxima cobertura.
+- **Tipos de Servicio mDNS IoT**: Añadidas queries específicas para `_amzn-wplay` (Alexa), `_googlecast` (Chromecast), `_hap` (HomeKit), `_airplay`.
+- **Auto-Pivot `extract_leaked_networks()`**: Retorna CIDRs /24 escaneables de IPs filtradas para descubrimiento automático de redes ocultas.
+
+### Cambiado
+
+- **Timeout mDNS**: Aumentado de 5s a 15s para mejor captura de dispositivos IoT.
+- **Timeout netdiscover**: Aumentado de 15s a 20s.
+- **Versión**: Actualizada a 3.2.2b (desarrollo/testing).
+
+### Corregido
+
+- **Descubrimiento de Dispositivos IoT**: Escaneos anteriores solo encontraban 3 de 10+ dispositivos debido al modo ARP pasivo y timeouts cortos.
+
 ## [3.2.2] - 2025-12-16 (Producción Hardening)
 
 ### Añadido
