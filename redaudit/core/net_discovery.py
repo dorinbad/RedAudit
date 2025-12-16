@@ -612,7 +612,7 @@ def discover_networks(
         Complete net_discovery result object for JSON report
     """
     if protocols is None:
-        protocols = ["dhcp", "fping", "netbios", "mdns", "upnp", "arp"]
+        protocols = ["dhcp", "fping", "netbios", "mdns", "upnp", "arp", "hyperscan"]
     
     tools = _check_tools()
     errors: List[str] = []
