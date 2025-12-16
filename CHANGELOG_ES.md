@@ -31,6 +31,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Corregido
 
 - **Descubrimiento de Dispositivos IoT**: Escaneos anteriores solo encontraban 3 de 10+ dispositivos debido al modo ARP pasivo y timeouts cortos.
+- **Sincronización JSON hidden_networks**: Las IPs de redes filtradas ahora correctamente populan `hidden_networks` y `leaked_networks_cidr` en JSON para pipelines SIEM/AI (antes solo aparecía en el reporte de texto).
 
 ## [3.2.2] - 2025-12-16 (Producción Hardening)
 

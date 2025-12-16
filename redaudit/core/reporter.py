@@ -85,6 +85,19 @@ def generate_summary(
             summary["unified_asset_count"] = len(unified)
             summary["multi_interface_devices"] = multi_interface
 
+    # v3.2.2b: Populate hidden_networks for SIEM/AI pipelines
+    # This detects IPs leaked in headers/redirects outside target networks
+    hidden_network_leaks = _detect_network_leaks(results, config)
+    if hidden_network_leaks:
+        results["hidden_networks"] = hidden_network_leaks
+        summary["leaked_networks_detected"] = len(hidden_network_leaks)
+    
+    # v3.2.2b: Also extract scannable CIDRs for auto-pivot
+    leaked_cidrs = extract_leaked_networks(results, config)
+    if leaked_cidrs:
+        results["leaked_networks_cidr"] = leaked_cidrs
+        summary["pivot_candidates"] = len(leaked_cidrs)
+
     # v2.9: SIEM Enhancement - ECS compliance, severity scoring, tags, risk scores
     enriched = enrich_report_for_siem(results, config)
     results.update(enriched)

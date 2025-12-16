@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **IoT Device Discovery**: Previous scans only found 3 of 10+ devices due to passive ARP mode and short timeouts.
+- **hidden_networks JSON sync**: Leaked network IPs now correctly populate `hidden_networks` and `leaked_networks_cidr` in JSON for SIEM/AI pipelines (was only in text report before).
 
 ## [3.2.2] - 2025-12-16 (Production Hardening)
 
