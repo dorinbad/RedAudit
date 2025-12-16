@@ -130,6 +130,15 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 | **Media** | **Automatización Nuclei** | Lanzar Nuclei sobre HTTP/HTTPS/servicios detectados con templates community + opción cargar custom. Output mergeado en findings con PoC URLs. Permite simular ataques modernos y generar Sigma rules defensivas. |
 | **Baja** | **Generación Playbook Red Team** | Por finding exploitable (ej: CVE alto, auth débil), generar scripts PoC automáticos (sugerencias Python/Impacket/Msfvenom) en carpeta evidence. Incluye safeguards (solo labs, `--dry-run`). Facilita testing controles Blue Team (EDR, logging). |
 
+### Experiencia de Desarrollador / Deuda Técnica (v3.3+)
+
+| Prioridad | Característica | Descripción |
+| :--- | :--- | :--- |
+| **Media** | **CommandRunner Centralizado** | Módulo único para ejecución de comandos externos: args como lista (anti-inyección), timeouts configurables, reintentos con backoff, redacción de secretos en logs, soporte dry-run. Refactoriza 50+ llamadas subprocess. |
+| **Media** | **Soporte Completo `--dry-run`** | Propagar flag `--dry-run` a todos los módulos para que los comandos se impriman pero no se ejecuten. Depende de CommandRunner. Útil para auditoría y debugging. |
+| **Baja** | **Única Fuente de Versión** | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
+| **Baja** | **Autodetección TTY** | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
+
 ## Propuestas Arquitectónicas
 
 ### 1. Motor de Plugins Modular

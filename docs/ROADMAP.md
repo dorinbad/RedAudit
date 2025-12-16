@@ -130,6 +130,15 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrated with full a
 | **Medium** | **Nuclei Automation** | Launch Nuclei on detected HTTP/HTTPS/services with community templates + option to load custom. Output merged in findings with PoC URLs. Enables simulating modern attacks and generating defensive Sigma rules. |
 | **Low** | **Red Team Playbook Generation** | For exploitable findings (e.g., high CVE, weak auth), generate automatic PoC scripts (Python/Impacket/Msfvenom suggestions) in evidence folder. Includes safeguards (labs only, `--dry-run`). Facilitates testing Blue Team controls (EDR, logging). |
 
+### Developer Experience / Technical Debt (v3.3+)
+
+| Priority | Feature | Description |
+| :--- | :--- | :--- |
+| **Medium** | **Centralized CommandRunner** | Single module for external command execution: args as list (anti-injection), configurable timeouts, retries with backoff, secret redaction in logs, dry-run support. Refactors 50+ subprocess calls. |
+| **Medium** | **Full `--dry-run` Support** | Propagate `--dry-run` flag to all modules so commands are printed but not executed. Depends on CommandRunner. Useful for auditing and debugging. |
+| **Low** | **Single Version Source** | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. |
+| **Low** | **TTY Autodetection** | Auto-disable colors when stdout is not a TTY (pipes/CI). Flag `--no-color` already exists but behavior not fully implemented. |
+
 ## Architectural Proposals
 
 ### 1. Modular Plugin Engine
