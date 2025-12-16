@@ -28,10 +28,21 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Corregido
 
 - **Fuga Visual de Tokens (B3)**: Los tokens internos de estado ya no aparecen como texto literal en la salida CLI.
+- **Resolución de Tags Anotados**: Auto-update ahora resuelve correctamente los tags git anotados a su commit subyacente usando dereference `^{}`. Anteriormente, la comparación del hash del objeto tag vs. hash del commit siempre fallaba.
 
 ### Seguridad
 
 - **Claims de Seguridad Honestos**: Documentado que el sistema de actualización verifica hashes de commit (integridad) pero NO realiza verificación criptográfica de firmas (autenticidad).
+
+### Aviso de Actualización
+
+> **⚠️ Usuarios en v3.2.1 o anterior**: La auto-actualización de v3.2.1 → v3.2.2 puede fallar debido al bug de tags anotados. Por favor reinstala manualmente:
+>
+> ```bash
+> curl -sL https://raw.githubusercontent.com/dorinbadea/RedAudit/v3.2.2/redaudit_install.sh | sudo bash
+> ```
+>
+> Después de esta actualización manual única, las futuras auto-actualizaciones funcionarán correctamente.
 
 ## [3.2.1] - 2025-12-15 (UX CLI)
 

@@ -748,13 +748,27 @@ def perform_git_update(
             git_env = os.environ.copy()
             git_env["GIT_TERMINAL_PROMPT"] = "0"
             git_env["GIT_ASKPASS"] = "echo"
-            ls_remote = subprocess.check_output(
-                ["git", "ls-remote", "--exit-code", GITHUB_CLONE_URL, target_ref],
+            # First try to get the dereferenced commit (for annotated tags)
+            # The ^{} suffix dereferences an annotated tag to its underlying commit
+            ls_remote_deref = subprocess.check_output(
+                ["git", "ls-remote", GITHUB_CLONE_URL, f"{target_ref}^{{}}"],
                 text=True,
                 timeout=15,
                 env=git_env,
             ).strip()
-            expected_commit = ls_remote.split()[0]
+            
+            if ls_remote_deref:
+                # Got the dereferenced commit (annotated tag)
+                expected_commit = ls_remote_deref.split()[0]
+            else:
+                # Fallback: lightweight tag or no dereference available
+                ls_remote = subprocess.check_output(
+                    ["git", "ls-remote", "--exit-code", GITHUB_CLONE_URL, target_ref],
+                    text=True,
+                    timeout=15,
+                    env=git_env,
+                ).strip()
+                expected_commit = ls_remote.split()[0]
         except Exception:
             return (False, f"Could not resolve tag {target_ref} from GitHub.")
 

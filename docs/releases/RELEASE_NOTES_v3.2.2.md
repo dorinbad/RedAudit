@@ -48,6 +48,18 @@ Internal status tokens (`OKGREEN`, `OKBLUE`, `WARNING`) are now mapped to user-f
 
 ---
 
+## ⚠️ Upgrade Notice for v3.2.1 Users
+
+The auto-update from v3.2.1 → v3.2.2 may fail with "Clone verification failed" due to a bug in how annotated git tags were resolved. The fix is included in v3.2.2, but users on v3.2.1 need to reinstall manually (one time only):
+
+```bash
+curl -sL https://raw.githubusercontent.com/dorinbadea/RedAudit/v3.2.2/redaudit_install.sh | sudo bash
+```
+
+**After this manual update, all future auto-updates will work correctly.**
+
+---
+
 ## Useful Links
 
 - **Changelog**: [CHANGELOG.md](../../CHANGELOG.md) / [CHANGELOG_ES.md](../../CHANGELOG_ES.md)

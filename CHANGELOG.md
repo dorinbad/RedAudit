@@ -28,10 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Visual Token Leakage (B3)**: Internal status tokens no longer appear as literal text in CLI output.
+- **Annotated Tag Resolution**: Auto-update now correctly resolves annotated git tags to their underlying commit using `^{}` dereference. Previously, comparison of tag object hash vs. commit hash always failed.
 
 ### Security
 
 - **Honest Security Claims**: Documented that the update system verifies commit hashes (integrity) but does NOT perform cryptographic signature verification (authenticity).
+
+### Upgrade Notice
+
+> **⚠️ Users on v3.2.1 or earlier**: The auto-update from v3.2.1 → v3.2.2 may fail due to the annotated tag bug. Please reinstall manually:
+>
+> ```bash
+> curl -sL https://raw.githubusercontent.com/dorinbadea/RedAudit/v3.2.2/redaudit_install.sh | sudo bash
+> ```
+>
+> After this one-time manual update, future auto-updates will work correctly.
 
 ## [3.2.1] - 2025-12-15 (CLI UX)
 

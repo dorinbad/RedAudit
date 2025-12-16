@@ -48,6 +48,18 @@ Los tokens de estado internos (`OKGREEN`, `OKBLUE`, `WARNING`) ahora se mapean a
 
 ---
 
+## ⚠️ Aviso de Actualización para Usuarios de v3.2.1
+
+La auto-actualización de v3.2.1 → v3.2.2 puede fallar con "Clone verification failed" debido a un bug en cómo se resolvían los tags git anotados. El fix está incluido en v3.2.2, pero los usuarios en v3.2.1 necesitan reinstalar manualmente (solo una vez):
+
+```bash
+curl -sL https://raw.githubusercontent.com/dorinbadea/RedAudit/v3.2.2/redaudit_install.sh | sudo bash
+```
+
+**Después de esta actualización manual, todas las futuras auto-actualizaciones funcionarán correctamente.**
+
+---
+
 ## Enlaces útiles
 
 - **Changelog**: [CHANGELOG.md](../../CHANGELOG.md) / [CHANGELOG_ES.md](../../CHANGELOG_ES.md)
