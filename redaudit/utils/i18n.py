@@ -233,6 +233,8 @@ TRANSLATIONS = {
         # v3.2.2+: Boolean formatting
         "enabled": "Enabled",
         "disabled": "Disabled",
+        # v3.2.3+: Stealth mode
+        "stealth_mode_info": "Stealth mode: {} timing, {} thread(s), {}s+ delay",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -453,6 +455,8 @@ TRANSLATIONS = {
         # v3.2.2+: Formato de booleanos
         "enabled": "Activado",
         "disabled": "Desactivado",
+        # v3.2.3+: Modo sigiloso
+        "stealth_mode_info": "Modo sigiloso: timing {}, {} hilo(s), {}s+ retardo",
     },
 }
 

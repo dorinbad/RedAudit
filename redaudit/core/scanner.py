@@ -181,21 +181,24 @@ def is_port_anomaly(port: int, service_name: str) -> bool:
 
 
 
-def get_nmap_arguments(mode: str) -> str:
+def get_nmap_arguments(mode: str, config: Optional[Dict] = None) -> str:
     """
     Get nmap arguments for the specified scan mode.
 
     Args:
         mode: Scan mode ('rapido', 'normal', 'completo')
+        config: Optional config dict with nmap_timing for stealth mode
 
     Returns:
         Nmap argument string
     """
+    # v3.2.3: Support stealth mode with different timing templates
+    timing = config.get("nmap_timing", "T4") if config else "T4"
     args = {
-        "rapido": "-sn -T4 --max-retries 1 --host-timeout 10s",
-        "normal": "-T4 -F -sV --version-intensity 5 --host-timeout 60s --open",
+        "rapido": f"-sn -{timing} --max-retries 1 --host-timeout 10s",
+        "normal": f"-{timing} -F -sV --version-intensity 5 --host-timeout 60s --open",
         # v2.9: Reduced max-retries from 2 to 1 for LAN efficiency
-        "completo": "-T4 -p- -sV -sC -A --version-intensity 9 --host-timeout 300s --max-retries 1 --open",
+        "completo": f"-{timing} -p- -sV -sC -A --version-intensity 9 --host-timeout 300s --max-retries 1 --open",
     }
     return args.get(mode, args["normal"])
 
