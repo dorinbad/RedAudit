@@ -103,6 +103,33 @@ redaudit --topology-only --target 192.168.0.0/16 --yes  # Solo topología (sin e
 redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditoría completa
 ```
 
+## Roadmap v3.3 / v4.0 (SIEM-Ready + Blue Team Manual + Testing Red Team)
+
+### Integración SIEM y Alertas
+
+| Prioridad | Característica | Descripción |
+| :--- | :--- | :--- |
+| **Alta** | **Pipeline SIEM Nativo** | Exporters directos: módulo Filebeat personalizado (autoconfig ingest Elasticsearch), mapping Sigma rules para findings comunes (Nikto, CVE, cifrados débiles). JSONL con ECS completo (risk_score calculado, rule.id). Flag `--siem-pipeline elk\|splunk\|qradar`. |
+| **Alta** | **Webhook Alertas en Tiempo Real** | `--webhook URL` para enviar findings críticos (CVE alto, servicios expuestos) via POST JSON a Slack/Teams/PagerDuty/TheHive durante el scan. Respuesta inmediata Blue Team. |
+| **Media** | **Diff Visual y Tracking Longitudinal** | Extender `--diff` con salida HTML comparativa (side-by-side, highlight nuevo/resuelto), dashboard timeline risk_score por subnet/host. Export diferencial JSONL para SIEM histórico. |
+
+### Herramientas Blue Team Manual
+
+| Prioridad | Característica | Descripción |
+| :--- | :--- | :--- |
+| **Alta** | **Dashboard HTML Interactivo** | Reporte HTML autogenerado (Jinja2 + Bootstrap + Chart.js): tablas sortable assets/findings, gráficos (top vulns, puertos, timeline diffs), mapa topología SVG clickable, búsqueda full-text. Flag `--html-report`. |
+| **Media** | **Export Playbooks** | Generar Markdown/YAML playbooks por finding (remediación TLS débil, referencias MITRE/CVE, comandos sugeridos). Incluido en reporte para triage rápido. |
+| **Baja** | **Verificación Hardening con Osquery** | Módulo post-scan que ejecute queries Osquery (via fleet o directo) en hosts vivos para validar configs detectadas (firewall, servicios). Merge en reporte SIEM/HTML para closed-loop. |
+
+### Extensiones Red Team Testing (Validación Defensiva)
+
+| Prioridad | Característica | Descripción |
+| :--- | :--- | :--- |
+| **Media** | **Integración Impacket** | Módulo opcional `--redteam-deep` usando Impacket (smbexec, wmiexec, secretsdump) sobre credenciales dummy o null sessions detectadas. Genera evidencia PoC para validar detección Blue Team (SMB signing, LAPS). |
+| **Media** | **BloodHound Collector Automático** | Ejecutar SharpHound/BloodHound.py en hosts Windows vivos (via psexec/winrm detectado). Importar JSON a Neo4j local y generar reporte paths ataque comunes (Kerberoast, AS-REProast). Ayuda Blue Team a priorizar hardening AD. |
+| **Media** | **Automatización Nuclei** | Lanzar Nuclei sobre HTTP/HTTPS/servicios detectados con templates community + opción cargar custom. Output mergeado en findings con PoC URLs. Permite simular ataques modernos y generar Sigma rules defensivas. |
+| **Baja** | **Generación Playbook Red Team** | Por finding exploitable (ej: CVE alto, auth débil), generar scripts PoC automáticos (sugerencias Python/Impacket/Msfvenom) en carpeta evidence. Incluye safeguards (solo labs, `--dry-run`). Facilita testing controles Blue Team (EDR, logging). |
+
 ## Propuestas Arquitectónicas
 
 ### 1. Motor de Plugins Modular
