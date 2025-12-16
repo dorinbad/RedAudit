@@ -120,6 +120,7 @@ async def hyperscan_tcp_sweep(
     batch_size: int = DEFAULT_TCP_BATCH_SIZE,
     timeout: float = DEFAULT_TCP_TIMEOUT,
     logger=None,
+    progress_callback=None,
 ) -> Dict[str, List[int]]:
     """
     Parallel TCP port sweep using asyncio batch scanning.
@@ -132,6 +133,7 @@ async def hyperscan_tcp_sweep(
         batch_size: Max concurrent connections per batch
         timeout: Connection timeout in seconds
         logger: Optional logger
+        progress_callback: Optional callback(completed, total, desc) for progress
         
     Returns:
         Dict mapping IP -> list of open ports
@@ -144,6 +146,7 @@ async def hyperscan_tcp_sweep(
     results: Dict[str, List[int]] = {ip: [] for ip in targets}
     
     # Create all connection tasks
+    total_probes = len(targets) * len(ports)
     tasks = []
     for ip in targets:
         for port in ports:
@@ -151,16 +154,24 @@ async def hyperscan_tcp_sweep(
     
     if logger:
         logger.info("HyperScan TCP: %d targets x %d ports = %d probes", 
-                    len(targets), len(ports), len(tasks))
+                    len(targets), len(ports), total_probes)
     
-    # Execute all tasks concurrently in batches
-    completed = await asyncio.gather(*tasks, return_exceptions=True)
+    # Execute in chunks for progress tracking
+    chunk_size = max(1, total_probes // 20)  # ~20 progress updates
+    completed = 0
     
-    # Collect results
-    for result in completed:
-        if isinstance(result, tuple):
-            ip, port = result
-            results[ip].append(port)
+    for i in range(0, len(tasks), chunk_size):
+        chunk = tasks[i:i + chunk_size]
+        chunk_results = await asyncio.gather(*chunk, return_exceptions=True)
+        
+        for result in chunk_results:
+            if isinstance(result, tuple):
+                ip, port = result
+                results[ip].append(port)
+        
+        completed += len(chunk)
+        if progress_callback:
+            progress_callback(completed, total_probes, "TCP sweep")
     
     duration = time.time() - start_time
     open_count = sum(len(ports) for ports in results.values())
