@@ -682,7 +682,15 @@ class InteractiveNetworkAuditor:
             if choice == len(opts) - 2:
                 return [self.ask_manual_network()]
             if choice == len(opts) - 1:
-                return [n["network"] for n in nets]
+                # v3.2.3: Deduplicate networks (same CIDR on multiple interfaces)
+                seen = set()
+                unique_nets = []
+                for n in nets:
+                    cidr = n["network"]
+                    if cidr not in seen:
+                        seen.add(cidr)
+                        unique_nets.append(cidr)
+                return unique_nets
             return [nets[choice]["network"]]
         else:
             self.print_status(self.t("no_nets_auto"), "WARNING")
@@ -1559,31 +1567,32 @@ class InteractiveNetworkAuditor:
                     defaults_for_run = {}
                     self.print_status(self.t("defaults_ignore_confirm"), "INFO")
                 elif choice == 1 and self.ask_yes_no(self.t("defaults_show_summary_q"), default="no"):
+                    # v3.2.3: Display ALL saved defaults (not just 6)
                     self.print_status(self.t("defaults_summary_title"), "INFO")
-                    self.print_status(
-                        f"- {self.t('defaults_summary_threads')}: {persisted_defaults.get('threads')}",
-                        "INFO",
-                    )
-                    self.print_status(
-                        f"- {self.t('defaults_summary_output')}: {persisted_defaults.get('output_dir')}",
-                        "INFO",
-                    )
-                    self.print_status(
-                        f"- {self.t('defaults_summary_rate_limit')}: {persisted_defaults.get('rate_limit')}",
-                        "INFO",
-                    )
-                    self.print_status(
-                        f"- {self.t('defaults_summary_udp_mode')}: {persisted_defaults.get('udp_mode')}",
-                        "INFO",
-                    )
-                    self.print_status(
-                        f"- {self.t('defaults_summary_udp_ports')}: {persisted_defaults.get('udp_top_ports')}",
-                        "INFO",
-                    )
-                    self.print_status(
-                        f"- {self.t('defaults_summary_topology')}: {persisted_defaults.get('topology_enabled')}",
-                        "INFO",
-                    )
+                    
+                    # Helper to format boolean values
+                    def fmt_bool(val):
+                        if val is None:
+                            return "-"
+                        return self.t("enabled") if val else self.t("disabled")
+                    
+                    # Display all saved defaults
+                    fields = [
+                        ("defaults_summary_scan_mode", persisted_defaults.get("scan_mode")),
+                        ("defaults_summary_threads", persisted_defaults.get("threads")),
+                        ("defaults_summary_output", persisted_defaults.get("output_dir")),
+                        ("defaults_summary_rate_limit", persisted_defaults.get("rate_limit")),
+                        ("defaults_summary_udp_mode", persisted_defaults.get("udp_mode")),
+                        ("defaults_summary_udp_ports", persisted_defaults.get("udp_top_ports")),
+                        ("defaults_summary_topology", fmt_bool(persisted_defaults.get("topology_enabled"))),
+                        ("defaults_summary_web_vulns", fmt_bool(persisted_defaults.get("scan_vulnerabilities"))),
+                        ("defaults_summary_cve_lookup", fmt_bool(persisted_defaults.get("cve_lookup_enabled"))),
+                        ("defaults_summary_txt_report", fmt_bool(persisted_defaults.get("generate_txt"))),
+                    ]
+                    
+                    for key, val in fields:
+                        display_val = val if val is not None else "-"
+                        self.print_status(f"- {self.t(key)}: {display_val}", "INFO")
 
         print(f"\n{self.COLORS['HEADER']}{self.t('scan_config')}{self.COLORS['ENDC']}")
         print("=" * 60)

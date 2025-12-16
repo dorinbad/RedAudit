@@ -124,6 +124,11 @@ TRANSLATIONS = {
         "defaults_summary_udp_mode": "UDP mode",
         "defaults_summary_udp_ports": "UDP ports (full mode)",
         "defaults_summary_topology": "Topology discovery",
+        # v3.2.3: Additional defaults display
+        "defaults_summary_scan_mode": "Scan mode",
+        "defaults_summary_web_vulns": "Web vulns scan",
+        "defaults_summary_cve_lookup": "CVE correlation",
+        "defaults_summary_txt_report": "TXT report",
         "defaults_ignore_confirm": "OK. Saved defaults will be ignored for this run.",
         "jsonl_exports": "JSONL exports: {} findings, {} assets",
         # v3.1+: UDP configuration
@@ -341,6 +346,11 @@ TRANSLATIONS = {
         "defaults_summary_udp_mode": "Modo UDP",
         "defaults_summary_udp_ports": "Puertos UDP (modo completo)",
         "defaults_summary_topology": "Descubrimiento de topología",
+        # v3.2.3: Nuevos campos de defaults
+        "defaults_summary_scan_mode": "Modo de escaneo",
+        "defaults_summary_web_vulns": "Escaneo vulns web",
+        "defaults_summary_cve_lookup": "Correlación CVE",
+        "defaults_summary_txt_report": "Reporte TXT",
         "defaults_ignore_confirm": "OK. Los defaults guardados se ignorarán en esta ejecución.",
         "jsonl_exports": "Exportaciones JSONL: {} hallazgos, {} activos",
         # v3.1+: Configuración UDP
