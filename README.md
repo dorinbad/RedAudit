@@ -163,168 +163,45 @@ redaudit --target 192.168.1.0/24 --threads 8 --rate-limit 1 --save-defaults --ye
 
 ### Usage Examples
 
-#### Basic Scanning
-
 ```bash
-# 1. Quick host discovery (fast mode)
+# Quick host discovery
 sudo redaudit --target 192.168.1.0/24 --mode fast --yes
 
-# 2. Standard security audit
+# Standard security audit
 sudo redaudit --target 192.168.1.0/24 --mode normal --yes
 
-# 3. Comprehensive audit with all checks
-sudo redaudit --target 192.168.1.0/24 --mode full --yes
+# Comprehensive audit with encryption
+sudo redaudit --target 192.168.1.0/24 --mode full --encrypt --yes
 
-# 4. Multiple networks simultaneously
-sudo redaudit --target "192.168.1.0/24,10.0.0.0/24,172.16.0.0/16" --mode normal --threads 8
-```
-
-#### Stealth & Performance
-
-```bash
-# 5. Stealthy scan with rate limiting and jitter
+# Stealthy scan with rate limiting
 sudo redaudit --target 10.0.0.0/24 --mode normal --rate-limit 2 --threads 4 --yes
 
-# 6. Fast scan with pre-scan optimization
-sudo redaudit --target 192.168.0.0/16 --prescan --prescan-ports 1-1024 --threads 12 --yes
+# Network discovery with topology mapping
+sudo redaudit --target 192.168.1.0/24 --net-discovery --topology --yes
 
-# 7. Custom UDP coverage for identity scanning
-sudo redaudit --target 192.168.1.0/24 --mode full --udp-mode full --udp-ports 200 --yes
+# Differential analysis (compare scans)
+redaudit --diff ~/reports/monday.json ~/reports/friday.json
 ```
 
-#### Encryption & Security
+For more examples including IPv6, CVE correlation, SOCKS5 pivoting, and SIEM integration, see:  
+📖 **[Complete Usage Guide](docs/en/USAGE.md)**
 
-```bash
-# 8. Encrypted reports (auto-generated password)
-sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
+**Core CLI Options:**
 
-# 9. Encrypted reports (custom password)
-sudo redaudit --target 192.168.1.0/24 --mode full --encrypt --encrypt-password "Str0ng!Pass2024" --yes
-```
+- `-t, --target`: Target network(s) in CIDR notation
+- `-m, --mode`: Scan mode (fast/normal/full, default: normal)
+- `-j, --threads`: Concurrent threads (1-16, default: 6)
+- `--rate-limit`: Delay between hosts in seconds (includes ±30% jitter)
+- `-e, --encrypt`: Encrypt reports with AES-128
+- `-o, --output`: Output directory (default: ~/Documents/RedAuditReports)
+- `--topology`: Enable network topology discovery **(v3.1+)**
+- `--net-discovery`: Enhanced L2/broadcast discovery **(v3.2+)**
+- `--cve-lookup`: CVE correlation via NVD API **(v3.0)**
+- `--diff OLD NEW`: Differential analysis between scans **(v3.0)**
+- `--ipv6`: IPv6-only scanning mode **(v3.0)**
+- `-y, --yes`: Skip confirmations (automation mode)
 
-#### v3.0 Advanced Features
-
-```bash
-# 10. IPv6 network scanning
-sudo redaudit --target "2001:db8::/64" --ipv6 --mode normal --yes
-
-# 11. CVE correlation with NVD intelligence
-sudo redaudit --target 192.168.1.0/24 --mode normal --cve-lookup --nvd-key YOUR_API_KEY --yes
-
-# 12. Scan through SOCKS5 proxy (pivoting)
-sudo redaudit --target 10.internal.0.0/24 --proxy socks5://pivot-host:1080 --mode normal --yes
-
-# 13. Differential analysis (compare two scans)
-redaudit --diff ~/reports/baseline_monday.json ~/reports/current_friday.json
-```
-
-#### v3.1 SIEM Integration
-
-```bash
-# 14. Generate SIEM-ready JSONL exports (no encryption)
-sudo redaudit --target 192.168.1.0/24 --mode full --yes
-# Outputs: findings.jsonl, assets.jsonl, summary.json alongside JSON report
-```
-
-#### v3.1.1 Topology & Persistence
-
-```bash
-# 15. Topology discovery only (network mapping)
-sudo redaudit --target 192.168.1.0/24 --topology-only --yes
-
-# 16. Full scan with topology context
-sudo redaudit --target 192.168.1.0/24 --mode normal --topology --yes
-
-# 17. Save your preferred settings as defaults
-sudo redaudit --target 192.168.1.0/24 --mode normal --threads 8 \
-  --rate-limit 1 --topology --udp-mode full --save-defaults --yes
-# Future runs will reuse these settings automatically
-```
-
-#### v3.2 Enhanced Net Discovery
-
-```bash
-# 18. Broadcast-based discovery (DHCP/NetBIOS/mDNS/UPNP/ARP/fping)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --yes
-
-# 19. Select only some protocols
-sudo redaudit --target 192.168.1.0/24 --net-discovery dhcp,netbios --yes
-
-# 20. Include optional Red Team recon block (best-effort)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam --yes
-
-# 21. Optional tuning (interface + limits)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam \
-  --net-discovery-interface eth0 --redteam-max-targets 50 --snmp-community public --yes
-```
-
-#### Real-World Workflows
-
-```bash
-# 22. Weekly audit workflow
-# Step 1: Baseline scan
-sudo redaudit --target 192.168.0.0/16 --mode normal --yes
-# Step 2: Weekly comparison
-sudo redaudit --target 192.168.0.0/16 --mode normal --yes
-redaudit --diff ~/Documents/RedAuditReports/RedAudit_BASELINE/redaudit_*.json \
-              ~/Documents/RedAuditReports/RedAudit_LATEST/redaudit_*.json
-
-# 23. Multi-VLAN enterprise network audit
-sudo redaudit --target "10.10.0.0/16,10.20.0.0/16,10.30.0.0/16" \
-  --mode normal --topology --threads 10 --rate-limit 0.5 --yes
-
-# 24. Post-scan verification and export
-sudo redaudit --target 192.168.1.0/24 --mode full --cve-lookup --yes
-# Verify JSONL exports were generated
-ls -lh ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl
-# Ingest into your SIEM
-cat ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl | your-siem-ingestion-tool
-```
-
-**Available CLI Options:**
-
-- `--target, -t`: Target network(s) in CIDR notation (required for non-interactive)
-- `--mode, -m`: Scan mode (fast/normal/full, default: normal)
-- `--threads, -j`: Concurrent threads (1-16, default: 6)
-- `--rate-limit`: Delay between hosts in seconds (default: 0)
-- `--encrypt, -e`: Encrypt reports with password
-- `--encrypt-password`: Custom password for encryption (optional, default: random generated)
-- `--output, -o`: Output directory (default: ~/Documents/RedAuditReports)
-- `--max-hosts`: Maximum discovered hosts to scan (default: all)
-- `--no-vuln-scan`: Disable web vulnerability scanning
-- `--no-txt-report`: Disable TXT report generation
-- `--no-deep-scan`: Disable adaptive deep scan
-- `--prescan`: Enable fast asyncio pre-scan before nmap
-- `--prescan-ports`: Port range for pre-scan (default: 1-1024)
-- `--prescan-timeout`: Pre-scan timeout in seconds (default: 0.5)
-- `--udp-mode`: UDP scan mode: quick (default) or full
-- `--udp-ports`: Top UDP ports count used in `--udp-mode full` (50-500, default: 100) **(v3.1+)**
-- `--topology`: Enable topology discovery (ARP/VLAN/LLDP + gateway/routes) **(v3.1+)**
-- `--no-topology`: Disable topology discovery (override persisted defaults) **(v3.1+)**
-- `--topology-only`: Run topology discovery only (skip host scanning) **(v3.1+)**
-- `--save-defaults`: Save current CLI settings as persistent defaults (`~/.redaudit/config.json`) **(v3.1+)**
-- `--defaults {ask,use,ignore}`: Persisted defaults behavior (interactive asks; non-interactive defaults to current behavior) **(v3.2.1+)**
-- `--use-defaults`: Shortcut for `--defaults use` **(v3.2.1+)**
-- `--ignore-defaults`: Shortcut for `--defaults ignore` **(v3.2.1+)**
-- `--net-discovery [PROTO,...]`: Enable enhanced network discovery (all, or comma-separated: dhcp,netbios,mdns,upnp,arp,fping) **(v3.2+)**
-- `--redteam`: Include optional Red Team recon block in net discovery **(v3.2+)**
-- `--net-discovery-interface IFACE`: Network interface for net discovery and L2 captures (e.g., eth0) **(v3.2+)**
-- `--redteam-max-targets N`: Max target IPs sampled for redteam checks (1-500, default: 50) **(v3.2+)**
-- `--snmp-community COMMUNITY`: SNMP community for SNMP walking (default: public) **(v3.2+)**
-- `--dns-zone ZONE`: DNS zone hint for AXFR attempt (e.g., corp.local) **(v3.2+)**
-- `--kerberos-realm REALM`: Kerberos realm hint (e.g., CORP.LOCAL) **(v3.2+)**
-- `--kerberos-userlist PATH`: Optional userlist for Kerberos userenum (requires kerbrute) **(v3.2+)**
-- `--redteam-active-l2`: Enable additional L2-focused checks that may be noisier (bettercap/scapy sniff; requires root) **(v3.2+)**
-- `--skip-update-check`: Skip update check at startup
-- `--yes, -y`: Skip legal warning (use with caution)
-- `--lang`: Language (en/es)
-- `--ipv6`: Enable IPv6-only scanning mode **(v3.0)**
-- `--proxy URL`: SOCKS5 proxy for pivoting (socks5://host:port) **(v3.0)**
-- `--diff OLD NEW`: Compare two JSON reports and show changes **(v3.0)**
-- `--cve-lookup`: Enable CVE correlation via NVD API **(v3.0)**
-- `--nvd-key KEY`: NVD API key for faster rate limits **(v3.0)**
-
-See `redaudit --help` for full details.
+See `redaudit --help` or [USAGE.md](docs/en/USAGE.md) for the complete list of 40+ options.
 
 ## Configuration & Internal Parameters
 
@@ -474,148 +351,11 @@ For comprehensive troubleshooting covering all scenarios, see the full guide:
 - [Scanning Problems](docs/en/TROUBLESHOOTING.md#5-scan-appears-frozen--long-pauses)
 - [Network Discovery Issues](docs/en/TROUBLESHOOTING.md#12-net-discovery-missing-tools--tool_missing-v32)
 - [Encryption/Decryption](docs/en/TROUBLESHOOTING.md#8-decryption-failed-invalid-token)
-
-### Common Installation Issues
-
-#### 1. "Permission denied" / Root privileges required
-
-- **Cause**: Running without `sudo` (nmap requires raw sockets)
-- **Fix**: Prepend `sudo` to command, or use `--allow-non-root` for limited mode
-- **Verify**: `id -u` should return 0 when running with sudo
-
-#### 2. "nmap: command not found"
-
-- **Cause**: nmap not installed or not in PATH
-- **Fix**: `sudo apt update && sudo apt install nmap`
-- **Verify**: `which nmap` should show `/usr/bin/nmap`
-
-#### 3. "ModuleNotFoundError: cryptography"
-
-- **Cause**: Python dependencies missing
-- **Fix**: `sudo bash redaudit_install.sh` or `sudo apt install python3-cryptography python3-nmap python3-netifaces`
-
-#### 4. Alias not working after installation
-
-- **Cause**: Shell configuration not reloaded
-- **Fix**: Run `source ~/.zshrc` (Kali) or `source ~/.bashrc` (Debian/Ubuntu), or open new terminal
-
-### Scanning Issues
-
-#### 5. "Scan appears frozen" / Long pauses
-
-- **Cause**: Deep scan legitimately takes 90-150s per complex host
-- **Check**: Look for `[deep]` marker in output - this is normal
-- **Monitor**: Check `~/.redaudit/logs/` for heartbeat messages
-- **Workaround**: Use `--no-deep-scan` or reduce `--threads` to 4
-
-#### 6. "Too many hosts, scan never finishes"
-
-- **Cause**: Scanning large /16 networks without optimization
-- **Fix**: Use `--prescan` for faster discovery, or `--max-hosts N` to limit scope
-- **Example**: `sudo redaudit -t 192.168.0.0/16 --prescan --max-hosts 100 --yes`
-
-#### 7. Heartbeat warnings in logs
-
-- **Cause**: Nikto/TestSSL running slowly on filtered hosts
-- **Status**: Normal - tools are still running
-- **Action**: Wait or reduce `--rate-limit` if too aggressive
-
-### Encryption & Decryption
-
-#### 8. "Decryption failed: Invalid token"
-
-- **Cause**: Wrong password or corrupted `.salt` file
-- **Fix**: Verify password (case-sensitive), ensure `.salt` file exists in same directory
-- **Check**: `.salt` file should be 16 bytes: `ls -lh *.salt`
-
-#### 9. "Cryptography not available" warning
-
-- **Cause**: `python3-cryptography` package missing
-- **Impact**: Encryption options will be disabled
-- **Fix**: `sudo apt install python3-cryptography`
-
-### Network & Connectivity
-
-#### 10. IPv6 scanning not working
-
-- **Cause**: IPv6 disabled on system or nmap built without IPv6 support
-- **Verify**: `ip -6 addr show` and `nmap -6 ::1`
-- **Fix**: Enable IPv6 in `/etc/sysctl.conf` or use IPv4 targets
-
-#### 11. NVD API rate limit errors
-
-- **Cause**: Using NVD API without key (limited to 5 requests/30s)
-- **Fix**: Get free API key from <https://nvd.nist.gov/developers/request-an-api-key>
-- **Usage**: `--nvd-key YOUR_KEY` or store in `~/.redaudit/config.json`
-
-#### 12. Proxy connection failed
-
-- **Cause**: `proxychains` not installed or proxy unreachable
-- **Fix**: `sudo apt install proxychains4` and test proxy: `curl --socks5 host:port http://example.com`
-- **Format**: `--proxy socks5://host:port`
-
-### Output & Reports
-
-#### 13. JSONL exports not generated
-
-- **Cause**: Report encryption is enabled (JSONL only generated when encryption is off)
-- **Fix**: Run without `--encrypt` flag to generate `findings.jsonl`, `assets.jsonl`, `summary.json`
-
-#### 14. "Output directory not found"
-
-- **Cause**: Custom output path doesn't exist
-- **Fix**: Create directory first: `mkdir -p /path/to/output` or let RedAudit use default (`~/Documents/RedAuditReports`)
-
-### Performance Tuning
-
-#### 15. Scans too slow on large networks
-
-- **Optimization 1**: Use `--prescan` for asyncio fast discovery
-- **Optimization 2**: Increase `--threads` to 12-16 (but watch for network congestion)
-- **Optimization 3**: Use `--mode fast` for quick inventory, then targeted `full` scans
-- **Example**: `sudo redaudit -t 10.0.0.0/16 --prescan --threads 12 --mode fast --yes`
-
-#### 16. High CPU/memory usage
-
-- **Cause**: Too many concurrent threads or deep scans on many hosts
-- **Fix**: Reduce `--threads` to 4-6, use `--no-deep-scan`, or add `--rate-limit 1`
-
-#### 17. Network congestion / IDS alerts
-
-- **Cause**: Aggressive scanning triggering security systems
-- **Fix**: Add `--rate-limit 2` (with ±30% jitter) and reduce `--threads` to 4
-- **Stealth mode**: `sudo redaudit -t TARGET --mode normal --rate-limit 3 --threads 2 --yes`
+- [Performance Tuning](docs/en/TROUBLESHOOTING.md#15-scans-too-slow-on-large-networks)
 
 ## 13. Changelog
 
-### v3.1 Features
-
-- **JSONL Exports**: Auto-generated `findings.jsonl`, `assets.jsonl`, `summary.json` for SIEM/AI pipelines (when report encryption is disabled)
-- **Finding IDs**: Deterministic hashes for cross-scan finding correlation
-- **Category Classification**: surface/misconfig/crypto/auth/info-leak/vuln
-- **Normalized Severity**: CVSS-like 0-10 scale with preserved tool severity
-- **Parsed Observations**: Structured extraction from Nikto/TestSSL output
-- **Scanner Versions**: Tool version detection for provenance tracking
-- **Topology Discovery (best-effort)**: Optional ARP/VLAN/LLDP + gateway/routes (`--topology`, `--topology-only`)
-- **Persistent Defaults**: `--save-defaults` stores common settings in `~/.redaudit/config.json`
-- **Configurable UDP Coverage**: `--udp-ports` to tune full UDP identity scan coverage
-
-### v3.0 Features
-
-- **IPv6 Support**: Full scanning capabilities for IPv6 networks
-- **CVE Correlation (NVD)**: Deep vulnerability intelligence via NIST NVD API
-- **Differential Analysis**: Compare scan reports to detect network changes (`--diff`)
-- **Proxy Chains (SOCKS5)**: Network pivoting support via proxychains
-- **Magic Byte Validation**: Enhanced false positive detection
-
-### v2.9 Improvements
-
-- **Smart-Check**: Automatic Nikto false positive filtering
-- **UDP Taming**: 50-80% faster scans with optimized strategy
-- **Entity Resolution**: Multi-interface host consolidation
-- **SIEM Professional**: ECS v8.11 compliance, severity scoring
-
-For detailed changelog, see [CHANGELOG.md](CHANGELOG.md)
+See [CHANGELOG.md](CHANGELOG.md) for complete version history and detailed release notes.
 
 ## 14. Contributing
 

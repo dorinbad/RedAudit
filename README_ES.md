@@ -177,168 +177,45 @@ Para automatización y scripting:
 
 ### Ejemplos de Uso
 
-#### Escaneo Básico
-
 ```bash
-# 1. Descubrimiento rápido de hosts (modo fast)
+# Descubrimiento rápido de hosts
 sudo redaudit --target 192.168.1.0/24 --mode fast --yes
 
-# 2. Auditoría de seguridad estándar
+# Auditoría de seguridad estándar
 sudo redaudit --target 192.168.1.0/24 --mode normal --yes
 
-# 3. Auditoría exhaustiva con todas las comprobaciones
-sudo redaudit --target 192.168.1.0/24 --mode full --yes
+# Auditoría completa con cifrado
+sudo redaudit --target 192.168.1.0/24 --mode full --encrypt --yes
 
-# 4. Múltiples redes simultáneamente
-sudo redaudit --target "192.168.1.0/24,10.0.0.0/24,172.16.0.0/16" --mode normal --threads 8
-```
-
-#### Sigilo y Rendimiento
-
-```bash
-# 5. Escaneo sigiloso con rate limiting y jitter
+# Escaneo sigiloso con rate limiting
 sudo redaudit --target 10.0.0.0/24 --mode normal --rate-limit 2 --threads 4 --yes
 
-# 6. Escaneo rápido con optimización pre-scan
-sudo redaudit --target 192.168.0.0/16 --prescan --prescan-ports 1-1024 --threads 12 --yes
+# Descubrimiento de red con mapeo de topología
+sudo redaudit --target 192.168.1.0/24 --net-discovery --topology --yes
 
-# 7. Cobertura UDP personalizada para escaneo de identidad
-sudo redaudit --target 192.168.1.0/24 --mode full --udp-mode full --udp-ports 200 --yes
+# Análisis diferencial (comparar escaneos)
+redaudit --diff ~/reports/lunes.json ~/reports/viernes.json
 ```
 
-#### Cifrado y Seguridad
+Para más ejemplos incluyendo IPv6, correlación CVE, pivoting SOCKS5 e integración SIEM, consulta:  
+📖 **[Guía Completa de Uso](docs/es/USAGE.md)**
 
-```bash
-# 8. Reportes cifrados (contraseña auto-generada)
-sudo redaudit --target 192.168.1.0/24 --mode normal --encrypt --yes
+**Opciones CLI Principales:**
 
-# 9. Reportes cifrados (contraseña personalizada)
-sudo redaudit --target 192.168.1.0/24 --mode full --encrypt --encrypt-password "Contr4s3ña!2024" --yes
-```
+- `-t, --target`: Red(es) objetivo en notación CIDR
+- `-m, --mode`: Modo de escaneo (fast/normal/full, por defecto: normal)
+- `-j, --threads`: Hilos concurrentes (1-16, por defecto: 6)
+- `--rate-limit`: Retardo entre hosts en segundos (incluye jitter ±30%)
+- `-e, --encrypt`: Cifrar reportes con AES-128
+- `-o, --output`: Directorio de salida (por defecto: ~/Documents/RedAuditReports)
+- `--topology`: Activar descubrimiento de topología de red **(v3.1+)**
+- `--net-discovery`: Descubrimiento L2/broadcast mejorado **(v3.2+)**
+- `--cve-lookup`: Correlación CVE vía API NVD **(v3.0)**
+- `--diff OLD NEW`: Análisis diferencial entre escaneos **(v3.0)**
+- `--ipv6`: Modo solo IPv6 **(v3.0)**
+- `-y, --yes`: Omitir confirmaciones (modo automatización)
 
-#### Características Avanzadas v3.0
-
-```bash
-# 10. Escaneo de redes IPv6
-sudo redaudit --target "2001:db8::/64" --ipv6 --mode normal --yes
-
-# 11. Correlación CVE con inteligencia NVD
-sudo redaudit --target 192.168.1.0/24 --mode normal --cve-lookup --nvd-key TU_API_KEY --yes
-
-# 12. Escaneo a través de proxy SOCKS5 (pivoting)
-sudo redaudit --target 10.internal.0.0/24 --proxy socks5://pivot-host:1080 --mode normal --yes
-
-# 13. Análisis diferencial (comparar dos escaneos)
-redaudit --diff ~/reports/baseline_lunes.json ~/reports/actual_viernes.json
-```
-
-#### Integración SIEM v3.1
-
-```bash
-# 14. Generar exportaciones JSONL para SIEM (sin cifrado)
-sudo redaudit --target 192.168.1.0/24 --mode full --yes
-# Salida: findings.jsonl, assets.jsonl, summary.json junto al reporte JSON
-```
-
-#### Topología y Persistencia v3.1.1
-
-```bash
-# 15. Solo descubrimiento de topología (mapeo de red)
-sudo redaudit --target 192.168.1.0/24 --topology-only --yes
-
-# 16. Escaneo completo con contexto de topología
-sudo redaudit --target 192.168.1.0/24 --mode normal --topology --yes
-
-# 17. Guardar ajustes preferidos como defaults
-sudo redaudit --target 192.168.1.0/24 --mode normal --threads 8 \
-  --rate-limit 1 --topology --udp-mode full --save-defaults --yes
-# Las ejecuciones futuras reutilizarán estos ajustes automáticamente
-```
-
-#### Descubrimiento de Red Mejorado v3.2
-
-```bash
-# 18. Descubrimiento basado en broadcast (DHCP/NetBIOS/mDNS/UPNP/ARP/fping)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --yes
-
-# 19. Seleccionar solo algunos protocolos
-sudo redaudit --target 192.168.1.0/24 --net-discovery dhcp,netbios --yes
-
-# 20. Incluir bloque opcional de recon Red Team (best-effort)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam --yes
-
-# 21. Tuning opcional (interfaz + límites)
-sudo redaudit --target 192.168.1.0/24 --net-discovery --redteam \
-  --net-discovery-interface eth0 --redteam-max-targets 50 --snmp-community public --yes
-```
-
-#### Workflows del Mundo Real
-
-```bash
-# 22. Workflow de auditoría semanal
-# Paso 1: Escaneo baseline
-sudo redaudit --target 192.168.0.0/16 --mode normal --yes
-# Paso 2: Comparación semanal
-sudo redaudit --target 192.168.0.0/16 --mode normal --yes
-redaudit --diff ~/Documents/RedAuditReports/RedAudit_BASELINE/redaudit_*.json \
-              ~/Documents/RedAuditReports/RedAudit_LATEST/redaudit_*.json
-
-# 23. Auditoría de red empresarial multi-VLAN
-sudo redaudit --target "10.10.0.0/16,10.20.0.0/16,10.30.0.0/16" \
-  --mode normal --topology --threads 10 --rate-limit 0.5 --yes
-
-# 24. Verificación post-escaneo y exportación
-sudo redaudit --target 192.168.1.0/24 --mode full --cve-lookup --yes
-# Verificar que se generaron exportaciones JSONL
-ls -lh ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl
-# Ingestar en tu SIEM
-cat ~/Documents/RedAuditReports/RedAudit_*/findings.jsonl | tu-herramienta-ingestion-siem
-```
-
-**Opciones CLI Disponibles:**
-
-- `--target, -t`: Red(es) objetivo en notación CIDR (requerido para modo no interactivo)
-- `--mode, -m`: Modo de escaneo (fast/normal/full, por defecto: normal)
-- `--threads, -j`: Hilos concurrentes (1-16, por defecto: 6)
-- `--rate-limit`: Retardo entre hosts en segundos (por defecto: 0)
-- `--encrypt, -e`: Cifrar reportes con contraseña
-- `--encrypt-password`: Contraseña personalizada para cifrado (opcional, defecto: generada aleatoriamente)
-- `--output, -o`: Directorio de salida (por defecto: ~/Documents/RedAuditReports)
-- `--max-hosts`: Máximo de hosts encontrados a escanear (por defecto: todos)
-- `--no-vuln-scan`: Desactivar escaneo de vulnerabilidades web
-- `--no-txt-report`: Desactivar generación de reporte TXT
-- `--no-deep-scan`: Desactivar deep scan adaptativo
-- `--prescan`: Activar pre-escaneo rápido asyncio antes de nmap
-- `--prescan-ports`: Rango de puertos para pre-scan (defecto: 1-1024)
-- `--prescan-timeout`: Timeout de pre-scan en segundos (defecto: 0.5)
-- `--udp-mode`: Modo de escaneo UDP: quick (defecto) o full
-- `--udp-ports`: Número de top puertos UDP usado en `--udp-mode full` (50-500, defecto: 100) **(v3.1+)**
-- `--topology`: Activar descubrimiento de topología (ARP/VLAN/LLDP + gateway/rutas) **(v3.1+)**
-- `--no-topology`: Desactivar descubrimiento de topología (anula defaults persistentes) **(v3.1+)**
-- `--topology-only`: Ejecutar solo topología (omitir escaneo de hosts) **(v3.1+)**
-- `--save-defaults`: Guardar ajustes CLI como defaults persistentes (`~/.redaudit/config.json`) **(v3.1+)**
-- `--defaults {ask,use,ignore}`: Comportamiento de defaults persistentes (en interactivo pregunta; en no-interactivo mantiene el comportamiento actual) **(v3.2.1+)**
-- `--use-defaults`: Atajo para `--defaults use` **(v3.2.1+)**
-- `--ignore-defaults`: Atajo para `--defaults ignore` **(v3.2.1+)**
-- `--net-discovery [PROTO,...]`: Activar descubrimiento de red mejorado (all, o lista: dhcp,netbios,mdns,upnp,arp,fping) **(v3.2+)**
-- `--redteam`: Incluir bloque opcional de recon Red Team en net discovery **(v3.2+)**
-- `--net-discovery-interface IFACE`: Interfaz para net discovery y capturas L2 (ej: eth0) **(v3.2+)**
-- `--redteam-max-targets N`: Máximo de IPs muestreadas para checks redteam (1-500, defecto: 50) **(v3.2+)**
-- `--snmp-community COMMUNITY`: Comunidad SNMP para SNMP walking (defecto: public) **(v3.2+)**
-- `--dns-zone ZONE`: Pista de zona DNS para intento AXFR (ej: corp.local) **(v3.2+)**
-- `--kerberos-realm REALM`: Pista de realm Kerberos (ej: CORP.LOCAL) **(v3.2+)**
-- `--kerberos-userlist PATH`: Lista opcional de usuarios para userenum Kerberos (requiere kerbrute) **(v3.2+)**
-- `--redteam-active-l2`: Activar checks L2 adicionales potencialmente más ruidosos (bettercap/scapy sniff; requiere root) **(v3.2+)**
-- `--skip-update-check`: Omitir verificación de actualizaciones al iniciar
-- `--yes, -y`: Saltar advertencia legal (usar con precaución)
-- `--lang`: Idioma (en/es)
-- `--ipv6`: Activar modo solo IPv6 **(v3.0)**
-- `--proxy URL`: Proxy SOCKS5 para pivoting (socks5://host:port) **(v3.0)**
-- `--diff OLD NEW`: Comparar dos reportes JSON y mostrar cambios **(v3.0)**
-- `--cve-lookup`: Activar correlación CVE vía API NVD **(v3.0)**
-- `--nvd-key KEY`: Clave API NVD para límites de velocidad más rápidos **(v3.0)**
-
-Ver `redaudit --help` para detalles completos.
+Consulta `redaudit --help` o [USAGE.md](docs/es/USAGE.md) para la lista completa de más de 40 opciones.
 
 ## 7. Configuración y Parámetros Internos
 
@@ -470,157 +347,20 @@ bash redaudit_verify.sh
 
 ## 12. Solución de Problemas
 
-Para solución integral cubriendo todos los escenarios, consulta la guía completa:  
+Para una guía completa de resolución de problemas cubriendo todos los escenarios, consulta la guía completa:  
 📖 **[Guía Completa de Solución de Problemas](docs/es/TROUBLESHOOTING.md)**
 
-**Enlaces Directos**:
+**Enlaces Rápidos**:
 
-- [Problemas de Instalación](docs/es/TROUBLESHOOTING.md#1-permission-denied--se-requieren-privilegios-root)
-- [Problemas de Escaneo](docs/es/TROUBLESHOOTING.md#5-el-escaneo-parece-congelado--pausas-largas)
-- [Problemas de Network Discovery](docs/es/TROUBLESHOOTING.md#12-net-discovery-herramientas-faltantes--tool_missing-v32)
-- [Cifrado/Descifrado](docs/es/TROUBLESHOOTING.md#8-fallo-en-el-descifrado-token-inválido)
-
-### Problemas Comunes de Instalación
-
-#### 1. "Permission denied" / Privilegios root requeridos
-
-- **Causa**: Ejecutar sin `sudo` (nmap requiere raw sockets)
-- **Solución**: Añadir `sudo` al comando, o usar `--allow-non-root` para modo limitado
-- **Verificar**: `id -u` debe devolver 0 al ejecutar con sudo
-
-#### 2. "nmap: command not found"
-
-- **Causa**: nmap no instalado o no está en PATH
-- **Solución**: `sudo apt update && sudo apt install nmap`
-- **Verificar**: `which nmap` debe mostrar `/usr/bin/nmap`
-
-#### 3. "ModuleNotFoundError: cryptography"
-
-- **Causa**: Dependencias Python faltantes
-- **Solución**: `sudo bash redaudit_install.sh` o `sudo apt install python3-cryptography python3-nmap python3-netifaces`
-
-#### 4. Alias no funciona tras instalación
-
-- **Causa**: Configuración del shell no recargada
-- **Solución**: Ejecutar `source ~/.zshrc` (Kali) o `source ~/.bashrc` (Debian/Ubuntu), o abrir nueva terminal
-
-### Problemas de Escaneo
-
-#### 5. "El escaneo parece congelado" / Pausas largas
-
-- **Causa**: Deep scan legítimamente toma 90-150s por host complejo
-- **Verificar**: Buscar marcador `[deep]` en salida - es normal
-- **Monitorear**: Revisar `~/.redaudit/logs/` para mensajes de heartbeat
-- **Solución alternativa**: Usar `--no-deep-scan` o reducir `--threads` a 4
-
-#### 6. "Demasiados hosts, nunca termina"
-
-- **Causa**: Escanear redes /16 grandes sin optimización
-- **Solución**: Usar `--prescan` para descubrimiento rápido, o `--max-hosts N` para limitar alcance
-- **Ejemplo**: `sudo redaudit -t 192.168.0.0/16 --prescan --max-hosts 100 --yes`
-
-#### 7. Avisos de Heartbeat en logs
-
-- **Causa**: Nikto/TestSSL ejecutándose lentamente en hosts filtrados
-- **Estado**: Normal - las herramientas siguen ejecutándose
-- **Acción**: Esperar o reducir `--rate-limit` si es demasiado agresivo
-
-### Cifrado y Descifrado
-
-#### 8. "Decryption failed: Invalid token"
-
-- **Causa**: Contraseña incorrecta o archivo `.salt` corrupto
-- **Solución**: Verificar contraseña (sensible a mayúsculas), asegurar que archivo `.salt` existe en mismo directorio
-- **Verificar**: Archivo `.salt` debe tener 16 bytes: `ls -lh *.salt`
-
-#### 9. Aviso "Cryptography not available"
-
-- **Causa**: Paquete `python3-cryptography` faltante
-- **Impacto**: Opciones de cifrado estarán deshabilitadas
-- **Solución**: `sudo apt install python3-cryptography`
-
-### Red y Conectividad
-
-#### 10. Escaneo IPv6 no funciona
-
-- **Causa**: IPv6 deshabilitado en sistema o nmap compilado sin soporte IPv6
-- **Verificar**: `ip -6 addr show` y `nmap -6 ::1`
-- **Solución**: Habilitar IPv6 en `/etc/sysctl.conf` o usar objetivos IPv4
-
-#### 11. Errores de rate limit NVD API
-
-- **Causa**: Usar API NVD sin clave (limitado a 5 peticiones/30s)
-- **Solución**: Obtener clave API gratuita de <https://nvd.nist.gov/developers/request-an-api-key>
-- **Uso**: `--nvd-key TU_CLAVE` o guardar en `~/.redaudit/config.json`
-
-#### 12. Conexión Proxy fallida
-
-- **Causa**: `proxychains` no instalado o proxy inalcanzable
-- **Solución**: `sudo apt install proxychains4` y probar proxy: `curl --socks5 host:port http://example.com`
-- **Formato**: `--proxy socks5://host:port`
-
-### Salida y Reportes
-
-#### 13. Exportaciones JSONL no generadas
-
-- **Causa**: Cifrado de reportes está habilitado (JSONL solo se genera cuando cifrado está desactivado)
-- **Solución**: Ejecutar sin flag `--encrypt` para generar `findings.jsonl`, `assets.jsonl`, `summary.json`
-
-#### 14. "Output directory not found"
-
-- **Causa**: Ruta de salida personalizada no existe
-- **Solución**: Crear directorio primero: `mkdir -p /ruta/a/salida` o dejar que RedAudit use default (`~/Documents/RedAuditReports`)
-
-### Optimización de Rendimiento
-
-#### 15. Escaneos muy lentos en redes grandes
-
-- **Optimización 1**: Usar `--prescan` para descubrimiento asyncio rápido
-- **Optimización 2**: Aumentar `--threads` a 12-16 (pero vigilar congestión de red)
-- **Optimización 3**: Usar `--mode fast` para inventario rápido, luego escaneos `full` específicos
-- **Ejemplo**: `sudo redaudit -t 10.0.0.0/16 --prescan --threads 12 --mode fast --yes`
-
-#### 16. Alto uso de CPU/memoria
-
-- **Causa**: Demasiados hilos concurrentes o deep scans en muchos hosts
-- **Solución**: Reducir `--threads` a 4-6, usar `--no-deep-scan`, o añadir `--rate-limit 1`
-
-#### 17. Congestión de red / Alertas IDS
-
-- **Causa**: Escaneo agresivo disparando sistemas de seguridad
-- **Solución**: Añadir `--rate-limit 2` (con jitter ±30%) y reducir `--threads` a 4
-- **Modo sigiloso**: `sudo redaudit -t OBJETIVO --mode normal --rate-limit 3 --threads 2 --yes`
+- [Problemas de Instalación](docs/es/TROUBLESHOOTING.md#1-permission-denied--root-privileges-required)
+- [Problemas de Escaneo](docs/es/TROUBLESHOOTING.md#5-scan-appears-frozen--long-pauses)
+- [Problemas de Network Discovery](docs/es/TROUBLESHOOTING.md#12-net-discovery-missing-tools--tool_missing-v32)
+- [Cifrado/Descifrado](docs/es/TROUBLESHOOTING.md#8-decryption-failed-invalid-token)
+- [Optimización de Rendimiento](docs/es/TROUBLESHOOTING.md#15-scans-too-slow-on-large-networks)
 
 ## 13. Historial de Cambios
 
-### Características v3.1
-
-- **Exportaciones JSONL**: `findings.jsonl`, `assets.jsonl`, `summary.json` para pipelines SIEM/IA (solo cuando el cifrado está desactivado)
-- **IDs de Hallazgo**: Hashes determinísticos para correlación entre escaneos
-- **Clasificación por Categoría**: surface/misconfig/crypto/auth/info-leak/vuln
-- **Severidad Normalizada**: Escala 0-10 estilo CVSS con severidad original preservada
-- **Observaciones Estructuradas**: Extracción de salida Nikto/TestSSL
-- **Versiones de Escáners**: Detección de versiones de herramientas
-- **Descubrimiento de Topología (best-effort)**: ARP/VLAN/LLDP + gateway/rutas (`--topology`, `--topology-only`)
-- **Defaults Persistentes**: `--save-defaults` guarda ajustes comunes en `~/.redaudit/config.json`
-- **Cobertura UDP Configurable**: `--udp-ports` para ajustar la cobertura del UDP full de identidad
-
-### Características v3.0
-
-- **Soporte IPv6**: Escaneo completo de redes IPv6
-- **Correlación CVE (NVD)**: Inteligencia de vulnerabilidades via API NIST NVD
-- **Análisis Diferencial**: Comparar reportes para detectar cambios (`--diff`)
-- **Proxy Chains (SOCKS5)**: Soporte para pivoting via proxychains
-- **Validación Magic Bytes**: Detección mejorada de falsos positivos
-
-### Mejoras v2.9
-
-- **Smart-Check**: Filtrado automático de falsos positivos de Nikto
-- **UDP Taming**: Escaneo 50-80% más rápido con estrategia optimizada
-- **Entity Resolution**: Consolidación de hosts multi-interfaz
-- **SIEM Profesional**: Cumplimiento ECS v8.11, puntuación de severidad
-
-Para el changelog detallado, consulta [CHANGELOG.md](CHANGELOG.md)
+Consulta [CHANGELOG_ES.md](CHANGELOG_ES.md) para el historial completo de versiones y notas de lanzamiento detalladas.
 
 ## 14. Contribución
 
