@@ -1831,9 +1831,11 @@ class InteractiveNetworkAuditor:
 
             # v3.2+: Enhanced network discovery (best-effort)
             # v3.2.1: Auto-enabled in 'completo' mode for complete network visibility
+            # v3.2.3: Also auto-enabled when topology is enabled (intelligent discovery)
             net_discovery_auto = self.config.get("scan_mode") == "completo"
+            topology_enabled = self.config.get("topology_enabled")
             net_discovery_explicit = self.config.get("net_discovery_enabled")
-            if (net_discovery_explicit or net_discovery_auto) and not self.interrupted:
+            if (net_discovery_explicit or net_discovery_auto or topology_enabled) and not self.interrupted:
                 try:
                     from redaudit.core.net_discovery import discover_networks
 
@@ -1895,6 +1897,23 @@ class InteractiveNetworkAuditor:
                     if candidate_vlans:
                         self.print_status(
                             self.t("net_discovery_vlans_found", len(candidate_vlans)),
+                            "WARNING",
+                        )
+                    
+                    # v3.2.3: Visible CLI logging for HyperScan results
+                    hyperscan_dur = self.results["net_discovery"].get("hyperscan_duration", 0)
+                    if hyperscan_dur > 0:
+                        arp_hosts = self.results["net_discovery"].get("arp_hosts", [])
+                        upnp_devices = self.results["net_discovery"].get("upnp_devices", [])
+                        tcp_hosts = self.results["net_discovery"].get("hyperscan_tcp_hosts", {})
+                        self.print_status(
+                            f"✓ HyperScan: {len(arp_hosts)} ARP, {len(upnp_devices)} IoT/UPNP, {len(tcp_hosts)} TCP hosts ({hyperscan_dur:.1f}s)",
+                            "OKGREEN",
+                        )
+                    backdoors = self.results["net_discovery"].get("potential_backdoors", [])
+                    if backdoors:
+                        self.print_status(
+                            f"⚠️  {len(backdoors)} puertos sospechosos (backdoor) detectados",
                             "WARNING",
                         )
                 except Exception as exc:

@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Net Discovery Auto-Trigger**: Net discovery with HyperScan now automatically runs when topology is enabled (not just in 'completo' mode). This ensures IoT/WiZ devices are discovered in normal scans with topology.
+- **HyperScan Visibility**: Added visible CLI output for HyperScan results showing ARP/IoT/TCP counts and duration.
 - **Network Deduplication**: "Scan ALL" now correctly removes duplicate CIDRs when same network is detected on multiple interfaces (e.g., eth0 + eth1).
 - **Defaults Display**: Interactive configuration review now shows 10 fields (was 6) including scan_mode, web_vulns, cve_lookup, txt_report.
 - **Config Persistence**: `DEFAULT_CONFIG` expanded to 12 fields for complete settings preservation.
