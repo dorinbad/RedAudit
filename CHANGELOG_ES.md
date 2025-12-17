@@ -13,6 +13,11 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [3.5.1] - 2025-12-17 (Hotfix)
 
+### Añadido
+
+- **Manifiesto de salida**: Cuando el cifrado está desactivado, RedAudit ahora escribe `run_manifest.json` en la carpeta de salida (métricas + lista de artefactos).
+- **Campos de procedencia SIEM**: `findings.jsonl` / `assets.jsonl` ahora incluyen `session_id`, `schema_version`, `scanner`, `scanner_version`; `summary.json` añade `redaudit_version`.
+
 ### Corregido
 
 - **Soporte completo de `--dry-run`**: Propagado a los módulos restantes para que no se ejecute ningún comando externo, mostrando igualmente los comandos planificados.
