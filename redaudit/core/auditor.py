@@ -142,7 +142,8 @@ class InteractiveNetworkAuditor:
             "topology_enabled": False,
             "topology_only": False,
             # v3.2+: Enhanced network discovery
-            "net_discovery_enabled": False,
+            # None = auto (enabled in full/topology), True/False = explicit override
+            "net_discovery_enabled": None,
             "net_discovery_protocols": None,  # None = all, or list like ["dhcp", "netbios"]
             "net_discovery_redteam": False,
             "net_discovery_interface": None,
@@ -1797,9 +1798,12 @@ class InteractiveNetworkAuditor:
             # v3.2.3: Also auto-enabled when topology is enabled (intelligent discovery)
             net_discovery_auto = self.config.get("scan_mode") == "completo"
             topology_enabled = self.config.get("topology_enabled")
-            net_discovery_explicit = self.config.get("net_discovery_enabled")
+            net_discovery_setting = self.config.get("net_discovery_enabled")
+            net_discovery_explicit = net_discovery_setting is True
+            net_discovery_disabled = net_discovery_setting is False
             if (
-                net_discovery_explicit or net_discovery_auto or topology_enabled
+                (not net_discovery_disabled)
+                and (net_discovery_explicit or net_discovery_auto or topology_enabled)
             ) and not self.interrupted:
                 try:
                     from redaudit.core.net_discovery import discover_networks
@@ -2174,6 +2178,66 @@ class InteractiveNetworkAuditor:
         )
         self.config["topology_enabled"] = topo_choice != 0
         self.config["topology_only"] = topo_choice == 2
+
+        # Enhanced network discovery + optional Red Team block (explicit opt-in).
+        # Keep this best-effort, and default to OFF for Red Team options.
+        persisted_nd = defaults_for_run.get("net_discovery_enabled")
+        nd_default = (
+            bool(persisted_nd)
+            if isinstance(persisted_nd, bool)
+            else bool(
+                self.config.get("topology_enabled") or self.config.get("scan_mode") == "completo"
+            )
+        )
+        enable_net_discovery = self.ask_yes_no(
+            self.t("net_discovery_q"), default="yes" if nd_default else "no"
+        )
+        self.config["net_discovery_enabled"] = bool(enable_net_discovery)
+
+        if enable_net_discovery:
+            # Red Team recon requires explicit opt-in; default is NO.
+            redteam_choice = self.ask_choice(
+                self.t("redteam_mode_q"),
+                [self.t("redteam_mode_a"), self.t("redteam_mode_b")],
+                default=0,
+            )
+
+            wants_redteam = redteam_choice == 1
+            is_root = hasattr(os, "geteuid") and os.geteuid() == 0
+            if wants_redteam and not is_root:
+                # Should not happen in the default interactive flow (root required),
+                # but keep behavior safe for --allow-non-root runs.
+                self.print_status(self.t("redteam_requires_root"), "WARNING")
+                wants_redteam = False
+
+            self.config["net_discovery_redteam"] = bool(wants_redteam)
+            self.config["net_discovery_active_l2"] = False
+            self.config["net_discovery_kerberos_realm"] = None
+            self.config["net_discovery_kerberos_userlist"] = None
+
+            if self.config["net_discovery_redteam"]:
+                self.config["net_discovery_active_l2"] = self.ask_yes_no(
+                    self.t("redteam_active_l2_q"),
+                    default="no",
+                )
+
+                # Kerberos user enumeration via kerbrute (requires userlist + authorization).
+                enable_kerberos_userenum = self.ask_yes_no(
+                    self.t("redteam_kerberos_userenum_q"),
+                    default="no",
+                )
+                if enable_kerberos_userenum:
+                    realm_hint = input(
+                        f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('kerberos_realm_q')}: "
+                    ).strip()
+                    self.config["net_discovery_kerberos_realm"] = realm_hint or None
+
+                    userlist = input(
+                        f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('kerberos_userlist_q')}: "
+                    ).strip()
+                    self.config["net_discovery_kerberos_userlist"] = (
+                        expand_user_path(userlist) if userlist else None
+                    )
 
         self.setup_encryption()
 
