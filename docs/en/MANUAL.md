@@ -133,7 +133,7 @@ The script `redaudit_install.sh` performs the following steps:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (for searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (for enhanced discovery)
-   - `snmp`, `snmp-mibs-downloader`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (for Red Team recon)
+   - `snmp`, `snmp-mibs-downloader`, `enum4linux`, `smbclient`, `samba-common-bin` (rpcclient), `masscan`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (for Red Team recon)
    - `kerbrute` (downloaded from GitHub)
 
 3. **Code deployment**
@@ -166,13 +166,13 @@ If you prefer not to use the installer:
 2. Install dependencies manually (example):
 
    ```bash
-   sudo apt update
-   sudo apt install curl wget openssl nmap tcpdump tshark \
-                    whois bind9-dnsutils python3-nmap \
-                    python3-cryptography python3-netifaces exploitdb git \
-                    nbtscan netdiscover fping avahi-utils arp-scan lldpd \
-                    snmp enum4linux smbclient masscan rpcclient ldap-utils bettercap python3-scapy proxychains4
-   ```
+	   sudo apt update
+	   sudo apt install curl wget openssl nmap tcpdump tshark \
+	                    whois bind9-dnsutils python3-nmap \
+	                    python3-cryptography python3-netifaces exploitdb git \
+	                    nbtscan netdiscover fping avahi-utils arp-scan lldpd \
+	                    snmp enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4
+	   ```
 
 3. Install `kerbrute` (manual step):
 
@@ -214,8 +214,9 @@ At a high level, a run of RedAudit follows this sequence:
    - Input of target ranges and selection of **Topology Mode** (Full, Standard, or Topology Only).
 
 2. **Network Discovery (Optional, v3.2)**
-   - If enabled (`--net-discovery`), broadcasts probes via ARP, mDNS, NetBIOS, and DHCP to find hidden hosts.
-   - Can optionally perform Red Team recon (SNMP, LDAP) if requested.
+   - If enabled (`--net-discovery` or via the interactive wizard), broadcasts probes via ARP, mDNS, NetBIOS, and DHCP to find hidden hosts.
+   - Opt-in Red Team recon can be enabled (`--redteam` or wizard option B); active L2 probing requires `--redteam-active-l2`.
+   - Kerberos user enumeration via Kerbrute runs only when explicitly enabled and a userlist is provided (authorized testing only).
 
 3. **Discovery**
    - Uses `nmap -sn` (host discovery) to find live hosts in the target range.

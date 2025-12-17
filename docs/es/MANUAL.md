@@ -137,7 +137,7 @@ El script `redaudit_install.sh` realiza, de forma resumida, lo siguiente:
    - `python3-nmap`, `python3-cryptography`, `python3-netifaces`
    - `exploitdb` (para searchsploit)
    - `nbtscan`, `netdiscover`, `fping`, `avahi-utils` (para descubrimiento mejorado)
-   - `snmp`, `snmp-mibs-downloader`, `enum4linux`, `smbclient`, `masscan`, `rpcclient`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (para recon Red Team)
+   - `snmp`, `snmp-mibs-downloader`, `enum4linux`, `smbclient`, `samba-common-bin` (rpcclient), `masscan`, `ldap-utils`, `bettercap`, `python3-scapy`, `proxychains4` (para recon Red Team)
    - `kerbrute` (descargado desde GitHub)
 
 3. **Despliegue del código**
@@ -217,8 +217,9 @@ En un ciclo normal de ejecución, RedAudit realiza:
    - Input de rangos objetivo y selección de **Modo Topología** (Full, Standard o Topology Only).
 
 2. **Descubrimiento de Red (Opcional, v3.2)**
-   - Si se activa (`--net-discovery`), lanza sondas broadcast vía ARP, mDNS, NetBIOS y DHCP para encontrar hosts ocultos.
-   - Puede realizar recon Red Team (SNMP, LDAP) si se solicita.
+   - Si se activa (`--net-discovery` o desde el asistente interactivo), lanza sondas broadcast vía ARP, mDNS, NetBIOS y DHCP para encontrar hosts ocultos.
+   - Recon Red Team opt-in disponible (`--redteam` o la opción B del wizard); el L2 activo requiere `--redteam-active-l2`.
+   - La enumeración Kerberos con Kerbrute solo se ejecuta si se habilita explícitamente y se proporciona una lista de usuarios (solo con autorización).
 
 3. **Descubrimiento**
    - Uso de `nmap -sn` para detectar hosts vivos en los rangos indicados.

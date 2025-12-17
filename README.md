@@ -34,7 +34,7 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **Smart-Check False Positive Filtering**: 3-layer verification (Content-Type, size checks, magic byte validation) reduces Nikto noise by 90%
 - **Cross-Validation (v3.1.4)**: Detects Nikto false positives by comparing findings with curl/wget headers
 - **Descriptive Titles (v3.1.4)**: Finding titles now describe the issue type, not just the URL
-- **Enhanced Net Discovery (v3.2)**: Broadcast/L2 discovery (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — **auto-enabled in `full` mode** (v3.2.1). Red Team recon available with `--redteam` flag.
+- **Enhanced Net Discovery (v3.2)**: Broadcast/L2 discovery (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — auto-enabled in `full` mode (v3.2.1) and when topology is enabled (v3.2.3); the interactive wizard prompts and defaults to enabled. Red Team recon is opt-in via `--redteam`.
 - **Staged Atomic Installation with Rollback (v3.2.2)**: Updates use atomic staging with automatic rollback on failure.
 - **Network Topology Discovery**: Best-effort L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection
 - **CVE Intelligence**: NVD API 2.0 integration with CPE 2.3 matching, 7-day caching, and deterministic finding IDs

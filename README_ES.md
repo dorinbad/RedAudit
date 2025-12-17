@@ -34,7 +34,7 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Filtrado Smart-Check de Falsos Positivos**: Verificación de 3 capas (Content-Type, checks de tamaño, validación magic bytes) reduce ruido Nikto en 90%
 - **Cross-Validation (v3.1.4)**: Detecta falsos positivos de Nikto comparando hallazgos con cabeceras curl/wget
 - **Títulos Descriptivos (v3.1.4)**: Los títulos de hallazgos ahora describen el tipo de problema, no solo la URL
-- **Descubrimiento de Red Mejorado (v3.2)**: Descubrimiento broadcast/L2 (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — **auto-habilitado en modo `full`** (v3.2.1). Recon Red Team disponible con flag `--redteam`.
+- **Descubrimiento de Red Mejorado (v3.2)**: Descubrimiento broadcast/L2 (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — auto-habilitado en modo `full` (v3.2.1) y cuando la topología está activada (v3.2.3); el wizard interactivo pregunta y lo habilita por defecto. Recon Red Team opt-in con `--redteam`.
 - **Detección de Fugas de Subred (v3.2.1)**: Identifica redes ocultas/invitados analizando fugas HTTP (via redirects y headers) para pivoting.
 - **Instalación Atómica con Rollback (v3.2.2)**: Las actualizaciones usan staging atómico con rollback automático en caso de fallo.
 - **Descubrimiento de Topología de Red**: Mapeo best-effort L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas
