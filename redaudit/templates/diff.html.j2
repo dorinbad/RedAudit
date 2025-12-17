@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedAudit Diff Report</title>
+    <style>
+        :root {
+            --bg-dark: #1a1d23;
+            --bg-card: #22262e;
+            --text-primary: #e4e6eb;
+            --text-secondary: #a0a3a8;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --accent-yellow: #f1c40f;
+            --accent-blue: #3498db;
+            --border-color: #3a3f47;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        h1 { font-size: 1.8rem; color: var(--accent-blue); margin-bottom: 0.5rem; }
+        .meta { color: var(--text-secondary); font-size: 0.9rem; }
+        .reports-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .report-box {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.2rem;
+            border: 1px solid var(--border-color);
+        }
+        .report-box.old { border-left: 3px solid var(--accent-red); }
+        .report-box.new { border-left: 3px solid var(--accent-green); }
+        .report-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .report-name { font-weight: 600; margin-bottom: 0.25rem; }
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .card-label { font-size: 0.8rem; color: var(--text-secondary); }
+        .card-value { font-size: 1.8rem; font-weight: 700; }
+        .card-value.positive { color: var(--accent-green); }
+        .card-value.negative { color: var(--accent-red); }
+        .card-value.neutral { color: var(--accent-yellow); }
+        .section { margin-bottom: 2rem; }
+        .section-title { font-size: 1.1rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; }
+        .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .badge-new { background: rgba(46,204,113,0.2); color: var(--accent-green); }
+        .badge-removed { background: rgba(231,76,60,0.2); color: var(--accent-red); }
+        .badge-changed { background: rgba(241,196,15,0.2); color: var(--accent-yellow); }
+        .host-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .host-ip { background: var(--bg-card); padding: 0.3rem 0.8rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); }
+        .host-ip.new { border-color: var(--accent-green); }
+        .host-ip.removed { border-color: var(--accent-red); text-decoration: line-through; opacity: 0.7; }
+        .change-item { background: var(--bg-card); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+        .change-host { font-weight: 600; margin-bottom: 0.5rem; font-family: monospace; }
+        .change-detail { font-size: 0.9rem; color: var(--text-secondary); margin-left: 1rem; }
+        .change-detail.added { color: var(--accent-green); }
+        .change-detail.removed { color: var(--accent-red); }
+        .no-changes { text-align: center; padding: 3rem; color: var(--text-secondary); font-style: italic; }
+        footer { text-align: center; color: var(--text-secondary); font-size: 0.85rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 RedAudit Differential Analysis</h1>
+            <div class="meta">Generated: {{ generated_at }}</div>
+        </header>
+
+        <div class="reports-comparison">
+            <div class="report-box old">
+                <div class="report-label">Old Report</div>
+                <div class="report-name">{{ old_report.path }}</div>
+                <div class="meta">{{ old_report.timestamp }} | {{ old_report.total_hosts }} hosts</div>
+            </div>
+            <div class="report-box new">
+                <div class="report-label">New Report</div>
+                <div class="report-name">{{ new_report.path }}</div>
+                <div class="meta">{{ new_report.timestamp }} | {{ new_report.total_hosts }} hosts</div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-label">New Hosts</div>
+                <div class="card-value {% if summary.new_hosts_count > 0 %}positive{% endif %}">+{{ summary.new_hosts_count }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Removed Hosts</div>
+                <div class="card-value {% if summary.removed_hosts_count > 0 %}negative{% endif %}">-{{ summary.removed_hosts_count }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">New Ports</div>
+                <div class="card-value {% if summary.total_new_ports > 0 %}positive{% endif %}">+{{ summary.total_new_ports }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Closed Ports</div>
+                <div class="card-value {% if summary.total_closed_ports > 0 %}negative{% endif %}">-{{ summary.total_closed_ports }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">New Vulns</div>
+                <div class="card-value {% if summary.total_new_vulnerabilities > 0 %}negative{% endif %}">{{ summary.total_new_vulnerabilities }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Web Findings Δ</div>
+                <div class="card-value {% if summary.web_vuln_delta > 0 %}negative{% elif summary.web_vuln_delta < 0 %}positive{% else %}neutral{% endif %}">
+                    {% if summary.web_vuln_delta > 0 %}+{% endif %}{{ summary.web_vuln_delta }}
+                </div>
+            </div>
+        </div>
+
+        {% if not summary.has_changes %}
+        <div class="no-changes">
+            ✅ No changes detected between the two reports.
+        </div>
+        {% else %}
+
+        {% if changes.new_hosts %}
+        <div class="section">
+            <div class="section-title"><span class="badge badge-new">+</span> New Hosts ({{ changes.new_hosts|length }})</div>
+            <div class="host-list">
+                {% for ip in changes.new_hosts %}
+                <span class="host-ip new">{{ ip }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if changes.removed_hosts %}
+        <div class="section">
+            <div class="section-title"><span class="badge badge-removed">−</span> Removed Hosts ({{ changes.removed_hosts|length }})</div>
+            <div class="host-list">
+                {% for ip in changes.removed_hosts %}
+                <span class="host-ip removed">{{ ip }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if changes.changed_hosts %}
+        <div class="section">
+            <div class="section-title"><span class="badge badge-changed">Δ</span> Changed Hosts ({{ changes.changed_hosts|length }})</div>
+            {% for host in changes.changed_hosts %}
+            <div class="change-item">
+                <div class="change-host">{{ host.ip }}{% if host.hostname %} ({{ host.hostname }}){% endif %}</div>
+                {% for port in host.new_ports %}
+                <div class="change-detail added">+ Port {{ port.port }}/{{ port.service }}</div>
+                {% endfor %}
+                {% for port in host.closed_ports %}
+                <div class="change-detail removed">− Port {{ port.port }}/{{ port.service }}</div>
+                {% endfor %}
+                {% for vuln in host.new_vulnerabilities %}
+                <div class="change-detail added">⚠ New: {{ vuln[:60] }}{% if vuln|length > 60 %}...{% endif %}</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if changes.web_vuln_changes %}
+        <div class="section">
+            <div class="section-title"><span class="badge badge-changed">🌐</span> Web Vulnerability Changes</div>
+            {% for wc in changes.web_vuln_changes %}
+            <div class="change-item">
+                <div class="change-host">{{ wc.host }}</div>
+                <div class="change-detail {% if wc.delta > 0 %}removed{% else %}added{% endif %}">
+                    Findings: {{ wc.old_count }} → {{ wc.new_count }} ({% if wc.delta > 0 %}+{% endif %}{{ wc.delta }})
+                </div>
+                {% if wc.nikto_delta != 0 %}
+                <div class="change-detail">Nikto: {% if wc.nikto_delta > 0 %}+{% endif %}{{ wc.nikto_delta }}</div>
+                {% endif %}
+                {% if wc.testssl_delta != 0 %}
+                <div class="change-detail">TestSSL: {% if wc.testssl_delta > 0 %}+{% endif %}{{ wc.testssl_delta }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        <footer>
+            Generated by RedAudit v{{ diff_version }} — {{ generated_at }}
+        </footer>
+    </div>
+</body>
+</html>

@@ -489,3 +489,33 @@ def format_diff_markdown(diff: Dict) -> str:
         lines.append("")
     
     return "\n".join(lines)
+
+
+def format_diff_html(diff: Dict) -> str:
+    """
+    Format diff report as interactive HTML.
+    
+    v3.3: Uses Jinja2 template for visual diff with highlights.
+    
+    Args:
+        diff: Diff report dict from generate_diff_report()
+        
+    Returns:
+        HTML formatted string
+    """
+    try:
+        from jinja2 import Environment, PackageLoader, select_autoescape
+        
+        env = Environment(
+            loader=PackageLoader("redaudit", "templates"),
+            autoescape=select_autoescape(["html", "xml"]),
+        )
+        template = env.get_template("diff.html.j2")
+        return template.render(**diff)
+    except ImportError:
+        # Fallback if Jinja2 not available
+        return f"<html><body><pre>{format_diff_text(diff)}</pre></body></html>"
+    except Exception as e:
+        # Template error fallback
+        return f"<html><body><h1>Error generating HTML diff</h1><pre>{e}</pre></body></html>"
+

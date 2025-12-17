@@ -542,7 +542,12 @@ def main():
 
     # v3.0: Handle --diff mode (no scan, just comparison) - does not require root
     if args.diff:
-        from redaudit.core.diff import generate_diff_report, format_diff_text, format_diff_markdown
+        from redaudit.core.diff import (
+            generate_diff_report,
+            format_diff_text,
+            format_diff_markdown,
+            format_diff_html,
+        )
 
         old_path, new_path = args.diff
 
@@ -561,6 +566,12 @@ def main():
         with open(md_path, "w") as f:
             f.write(format_diff_markdown(diff))
         print(f"\nMarkdown report saved: {md_path}")
+
+        # v3.3: Save HTML version for visual diff
+        html_path = f"diff_report_{diff['generated_at'][:10]}.html"
+        with open(html_path, "w") as f:
+            f.write(format_diff_html(diff))
+        print(f"HTML report saved: {html_path}")
 
         sys.exit(0)
 
