@@ -138,6 +138,7 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 | **Media** | **Soporte Completo `--dry-run`** | Propagar flag `--dry-run` a todos los módulos para que los comandos se impriman pero no se ejecuten. Depende de CommandRunner. Útil para auditoría y debugging. |
 | **Baja** | **Única Fuente de Versión** | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
 | **Baja** | **Autodetección TTY** | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
+| **Baja** | **Webhook Interactivo** | Añadir prompt de URL webhook al wizard interactivo para usuarios avanzados. Actualmente webhook es solo CLI (`--webhook URL`). |
 
 ## Propuestas Arquitectónicas
 

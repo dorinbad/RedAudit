@@ -138,6 +138,7 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrated with full a
 | **Medium** | **Full `--dry-run` Support** | Propagate `--dry-run` flag to all modules so commands are printed but not executed. Depends on CommandRunner. Useful for auditing and debugging. |
 | **Low** | **Single Version Source** | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. |
 | **Low** | **TTY Autodetection** | Auto-disable colors when stdout is not a TTY (pipes/CI). Flag `--no-color` already exists but behavior not fully implemented. |
+| **Low** | **Interactive Webhook Config** | Add webhook URL prompt to interactive wizard for advanced users. Currently webhook is CLI-only (`--webhook URL`). |
 
 ## Architectural Proposals
 
