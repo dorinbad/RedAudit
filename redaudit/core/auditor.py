@@ -320,9 +320,11 @@ class InteractiveNetworkAuditor:
             phase = self.current_phase
             if phase not in ("init", "saving", "interrupted"):
                 if HEARTBEAT_WARN_THRESHOLD <= delta < HEARTBEAT_FAIL_THRESHOLD:
-                    self.print_status(self.t("heartbeat_warn", phase, int(delta)), "WARNING", False)
+                    # Keep the terminal UI quiet: prefer progress bars (when available) over periodic
+                    # "clocking" warnings. Still record a debug trace in logs for troubleshooting.
+                    if self.logger:
+                        self.logger.debug("Heartbeat silence %ss in %s", int(delta), phase)
                 elif delta >= HEARTBEAT_FAIL_THRESHOLD:
-                    self.print_status(self.t("heartbeat_fail", phase, int(delta)), "FAIL", False)
                     if self.logger:
                         self.logger.warning("Heartbeat silence > %ss in %s", delta, phase)
             time.sleep(HEARTBEAT_INTERVAL)
@@ -1194,7 +1196,9 @@ class InteractiveNetworkAuditor:
                 BarColumn,
                 TextColumn,
                 TimeElapsedColumn,
+                TimeRemainingColumn,
             )
+            from rich.console import Console
 
             use_rich = True
         except ImportError:
@@ -1225,6 +1229,8 @@ class InteractiveNetworkAuditor:
                     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                     TextColumn("({task.completed}/{task.total})"),
                     TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                    console=Console(stderr=True),
                 ) as progress:
                     task = progress.add_task(f"[cyan]{self.t('scanning_hosts')}", total=total)
                     for fut in as_completed(futures):
@@ -1423,7 +1429,9 @@ class InteractiveNetworkAuditor:
                 BarColumn,
                 TextColumn,
                 TimeElapsedColumn,
+                TimeRemainingColumn,
             )
+            from rich.console import Console
 
             use_rich = True
         except ImportError:
@@ -1446,6 +1454,8 @@ class InteractiveNetworkAuditor:
                     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                     TextColumn("({task.completed}/{task.total})"),
                     TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                    console=Console(stderr=True),
                 ) as progress:
                     task = progress.add_task(f"[cyan]Vuln scan ({total_ports} ports)", total=total)
                     for fut in as_completed(futures):
@@ -1460,7 +1470,11 @@ class InteractiveNetworkAuditor:
                                 self.results["vulnerabilities"].append(res)
                                 vuln_count = len(res.get("vulnerabilities", []))
                                 if vuln_count > 0:
-                                    self.print_status(self.t("vulns_found", res["host"]), "WARNING")
+                                    # Avoid noisy per-host warnings; progress + final summary is enough.
+                                    if self.logger:
+                                        self.logger.info(
+                                            "Vulnerabilities recorded on %s", res["host"]
+                                        )
                         except Exception as exc:
                             self.logger.error("Vuln worker error for %s: %s", host_ip, exc)
                             self.logger.debug(
