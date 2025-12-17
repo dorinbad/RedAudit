@@ -23,4 +23,3 @@ sudo bash redaudit_install.sh
 ---
 
 *RedAudit v3.4.3 - Cleaner triage output.*
-
