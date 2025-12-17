@@ -120,7 +120,14 @@ redaudit --net-discovery --redteam --target 10.0.0.0/8
 
 ## Hitos Completados
 
-### v3.4.3 (Hotfix - Diciembre 2025) -> **ACTUAL**
+### v3.4.4 (Hotfix - Diciembre 2025) -> **ACTUAL**
+
+*Patch centrado en pulir el flujo de defaults y la UX tras actualizar.*
+
+- [x] **UX de defaults**: "Usar defaults y continuar" aplica defaults correctamente; iniciar inmediatamente evita re-preguntar parámetros y puede reutilizar objetivos guardados cuando estén disponibles.
+- [x] **Nota de actualización**: Añadida guía para reiniciar terminal o ejecutar `hash -r` cuando el banner no refresca la versión tras actualizar.
+
+### v3.4.3 (Hotfix - Diciembre 2025)
 
 *Patch centrado en mejorar la legibilidad de hallazgos y pulir defaults del wizard.*
 

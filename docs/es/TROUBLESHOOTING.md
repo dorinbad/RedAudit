@@ -96,6 +96,14 @@ sudo apt install python3-cryptography
 sudo bash redaudit_install.sh -y
 ```
 
+### 8b. La versión/banner no se refresca tras actualizar
+
+**Síntoma**: Actualizaste RedAudit pero el banner sigue mostrando la versión anterior.
+**Causa**: La shell puede estar cacheando la ruta del ejecutable.
+**Solución**:
+
+- Reinicia el terminal, o ejecuta `hash -r` (zsh/bash).
+
 ### 9. Escaneo IPv6 no funciona (v3.0)
 
 **Síntoma**: Los objetivos IPv6 no devuelven resultados o dan errores.

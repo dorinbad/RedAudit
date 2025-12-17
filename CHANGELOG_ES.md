@@ -11,6 +11,13 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (nada aún)
 
+## [3.4.4] - 2025-12-17 (Hotfix)
+
+### Corregido
+
+- **Flujo de defaults**: Al elegir "Usar defaults y continuar" ahora sí se aplican; iniciar "inmediatamente" ya no re-pregunta parámetros, y puede reutilizar objetivos guardados cuando estén disponibles.
+- **Docs**: Añadida nota sobre reiniciar el terminal / `hash -r` si el banner no refresca la versión tras actualizar.
+
 ## [3.4.3] - 2025-12-17 (Hotfix)
 
 ### Corregido
