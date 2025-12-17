@@ -120,7 +120,7 @@ redaudit --net-discovery --redteam --target 10.0.0.0/8
 
 ## Hitos Completados
 
-### v3.4.1 (Hotfix - Diciembre 2025) -> **PENDIENTE DE RELEASE**
+### v3.4.1 (Hotfix - Diciembre 2025) -> **ACTUAL**
 
 *Patch centrado en guardar reportes bajo el usuario invocador cuando se ejecuta con `sudo`.*
 
@@ -129,7 +129,7 @@ redaudit --net-discovery --redteam --target 10.0.0.0/8
 - [x] **Endurecimiento de ownership**: `chown` best-effort del árbol del directorio de salida para evitar artefactos propiedad de root bajo el home del usuario.
 - [x] **Tests unitarios**: Cobertura añadida para la lógica de resolución de rutas.
 
-### v3.4.0 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.4.0 (Completado - Diciembre 2025)
 
 *Release centrada en playbooks de remediación y alineación de documentación.*
 
