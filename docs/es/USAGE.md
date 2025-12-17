@@ -104,6 +104,8 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 
 **Salida**: directorio `<output_dir>/playbooks/` con un archivo Markdown por categoría por host.
 
+**Notas**: Los playbooks se deduplican (uno por host + categoría) y se omiten cuando el cifrado de reportes está activado (`--encrypt`).
+
 ### Seguridad
 
 | Flag | Descripción |
@@ -258,6 +260,8 @@ export NVD_API_KEY="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 **Opción 3: Archivo de Configuración**
 
 Crea `~/.redaudit/config.json`:
+
+**Nota**: El campo `version` en `~/.redaudit/config.json` es la **versión del esquema de configuración** (actualmente `3.2.3`) y no tiene por qué coincidir con la versión de la aplicación RedAudit (v3.4.0).
 
 ```json
 {
