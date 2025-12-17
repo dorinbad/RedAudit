@@ -51,7 +51,7 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **Stealth Mode (v3.2.3)**: `--stealth` flag enables T1 paranoid timing, single-thread scanning, and 5s+ delays for enterprise IDS evasion.
 - **Remediation Playbooks (v3.4.0+)**: Auto-generated Markdown playbooks per host/category in `<output_dir>/playbooks/` (TLS, headers, CVE, web, ports) (skipped when `--encrypt` is enabled).
 - **Prevent Sleep During Scans (v3.5)**: Best-effort system/display sleep inhibition while a scan is running (opt-out with `--no-prevent-sleep`).
-- **Centralized CommandRunner (v3.5)**: Single entry point for external commands with timeouts, retries, redaction, and incremental `--dry-run` rollout.
+- **Centralized CommandRunner (v3.5)**: Single entry point for external commands with timeouts, retries, redaction, and full `--dry-run` support.
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture
@@ -74,7 +74,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `kerbrute`, `scapy` | Optional active enumeration (SNMP, SMB, LDAP, Kerberos, L2 attacks) for deep Blue Team analysis (v3.2+). |
 | **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT broadcast, aggressive ARP (v3.2.3). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
-| **Command Execution** | Built-in (`CommandRunner`) | Centralized safe command execution (args lists, timeouts, retries, redaction, dry-run rollout) (v3.5). |
+| **Command Execution** | Built-in (`CommandRunner`) | Centralized safe command execution (args lists, timeouts, retries, redaction, full `--dry-run` support) (v3.5). |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 | **Remediation Playbooks** | Built-in | Generates actionable Markdown playbooks per host/category (v3.4.0+). |
 
@@ -365,7 +365,7 @@ bash redaudit_verify.sh
 - **Entity Resolution**: Consolidation of multi-interface devices into `unified_assets[]` for cleaner asset tracking and SIEM ingestion.
 - **Deep Scan / Identity Refinement**: Selective escalation (TCP + UDP fingerprinting) to improve identification on ambiguous or filtered hosts.
 - **Remediation Playbook**: Auto-generated Markdown guide per host/category describing actionable remediation steps and references (saved under `<output_dir>/playbooks/`).
-- **Dry Run (`--dry-run`)**: Prints external commands that would run without executing them (incremental rollout in v3.5.0; some tools may still execute until fully migrated).
+- **Dry Run (`--dry-run`)**: Prints external commands that would run without executing them (full support; no external commands are executed).
 - **CommandRunner**: Central module that executes external commands with timeouts, retries, and secret redaction (foundation for `--dry-run`).
 - **Sleep Inhibition**: Best-effort prevention of system/display sleep during scans (enabled by default; opt-out with `--no-prevent-sleep`).
 

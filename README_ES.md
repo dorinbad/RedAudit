@@ -51,7 +51,7 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Modo Sigiloso (v3.2.3)**: Flag `--stealth` activa timing paranoid T1, escaneo mono-hilo, y retardos 5s+ para evasión IDS empresarial.
 - **Playbooks de Remediación (v3.4.0+)**: Playbooks Markdown auto-generados por host/categoría en `<output_dir>/playbooks/` (TLS, cabeceras, CVE, web, puertos) (omitidos cuando `--encrypt` está activado).
 - **Evitar Reposo Durante Escaneos (v3.5)**: Inhibición best-effort del reposo del sistema/pantalla mientras se ejecuta un escaneo (opt-out con `--no-prevent-sleep`).
-- **CommandRunner Centralizado (v3.5)**: Punto único para comandos externos con timeouts, reintentos, redacción y despliegue incremental de `--dry-run`.
+- **CommandRunner Centralizado (v3.5)**: Punto único para comandos externos con timeouts, reintentos, redacción y soporte completo de `--dry-run`.
 - **Interfaz Bilingüe**: Localización completa Inglés/Español
 
 ## Arquitectura
@@ -367,7 +367,7 @@ bash redaudit_verify.sh
 - **Entity Resolution**: Consolidación de dispositivos multi-interfaz en `unified_assets[]` para tracking de activos más limpio e ingesta SIEM.
 - **Deep Scan / Refinamiento de Identidad**: Escalado selectivo (fingerprinting TCP + UDP) para mejorar identificación en hosts ambiguos o filtrados.
 - **Playbook de Remediación**: Guía Markdown auto-generada por host/categoría con pasos de remediación y referencias (guardada en `<output_dir>/playbooks/`).
-- **Dry Run (`--dry-run`)**: Muestra los comandos externos que se ejecutarían sin ejecutarlos (despliegue incremental en v3.5.0; algunas herramientas pueden seguir ejecutándose hasta completar la migración).
+- **Dry Run (`--dry-run`)**: Muestra los comandos externos que se ejecutarían sin ejecutarlos (soporte completo; no se ejecuta ningún comando externo).
 - **CommandRunner**: Módulo central que ejecuta comandos externos con timeouts, reintentos y redacción de secretos (base de `--dry-run`).
 - **Inhibición de Reposo**: Prevención best-effort del reposo del sistema/pantalla durante escaneos (activado por defecto; opt-out con `--no-prevent-sleep`).
 

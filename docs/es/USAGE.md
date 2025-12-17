@@ -106,11 +106,11 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 
 **Notas**: Los playbooks se deduplican (uno por host + categoría) y se omiten cuando el cifrado de reportes está activado (`--encrypt`).
 
-### Características v3.5.0
+### Características v3.5+
 
 | Flag | Descripción |
 | :--- | :--- |
-| `--dry-run` | Muestra los comandos que se ejecutarían sin ejecutarlos. **Nota:** se está desplegando módulo a módulo en v3.5 (algunas herramientas externas pueden seguir ejecutándose hasta completar la migración). |
+| `--dry-run` | Muestra los comandos que se ejecutarían sin ejecutarlos (no se ejecuta ningún comando externo). |
 | `--no-prevent-sleep` | No inhibir reposo del sistema/pantalla mientras se ejecuta el scan (el inhibidor best-effort está habilitado por defecto). |
 
 ### Seguridad

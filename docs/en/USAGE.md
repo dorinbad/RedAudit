@@ -106,11 +106,11 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 
 **Notes**: Playbooks are deduplicated (one per host + category) and are skipped when report encryption is enabled (`--encrypt`).
 
-### v3.5.0 Features
+### v3.5+ Features
 
 | Flag | Description |
 | :--- | :--- |
-| `--dry-run` | Print commands that would be executed without running them. **Note:** this is being rolled out module-by-module in v3.5 (some external tools may still execute until migration is complete). |
+| `--dry-run` | Print commands that would be executed without running them (no external commands are executed). |
 | `--no-prevent-sleep` | Do not inhibit system/display sleep while a scan is running (best-effort inhibit is enabled by default). |
 
 ### Security
