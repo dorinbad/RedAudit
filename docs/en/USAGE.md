@@ -22,7 +22,7 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 | :--- | :--- |
 | `-t`, `--target` | Target IP, subnet (CIDR), or comma-separated list. |
 | `-m`, `--mode` | Scan intensity: `fast` (discovery), `normal` (top ports), `full` (all ports + scripts). |
-| `-o`, `--output` | Specify output directory. Default: `~/Documents/RedAuditReports`. |
+| `-o`, `--output` | Specify output directory. Default: `~/Documents/RedAuditReports` (invoking user under `sudo`). |
 | `--lang` | Interface language: `en` (default), `es`. |
 | `-y`, `--yes` | Skip legal warning confirmation (use with caution). |
 
@@ -90,7 +90,7 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 | `--html-report` | Generate interactive HTML dashboard with charts and sortable tables (works offline). |
 | `--webhook URL` | Send real-time alerts for High/Critical findings to a webhook URL (Slack/Teams/Discord). |
 
-### v3.4.0 Features
+### v3.4.x Features
 
 **Remediation Playbooks** are now automatically generated after each scan. Playbooks provide actionable guidance for remediating detected findings.
 
@@ -261,7 +261,7 @@ export NVD_API_KEY="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 Create `~/.redaudit/config.json`:
 
-**Note**: The `version` field in `~/.redaudit/config.json` is the **config schema version** (currently `3.2.3`) and does not need to match the RedAudit application version (v3.4.0).
+**Note**: The `version` field in `~/.redaudit/config.json` is the **config schema version** (currently `3.2.3`) and does not need to match the RedAudit application version (v3.4.1).
 
 ```json
 {

@@ -16,7 +16,7 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.4.0
+                                      v3.4.1
         Interactive Network Audit Tool
 ```
 
@@ -49,7 +49,7 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **Interactive Main Menu (v3.2)**: Friendly entrypoint for scanning, updates, and diff analysis (no arguments required).
 - **HyperScan Module (v3.2.3)**: Ultra-fast parallel discovery (asyncio batch TCP, 45+ UDP ports, aggressive ARP, IoT broadcast) with backdoor detection.
 - **Stealth Mode (v3.2.3)**: `--stealth` flag enables T1 paranoid timing, single-thread scanning, and 5s+ delays for enterprise IDS evasion.
-- **Remediation Playbooks (v3.4.0)**: Auto-generated Markdown playbooks per host/category in `<output_dir>/playbooks/` (TLS, headers, CVE, web, ports) (skipped when `--encrypt` is enabled).
+- **Remediation Playbooks (v3.4.0+)**: Auto-generated Markdown playbooks per host/category in `<output_dir>/playbooks/` (TLS, headers, CVE, web, ports) (skipped when `--encrypt` is enabled).
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture
@@ -73,7 +73,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT broadcast, aggressive ARP (v3.2.3). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
-| **Remediation Playbooks** | Built-in | Generates actionable Markdown playbooks per host/category (v3.4.0). |
+| **Remediation Playbooks** | Built-in | Generates actionable Markdown playbooks per host/category (v3.4.0+). |
 
 ### System Overview
 
@@ -153,7 +153,7 @@ Verify installation integrity:
 which redaudit  # Should return: /usr/local/bin/redaudit
 
 # 2. Verify version
-redaudit --version  # Should show: RedAudit v3.4.0
+redaudit --version  # Should show: RedAudit v3.4.1
 
 # 3. Check core dependencies
 command -v nmap && command -v tcpdump && command -v python3  # All should succeed
@@ -212,7 +212,7 @@ For more examples including IPv6, CVE correlation, SOCKS5 pivoting, and SIEM int
 - `--diff OLD NEW`: Differential analysis between scans **(v3.0)**
 - `--html-report`: Generate interactive HTML dashboard **(v3.3)**
 - `--webhook URL`: Send real-time alerts to webhook endpoint **(v3.3)**
-- `Playbooks`: Auto-generated remediation playbooks in `<output_dir>/playbooks/` **(v3.4.0, no flag; skipped when `--encrypt`)**
+- `Playbooks`: Auto-generated remediation playbooks in `<output_dir>/playbooks/` **(v3.4.0+, no flag; skipped when `--encrypt`)**
 - `--ipv6`: IPv6-only scanning mode **(v3.0)**
 - `-y, --yes`: Skip confirmations (automation mode)
 
@@ -287,7 +287,7 @@ python -m redaudit --help
 
 ## 8. Reports, Encryption & Decryption
 
-Reports are saved to `~/Documents/RedAuditReports` (default) with timestamps.
+Reports are saved to `~/Documents/RedAuditReports` (default) with timestamps (invoking user’s home, even under `sudo`).
 
 ### Encryption (`.enc`)
 

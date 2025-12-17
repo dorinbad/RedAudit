@@ -16,7 +16,7 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.4.0
+                                      v3.4.1
       Herramienta Interactiva de Auditoría de Red
 ```
 
@@ -49,7 +49,7 @@ La herramienta cubre la brecha entre el escaneo ad-hoc y la auditoría formal, p
 - **Menú Principal Interactivo (v3.2)**: Punto de entrada amigable para escaneo, actualizaciones y análisis diff (sin argumentos).
 - **Módulo HyperScan (v3.2.3)**: Descubrimiento paralelo ultrarrápido (TCP batch asyncio, 45+ puertos UDP, ARP agresivo, broadcast IoT) con detección de backdoors.
 - **Modo Sigiloso (v3.2.3)**: Flag `--stealth` activa timing paranoid T1, escaneo mono-hilo, y retardos 5s+ para evasión IDS empresarial.
-- **Playbooks de Remediación (v3.4.0)**: Playbooks Markdown auto-generados por host/categoría en `<output_dir>/playbooks/` (TLS, cabeceras, CVE, web, puertos) (omitidos cuando `--encrypt` está activado).
+- **Playbooks de Remediación (v3.4.0+)**: Playbooks Markdown auto-generados por host/categoría en `<output_dir>/playbooks/` (TLS, cabeceras, CVE, web, puertos) (omitidos cuando `--encrypt` está activado).
 - **Interfaz Bilingüe**: Localización completa Inglés/Español
 
 ## Arquitectura
@@ -73,7 +73,7 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 | **HyperScan** | Python `asyncio` | Descubrimiento paralelo ultrarrápido: batch TCP, broadcast UDP IoT, ARP agresivo (v3.2.3). |
 | **Orquestador** | `concurrent.futures` (Python) | Gestiona pools de hilos para escaneo paralelo de hosts. |
 | **Cifrado** | `python3-cryptography` | Cifrado AES-128 para reportes de auditoría sensibles. |
-| **Playbooks de Remediación** | Integrado | Genera playbooks Markdown accionables por host/categoría (v3.4.0). |
+| **Playbooks de Remediación** | Integrado | Genera playbooks Markdown accionables por host/categoría (v3.4.0+). |
 
 ### Vista General del Sistema
 
@@ -153,7 +153,7 @@ Verifica la integridad de la instalación:
 which redaudit  # Debe devolver: /usr/local/bin/redaudit
 
 # 2. Verificar versión
-redaudit --version  # Debe mostrar: RedAudit v3.4.0
+redaudit --version  # Debe mostrar: RedAudit v3.4.1
 
 # 3. Verificar dependencias core
 command -v nmap && command -v tcpdump && command -v python3  # Todos deben existir
@@ -225,7 +225,7 @@ Para más ejemplos incluyendo IPv6, correlación CVE, pivoting SOCKS5 e integrac
 - `--diff OLD NEW`: Análisis diferencial entre escaneos **(v3.0)**
 - `--html-report`: Genera dashboard HTML interactivo **(v3.3)**
 - `--webhook URL`: Envía alertas en tiempo real a endpoint webhook **(v3.3)**
-- `Playbooks`: Playbooks de remediación auto-generados en `<output_dir>/playbooks/` **(v3.4.0, sin flag; omitido con `--encrypt`)**
+- `Playbooks`: Playbooks de remediación auto-generados en `<output_dir>/playbooks/` **(v3.4.0+, sin flag; omitido con `--encrypt`)**
 - `--ipv6`: Modo solo IPv6 **(v3.0)**
 - `-y, --yes`: Omitir confirmaciones (modo automatización)
 
@@ -291,7 +291,7 @@ python -m redaudit --help
 
 ## 8. Reportes, Cifrado y Descifrado
 
-Los reportes se guardan en `~/Documents/RedAuditReports` (por defecto) con fecha y hora.
+Los reportes se guardan en `~/Documents/RedAuditReports` (por defecto) con fecha y hora (home del usuario invocador, incluso bajo `sudo`).
 
 ### Cifrado (`.enc`)
 

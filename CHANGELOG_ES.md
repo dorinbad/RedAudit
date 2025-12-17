@@ -11,6 +11,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (nada aún)
 
+## [3.4.1] - 2025-12-17 (Hotfix)
+
+### Corregido
+
+- **Directorio de salida por defecto (sudo)**: Los reportes ahora se guardan por defecto en la carpeta Documentos del usuario que invoca `sudo` (en lugar de `/root`).
+- **Expansión de `~` (sudo)**: `--output ~/...` y los defaults persistidos que usan `~` ahora se expanden contra el usuario invocador bajo `sudo`.
+- **Propietario de archivos**: `chown` best-effort del directorio de salida al usuario invocador para evitar artefactos propiedad de root en el home del usuario.
+
 ## [3.4.0] - 2025-12-17 (Playbook Export)
 
 ### Añadido

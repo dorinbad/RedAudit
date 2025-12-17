@@ -30,7 +30,6 @@ from redaudit.utils.constants import (
     DEFAULT_LANG,
     MAX_CIDR_LENGTH,
     COLORS,
-    DEFAULT_OUTPUT_DIR,
     DEFAULT_THREADS,
     MAX_THREADS,
     MIN_THREADS,
@@ -48,6 +47,11 @@ from redaudit.utils.constants import (
     UDP_MAX_RETRIES_LAN,
     STATUS_DOWN,
     STATUS_NO_RESPONSE,
+)
+from redaudit.utils.paths import (
+    expand_user_path,
+    get_default_reports_base_dir,
+    maybe_chown_to_invoking_user,
 )
 from redaudit.utils.i18n import TRANSLATIONS, get_text
 from redaudit.core.crypto import (
@@ -111,7 +115,7 @@ class InteractiveNetworkAuditor:
             "max_hosts_value": "all",
             "scan_mode": "normal",
             "threads": DEFAULT_THREADS,
-            "output_dir": os.path.expanduser(DEFAULT_OUTPUT_DIR),
+            "output_dir": get_default_reports_base_dir(),
             "scan_vulnerabilities": True,
             "save_txt_report": True,
             "encryption_salt": None,
@@ -1620,11 +1624,10 @@ class InteractiveNetworkAuditor:
             # v2.8.1: Create timestamped output folder BEFORE scanning
             # This ensures PCAP files are saved inside the result folder
             ts_folder = self.scan_start_time.strftime("%Y-%m-%d_%H-%M-%S")
-            output_base = self.config.get(
-                "output_dir", os.path.expanduser("~/Documents/RedAuditReports")
-            )
+            output_base = self.config.get("output_dir", get_default_reports_base_dir())
             self.config["_actual_output_dir"] = os.path.join(output_base, f"RedAudit_{ts_folder}")
             os.makedirs(self.config["_actual_output_dir"], exist_ok=True)
+            maybe_chown_to_invoking_user(self.config["_actual_output_dir"])
 
             # Ensure network_info is populated for reports and topology discovery.
             if not self.results.get("network_info"):
@@ -1917,9 +1920,9 @@ class InteractiveNetworkAuditor:
         # 6. Output Dir
         out_dir = defaults_for_run.get("output_dir")
         if isinstance(out_dir, str) and out_dir.strip():
-            self.config["output_dir"] = os.path.expanduser(out_dir.strip())
+            self.config["output_dir"] = expand_user_path(out_dir.strip())
         else:
-            self.config["output_dir"] = os.path.expanduser(DEFAULT_OUTPUT_DIR)
+            self.config["output_dir"] = get_default_reports_base_dir()
 
         self.config["save_txt_report"] = defaults_for_run.get("generate_txt", True)
         self.config["save_html_report"] = defaults_for_run.get("generate_html", True)
@@ -1981,16 +1984,16 @@ class InteractiveNetworkAuditor:
         else:
             self.config["cve_lookup_enabled"] = False
 
-        default_reports = os.path.expanduser(DEFAULT_OUTPUT_DIR)
+        default_reports = get_default_reports_base_dir()
         persisted_output = defaults_for_run.get("output_dir")
         if isinstance(persisted_output, str) and persisted_output.strip():
-            default_reports = os.path.expanduser(persisted_output.strip())
+            default_reports = expand_user_path(persisted_output.strip())
         out_dir = input(
             f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('output_dir')} [{default_reports}]: "
         ).strip()
         if not out_dir:
             out_dir = default_reports
-        self.config["output_dir"] = out_dir
+        self.config["output_dir"] = expand_user_path(out_dir)
 
         # v3.3.1: TXT and HTML reports are always generated (no prompt)
         self.config["save_txt_report"] = True

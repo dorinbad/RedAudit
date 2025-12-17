@@ -1,4 +1,4 @@
-# Manual de Usuario de RedAudit v3.4.0 (ES)
+# Manual de Usuario de RedAudit v3.4.1 (ES)
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
@@ -340,7 +340,7 @@ Las opciones más importantes:
 | `--encrypt-password PASS`    | Contraseña de cifrado en modo no interactivo. Si se omite con `--encrypt`, se pedirá por consola o se generará una aleatoria. |
 | `--no-vuln-scan`             | Desactiva el escaneo de vulnerabilidades web (omite nikto y ciertas pruebas HTTP).                                      |
 | `--no-txt-report`            | Evita generar el resumen en texto (TXT).                                                                                |
-| `-o`, `--output DIR`         | Directorio base destino para los informes. Por defecto: `~/Documents/RedAuditReports` (se crea `RedAudit_...` con timestamp). |
+| `-o`, `--output DIR`         | Directorio base destino para los informes. Por defecto: `~/Documents/RedAuditReports` (usuario invocador bajo `sudo`; se crea `RedAudit_...` con timestamp). |
 | `--yes`                      | Modo no interactivo: asume "sí" a las preguntas. Imprescindible para automatización.                                    |
 | `--prescan`                  | Activa el pre-escaneo asíncrono antes de lanzar nmap sobre grandes rangos.                                        |
 | `--prescan-ports`            | Rango de puertos para pre-scan (ej: `1-1000` o `top-1000`). Defecto: `1-1024`.                                          |

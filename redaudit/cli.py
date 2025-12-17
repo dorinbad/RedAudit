@@ -22,6 +22,7 @@ from redaudit.utils.constants import (
     UDP_TOP_PORTS,
 )
 from redaudit.utils.i18n import TRANSLATIONS, detect_preferred_language
+from redaudit.utils.paths import expand_user_path, get_default_reports_base_dir
 
 
 def parse_arguments():
@@ -135,7 +136,7 @@ Examples:
         "-o",
         type=str,
         default=default_output,
-        help="Output directory for reports (default: ~/Documents/RedAuditReports)",
+        help=f"Output directory for reports (default: {get_default_reports_base_dir()})",
     )
     parser.add_argument(
         "--max-hosts", type=int, help="Maximum number of hosts to scan (default: all)"
@@ -433,7 +434,7 @@ def configure_from_args(app, args) -> bool:
 
     # Set output directory
     if args.output:
-        app.config["output_dir"] = os.path.expanduser(args.output)
+        app.config["output_dir"] = expand_user_path(args.output)
 
     # Set max hosts
     if args.max_hosts:
