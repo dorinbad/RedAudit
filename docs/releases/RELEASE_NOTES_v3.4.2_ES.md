@@ -23,4 +23,3 @@ sudo bash redaudit_install.sh
 ---
 
 *RedAudit v3.4.2 - Hotfix pequeño, defaults más limpios.*
-

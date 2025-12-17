@@ -135,11 +135,13 @@ class TestEnvPriority(unittest.TestCase):
 
 class TestPersistentDefaultsOutputDir(unittest.TestCase):
     def test_root_output_dir_is_rewritten_under_sudo(self):
-        with patch("redaudit.utils.config.load_config") as mock_load, patch(
-            "redaudit.utils.config.get_invoking_user", return_value="dorin"
-        ), patch(
-            "redaudit.utils.config.get_default_reports_base_dir",
-            return_value="/home/dorin/Documents/RedAuditReports",
+        with (
+            patch("redaudit.utils.config.load_config") as mock_load,
+            patch("redaudit.utils.config.get_invoking_user", return_value="dorin"),
+            patch(
+                "redaudit.utils.config.get_default_reports_base_dir",
+                return_value="/home/dorin/Documents/RedAuditReports",
+            ),
         ):
             mock_load.return_value = {"defaults": {"output_dir": "/root/Documents/RedAuditReports"}}
             defaults = get_persistent_defaults()
