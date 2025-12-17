@@ -10,10 +10,11 @@ Supports both proxychains wrapper and native nmap --proxies option.
 
 import os
 import shutil
-import subprocess
 import tempfile
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
+
+from redaudit.core.command_runner import CommandRunner
 
 
 def parse_proxy_url(url: str) -> Optional[Dict]:
@@ -93,18 +94,26 @@ def test_proxy_connection(proxy: Dict, timeout: int = 10) -> Tuple[bool, str]:
             return False, f"Proxy connection failed: {e}"
 
     try:
-        result = subprocess.run(
+        runner = CommandRunner(
+            dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+            default_timeout=float(timeout + 5),
+            default_retries=0,
+            backoff_base_s=0.0,
+        )
+        result = runner.run(
             [nc_path, "-z", "-w", str(timeout), host, str(port)],
             capture_output=True,
+            text=True,
             timeout=timeout + 5,
         )
         if result.returncode == 0:
             return True, f"Proxy {host}:{port} is reachable"
         else:
             return False, f"Proxy {host}:{port} not responding"
-    except subprocess.TimeoutExpired:
-        return False, f"Proxy connection timeout ({timeout}s)"
     except Exception as e:
+        msg = str(e)
+        if "timed out" in msg.lower() or "timeout" in msg.lower():
+            return False, f"Proxy connection timeout ({timeout}s)"
         return False, f"Proxy test error: {e}"
 
 

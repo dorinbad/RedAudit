@@ -9,8 +9,10 @@ Uses Content-Type verification and Magic Bytes to detect Soft 404s.
 """
 
 import re
-import subprocess
+import os
 from typing import Dict, List, Optional, Tuple
+
+from redaudit.core.command_runner import CommandRunner
 
 # File extensions that suggest sensitive/binary content
 SENSITIVE_EXTENSIONS = (".tar", ".zip", ".gz", ".bak", ".config", ".pem", ".key", ".pfx", ".p12")
@@ -114,15 +116,23 @@ def verify_content_type(
     if not curl_path:
         curl_path = "curl"
 
+    runner = CommandRunner(
+        dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+        default_timeout=float(timeout + 5),
+        default_retries=0,
+        backoff_base_s=0.0,
+        redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
+    )
+
     try:
-        res = subprocess.run(
+        res = runner.run(
             [curl_path, "-I", "-s", "--max-time", str(timeout), "-k", url],
             capture_output=True,
             text=True,
             timeout=timeout + 5,
-        )  # nosec B603
+        )
 
-        headers = res.stdout or ""
+        headers = str(res.stdout or "")
         content_type = None
         content_length = None
 
@@ -231,15 +241,24 @@ def verify_magic_bytes(
     if not expected_magic:
         return True, "kept:magic_not_defined"
 
+    runner = CommandRunner(
+        dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+        default_timeout=float(timeout + 5),
+        default_retries=0,
+        backoff_base_s=0.0,
+        redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
+    )
+
     try:
         # Download first 512 bytes (enough for all signatures including tar at offset 257)
-        res = subprocess.run(
+        res = runner.run(
             [curl_path, "-s", "-r", "0-511", "--max-time", str(timeout), "-k", url],
             capture_output=True,
+            text=False,
             timeout=timeout + 5,
-        )  # nosec B603
+        )
 
-        data = res.stdout
+        data = res.stdout if isinstance(res.stdout, (bytes, bytearray)) else b""
         if not data or len(data) < offset + len(expected_magic):
             return True, "kept:insufficient_data"
 

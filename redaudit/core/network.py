@@ -7,12 +7,13 @@ GPLv3 License
 Handles local network interface detection and enumeration.
 """
 
-import subprocess
 import ipaddress
+import os
 import re
 from typing import List, Dict, Optional
 
 from redaudit.utils.i18n import get_text
+from redaudit.core.command_runner import CommandRunner
 
 
 def detect_interface_type(iface: str) -> str:
@@ -137,13 +138,19 @@ def detect_networks_fallback(lang: str = "en", include_ipv6: bool = True) -> Lis
 
     # IPv4 detection
     try:
-        res = subprocess.run(
+        runner = CommandRunner(
+            dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+            default_timeout=5.0,
+            default_retries=0,
+            backoff_base_s=0.0,
+        )
+        res = runner.run(
             ["ip", "-4", "-o", "addr", "show"],
             capture_output=True,
             text=True,
             timeout=5,
         )
-        for line in res.stdout.strip().splitlines():
+        for line in str(res.stdout or "").strip().splitlines():
             parts = line.split()
             if len(parts) < 4:
                 continue
@@ -170,13 +177,19 @@ def detect_networks_fallback(lang: str = "en", include_ipv6: bool = True) -> Lis
     # IPv6 detection (v3.0)
     if include_ipv6:
         try:
-            res = subprocess.run(
+            runner = CommandRunner(
+                dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+                default_timeout=5.0,
+                default_retries=0,
+                backoff_base_s=0.0,
+            )
+            res = runner.run(
                 ["ip", "-6", "-o", "addr", "show", "scope", "global"],
                 capture_output=True,
                 text=True,
                 timeout=5,
             )
-            for line in res.stdout.strip().splitlines():
+            for line in str(res.stdout or "").strip().splitlines():
                 parts = line.split()
                 if len(parts) < 4:
                     continue
@@ -271,8 +284,14 @@ def get_neighbor_mac(ip_str: str) -> Optional[str]:
 
     for cmd, timeout in candidates:
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-            text = (res.stdout or "") + "\n" + (res.stderr or "")
+            runner = CommandRunner(
+                dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+                default_timeout=float(timeout),
+                default_retries=0,
+                backoff_base_s=0.0,
+            )
+            res = runner.run(cmd, capture_output=True, text=True, timeout=timeout)
+            text = str(res.stdout or "") + "\n" + str(res.stderr or "")
             m = mac_re.search(text)
             if m:
                 return m.group(1).lower()

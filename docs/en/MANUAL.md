@@ -1,8 +1,8 @@
-# RedAudit v3.4.2 – User Manual (EN)
+# RedAudit v3.5.0 – User Manual (EN)
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/MANUAL.md)
 
-**Version:** 3.4.0
+**Version:** 3.5.0
 **Target audience:** Security analysts, penetration testers, systems / network administrators
 **License:** GPLv3
 
@@ -332,6 +332,8 @@ The most important options:
 | `-j`, `--threads N`         | Concurrent scanning threads. Range constrained by built-in safe defaults.                                               |
 | `--max-hosts N`             | Maximum number of discovered hosts to scan. Default: all. *(This is a cap, not a host selector.)*                         |
 | `--rate-limit SECONDS`      | Delay between host scans to reduce noise on the wire. Default: 0.                                                        |
+| `--dry-run`                 | Print commands that would be executed without running them. **(v3.5, incremental rollout)**                               |
+| `--no-prevent-sleep`        | Do not inhibit system/display sleep while a scan is running. **(v3.5)**                                                   |
 | `-e`, `--encrypt`           | Enable encryption of generated reports.                                                                                  |
 | `--encrypt-password PASS`   | Password for encryption in non-interactive runs. If omitted with `--encrypt`, you'll be prompted or a random password may be generated and printed. |
 | `--no-vuln-scan`            | Disable web vulnerability scanning (skip nikto / certain HTTP checks).                                                   |

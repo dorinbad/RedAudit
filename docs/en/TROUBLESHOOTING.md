@@ -67,6 +67,15 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 - **Why**: Essential for identifying IoT boxes, firewalls, or filtered servers that hide their OS.
 - **Check**: Look for the `[deep]` marker in the CLI output.
 
+### 6b. System sleep / screen blanking during long scans (v3.5+)
+
+**Symptom**: Your VM/laptop goes to sleep or the screen blanks while RedAudit is running.
+**Explanation**: RedAudit attempts a **best-effort** sleep/display inhibition while a scan is running to avoid long scans being paused.
+**Notes**:
+
+- This depends on what tools are available on the system (e.g., `systemd-inhibit` on Linux, `xset` for X11/DPMS).
+- You can disable it with `--no-prevent-sleep`.
+
 ### 7. "Cryptography not available" warning
 
 **Symptom**: You see a warning about `python3-cryptography` not being available.

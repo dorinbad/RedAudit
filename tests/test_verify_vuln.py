@@ -16,6 +16,7 @@ from redaudit.core.verify_vuln import (
     is_sensitive_file,
     is_false_positive_by_content_type,
     is_false_positive_by_size,
+    verify_content_type,
     verify_nikto_finding,
     filter_nikto_false_positives,
 )
@@ -126,6 +127,14 @@ class TestVerifyVuln(unittest.TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertIn("admin", result[0])
+
+    @patch("redaudit.core.command_runner.subprocess.run")
+    def test_verify_content_type_dry_run_does_not_execute(self, mock_run):
+        with patch.dict(os.environ, {"REDAUDIT_DRY_RUN": "1"}, clear=False):
+            content_type, content_len = verify_content_type("http://example.com", extra_tools={})
+        mock_run.assert_not_called()
+        self.assertIsNone(content_type)
+        self.assertIsNone(content_len)
 
 
 if __name__ == "__main__":

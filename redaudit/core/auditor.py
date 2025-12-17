@@ -54,6 +54,7 @@ from redaudit.utils.paths import (
     maybe_chown_to_invoking_user,
 )
 from redaudit.utils.i18n import TRANSLATIONS, get_text
+from redaudit.core.command_runner import CommandRunner
 from redaudit.core.crypto import (
     is_crypto_available,
     derive_key_from_password,
@@ -116,6 +117,10 @@ class InteractiveNetworkAuditor:
             "scan_mode": "normal",
             "threads": DEFAULT_THREADS,
             "output_dir": get_default_reports_base_dir(),
+            # v3.5: Dry-run (print commands without executing)
+            "dry_run": False,
+            # v3.5: Best-effort prevent system/display sleep during scan
+            "prevent_sleep": True,
             "scan_vulnerabilities": True,
             "save_txt_report": True,
             "encryption_salt": None,
@@ -784,7 +789,14 @@ class InteractiveNetworkAuditor:
             self.print_status(
                 self.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING"
             )
-            rec1 = run_nmap_command(cmd_p1, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
+            rec1 = run_nmap_command(
+                cmd_p1,
+                DEEP_SCAN_TIMEOUT,
+                safe_ip,
+                deep_obj,
+                logger=self.logger,
+                dry_run=bool(self.config.get("dry_run", False)),
+            )
 
             # Check for Identity
             has_identity = output_has_identity([rec1])
@@ -890,7 +902,14 @@ class InteractiveNetworkAuditor:
                         "WARNING",
                     )
                     deep_obj["udp_top_ports"] = udp_top_ports
-                    rec2b = run_nmap_command(cmd_p2b, DEEP_SCAN_TIMEOUT, safe_ip, deep_obj)
+                    rec2b = run_nmap_command(
+                        cmd_p2b,
+                        DEEP_SCAN_TIMEOUT,
+                        safe_ip,
+                        deep_obj,
+                        logger=self.logger,
+                        dry_run=bool(self.config.get("dry_run", False)),
+                    )
                     if not mac:
                         m2b, v2b = extract_vendor_mac(rec2b.get("stdout", ""))
                         if m2b:
@@ -1255,12 +1274,23 @@ class InteractiveNetworkAuditor:
             finding = {"url": url, "port": port}
 
             # HTTP enrichment
-            http_data = http_enrichment(url, self.extra_tools)
+            http_data = http_enrichment(
+                url,
+                self.extra_tools,
+                dry_run=bool(self.config.get("dry_run", False)),
+                logger=self.logger,
+            )
             finding.update(http_data)
 
             # TLS enrichment
             if scheme == "https":
-                tls_data = tls_enrichment(ip, port, self.extra_tools)
+                tls_data = tls_enrichment(
+                    ip,
+                    port,
+                    self.extra_tools,
+                    dry_run=bool(self.config.get("dry_run", False)),
+                    logger=self.logger,
+                )
                 finding.update(tls_data)
 
                 # TestSSL deep analysis (only in completo mode)
@@ -1282,16 +1312,25 @@ class InteractiveNetworkAuditor:
             if self.extra_tools.get("whatweb"):
                 try:
                     self.current_phase = f"vulns:whatweb:{ip}:{port}"
-                    import subprocess
-
-                    res = subprocess.run(
+                    runner = CommandRunner(
+                        logger=self.logger,
+                        dry_run=bool(self.config.get("dry_run", False)),
+                        default_timeout=30.0,
+                        default_retries=0,
+                        backoff_base_s=0.0,
+                        redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
+                    )
+                    res = runner.run(
                         [self.extra_tools["whatweb"], "-q", "-a", "3", url],
                         capture_output=True,
+                        check=False,
                         text=True,
-                        timeout=30,
+                        timeout=30.0,
                     )
-                    if res.stdout.strip():
-                        finding["whatweb"] = res.stdout.strip()[:2000]
+                    if not res.timed_out:
+                        output = str(res.stdout or "").strip()
+                        if output:
+                            finding["whatweb"] = output[:2000]
                 except Exception:
                     if self.logger:
                         self.logger.debug("WhatWeb scan failed for %s", url, exc_info=True)
@@ -1301,34 +1340,45 @@ class InteractiveNetworkAuditor:
             if self.config["scan_mode"] == "completo" and self.extra_tools.get("nikto"):
                 try:
                     self.current_phase = f"vulns:nikto:{ip}:{port}"
-                    import subprocess
                     from redaudit.core.verify_vuln import filter_nikto_false_positives
 
-                    res = subprocess.run(
+                    runner = CommandRunner(
+                        logger=self.logger,
+                        dry_run=bool(self.config.get("dry_run", False)),
+                        default_timeout=150.0,
+                        default_retries=0,
+                        backoff_base_s=0.0,
+                        redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
+                    )
+                    res = runner.run(
                         [self.extra_tools["nikto"], "-h", url, "-maxtime", "120s", "-Tuning", "x"],
                         capture_output=True,
+                        check=False,
                         text=True,
-                        timeout=150,
+                        timeout=150.0,
                     )
-                    output = res.stdout or res.stderr
-                    if output:
-                        findings_list = [line for line in output.splitlines() if "+ " in line][:20]
-                        if findings_list:
-                            # v2.9: Filter false positives using Smart-Check
-                            original_count = len(findings_list)
-                            verified = filter_nikto_false_positives(
-                                findings_list, url, self.extra_tools, self.logger
-                            )
-                            if verified:
-                                finding["nikto_findings"] = verified
-                                # Track how many were filtered
-                                filtered = original_count - len(verified)
-                                if filtered > 0:
-                                    finding["nikto_filtered_count"] = filtered
-                                    self.print_status(
-                                        f"[nikto] {ip}:{port} → Filtered {filtered}/{original_count} false positives",
-                                        "INFO",
-                                    )
+                    if not res.timed_out:
+                        output = str(res.stdout or "") or str(res.stderr or "")
+                        if output:
+                            findings_list = [line for line in output.splitlines() if "+ " in line][
+                                :20
+                            ]
+                            if findings_list:
+                                # v2.9: Filter false positives using Smart-Check
+                                original_count = len(findings_list)
+                                verified = filter_nikto_false_positives(
+                                    findings_list, url, self.extra_tools, self.logger
+                                )
+                                if verified:
+                                    finding["nikto_findings"] = verified
+                                    # Track how many were filtered
+                                    filtered = original_count - len(verified)
+                                    if filtered > 0:
+                                        finding["nikto_filtered_count"] = filtered
+                                        self.print_status(
+                                            f"[nikto] {ip}:{port} → Filtered {filtered}/{original_count} false positives",
+                                            "INFO",
+                                        )
                 except Exception:
                     if self.logger:
                         self.logger.debug("Nikto scan failed for %s", url, exc_info=True)
@@ -1647,6 +1697,16 @@ class InteractiveNetworkAuditor:
         self.scan_start_time = datetime.now()
         self.start_heartbeat()
 
+        inhibitor = None
+        if self.config.get("prevent_sleep", True):
+            try:
+                from redaudit.core.power import SleepInhibitor
+
+                inhibitor = SleepInhibitor(logger=self.logger)
+                inhibitor.start()
+            except Exception:
+                inhibitor = None
+
         try:
             # v2.8.1: Create timestamped output folder BEFORE scanning
             # This ensures PCAP files are saved inside the result folder
@@ -1866,6 +1926,11 @@ class InteractiveNetworkAuditor:
             self.show_results()
 
         finally:
+            if inhibitor is not None:
+                try:
+                    inhibitor.stop()
+                except Exception:
+                    pass
             self.stop_heartbeat()
 
         return not self.interrupted

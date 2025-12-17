@@ -8,11 +8,12 @@ v3.1: Detect and report versions of external scanning tools.
 """
 
 import shutil
-import subprocess
 import re
+import os
 from typing import Dict, Optional
 
 from redaudit.utils.constants import VERSION
+from redaudit.core.command_runner import CommandRunner
 
 
 # Tool detection configuration
@@ -68,10 +69,14 @@ def _get_tool_version(tool_name: str, config: dict) -> Optional[str]:
         return None
 
     try:
-        result = subprocess.run(
-            [tool_path] + config["version_args"], capture_output=True, text=True, timeout=5
+        runner = CommandRunner(
+            dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+            default_timeout=5.0,
+            default_retries=0,
+            backoff_base_s=0.0,
         )
-        output = result.stdout + result.stderr
+        result = runner.run([tool_path] + config["version_args"], capture_output=True, text=True)
+        output = str(result.stdout or "") + str(result.stderr or "")
 
         match = re.search(config["pattern"], output, re.IGNORECASE)
         if match:
@@ -80,7 +85,7 @@ def _get_tool_version(tool_name: str, config: dict) -> Optional[str]:
         # Fallback: return "detected" if tool exists but version unknown
         return "detected"
 
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError):
+    except Exception:
         # Tool exists but version detection failed
         return "detected"
 

@@ -4,7 +4,7 @@
 
 RedAudit is a CLI tool for structured network auditing and hardening on Kali/Debian systems.
 
-![Version](https://img.shields.io/badge/version-3.4.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-3.5.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
@@ -16,7 +16,7 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.4.2
+                                      v3.5.0
         Interactive Network Audit Tool
 ```
 
@@ -50,6 +50,8 @@ The tool bridges the gap between ad-hoc scanning and formal auditing, providing 
 - **HyperScan Module (v3.2.3)**: Ultra-fast parallel discovery (asyncio batch TCP, 45+ UDP ports, aggressive ARP, IoT broadcast) with backdoor detection.
 - **Stealth Mode (v3.2.3)**: `--stealth` flag enables T1 paranoid timing, single-thread scanning, and 5s+ delays for enterprise IDS evasion.
 - **Remediation Playbooks (v3.4.0+)**: Auto-generated Markdown playbooks per host/category in `<output_dir>/playbooks/` (TLS, headers, CVE, web, ports) (skipped when `--encrypt` is enabled).
+- **Prevent Sleep During Scans (v3.5)**: Best-effort system/display sleep inhibition while a scan is running (opt-out with `--no-prevent-sleep`).
+- **Centralized CommandRunner (v3.5)**: Single entry point for external commands with timeouts, retries, redaction, and incremental `--dry-run` rollout.
 - **Bilingual Interface**: Complete English/Spanish localization
 
 ## Architecture
@@ -72,6 +74,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `kerbrute`, `scapy` | Optional active enumeration (SNMP, SMB, LDAP, Kerberos, L2 attacks) for deep Blue Team analysis (v3.2+). |
 | **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT broadcast, aggressive ARP (v3.2.3). |
 | **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
+| **Command Execution** | Built-in (`CommandRunner`) | Centralized safe command execution (args lists, timeouts, retries, redaction, dry-run rollout) (v3.5). |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
 | **Remediation Playbooks** | Built-in | Generates actionable Markdown playbooks per host/category (v3.4.0+). |
 
@@ -94,6 +97,8 @@ redaudit/
 │   ├── reporter.py     # JSON/TXT/HTML/JSONL + playbooks output
 │   ├── html_reporter.py  # Interactive HTML report generator (v3.3)
 │   ├── playbook_generator.py  # Remediation playbook generator (v3.4)
+│   ├── command_runner.py  # Centralized external command execution (v3.5)
+│   ├── power.py        # Best-effort sleep/display inhibition (v3.5)
 │   ├── updater.py      # Reliable auto-update (git clone)
 │   ├── verify_vuln.py  # Smart-Check false positive filtering
 │   ├── entity_resolver.py  # Multi-interface host grouping
@@ -153,7 +158,7 @@ Verify installation integrity:
 which redaudit  # Should return: /usr/local/bin/redaudit
 
 # 2. Verify version
-redaudit --version  # Should show: RedAudit v3.4.2
+redaudit --version  # Should show: RedAudit v3.5.0
 
 # 3. Check core dependencies
 command -v nmap && command -v tcpdump && command -v python3  # All should succeed
@@ -360,6 +365,9 @@ bash redaudit_verify.sh
 - **Entity Resolution**: Consolidation of multi-interface devices into `unified_assets[]` for cleaner asset tracking and SIEM ingestion.
 - **Deep Scan / Identity Refinement**: Selective escalation (TCP + UDP fingerprinting) to improve identification on ambiguous or filtered hosts.
 - **Remediation Playbook**: Auto-generated Markdown guide per host/category describing actionable remediation steps and references (saved under `<output_dir>/playbooks/`).
+- **Dry Run (`--dry-run`)**: Prints external commands that would run without executing them (incremental rollout in v3.5.0; some tools may still execute until fully migrated).
+- **CommandRunner**: Central module that executes external commands with timeouts, retries, and secret redaction (foundation for `--dry-run`).
+- **Sleep Inhibition**: Best-effort prevention of system/display sleep during scans (enabled by default; opt-out with `--no-prevent-sleep`).
 
 **Note**: For detailed explanations of scanning strategies (Deep Scan, Smart-Check, Topology Discovery, etc.), see the Features section above.
 

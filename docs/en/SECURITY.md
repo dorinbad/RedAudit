@@ -23,7 +23,8 @@ If you discover a security vulnerability in RedAudit, please report it responsib
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 3.4.x   | Yes                | Current stable |
+| 3.5.x   | Yes                | Current stable |
+| 3.4.x   | Yes                | Supported |
 | 3.3.x   | Yes                | Supported |
 | 3.2.x   | Security fixes only | Maintenance |
 | 2.9.x   | Security fixes only | EOL: March 2026 |
@@ -46,7 +47,7 @@ All external inputs—target ranges, hostnames, interface names—are treated as
 - **IP Address Validation**: Uses Python's `ipaddress` module to validate both IPv4 and IPv6 addresses. Invalid IPs return `None`.
 - **Hostname Validation**: Regex allowlisting (`^[a-zA-Z0-9\.\-]+$`) ensures only alphanumeric characters, dots, and hyphens.
 - **Length Limits**: All inputs are truncated to `MAX_INPUT_LENGTH` (1024 chars) to prevent buffer-based attacks.
-- **Command Injection Prevention**: `subprocess.run` is used exclusively with argument lists; shell expansion (`shell=True`) is disabled.
+- **Command Injection Prevention**: External commands are executed via `CommandRunner` using argument lists (shell expansion is never used).
 - **Module Location**: `redaudit/core/scanner.py` (`sanitize_ip`, `sanitize_hostname`)
 
 ## 2. Cryptographic Implementation

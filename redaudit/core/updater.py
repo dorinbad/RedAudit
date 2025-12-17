@@ -24,6 +24,7 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
 from redaudit.utils.constants import VERSION
+from redaudit.core.command_runner import CommandRunner
 
 # GitHub repository configuration
 GITHUB_OWNER = "dorinbadea"
@@ -752,6 +753,14 @@ def perform_git_update(
     install_path = "/usr/local/lib/redaudit"
 
     try:
+        runner = CommandRunner(
+            logger=logger,
+            dry_run=bool(os.environ.get("REDAUDIT_DRY_RUN")),
+            default_timeout=30.0,
+            default_retries=1,
+            redact_env_keys={"GITHUB_TOKEN", "NVD_API_KEY"},
+        )
+
         # Step 1: Determine target commit for the current version tag
         try:
             git_env = os.environ.copy()
@@ -759,7 +768,7 @@ def perform_git_update(
             git_env["GIT_ASKPASS"] = "echo"
             # First try to get the dereferenced commit (for annotated tags)
             # The ^{} suffix dereferences an annotated tag to its underlying commit
-            ls_remote_deref = subprocess.check_output(
+            ls_remote_deref = runner.check_output(
                 ["git", "ls-remote", GITHUB_CLONE_URL, f"{target_ref}^{{}}"],
                 text=True,
                 timeout=15,
@@ -771,7 +780,7 @@ def perform_git_update(
                 expected_commit = ls_remote_deref.split()[0]
             else:
                 # Fallback: lightweight tag or no dereference available
-                ls_remote = subprocess.check_output(
+                ls_remote = runner.check_output(
                     ["git", "ls-remote", "--exit-code", GITHUB_CLONE_URL, target_ref],
                     text=True,
                     timeout=15,
@@ -849,11 +858,11 @@ def perform_git_update(
             return (False, f"Git clone failed: {''.join(output_lines[-5:])}")
 
         # Verify pinned commit
-        cloned_commit = (
-            subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=clone_path, text=True).strip()
-            if os.path.isdir(clone_path)
-            else "unknown"
-        )
+        cloned_commit = "unknown"
+        if os.path.isdir(clone_path):
+            cloned_commit = runner.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=clone_path, text=True, timeout=15
+            ).strip()
 
         if cloned_commit != expected_commit:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -999,7 +1008,7 @@ def perform_git_update(
             os.path.join(home_redaudit_path, ".git")
         ):
             try:
-                status = subprocess.check_output(
+                status = runner.check_output(
                     ["git", "status", "--porcelain"],
                     cwd=home_redaudit_path,
                     text=True,

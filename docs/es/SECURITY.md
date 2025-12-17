@@ -10,7 +10,8 @@ RedAudit implementa una filosofía de "seguro por diseño", asumiendo la ejecuci
 
 | Versión | Soportada | Estado |
 | ------- | --------- | ------ |
-| 3.4.x   | Sí        | Estable actual |
+| 3.5.x   | Sí        | Estable actual |
+| 3.4.x   | Sí        | Soportada |
 | 3.3.x   | Sí        | Soportada |
 | 3.2.x   | Solo fixes de seguridad | Mantenimiento |
 | 2.9.x   | Solo fixes de seguridad | EOL: Marzo 2026 |
@@ -25,7 +26,7 @@ Todas las entradas externas—rangos objetivo, nombres de host, nombres de inter
 - **Validación de Direcciones IP**: Usa el módulo `ipaddress` de Python para validar direcciones IPv4 e IPv6. Las IPs inválidas devuelven `None`.
 - **Validación de Nombres de Host**: Allowlisting con regex (`^[a-zA-Z0-9\.\-]+$`) asegura solo caracteres alfanuméricos, puntos y guiones.
 - **Límites de Longitud**: Todas las entradas se truncan a `MAX_INPUT_LENGTH` (1024 caracteres) para prevenir ataques basados en buffer.
-- **Prevención de Inyección de Comandos**: `subprocess.run` se usa exclusivamente con listas de argumentos; la expansión de shell (`shell=True`) está deshabilitada.
+- **Prevención de Inyección de Comandos**: Los comandos externos se ejecutan mediante `CommandRunner` usando listas de argumentos (nunca se usa expansión de shell).
 - **Ubicación del Módulo**: `redaudit/core/scanner.py` (`sanitize_ip`, `sanitize_hostname`)
 
 ## 2. Implementación Criptográfica

@@ -4,7 +4,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/DIDACTIC_GUIDE.md)
 
-This guide is designed to help professors, instructors, and mentors explain the complete functionality of **RedAudit v3.4.2**. The document breaks down the tool from a pedagogical perspective, combining theory, visual diagrams, practical exercises, and code references.
+This guide is designed to help professors, instructors, and mentors explain the complete functionality of **RedAudit v3.5.0**. The document breaks down the tool from a pedagogical perspective, combining theory, visual diagrams, practical exercises, and code references.
 
 > **TL;DR for Instructors**: RedAudit is a network auditing orchestration tool perfect for teaching structured security workflows. Key teaching points: (1) Automated tool orchestration vs manual scanning, (2) Adaptive heuristics (Deep Scan triggers), (3) Professional reporting (SIEM-ready JSON). For a 60-minute lecture, focus on Sections 1-3. For hands-on labs, use Section 8 practical exercises. For research students, Section 5 provides Python internals reference.
 
@@ -104,7 +104,7 @@ At startup, RedAudit presents a **Main Menu** allowing you to choose between sca
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│         RedAudit v3.4.2 - Main Menu            │
+│         RedAudit v3.5.0 - Main Menu            │
 ├─────────────────────────────────────────────────┤
 │  [1] Start Network Scan (Wizard)               │
 │  [2] Check for Updates                          │
@@ -1062,6 +1062,9 @@ time sudo redaudit --target 192.168.1.0/24 --mode fast --threads 16
 | **Nmap** | Network Mapper, open-source port scanner | RedAudit's main engine |
 | **PBKDF2** | Password-Based Key Derivation Function 2 | Encryption key derivation (480k iterations) |
 | **PCAP** | Packet Capture, network traffic file format | Evidence captured with tcpdump |
+| **Dry Run** | Mode that prints commands without executing them | `--dry-run` helps audit/debug command plan (incremental rollout v3.5) |
+| **CommandRunner** | Centralized external command execution wrapper | Safer args-only execution with timeouts/retries/redaction; foundation for dry-run |
+| **Sleep Inhibitor** | Mechanism to prevent system/display sleep | Best-effort prevent sleep during long scans (opt-out `--no-prevent-sleep`) |
 | **SIGINT** | Interrupt signal (Ctrl+C) | Clean cancellation handling |
 | **SIEM** | Security Information and Event Management | Systems that consume RedAudit's JSON |
 | **ThreadPoolExecutor** | Python class for managing thread pools | Scan parallelization |
