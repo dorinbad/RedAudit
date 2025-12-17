@@ -1,5 +1,7 @@
 # RedAudit v3.3.0 Release Notes
 
+[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](RELEASE_NOTES_v3.3.0_ES.md)
+
 **Date:** December 17, 2025
 **Codename:** "Visual Insight"
 **Focus:** Developer Experience (DX), Visualization, and Alerting

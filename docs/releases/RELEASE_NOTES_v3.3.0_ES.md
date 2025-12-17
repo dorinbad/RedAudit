@@ -1,5 +1,7 @@
 # RedAudit v3.3.0 Notas de la Versión
 
+[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](RELEASE_NOTES_v3.3.0.md)
+
 **Fecha:** 17 de Diciembre, 2025
 **Nombre Clave:** "Visual Insight"
 **Enfoque:** Experiencia de Desarrollador (DX), Visualización y Alertas
