@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+"""
+RedAudit - Centralized Command Runner
+
+Single entry point for external command execution (v3.5).
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import shlex
+import subprocess
+import time
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    args: List[str]
+    returncode: int
+    stdout: Optional[str]
+    stderr: Optional[str]
+    duration_s: float
+    timed_out: bool
+    attempts: int
+
+    @property
+    def ok(self) -> bool:
+        return self.returncode == 0 and not self.timed_out
+
+
+class CommandRunner:
+    def __init__(
+        self,
+        *,
+        logger: Any = None,
+        dry_run: bool = False,
+        default_timeout: Optional[float] = 60.0,
+        default_retries: int = 0,
+        backoff_base_s: float = 0.5,
+        redact_env_keys: Optional[Iterable[str]] = None,
+    ):
+        self._logger = logger
+        self._dry_run = bool(dry_run)
+        self._default_timeout = default_timeout
+        self._default_retries = int(default_retries)
+        self._backoff_base_s = float(backoff_base_s)
+        self._redact_env_keys: Set[str] = {k for k in (redact_env_keys or []) if isinstance(k, str)}
+
+    @property
+    def dry_run(self) -> bool:
+        return self._dry_run
+
+    def run(
+        self,
+        args: Sequence[str],
+        *,
+        cwd: Optional[str] = None,
+        env: Optional[Mapping[str, str]] = None,
+        timeout: Optional[float] = None,
+        capture_output: bool = True,
+        check: bool = False,
+        text: bool = True,
+        input_text: Optional[str] = None,
+    ) -> CommandResult:
+        cmd = self._validate_args(args)
+        merged_env = self._merge_env(env)
+        redact_values = self._collect_redact_values(merged_env)
+
+        if self._dry_run:
+            self._log("INFO", f"[dry-run] {self._format_cmd(cmd, redact_values)}")
+            return CommandResult(
+                args=list(cmd),
+                returncode=0,
+                stdout="" if capture_output else None,
+                stderr="" if capture_output else None,
+                duration_s=0.0,
+                timed_out=False,
+                attempts=0,
+            )
+
+        attempts = max(1, self._default_retries + 1)
+        last_exc: Optional[BaseException] = None
+        start_all = time.monotonic()
+        for attempt in range(1, attempts + 1):
+            try:
+                self._log("DEBUG", f"exec: {self._format_cmd(cmd, redact_values)}")
+                timeout_val = timeout if timeout is not None else self._default_timeout
+                completed = subprocess.run(
+                    list(cmd),
+                    cwd=cwd,
+                    env=merged_env,
+                    timeout=timeout_val,
+                    capture_output=capture_output,
+                    text=text,
+                    check=check,
+                    input=input_text if input_text is not None else None,
+                )
+                elapsed = time.monotonic() - start_all
+                stdout = completed.stdout if capture_output else None
+                stderr = completed.stderr if capture_output else None
+                return CommandResult(
+                    args=list(cmd),
+                    returncode=int(completed.returncode),
+                    stdout=self._redact_text(stdout, redact_values),
+                    stderr=self._redact_text(stderr, redact_values),
+                    duration_s=elapsed,
+                    timed_out=False,
+                    attempts=attempt,
+                )
+            except subprocess.TimeoutExpired as exc:
+                last_exc = exc
+                elapsed = time.monotonic() - start_all
+                self._log("WARNING", f"timeout: {self._format_cmd(cmd, redact_values)}")
+                if attempt >= attempts:
+                    return CommandResult(
+                        args=list(cmd),
+                        returncode=124,
+                        stdout=self._redact_text(getattr(exc, "stdout", None), redact_values),
+                        stderr=self._redact_text(getattr(exc, "stderr", None), redact_values),
+                        duration_s=elapsed,
+                        timed_out=True,
+                        attempts=attempt,
+                    )
+            except FileNotFoundError as exc:
+                last_exc = exc
+                elapsed = time.monotonic() - start_all
+                self._log("FAIL", f"command not found: {self._format_cmd(cmd, redact_values)}")
+                return CommandResult(
+                    args=list(cmd),
+                    returncode=127,
+                    stdout=None,
+                    stderr=str(exc),
+                    duration_s=elapsed,
+                    timed_out=False,
+                    attempts=attempt,
+                )
+            except subprocess.CalledProcessError as exc:
+                last_exc = exc
+                elapsed = time.monotonic() - start_all
+                stdout = exc.stdout if capture_output else None
+                stderr = exc.stderr if capture_output else None
+                if attempt >= attempts:
+                    return CommandResult(
+                        args=list(cmd),
+                        returncode=int(exc.returncode),
+                        stdout=self._redact_text(stdout, redact_values),
+                        stderr=self._redact_text(stderr, redact_values),
+                        duration_s=elapsed,
+                        timed_out=False,
+                        attempts=attempt,
+                    )
+            except Exception as exc:
+                last_exc = exc
+                if attempt >= attempts:
+                    raise
+
+            self._sleep_backoff(attempt)
+
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("CommandRunner run() failed unexpectedly")
+
+    def check_output(
+        self,
+        args: Sequence[str],
+        *,
+        cwd: Optional[str] = None,
+        env: Optional[Mapping[str, str]] = None,
+        timeout: Optional[float] = None,
+        text: bool = True,
+    ) -> str:
+        result = self.run(
+            args,
+            cwd=cwd,
+            env=env,
+            timeout=timeout,
+            capture_output=True,
+            check=True,
+            text=text,
+        )
+        return result.stdout or ""
+
+    def _validate_args(self, args: Sequence[str]) -> Tuple[str, ...]:
+        if isinstance(args, (str, bytes)):
+            raise TypeError("CommandRunner expects args as a list/tuple of strings (shell=False)")
+        cmd: List[str] = []
+        for a in args:
+            if not isinstance(a, str):
+                cmd.append(str(a))
+            else:
+                cmd.append(a)
+        if not cmd or not cmd[0].strip():
+            raise ValueError("Empty command")
+        return tuple(cmd)
+
+    def _merge_env(self, env: Optional[Mapping[str, str]]) -> Dict[str, str]:
+        merged = os.environ.copy()
+        if env:
+            for k, v in env.items():
+                if isinstance(k, str) and isinstance(v, str):
+                    merged[k] = v
+        return merged
+
+    def _collect_redact_values(self, env: Mapping[str, str]) -> Set[str]:
+        values: Set[str] = set()
+        for k in self._redact_env_keys:
+            v = env.get(k)
+            if isinstance(v, str) and v:
+                values.add(v)
+        return values
+
+    def _sleep_backoff(self, attempt: int) -> None:
+        if attempt <= 0:
+            return
+        sleep_s = self._backoff_base_s * (2 ** (attempt - 1))
+        try:
+            time.sleep(sleep_s)
+        except Exception:
+            return
+
+    def _format_cmd(self, args: Sequence[str], redact_values: Set[str]) -> str:
+        rendered = " ".join(shlex.quote(a) for a in args)
+        return self._redact_text(rendered, redact_values) or rendered
+
+    def _redact_text(self, text: Optional[str], redact_values: Set[str]) -> Optional[str]:
+        if not isinstance(text, str) or not text:
+            return text
+        redacted = text
+        for val in redact_values:
+            if not val:
+                continue
+            redacted = redacted.replace(val, "***")
+        redacted = self._redact_known_flag_values(redacted)
+        return redacted
+
+    def _redact_known_flag_values(self, text: str) -> str:
+        patterns = [
+            r"(--nvd-key\s+)(\S+)",
+            r"(--encrypt-password\s+)(\S+)",
+        ]
+        out = text
+        for pat in patterns:
+            out = re.sub(pat, r"\1***", out, flags=re.IGNORECASE)
+        out = re.sub(r"(socks5://[^:\s]+:)([^@\s]+)(@)", r"\1***\3", out)
+        return out
+
+    def _log(self, level: str, message: str) -> None:
+        if not self._logger:
+            return
+        try:
+            if level == "DEBUG" and hasattr(self._logger, "debug"):
+                self._logger.debug(message)
+            elif level in {"WARNING", "WARN"} and hasattr(self._logger, "warning"):
+                self._logger.warning(message)
+            elif level == "FAIL" and hasattr(self._logger, "error"):
+                self._logger.error(message)
+            elif hasattr(self._logger, "info"):
+                self._logger.info(message)
+        except Exception:
+            return
+

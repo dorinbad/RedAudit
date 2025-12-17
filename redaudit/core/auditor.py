@@ -116,6 +116,8 @@ class InteractiveNetworkAuditor:
             "scan_mode": "normal",
             "threads": DEFAULT_THREADS,
             "output_dir": get_default_reports_base_dir(),
+            # v3.5: Dry-run (print commands without executing)
+            "dry_run": False,
             "scan_vulnerabilities": True,
             "save_txt_report": True,
             "encryption_salt": None,

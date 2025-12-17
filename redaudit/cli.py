@@ -436,6 +436,9 @@ def configure_from_args(app, args) -> bool:
     if args.output:
         app.config["output_dir"] = expand_user_path(args.output)
 
+    # v3.5: Dry-run (print commands where supported)
+    app.config["dry_run"] = bool(getattr(args, "dry_run", False))
+
     # Set max hosts
     if args.max_hosts:
         app.config["max_hosts_value"] = args.max_hosts
