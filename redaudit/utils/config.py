@@ -330,14 +330,24 @@ def get_persistent_defaults() -> Dict[str, Any]:
     if isinstance(raw, dict):
         defaults.update(raw)
 
-    # v3.4.2 hotfix: Old versions could persist /root paths when running under sudo
-    # (because ~ expanded to /root). If we detect an output_dir under /root while
-    # a non-root invoking user exists, rewrite to the invoking user's Documents folder.
+    # v3.4.2+ hotfix: Old versions could persist /root paths when running under sudo
+    # (because ~ expanded to /root). Also, some environments run RedAudit directly as
+    # root (no sudo) but still expect artifacts to land under /home/<user> when a single
+    # "human" user exists. If we detect the legacy default under /root, rewrite to the
+    # preferred Documents folder.
     output_dir = defaults.get("output_dir")
-    invoking_user = get_invoking_user()
-    if invoking_user and isinstance(output_dir, str):
+    if isinstance(output_dir, str):
         normalized = output_dir.strip()
-        if normalized == "/root" or normalized.startswith("/root/"):
+        legacy_root_defaults = {
+            "/root/RedAuditReports",
+            "/root/Documents/RedAuditReports",
+            "/root/Documentos/RedAuditReports",
+        }
+        if normalized in legacy_root_defaults:
+            preferred_default = get_default_reports_base_dir()
+            if preferred_default and preferred_default != normalized:
+                defaults["output_dir"] = preferred_default
+        elif get_invoking_user() and normalized == "/root":
             defaults["output_dir"] = get_default_reports_base_dir()
 
     return defaults

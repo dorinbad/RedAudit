@@ -611,7 +611,8 @@ class InteractiveNetworkAuditor:
         print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
         print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
         for i, opt in enumerate(options):
-            marker = f"{self.COLORS['BOLD']}▶{self.COLORS['ENDC']}" if i == default else " "
+            # Use an ASCII marker for maximum terminal compatibility.
+            marker = f"{self.COLORS['BOLD']}>{self.COLORS['ENDC']}" if i == default else " "
             print(f"  {marker} {i + 1}. {opt}")
         while True:
             try:

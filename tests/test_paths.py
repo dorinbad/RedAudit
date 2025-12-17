@@ -61,6 +61,31 @@ class TestDocumentsDir(unittest.TestCase):
         ):
             self.assertEqual(paths.get_documents_dir("/home/alice"), "/home/alice/Documentos")
 
+    @unittest.skipIf(paths.pwd is None, "pwd not available on this platform")
+    def test_get_default_reports_base_dir_prefers_single_human_user_under_home_when_root(self):
+        class _PwEntry:
+            def __init__(self, name, uid, home, shell="/bin/bash"):
+                self.pw_name = name
+                self.pw_uid = uid
+                self.pw_dir = home
+                self.pw_shell = shell
+
+        def isdir_side_effect(p):
+            return p in {"/home/kali", "/home/kali/Documents"}
+
+        with (
+            patch("redaudit.utils.paths.os.geteuid", return_value=0),
+            patch(
+                "redaudit.utils.paths.pwd.getpwall",
+                return_value=[_PwEntry("kali", 1000, "/home/kali")],
+            ),
+            patch("redaudit.utils.paths.open", side_effect=FileNotFoundError),
+            patch("redaudit.utils.paths.os.path.isdir", side_effect=isdir_side_effect),
+        ):
+            self.assertEqual(
+                paths.get_default_reports_base_dir(), "/home/kali/Documents/RedAuditReports"
+            )
+
 
 class TestChownTree(unittest.TestCase):
     def test_maybe_chown_tree_calls_chown(self):

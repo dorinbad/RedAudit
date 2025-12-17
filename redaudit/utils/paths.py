@@ -25,6 +25,26 @@ def _is_root() -> bool:
         return False
 
 
+def _resolve_home_dir_for_user(username: str) -> Optional[str]:
+    if not username or not isinstance(username, str):
+        return None
+
+    if pwd is not None:
+        try:
+            return pwd.getpwnam(username).pw_dir
+        except Exception:
+            pass
+
+    try:
+        expanded = os.path.expanduser(f"~{username}")
+        if expanded and isinstance(expanded, str) and not expanded.startswith("~"):
+            return expanded
+    except Exception:
+        return None
+
+    return None
+
+
 def get_invoking_user() -> Optional[str]:
     """
     Return the invoking user when running under sudo, otherwise None.
@@ -40,6 +60,80 @@ def get_invoking_user() -> Optional[str]:
     return None
 
 
+def _get_preferred_human_home_under_home() -> Optional[str]:
+    """
+    Best-effort: pick a "human" home directory under /home when running as root.
+
+    This is useful on distributions like Kali where users may run RedAudit directly
+    as root (without sudo) but still expect artifacts to land under /home/<user>.
+    We only return a home directory when we can do so safely (single candidate, or
+    a clear default like 'kali').
+    """
+
+    if not _is_root() or pwd is None:
+        return None
+
+    try:
+        entries = pwd.getpwall()
+    except Exception:
+        return None
+
+    candidates: dict[str, str] = {}
+    for entry in entries:
+        try:
+            username = getattr(entry, "pw_name", None)
+            uid = getattr(entry, "pw_uid", None)
+            home_dir = getattr(entry, "pw_dir", None)
+            shell = getattr(entry, "pw_shell", None)
+            if not username or not isinstance(username, str):
+                continue
+            if username in {"root", "nobody"}:
+                continue
+            if not isinstance(uid, int) or uid < 1000:
+                continue
+            if not home_dir or not isinstance(home_dir, str) or not home_dir.startswith("/home/"):
+                continue
+            if isinstance(shell, str) and shell in {"/usr/sbin/nologin", "/bin/false"}:
+                continue
+            if not os.path.isdir(home_dir):
+                continue
+            candidates[username] = home_dir
+        except Exception:
+            continue
+
+    if not candidates:
+        return None
+    # Common Kali default user.
+    if "kali" in candidates:
+        return candidates["kali"]
+    if len(candidates) == 1:
+        return next(iter(candidates.values()))
+    return None
+
+
+def get_reports_home_dir() -> str:
+    """
+    Resolve the preferred home directory for user-facing artifacts (reports).
+
+    Priority:
+    1) SUDO invoking user (when available)
+    2) A single detected "human" user under /home when running as root
+    3) Current user's home directory
+    """
+
+    invoking_user = get_invoking_user()
+    if invoking_user:
+        home_dir = _resolve_home_dir_for_user(invoking_user)
+        if home_dir:
+            return home_dir
+
+    fallback_home = _get_preferred_human_home_under_home()
+    if fallback_home:
+        return fallback_home
+
+    return os.path.expanduser("~")
+
+
 def get_invoking_home_dir() -> str:
     """
     Resolve the home directory for the user that invoked sudo, if available.
@@ -49,10 +143,9 @@ def get_invoking_home_dir() -> str:
 
     invoking_user = get_invoking_user()
     if invoking_user:
-        try:
-            return os.path.expanduser(f"~{invoking_user}")
-        except Exception:
-            pass
+        home_dir = _resolve_home_dir_for_user(invoking_user)
+        if home_dir:
+            return home_dir
     return os.path.expanduser("~")
 
 
@@ -114,7 +207,7 @@ def get_documents_dir(home_dir: Optional[str] = None) -> str:
     Otherwise falls back to commonly used folder names.
     """
 
-    resolved_home = home_dir or get_invoking_home_dir()
+    resolved_home = home_dir or get_reports_home_dir()
 
     xdg_documents = _read_xdg_documents_dir(resolved_home)
     if xdg_documents:

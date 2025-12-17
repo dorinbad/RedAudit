@@ -137,7 +137,6 @@ class TestPersistentDefaultsOutputDir(unittest.TestCase):
     def test_root_output_dir_is_rewritten_under_sudo(self):
         with (
             patch("redaudit.utils.config.load_config") as mock_load,
-            patch("redaudit.utils.config.get_invoking_user", return_value="dorin"),
             patch(
                 "redaudit.utils.config.get_default_reports_base_dir",
                 return_value="/home/dorin/Documents/RedAuditReports",
@@ -146,6 +145,19 @@ class TestPersistentDefaultsOutputDir(unittest.TestCase):
             mock_load.return_value = {"defaults": {"output_dir": "/root/Documents/RedAuditReports"}}
             defaults = get_persistent_defaults()
             self.assertEqual(defaults.get("output_dir"), "/home/dorin/Documents/RedAuditReports")
+
+    def test_root_output_dir_is_rewritten_without_sudo_when_preferred_home_changes(self):
+        with (
+            patch("redaudit.utils.config.load_config") as mock_load,
+            patch("redaudit.utils.config.get_invoking_user", return_value=None),
+            patch(
+                "redaudit.utils.config.get_default_reports_base_dir",
+                return_value="/home/kali/Documents/RedAuditReports",
+            ),
+        ):
+            mock_load.return_value = {"defaults": {"output_dir": "/root/Documents/RedAuditReports"}}
+            defaults = get_persistent_defaults()
+            self.assertEqual(defaults.get("output_dir"), "/home/kali/Documents/RedAuditReports")
 
 
 class TestConfigFilePermissions(unittest.TestCase):
