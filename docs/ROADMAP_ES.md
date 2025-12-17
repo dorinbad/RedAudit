@@ -4,83 +4,37 @@
 
 Este documento describe el roadmap técnico, las mejoras arquitectónicas planificadas y los enfoques descartados para RedAudit.
 
-## Roadmap Inmediato (v3.1+)
+## Roadmap Activo (Próximos Pasos)
+
+### Funcionalidades de Seguridad y Alta Prioridad (v3.4+)
 
 | Prioridad | Característica | Estado | Descripción |
 | :--- | :--- | :--- | :--- |
-| **Alta** | **Descubrimiento de Topología de Red** | ✅ Implementado (best-effort) | Descubrimiento de topología opcional (ARP/VLAN/LLDP + gateway/rutas) orientado a pistas de "redes ocultas" y contexto L2. |
-| **Alta** | **Puertos UDP Configurables** | ✅ Implementado | Añadido flag CLI `--udp-ports N` (rango: 50-500, defecto: 100) para cobertura UDP ajustable en modo UDP full de identidad. |
-| **Alta** | **Descubrimiento de Red Mejorado (v3.2)** | ✅ Implementado (best-effort) | Descubrimiento activo de redes de invitados y VLANs vía protocolos broadcast (estándar + recon Red Team opcional). |
-| **Media** | **Descubrimiento NetBIOS/mDNS** | ✅ Implementado (v3.2) | Consultas activas de hostname (puerto 137/5353) para mejorar resolución de entidades. |
-| **Media** | **Contenedorización** | Aparcado | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
-| **Baja** | **Ampliar Configuración Persistente** | ✅ Implementado (inicial) | Extendido `~/.redaudit/config.json` más allá de la clave NVD (defaults comunes: hilos/salida/rate-limit/UDP/topología/idioma). |
+| **Alta** | **Pipeline SIEM Nativo** | 🎯 Planificado | Exporters directos: módulo Filebeat personalizado (autoconfig ingest Elasticsearch), mapping Sigma rules para findings comunes (Nikto, CVE, cifrados débiles). JSONL con ECS completo (risk_score calculado, rule.id). Flag `--siem-pipeline elk\|splunk\|qradar`. |
+| **Media** | **Export Playbooks** | 🎯 Planificado (v3.4) | Generar Markdown/YAML playbooks por finding (remediación TLS débil, referencias MITRE/CVE, comandos sugeridos). Incluido en reporte para triage rápido. |
+| **Baja** | **Verificación Hardening con Osquery** | 🎯 Planificado | Módulo post-scan que ejecute queries Osquery (via fleet o directo) en hosts vivos para validar configs detectadas (firewall, servicios). Merge en reporte SIEM/HTML para closed-loop. |
 
-### Descubrimiento de Red Mejorado (Objetivo v3.2)
+### Extensiones Red Team (v3.5+)
 
-**Objetivo**: Detectar redes de invitados, VLANs ocultas y servidores DHCP adicionales no visibles desde el segmento de red principal.
-
-**Progreso Actual (v3.2)**:
-
-- ✅ Módulo core: `redaudit/core/net_discovery.py`
-- ✅ Flags CLI: `--net-discovery`, `--redteam` (+ flags opcionales de tuning)
-- ✅ Descubrimiento DHCP vía nmap
-- ✅ Sweep Fping
-- ✅ Descubrimiento NetBIOS (nbtscan/nmap)
-- ✅ Descubrimiento mDNS/Bonjour
-- ✅ Descubrimiento de dispositivos UPNP
-- ✅ Escaneo ARP Netdiscover
-- ✅ Análisis de VLANs candidatas
-- ✅ Recon Red Team (v3.2): SNMP/SMB/RPC/LDAP/Kerberos/DNS + capturas L2 pasivas (con guardas; best-effort)
-
-**Herramientas de Descubrimiento Estándar (Implementadas)**:
-
-| Técnica | Herramienta | Estado |
-| :--- | :--- | :--- |
-| **Descubrimiento DHCP** | `nmap --script broadcast-dhcp-discover` | ✅ |
-| **Descubrimiento NetBIOS** | `nbtscan` / `nmap --script nbstat` | ✅ |
-| **mDNS/Bonjour** | `avahi-browse` / `nmap --script dns-service-discovery` | ✅ |
-| **Netdiscover** | `netdiscover -r <rango> -P` | ✅ |
-| **Sweep Fping** | `fping -a -g <rango>` | ✅ |
-| **Descubrimiento UPNP** | `nmap --script broadcast-upnp-info` | ✅ |
-
-**Técnicas Red Team / Pentesting (Implementadas - best-effort)**:
-
-| Técnica | Herramienta | Estado | Qué Detecta |
+| Prioridad | Característica | Estado | Descripción |
 | :--- | :--- | :--- | :--- |
-| **SNMP Walking** | `snmpwalk -v2c -c public <ip>` | ✅ Implementado (v3.2) | Mapeo de puertos de switch, asignaciones VLAN, tablas ARP |
-| **Enumeración SMB** | `enum4linux -a <ip>` / `crackmapexec smb` | ✅ Implementado (v3.2) | Shares Windows, usuarios, políticas de contraseña, dominios |
-| **Enumeración VLAN** | `tcpdump` (pasivo) / `scapy` (sniff pasivo opt-in) | ✅ Implementado (v3.2) | IDs VLAN 802.1Q observados + pistas DTP (best-effort) |
-| **Topología STP** | `tcpdump` (captura BPDU pasiva) | ✅ Implementado (v3.2) | Pistas de Spanning Tree (root/bridge IDs si son visibles) |
-| **Descubrimiento HSRP/VRRP** | `tcpdump` (captura pasiva) | ✅ Implementado (v3.2) | Presencia de protocolos de redundancia de gateway (best-effort) |
-| **LLMNR/NBT-NS** | `tcpdump` (captura pasiva) | ✅ Implementado (v3.2) | Peticiones de resolución de nombres Windows (solo recon) |
-| **Bettercap Recon** | `bettercap` (opt-in) | ✅ Implementado (v3.2) | Salida de recon opcional (con guardas; requiere flag explícito) |
-| **Masscan** | `masscan` | ✅ Implementado (con guardas) | Pistas rápidas de puertos para muestreo de objetivos (requiere root) |
-| **Descubrimiento de Routers** | `nmap --script broadcast-igmp-discovery` / `tcpdump` | ✅ Implementado (v3.2) | Routers multicast candidatos (best-effort) |
-| **Descubrimiento IPv6** | `ping6` + `ip -6 neigh` | ✅ Implementado (v3.2) | Vecinos IPv6 vía multicast + caché de vecinos (best-effort) |
-| **Scapy Custom** | `scapy` (solo sniff pasivo) | ✅ Implementado (v3.2) | Extensión de sniff 802.1Q pasiva (sin inyección de paquetes) |
-| **Enumeración RPC** | `rpcclient` / `nmap --script msrpc-enum` | ✅ Implementado (v3.2) | Pistas de servicios RPC Windows (best-effort) |
-| **Enumeración LDAP** | `ldapsearch` / `nmap --script ldap-rootdse` | ✅ Implementado (v3.2) | Info RootDSE AD/LDAP (best-effort) |
-| **Enumeración Kerberos** | `nmap --script krb5-info` (+ opcional `kerbrute userenum`) | ✅ Implementado (v3.2) | Descubrimiento de realm + userenum opcional (requiere lista explícita) |
-| **Transferencia de Zona DNS** | `dig axfr` (desde DNS por DHCP) | ✅ Implementado (v3.2) | Intento AXFR (requiere zona explícita o pista por DHCP) |
-| **Web Fingerprint** | `whatweb` / `wappalyzer` | ✅ (scanner.py) | Tecnologías web, frameworks, versiones |
-| **Análisis SSL/TLS** | `testssl.sh` | ✅ (scanner.py) | Problemas de certificados, debilidades de cifrado |
+| **Media** | **Integración Impacket** | 🎯 Planificado | Módulo opcional `--redteam-deep` usando Impacket (smbexec, wmiexec, secretsdump) sobre credenciales dummy o null sessions detectadas. Genera evidencia PoC para validar detección Blue Team (SMB signing, LAPS). |
+| **Media** | **BloodHound Collector Automático** | 🎯 Planificado | Ejecutar SharpHound/BloodHound.py en hosts Windows vivos (via psexec/winrm detectado). Importar JSON a Neo4j local y generar reporte paths ataque comunes (Kerberoast, AS-REProast). Ayuda Blue Team a priorizar hardening AD. |
+| **Media** | **Automatización Nuclei** | 🎯 Planificado (v3.6) | Lanzar Nuclei sobre HTTP/HTTPS/servicios detectados con templates community + opción cargar custom. Output mergeado en findings con PoC URLs. Permite simular ataques modernos y generar Sigma rules defensivas. |
+| **Baja** | **Generación Playbook Red Team** | 🎯 Planificado | Por finding exploitable (ej: CVE alto, auth débil), generar scripts PoC automáticos (sugerencias Python/Impacket/Msfvenom) en carpeta evidence. Incluye safeguards (solo labs, `--dry-run`). Facilita testing controles Blue Team (EDR, logging). |
 
-**Opciones CLI (Implementadas)**:
+### Experiencia de Desarrollador / Deuda Técnica
 
-```bash
-redaudit --net-discovery --target 192.168.0.0/16 --yes   # Descubrimiento broadcast completo
-redaudit --net-discovery dhcp,netbios --target 10.0.0.0/8  # Solo protocolos específicos
-redaudit --net-discovery --redteam --target 10.0.0.0/8   # Incluir recon Red Team (más lento / más ruido)
+| Prioridad | Característica | Estado | Descripción |
+| :--- | :--- | :--- | :--- |
+| **Media** | **Contenedorización** | Aparcado | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
+| **Media** | **CommandRunner Centralizado** | 🎯 Planificado (v3.5) | Módulo único para ejecución de comandos externos: args como lista (anti-inyección), timeouts configurables, reintentos con backoff, redacción de secretos en logs, soporte dry-run. Refactoriza 50+ llamadas subprocess. |
+| **Media** | **Soporte Completo `--dry-run`** | 🎯 Planificado | Propagar flag `--dry-run` a todos los módulos para que los comandos se impriman pero no se ejecuten. Depende de CommandRunner. Útil para auditoría y debugging. |
+| **Baja** | **Única Fuente de Versión** | 🎯 Planificado | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
+| **Baja** | **Autodetección TTY** | 🎯 Planificado | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
+| **Baja** | **Webhook Interactivo** | 🎯 Planificado | Añadir prompt de URL webhook al wizard interactivo para usuarios avanzados. Actualmente webhook es solo CLI (`--webhook URL`). |
 
-# Tuning opcional (v3.2)
-redaudit --net-discovery --redteam --net-discovery-interface eth0 --target 10.0.0.0/8 --yes
-redaudit --net-discovery --redteam --snmp-community public --redteam-max-targets 50 --target 10.0.0.0/8 --yes
-redaudit --net-discovery --redteam --dns-zone corp.local --target 10.0.0.0/8 --yes
-redaudit --net-discovery --redteam --kerberos-realm CORP.LOCAL --kerberos-userlist users.txt --target 10.0.0.0/8 --yes
-redaudit --net-discovery --redteam --redteam-active-l2 --net-discovery-interface eth0 --target 10.0.0.0/8 --yes
-```
-
-**Salida**: Nuevo bloque `net_discovery` en el reporte JSON con servidores detectados, redes de invitados, mapeos VLAN y observaciones cross-VLAN.
+## Objetivos Futuros (Deep Dives)
 
 ### Descubrimiento de Topología de Red (Objetivo v4.0)
 
@@ -103,42 +57,42 @@ redaudit --topology-only --target 192.168.0.0/16 --yes  # Solo topología (sin e
 redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditoría completa
 ```
 
-## Roadmap v3.3 / v4.0 (SIEM-Ready + Blue Team Manual + Testing Red Team)
+## Referencia: Capacidades Implementadas Recientemente
 
-### Integración SIEM y Alertas
+### Descubrimiento de Red Mejorado (v3.2)
 
-| Prioridad | Característica | Estado | Descripción |
-| :--- | :--- | :--- | :--- |
-| **Alta** | **Pipeline SIEM Nativo** | 🎯 Planificado | Exporters directos: módulo Filebeat personalizado (autoconfig ingest Elasticsearch), mapping Sigma rules para findings comunes (Nikto, CVE, cifrados débiles). JSONL con ECS completo (risk_score calculado, rule.id). Flag `--siem-pipeline elk\|splunk\|qradar`. |
-| **Alta** | **Webhook Alertas en Tiempo Real** | ✅ Implementado (v3.3) | `--webhook URL` para enviar findings críticos (CVE alto, servicios expuestos) via POST JSON a Slack/Teams/PagerDuty/TheHive durante el scan. Respuesta inmediata Blue Team. |
-| **Media** | **Diff Visual y Tracking Longitudinal** | ✅ Implementado (v3.3) | Extender `--diff` con salida HTML comparativa (side-by-side, highlight nuevo/resuelto). Export diferencial JSONL para SIEM histórico. |
+**Resumen**: Detectar redes de invitados, VLANs ocultas y servidores DHCP adicionales no visibles desde el segmento de red principal.
+Funcionalidades permiten detectar:
 
-### Herramientas Blue Team Manual
+- ✅ Descubrimiento DHCP y sweeps Fping
+- ✅ Descubrimiento NetBIOS/mDNS/Bonjour/UPNP
+- ✅ Recon Red Team (SNMP/SMB/RPC/LDAP/Kerberos/DNS)
+- ✅ Análisis de candidatos VLAN y capturas L2 pasivas
 
-| Prioridad | Característica | Estado | Descripción |
-| :--- | :--- | :--- | :--- |
-| **Alta** | **Dashboard HTML Interactivo** | ✅ Implementado (v3.3) | Reporte HTML autogenerado (Jinja2 + Chart.js): tablas sortable assets/findings, gráficos (distribución severidad, top puertos). Flag `--html-report`. |
-| **Media** | **Export Playbooks** | 🎯 Planificado (v3.4) | Generar Markdown/YAML playbooks por finding (remediación TLS débil, referencias MITRE/CVE, comandos sugeridos). Incluido en reporte para triage rápido. |
-| **Baja** | **Verificación Hardening con Osquery** | 🎯 Planificado | Módulo post-scan que ejecute queries Osquery (via fleet o directo) en hosts vivos para validar configs detectadas (firewall, servicios). Merge en reporte SIEM/HTML para closed-loop. |
+**Herramientas de Descubrimiento Estándar**:
 
-### Extensiones Red Team Testing (Validación Defensiva)
+| Técnica | Herramienta |
+| :--- | :--- |
+| **Descubrimiento DHCP** | `nmap --script broadcast-dhcp-discover` |
+| **NetBIOS/mDNS/UPNP** | `nbtscan`, `avahi-browse`, `nmap` |
+| **Netdiscover** | `netdiscover -r <rango> -P` |
 
-| Prioridad | Característica | Estado | Descripción |
-| :--- | :--- | :--- | :--- |
-| **Media** | **Integración Impacket** | 🎯 Planificado | Módulo opcional `--redteam-deep` usando Impacket (smbexec, wmiexec, secretsdump) sobre credenciales dummy o null sessions detectadas. Genera evidencia PoC para validar detección Blue Team (SMB signing, LAPS). |
-| **Media** | **BloodHound Collector Automático** | 🎯 Planificado | Ejecutar SharpHound/BloodHound.py en hosts Windows vivos (via psexec/winrm detectado). Importar JSON a Neo4j local y generar reporte paths ataque comunes (Kerberoast, AS-REProast). Ayuda Blue Team a priorizar hardening AD. |
-| **Media** | **Automatización Nuclei** | 🎯 Planificado (v3.6) | Lanzar Nuclei sobre HTTP/HTTPS/servicios detectados con templates community + opción cargar custom. Output mergeado en findings con PoC URLs. Permite simular ataques modernos y generar Sigma rules defensivas. |
-| **Baja** | **Generación Playbook Red Team** | 🎯 Planificado | Por finding exploitable (ej: CVE alto, auth débil), generar scripts PoC automáticos (sugerencias Python/Impacket/Msfvenom) en carpeta evidence. Incluye safeguards (solo labs, `--dry-run`). Facilita testing controles Blue Team (EDR, logging). |
+**Técnicas Red Team (Guardas/Opcional)**:
 
-### Experiencia de Desarrollador / Deuda Técnica (v3.3+)
+| Técnica | Herramienta | Qué Detecta |
+| :--- | :--- | :--- |
+| **SNMP Walking** | `snmpwalk -v2c -c public` | Puertos switch, VLANs |
+| **Enum SMB** | `enum4linux`, `crackmapexec` | Usuarios, shares, políticas |
+| **VLAN/STP/HSRP** | `tcpdump` | Pistas topología L2 pasiva |
+| **Descubrimiento IPv6** | `ping6`, `ip -6 neigh` | Vecinos IPv6 |
+| **Kerberos/LDAP** | Scripts `nmap` | Estructura AD, realms |
 
-| Prioridad | Característica | Estado | Descripción |
-| :--- | :--- | :--- | :--- |
-| **Media** | **CommandRunner Centralizado** | 🎯 Planificado (v3.5) | Módulo único para ejecución de comandos externos: args como lista (anti-inyección), timeouts configurables, reintentos con backoff, redacción de secretos en logs, soporte dry-run. Refactoriza 50+ llamadas subprocess. |
-| **Media** | **Soporte Completo `--dry-run`** | 🎯 Planificado | Propagar flag `--dry-run` a todos los módulos para que los comandos se impriman pero no se ejecuten. Depende de CommandRunner. Útil para auditoría y debugging. |
-| **Baja** | **Única Fuente de Versión** | 🎯 Planificado | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
-| **Baja** | **Autodetección TTY** | 🎯 Planificado | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
-| **Baja** | **Webhook Interactivo** | 🎯 Planificado | Añadir prompt de URL webhook al wizard interactivo para usuarios avanzados. Actualmente webhook es solo CLI (`--webhook URL`). |
+**Ejemplos CLI**:
+
+```bash
+redaudit --net-discovery --target 192.168.0.0/16 --yes
+redaudit --net-discovery --redteam --target 10.0.0.0/8
+```
 
 ## Propuestas Arquitectónicas
 
