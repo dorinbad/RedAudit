@@ -501,7 +501,9 @@ def save_results(
             logger.info("JSONL exports skipped (report encryption enabled)")
 
         # v3.3: Generate HTML report if enabled
-        if config.get("html_report") and not encryption_enabled:
+        # v3.3.1: Check both CLI key (html_report) and wizard key (save_html_report)
+        html_enabled = config.get("html_report") or config.get("save_html_report")
+        if html_enabled and not encryption_enabled:
             try:
                 from redaudit.core.html_reporter import save_html_report
 
@@ -515,7 +517,7 @@ def save_results(
                     logger.warning("HTML report generation failed: %s", html_err)
                 if print_fn:
                     print_fn(f"HTML report error: {html_err}", "FAIL")
-        elif config.get("html_report") and encryption_enabled:
+        elif html_enabled and encryption_enabled:
             if logger:
                 logger.info("HTML report skipped (report encryption enabled)")
 
