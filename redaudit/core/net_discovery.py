@@ -40,7 +40,9 @@ def _run_cmd(
         redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
     )
     res = runner.run(args, timeout=float(timeout_s), capture_output=True, check=False, text=True)
-    return int(res.returncode), res.stdout or "", res.stderr or ""
+    stdout = res.stdout if isinstance(res.stdout, str) else ""
+    stderr = res.stderr if isinstance(res.stderr, str) else ""
+    return int(res.returncode), stdout, stderr
 
 
 def _check_tools() -> Dict[str, bool]:
