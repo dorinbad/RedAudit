@@ -10,3 +10,4 @@ RedAudit v3.5.1 is a hotfix release focused on completing `--dry-run` behavior a
 - **Updater reliability**: If the system install is updated but `~/RedAudit` has local git changes, RedAudit now skips updating the home copy instead of failing the whole update.
 - **Post-update refresh hint**: After updating, RedAudit prints a reminder to restart the terminal or run `hash -r` if the banner/version does not refresh.
 - **Output provenance**: When encryption is disabled, RedAudit writes `run_manifest.json` (artifact list + counts) and adds provenance fields to `findings.jsonl` / `assets.jsonl` for easier SIEM ingestion.
+- **Silent progress UI**: Host and vuln phases show Rich progress bars with ETA, and heartbeat "no output" clocking messages no longer clutter the terminal.

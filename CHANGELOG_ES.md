@@ -17,6 +17,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - **Manifiesto de salida**: Cuando el cifrado está desactivado, RedAudit ahora escribe `run_manifest.json` en la carpeta de salida (métricas + lista de artefactos).
 - **Campos de procedencia SIEM**: `findings.jsonl` / `assets.jsonl` ahora incluyen `session_id`, `schema_version`, `scanner`, `scanner_version`; `summary.json` añade `redaudit_version`.
+- **UI de progreso silenciosa**: Las barras de progreso Rich ahora muestran ETA en fases de hosts/vulns, y los mensajes tipo "sin salida" del heartbeat dejan de spamear el terminal.
 
 ### Corregido
 

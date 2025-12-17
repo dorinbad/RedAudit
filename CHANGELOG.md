@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Output manifest**: When encryption is disabled, RedAudit now writes `run_manifest.json` in the output folder (counts + artifact list).
 - **SIEM provenance fields**: `findings.jsonl` / `assets.jsonl` now include `session_id`, `schema_version`, `scanner`, `scanner_version`; `summary.json` adds `redaudit_version`.
+- **Silent progress UI**: Rich progress bars now show an ETA for host/vuln phases, and heartbeat "no output" clocking messages no longer spam the terminal.
 
 ### Fixed
 
