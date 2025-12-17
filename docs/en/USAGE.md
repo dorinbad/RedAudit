@@ -111,6 +111,7 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 | Flag | Description |
 | :--- | :--- |
 | `--dry-run` | Print commands that would be executed without running them. **Note:** this is being rolled out module-by-module in v3.5 (some external tools may still execute until migration is complete). |
+| `--no-prevent-sleep` | Do not inhibit system/display sleep while a scan is running (best-effort inhibit is enabled by default). |
 
 ### Security
 

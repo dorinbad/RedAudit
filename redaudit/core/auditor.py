@@ -118,6 +118,8 @@ class InteractiveNetworkAuditor:
             "output_dir": get_default_reports_base_dir(),
             # v3.5: Dry-run (print commands without executing)
             "dry_run": False,
+            # v3.5: Best-effort prevent system/display sleep during scan
+            "prevent_sleep": True,
             "scan_vulnerabilities": True,
             "save_txt_report": True,
             "encryption_salt": None,
@@ -1663,6 +1665,16 @@ class InteractiveNetworkAuditor:
         self.scan_start_time = datetime.now()
         self.start_heartbeat()
 
+        inhibitor = None
+        if self.config.get("prevent_sleep", True):
+            try:
+                from redaudit.core.power import SleepInhibitor
+
+                inhibitor = SleepInhibitor(logger=self.logger)
+                inhibitor.start()
+            except Exception:
+                inhibitor = None
+
         try:
             # v2.8.1: Create timestamped output folder BEFORE scanning
             # This ensures PCAP files are saved inside the result folder
@@ -1882,6 +1894,11 @@ class InteractiveNetworkAuditor:
             self.show_results()
 
         finally:
+            if inhibitor is not None:
+                try:
+                    inhibitor.stop()
+                except Exception:
+                    pass
             self.stop_heartbeat()
 
         return not self.interrupted

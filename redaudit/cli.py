@@ -165,6 +165,11 @@ Examples:
         action="store_true",
         help="Print commands that would be executed without running them",
     )
+    parser.add_argument(
+        "--no-prevent-sleep",
+        action="store_true",
+        help="Do not inhibit system/display sleep while a scan is running",
+    )
     # v3.3: HTML report generation
     parser.add_argument(
         "--html-report",
@@ -440,6 +445,9 @@ def configure_from_args(app, args) -> bool:
     app.config["dry_run"] = bool(getattr(args, "dry_run", False))
     if app.config["dry_run"]:
         os.environ["REDAUDIT_DRY_RUN"] = "1"
+
+    # v3.5: Prevent sleep while scanning (best-effort)
+    app.config["prevent_sleep"] = not bool(getattr(args, "no_prevent_sleep", False))
 
     # Set max hosts
     if args.max_hosts:

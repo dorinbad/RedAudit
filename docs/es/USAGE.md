@@ -111,6 +111,7 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 | Flag | Descripción |
 | :--- | :--- |
 | `--dry-run` | Muestra los comandos que se ejecutarían sin ejecutarlos. **Nota:** se está desplegando módulo a módulo en v3.5 (algunas herramientas externas pueden seguir ejecutándose hasta completar la migración). |
+| `--no-prevent-sleep` | No inhibir reposo del sistema/pantalla mientras se ejecuta el scan (el inhibidor best-effort está habilitado por defecto). |
 
 ### Seguridad
 
