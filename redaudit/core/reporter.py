@@ -508,9 +508,13 @@ def save_results(
                 html_path = save_html_report(results, config, output_dir)
                 if html_path and print_fn and t_fn:
                     print_fn(t_fn("html_report", html_path), "OKGREEN")
+                elif not html_path and print_fn:
+                    print_fn("HTML report generation failed (check log)", "WARNING")
             except Exception as html_err:
                 if logger:
                     logger.warning("HTML report generation failed: %s", html_err)
+                if print_fn:
+                    print_fn(f"HTML report error: {html_err}", "FAIL")
         elif config.get("html_report") and encryption_enabled:
             if logger:
                 logger.info("HTML report skipped (report encryption enabled)")
