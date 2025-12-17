@@ -160,12 +160,20 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrado con auditor�
 
 ### 3. Configuración Persistente
 
-**Estado**: Planificado
-**Concepto**: Ampliar la configuración de usuario en `~/.redaudit/config.json` para anular valores por defecto (eliminando la necesidad de flags CLI repetitivos). Opcionalmente añadir importación/exportación YAML por comodidad.
+**Estado**: ✅ Implementado (v3.1.1)
+**Concepto**: Configuración de usuario en `~/.redaudit/config.json` anula valores por defecto (hilos, salida, rate-limit, UDP, topología, idioma). Importación/exportación YAML queda como mejora futura.
 
 ## Hitos Completados
 
-### v3.2.2 (Completado - Diciembre 2025) -> **ACTUAL**
+### v3.3 (Completado - Diciembre 2025) -> **ACTUAL**
+
+*Release centrada en alertas SIEM, dashboards Blue Team y salida diff visual.*
+
+- [x] **Webhook Alertas en Tiempo Real**: `--webhook URL` envía findings críticos (CVE alto, servicios expuestos) via POST JSON a Slack/Teams/PagerDuty/TheHive durante el scan.
+- [x] **Dashboard HTML Interactivo**: Reporte HTML autogenerado (Jinja2 + Chart.js) con tablas ordenables, gráficos de severidad y top puertos. Flag `--html-report`.
+- [x] **Diff Visual y Tracking Longitudinal**: Salida HTML comparativa para `--diff` (side-by-side, highlight nuevo/resuelto). Export diferencial JSONL para SIEM histórico.
+
+### v3.2.2 (Completado - Diciembre 2025)
 
 *Release centrado en pulido de UX, Menú Principal Interactivo y simplificación de Topología.*
 

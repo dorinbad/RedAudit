@@ -160,12 +160,20 @@ redaudit --topology --target 10.0.0.0/8 --yes           # Integrated with full a
 
 ### 3. Persistent Configuration
 
-**Status**: Planned
-**Concept**: Expand user configuration in `~/.redaudit/config.json` to override defaults (removing need for repetitive CLI flags). Optionally add YAML import/export for convenience.
+**Status**: ✅ Implemented (v3.1.1)
+**Concept**: User configuration in `~/.redaudit/config.json` overrides defaults (threads, output, rate-limit, UDP, topology, lang). YAML import/export remains a future enhancement.
 
 ## Completed Milestones
 
-### v3.2.2 (Completed - December 2025) -> **CURRENT**
+### v3.3 (Completed - December 2025) -> **CURRENT**
+
+*Feature release focused on SIEM alerting, Blue Team dashboards, and visual diff output.*
+
+- [x] **Webhook Realtime Alerting**: `--webhook URL` sends critical findings (high CVE, exposed services) via POST JSON to Slack/Teams/PagerDuty/TheHive during scan.
+- [x] **Interactive HTML Dashboard**: Auto-generated HTML report (Jinja2 + Chart.js) with sortable tables, severity charts, and top ports. Flag `--html-report`.
+- [x] **Diff Visual & Longitudinal Tracking**: Comparative HTML output for `--diff` (side-by-side, highlight new/resolved). JSONL differential export for historical SIEM.
+
+### v3.2.2 (Completed - December 2025)
 
 *Release focused on UX polish, Interactive Main Menu, and Topology Streamlining.*
 
