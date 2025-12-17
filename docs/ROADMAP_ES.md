@@ -33,6 +33,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 | **Baja** | **Única Fuente de Versión** | 🎯 Planificado | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
 | **Baja** | **Autodetección TTY** | 🎯 Planificado | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
 | **Baja** | **Webhook Interactivo** | 🎯 Planificado | Añadir prompt de URL webhook al wizard interactivo para usuarios avanzados. Actualmente webhook es solo CLI (`--webhook URL`). |
+| **Baja** | **HTML Report Interactivo** | 🎯 Planificado | Añadir pregunta "¿Generar reporte HTML?" al wizard interactivo. Actualmente HTML report es solo CLI (`--html-report`). |
 
 ## Objetivos Futuros (Deep Dives)
 
