@@ -22,7 +22,7 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 | :--- | :--- |
 | `-t`, `--target` | IP objetivo, subred (CIDR), o lista separada por comas. |
 | `-m`, `--mode` | Intensidad: `fast` (descubrimiento), `normal` (puertos top), `full` (todos + scripts). |
-| `-o`, `--output` | Especificar directorio de salida. Por defecto: `~/Documents/RedAuditReports`. |
+| `-o`, `--output` | Especificar directorio de salida. Por defecto: `~/Documents/RedAuditReports` (usuario invocador bajo `sudo`). |
 | `--lang` | Idioma de interfaz: `en` (defecto), `es`. |
 | `-y`, `--yes` | Saltar confirmación de advertencia legal (usar con precaución). |
 
@@ -90,7 +90,7 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 | `--html-report` | Genera dashboard HTML interactivo con gráficos y tablas ordenables (funciona offline). |
 | `--webhook URL` | Envía alertas en tiempo real para hallazgos de alta severidad a una URL (Slack/Teams/Discord). |
 
-### Características v3.4.0
+### Características v3.4.x
 
 **Playbooks de Remediación** se generan automáticamente tras cada escaneo. Proveen guías accionables para remediar hallazgos.
 
@@ -261,7 +261,7 @@ export NVD_API_KEY="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 Crea `~/.redaudit/config.json`:
 
-**Nota**: El campo `version` en `~/.redaudit/config.json` es la **versión del esquema de configuración** (actualmente `3.2.3`) y no tiene por qué coincidir con la versión de la aplicación RedAudit (v3.4.0).
+**Nota**: El campo `version` en `~/.redaudit/config.json` es la **versión del esquema de configuración** (actualmente `3.2.3`) y no tiene por qué coincidir con la versión de la aplicación RedAudit (v3.4.1).
 
 ```json
 {

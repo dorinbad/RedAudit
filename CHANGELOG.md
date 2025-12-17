@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
+## [3.4.1] - 2025-12-17 (Hotfix)
+
+### Fixed
+
+- **Default Output Directory (sudo)**: Reports now default to the invoking user’s Documents folder when running under `sudo` (instead of `/root`).
+- **Tilde Expansion (sudo)**: `--output ~/...` and persisted defaults using `~` now expand against the invoking user under `sudo`.
+- **Ownership**: Best-effort chown of the report output folder to the invoking user to avoid root-owned artifacts under the user’s home.
+
 ## [3.4.0] - 2025-12-17 (Playbook Export)
 
 ### Added
