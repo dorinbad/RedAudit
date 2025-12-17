@@ -11,6 +11,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (nada aún)
 
+## [3.5.1] - 2025-12-17 (Hotfix)
+
+### Corregido
+
+- **Soporte completo de `--dry-run`**: Propagado a los módulos restantes para que no se ejecute ningún comando externo, mostrando igualmente los comandos planificados.
+- **UX del updater**: Si el system install se actualiza pero `~/RedAudit` tiene cambios locales git, RedAudit ahora omite actualizar la copia en home en vez de fallar toda la actualización.
+- **Nota post-actualización**: Tras actualizar, RedAudit recuerda reiniciar el terminal o ejecutar `hash -r` si el banner/versión no se refresca.
+
 ## [3.5.0] - 2025-12-17 (Fiabilidad y Ejecución)
 
 ### Añadido
