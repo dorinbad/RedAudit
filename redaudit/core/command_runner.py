@@ -20,8 +20,8 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, 
 class CommandResult:
     args: List[str]
     returncode: int
-    stdout: Optional[str]
-    stderr: Optional[str]
+    stdout: Optional[str | bytes]
+    stderr: Optional[str | bytes]
     duration_s: float
     timed_out: bool
     attempts: int
@@ -71,11 +71,16 @@ class CommandRunner:
 
         if self._dry_run:
             self._log("INFO", f"[dry-run] {self._format_cmd(cmd, redact_values)}")
+            empty_out: str | bytes | None
+            if not capture_output:
+                empty_out = None
+            else:
+                empty_out = "" if text else b""
             return CommandResult(
                 args=list(cmd),
                 returncode=0,
-                stdout="" if capture_output else None,
-                stderr="" if capture_output else None,
+                stdout=empty_out,
+                stderr=empty_out,
                 duration_s=0.0,
                 timed_out=False,
                 attempts=0,
@@ -99,13 +104,23 @@ class CommandRunner:
                     input=input_text if input_text is not None else None,
                 )
                 elapsed = time.monotonic() - start_all
-                stdout = completed.stdout if capture_output else None
-                stderr = completed.stderr if capture_output else None
+                stdout_raw = completed.stdout if capture_output else None
+                stderr_raw = completed.stderr if capture_output else None
+                stdout = (
+                    stdout_raw
+                    if not isinstance(stdout_raw, str)
+                    else self._redact_text(stdout_raw, redact_values)
+                )
+                stderr = (
+                    stderr_raw
+                    if not isinstance(stderr_raw, str)
+                    else self._redact_text(stderr_raw, redact_values)
+                )
                 return CommandResult(
                     args=list(cmd),
                     returncode=int(completed.returncode),
-                    stdout=self._redact_text(stdout, redact_values),
-                    stderr=self._redact_text(stderr, redact_values),
+                    stdout=stdout,
+                    stderr=stderr,
                     duration_s=elapsed,
                     timed_out=False,
                     attempts=attempt,
@@ -115,11 +130,23 @@ class CommandRunner:
                 elapsed = time.monotonic() - start_all
                 self._log("WARNING", f"timeout: {self._format_cmd(cmd, redact_values)}")
                 if attempt >= attempts:
+                    stdout_raw = getattr(exc, "stdout", None)
+                    stderr_raw = getattr(exc, "stderr", None)
+                    stdout = (
+                        stdout_raw
+                        if not isinstance(stdout_raw, str)
+                        else self._redact_text(stdout_raw, redact_values)
+                    )
+                    stderr = (
+                        stderr_raw
+                        if not isinstance(stderr_raw, str)
+                        else self._redact_text(stderr_raw, redact_values)
+                    )
                     return CommandResult(
                         args=list(cmd),
                         returncode=124,
-                        stdout=self._redact_text(getattr(exc, "stdout", None), redact_values),
-                        stderr=self._redact_text(getattr(exc, "stderr", None), redact_values),
+                        stdout=stdout,
+                        stderr=stderr,
                         duration_s=elapsed,
                         timed_out=True,
                         attempts=attempt,
@@ -140,14 +167,24 @@ class CommandRunner:
             except subprocess.CalledProcessError as exc:
                 last_exc = exc
                 elapsed = time.monotonic() - start_all
-                stdout = exc.stdout if capture_output else None
-                stderr = exc.stderr if capture_output else None
+                stdout_raw = exc.stdout if capture_output else None
+                stderr_raw = exc.stderr if capture_output else None
+                stdout = (
+                    stdout_raw
+                    if not isinstance(stdout_raw, str)
+                    else self._redact_text(stdout_raw, redact_values)
+                )
+                stderr = (
+                    stderr_raw
+                    if not isinstance(stderr_raw, str)
+                    else self._redact_text(stderr_raw, redact_values)
+                )
                 if attempt >= attempts:
                     return CommandResult(
                         args=list(cmd),
                         returncode=int(exc.returncode),
-                        stdout=self._redact_text(stdout, redact_values),
-                        stderr=self._redact_text(stderr, redact_values),
+                        stdout=stdout,
+                        stderr=stderr,
                         duration_s=elapsed,
                         timed_out=False,
                         attempts=attempt,
@@ -172,6 +209,8 @@ class CommandRunner:
         timeout: Optional[float] = None,
         text: bool = True,
     ) -> str:
+        if not text:
+            raise ValueError("check_output requires text=True")
         result = self.run(
             args,
             cwd=cwd,
@@ -181,7 +220,7 @@ class CommandRunner:
             check=True,
             text=text,
         )
-        return result.stdout or ""
+        return str(result.stdout or "")
 
     def _validate_args(self, args: Sequence[str]) -> Tuple[str, ...]:
         if isinstance(args, (str, bytes)):

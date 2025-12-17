@@ -47,6 +47,14 @@ class TestCommandRunner(unittest.TestCase):
         self.assertTrue(any("dry-run" in m[1] for m in logger.messages if m[0] == "info"))
 
     @patch("redaudit.core.command_runner.subprocess.run")
+    def test_dry_run_binary_mode_returns_bytes(self, mock_run):
+        runner = CommandRunner(dry_run=True)
+        res = runner.run(["curl", "http://example.com"], capture_output=True, text=False)
+        mock_run.assert_not_called()
+        self.assertEqual(res.stdout, b"")
+        self.assertEqual(res.stderr, b"")
+
+    @patch("redaudit.core.command_runner.subprocess.run")
     def test_retries_on_timeout_then_succeeds(self, mock_run):
         import subprocess
 
