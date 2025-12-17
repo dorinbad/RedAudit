@@ -6,8 +6,8 @@ GPLv3 License
 """
 
 # Version
-VERSION = "3.2.3"
-SCHEMA_VERSION = "3.2"  # Report schema version (may differ from app version)
+VERSION = "3.3.0"
+SCHEMA_VERSION = "3.3"  # Report schema version (may differ from app version)
 
 # Default language (installer may override)
 DEFAULT_LANG = "en"

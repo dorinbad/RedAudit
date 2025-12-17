@@ -4,7 +4,7 @@
 
 RedAudit is a CLI tool for structured network auditing and hardening on Kali/Debian systems.
 
-![Version](https://img.shields.io/badge/version-3.2.3-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-3.3.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
@@ -16,7 +16,7 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.2.3
+                                      v3.3.0
         Interactive Network Audit Tool
 ```
 
@@ -202,6 +202,8 @@ For more examples including IPv6, CVE correlation, SOCKS5 pivoting, and SIEM int
 - `--net-discovery`: Enhanced L2/broadcast discovery **(v3.2+)**
 - `--cve-lookup`: CVE correlation via NVD API **(v3.0)**
 - `--diff OLD NEW`: Differential analysis between scans **(v3.0)**
+- `--html-report`: Generate interactive HTML dashboard **(v3.3)**
+- `--webhook URL`: Send real-time alerts to webhook endpoint **(v3.3)**
 - `--ipv6`: IPv6-only scanning mode **(v3.0)**
 - `-y, --yes`: Skip confirmations (automation mode)
 

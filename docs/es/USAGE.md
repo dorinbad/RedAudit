@@ -83,6 +83,13 @@ Nota: para modo limitado sin sudo/root, añade `--allow-non-root` (algunas funci
 | :--- | :--- |
 | `--stealth` | Modo sigiloso: timing paranoid nmap (T1), mono-hilo, retardo 5s+. Para redes empresariales con IDS/rate limiters. |
 
+### Características v3.3.0
+
+| Flag | Descripción |
+| :--- | :--- |
+| `--html-report` | Genera dashboard HTML interactivo con gráficos y tablas ordenables (funciona offline). |
+| `--webhook URL` | Envía alertas en tiempo real para hallazgos de alta severidad a una URL (Slack/Teams/Discord). |
+
 ### Seguridad
 
 | Flag | Descripción |
@@ -153,8 +160,14 @@ sudo redaudit -t 192.168.1.0/24 --cve-lookup --nvd-key TU_CLAVE --yes
 Descubrimiento basado en broadcast para revelar DHCP adicionales, hostnames y señales L2.
 
 ```bash
-sudo redaudit -t 192.168.1.0/24 --net-discovery --yes
 sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
+```
+
+**10. Dashboard HTML y Alertas Webhook (v3.3)**
+Genera un reporte visual y alerta sobre hallazgos críticos.
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --html-report --webhook https://hooks.slack.com/services/XXX --yes
 ```
 
 ### Reportes y Cifrado

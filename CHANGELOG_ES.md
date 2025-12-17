@@ -11,6 +11,44 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (pendiente)
 
+## [3.3.0] - 2025-12-17 (Mejoras DX)
+
+### Añadido
+
+- **Dashboard HTML Interactivo** (`--html-report`): Genera reportes HTML standalone con Bootstrap + Chart.js.
+  - Tema oscuro con estética premium
+  - Gráfico donut de distribución de severidad y gráfico de barras Top 10 puertos
+  - Tablas ordenables de hosts y hallazgos
+  - Colores de risk score (verde/naranja/rojo)
+  - Columnas de MAC y vendor en tabla de hosts
+  - Autocontenido: funciona offline, sin dependencias externas en runtime
+
+- **Reporte Visual de Diff HTML** (`--diff`): Compara dos escaneos con salida visual lado a lado.
+  - Nueva plantilla: `redaudit/templates/diff.html.j2`
+  - Nueva función: `format_diff_html()` en `diff.py`
+  - Resaltados: hosts nuevos (verde), hosts eliminados (rojo), puertos cambiados (amarillo)
+  - Badges para cambios de severidad y deltas de puertos
+
+- **Alertas Webhook** (`--webhook URL`): Alertas en tiempo real para hallazgos de alta severidad.
+  - Nuevo módulo: `redaudit/utils/webhook.py`
+  - Envía payloads JSON a cualquier endpoint webhook (Slack, Discord, Teams, custom)
+  - Filtros: solo hallazgos HIGH y CRITICAL disparan alertas
+  - Incluye: IP del activo, título del hallazgo, severidad, puerto, timestamp
+  - Timeout: 10 segundos por request con manejo de errores
+
+### Cambiado
+
+- **reporter.py**: Ahora genera reporte HTML automáticamente cuando se usa el flag `--html-report`.
+- **reporter.py**: Envía alertas webhook tras completar el escaneo cuando se provee `--webhook URL`.
+- **cli.py**: Añadidos flags `--html-report` y `--webhook URL`.
+- **pyproject.toml**: Directorio de templates incluido en package data.
+- **Instalador**: Añadido `python3-jinja2` como dependencia para renderizado de templates HTML.
+
+### Corregido
+
+- **Visibilidad de Errores HTML Report**: Los errores durante generación HTML ahora se muestran en consola (no solo en log).
+- **Bandit CI**: Configurado para saltar B101 (assert) en directorio de tests.
+
 ## [3.2.3] - 2025-12-16 (HyperScan + Modo Sigiloso)
 
 ### Añadido

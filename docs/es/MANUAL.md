@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
-**Versión:** 3.2.3
+**Versión:** 3.3.0
 **Fecha:** Diciembre 2025
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas / redes
 **Licencia:** GPLv3
@@ -65,6 +65,8 @@ RedAudit no explota vulnerabilidades por sí mismo. Su función es ofrecer visib
 - Defaults persistentes guardados en `~/.redaudit/config.json` (opcional, para automatización).
 - Descubrimiento de topología opcional (ARP/VLAN/LLDP + gateway/rutas) para contexto L2 y pistas de "redes ocultas".
 - Descubrimiento de red mejorado opcional (`--net-discovery`) con señales broadcast/L2 y un bloque de recon `--redteam` (best-effort).
+- **Dashboard HTML Interactivo** (`--html-report`): Reporte visual autocontenido con gráficos y búsqueda. (v3.3)
+- **Alertas Webhook** (`--webhook`): Notificaciones de hallazgos en tiempo real a servicios externos. (v3.3)
 - Mensajes bilingües (inglés / español).
 
 ---
@@ -240,6 +242,7 @@ En un ciclo normal de ejecución, RedAudit realiza:
 6. **Post-procesado e informes**
    - Se consolida toda la información en un informe JSON estructurado.
    - Se genera un informe de texto / Markdown para lectura rápida.
+   - Genera un Dashboard HTML interactivo (`--html-report`).
    - Si se ha solicitado cifrado, los informes se protegen con `cryptography`.
 
 ---
@@ -357,6 +360,8 @@ Las opciones más importantes:
 | `--diff OLD NEW`             | Compara dos reportes JSON y genera análisis diferencial. **(v3.0)**                                               |
 | `--cve-lookup`               | Activa correlación CVE vía API NVD. **(v3.0)**                                                                    |
 | `--nvd-key KEY`              | Clave API NVD para límites de velocidad más rápidos (opcional). **(v3.0)**                                        |
+| `--html-report`              | Genera dashboard HTML interactivo. **(v3.3)**                                                                     |
+| `--webhook URL`              | Envía hallazgos POST a esta URL (ej: Slack/Teams webhook). **(v3.3)**                                             |
 | `-V`, `--version`            | Muestra la versión de RedAudit y termina.                                                                               |
 
 Defaults persistentes: si se usa `--save-defaults`, RedAudit guarda ajustes en `defaults` dentro de `~/.redaudit/config.json` y los reutiliza como valores por defecto en ejecuciones futuras.
@@ -421,6 +426,7 @@ Tras cada ejecución, RedAudit crea un directorio con sello temporal (v2.8+):
 └── RedAudit_2025-01-15_21-30-45/
     ├── redaudit_20250115_213045.json
     ├── redaudit_20250115_213045.txt
+    ├── redaudit_20250115_213045.html # v3.3 Dashboard Interactivo
     ├── findings.jsonl                # v3.1 exportación plana de hallazgos (SIEM/IA)
     ├── assets.jsonl                  # v3.1 exportación plana de activos (SIEM/IA)
     ├── summary.json                  # v3.1 resumen compacto para dashboards

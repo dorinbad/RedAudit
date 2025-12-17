@@ -4,7 +4,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/DIDACTIC_GUIDE.md)
 
-This guide is designed to help professors, instructors, and mentors explain the complete functionality of **RedAudit v3.2.3**. The document breaks down the tool from a pedagogical perspective, combining theory, visual diagrams, practical exercises, and code references.
+This guide is designed to help professors, instructors, and mentors explain the complete functionality of **RedAudit v3.3.0**. The document breaks down the tool from a pedagogical perspective, combining theory, visual diagrams, practical exercises, and code references.
 
 > **TL;DR for Instructors**: RedAudit is a network auditing orchestration tool perfect for teaching structured security workflows. Key teaching points: (1) Automated tool orchestration vs manual scanning, (2) Adaptive heuristics (Deep Scan triggers), (3) Professional reporting (SIEM-ready JSON). For a 60-minute lecture, focus on Sections 1-3. For hands-on labs, use Section 8 practical exercises. For research students, Section 5 provides Python internals reference.
 
@@ -103,7 +103,7 @@ At startup, RedAudit presents a **Main Menu** allowing you to choose between sca
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│         RedAudit v3.2.3 - Main Menu            │
+│         RedAudit v3.3.0 - Main Menu            │
 ├─────────────────────────────────────────────────┤
 │  [1] Start Network Scan (Wizard)               │
 │  [2] Check for Updates                          │
@@ -172,6 +172,19 @@ Once open ports are detected, RedAudit calls specialized tools based on the serv
 - If HTTP/HTTPS → Launches `whatweb`, `curl -I`, `nikto` (with false positive filtering).
 - If SSL/TLS → Launches `testssl.sh --quiet --fast`, `openssl s_client`.
 - If versions detected → Automatically searches `searchsploit` (ExploitDB).
+
+### Phase 4b: HTML Dashboard & Visualization (v3.3)
+
+**Code**: [`html_reporter.py`](../../redaudit/core/html_reporter.py)
+
+RedAudit v3.3 introduces an interactive **HTML Dashboard** (`--html-report`). Unlike static text files, this dashboard allows:
+
+- **Sorting/Filtering**: Sort hosts by Open Ports, OS, or Risk Score.
+- **Visual Charts**: Donut charts for OS distribution and Severity/Risk overview.
+- **Search**: Instant search across all findings.
+- **Offline Safety**: Fully self-contained (no external JS/CSS), safe for air-gapped labs.
+
+This teaches students the value of **data presentation**—raw data is useful for machines, but visualized data is crucial for executive decision-making.
 
 ---
 
@@ -287,6 +300,15 @@ For authorized assessments, finding usernames is key to lateral movement.
 2. **SOCKS Proxying**: Uses `proxychains4` to route tools through compromised hosts if pivoting is enabled.
 
 **Risk**: High. Unlike leak detection, this actively touches the Domain Controller and generates logs (Event 4771).
+
+### Technique Spotlight: Visual Differential Analysis (v3.3)
+
+**Code**: [`diff.py`](../../redaudit/core/diff.py)
+
+Comparing two scans manually is tedious. RedAudit's `--diff` mode now generates a **Visual HTML Diff Report**.
+
+- **Traffic Light System**: Green (Fixed/Removed), Red (New/Added), Yellow (Modified).
+- **Use Case**: Prove to a client that "Patch Tuesday" updates actually closed port 445 on their servers.
 | **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap` | Optional deep enumeration (SNMP walking, SMB shares, LDAP queries, fast port scanning) for comprehensive Blue Team analysis (v3.2+) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
 | **Web Recon** | `whatweb`, `curl`, `nikto` | Web application analysis | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Encryption and certificate auditing | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |

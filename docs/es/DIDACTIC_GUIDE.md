@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/DIDACTIC_GUIDE.md)
 
-Esta guía está diseñada para ayudar a profesores, instructores y mentores a explicar el funcionamiento completo de **RedAudit v3.2.3**. El documento desglosa la herramienta desde una perspectiva pedagógica, combinando teoría, diagramas visuales, ejercicios prácticos y referencias al código.
+Esta guía está diseñada para ayudar a profesores, instructores y mentores a explicar el funcionamiento completo de **RedAudit v3.3.0**. El documento desglosa la herramienta desde una perspectiva pedagógica, combinando teoría, diagramas visuales, ejercicios prácticos y referencias al código.
 
 > **Resumen Ejecutivo para Instructores**: RedAudit es una herramienta de orquestación de auditoría de red ideal para enseñar flujos de seguridad estructurados. Puntos clave de enseñanza: (1) Orquestación automatizada vs escaneo manual, (2) Heurística adaptativa (activadores de Deep Scan), (3) Reportes profesionales (JSON listo para SIEM). Para una clase de 60 minutos, enfocarse en Secciones 1-3. Para laboratorios prácticos, usar ejercicios de la Sección 8. Para estudiantes de investigación, la Sección 5 provee referencia de internals en Python.
 
@@ -101,7 +101,7 @@ Al inicio, RedAudit presenta un **Menú Principal** que permite elegir entre esc
 
 ```text
 ┌─────────────────────────────────────────────────┐
-│         RedAudit v3.2.3 - Menú Principal       │
+│         RedAudit v3.3.0 - Menú Principal       │
 ├─────────────────────────────────────────────────┤
 │  [1] Iniciar Auditoría (Wizard)                │
 │  [2] Buscar Actualizaciones                     │
@@ -170,6 +170,19 @@ Una vez detectados los puertos abiertos, RedAudit llama a herramientas especiali
 - Si es HTTP/HTTPS → Lanza `whatweb`, `curl -I`, `nikto` (con filtrado de falsos positivos).
 - Si es SSL/TLS → Lanza `testssl.sh --quiet --fast`, `openssl s_client`.
 - Si detecta versiones → Busca en `searchsploit` (ExploitDB) automáticamente.
+
+### Fase 4b: Dashboard HTML y Visualización (v3.3)
+
+**Código**: [`html_reporter.py`](../../redaudit/core/html_reporter.py)
+
+RedAudit v3.3 introduce un **Dashboard HTML** interactivo (`--html-report`). A diferencia de los archivos de texto estáticos, este dashboard permite:
+
+- **Ordenar/Filtrar**: Ordenar hosts por Puertos Abiertos, SO, o Puntuación de Riesgo.
+- **Gráficos Visuales**: Gráficos de donut para distribución de SO y resumen de Severidad/Riesgo.
+- **Búsqueda**: Búsqueda instantánea en todos los hallazgos.
+- **Seguridad Offline**: Totalmente autocontenido (sin JS/CSS externo), seguro para laboratorios aislados.
+
+Esto enseña a los estudiantes el valor de la **presentación de datos**: los datos crudos son útiles para máquinas, pero los datos visualizados son cruciales para la toma de decisiones ejecutiva.
 
 ---
 
@@ -286,6 +299,15 @@ Para evaluaciones autorizadas, encontrar nombres de usuario es clave para el mov
 2. **Proxy SOCKS**: Usa `proxychains4` para enrutar herramientas a través de hosts comprometidos si el pivoting está habilitado.
 
 **Riesgo**: Alto. A diferencia de la detección de fugas, esto toca activamente el Controlador de Dominio y genera logs (Evento 4771).
+
+### Técnica Destacada: Análisis Diferencial Visual (v3.3)
+
+**Código**: [`diff.py`](../../redaudit/core/diff.py)
+
+Comparar dos escaneos manualmente es tedioso. El modo `--diff` de RedAudit ahora genera un **Reporte Diff HTML Visual**.
+
+- **Sistema de Semáforo**: Verde (Corregido/Eliminado), Rojo (Nuevo/Añadido), Amarillo (Modificado).
+- **Caso de Uso**: Demostrar a un cliente que las actualizaciones del "Patch Tuesday" realmente cerraron el puerto 445 en sus servidores.
 | **Recon Web** | `whatweb`, `curl`, `nikto` | Análisis de aplicaciones web | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
 | **SSL/TLS** | `testssl.sh`, `openssl` | Auditoría de cifrado y certificados | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
 | **Tráfico** | `tcpdump`, `tshark` | Captura de evidencia forense (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |

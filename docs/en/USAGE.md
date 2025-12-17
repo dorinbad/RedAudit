@@ -83,6 +83,13 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 | :--- | :--- |
 | `--stealth` | Stealth mode: paranoid nmap timing (T1), single-thread, 5s+ delay. For enterprise networks with IDS/rate limiters. |
 
+### v3.3.0 Features
+
+| Flag | Description |
+| :--- | :--- |
+| `--html-report` | Generate interactive HTML dashboard with charts and sortable tables (works offline). |
+| `--webhook URL` | Send real-time alerts for High/Critical findings to a webhook URL (Slack/Teams/Discord). |
+
 ### Security
 
 | Flag | Description |
@@ -153,8 +160,14 @@ sudo redaudit -t 192.168.1.0/24 --cve-lookup --nvd-key YOUR_KEY --yes
 Broadcast-based discovery to reveal additional DHCP servers, hostnames, and L2 signals.
 
 ```bash
-sudo redaudit -t 192.168.1.0/24 --net-discovery --yes
 sudo redaudit -t 192.168.1.0/24 --net-discovery --redteam --net-discovery-interface eth0 --yes
+```
+
+**10. HTML Dashboard & Webhook Alerts (v3.3)**
+Generate a visual report and alert on critical findings.
+
+```bash
+sudo redaudit -t 192.168.1.0/24 --html-report --webhook https://hooks.slack.com/services/XXX --yes
 ```
 
 ### Reports & Encryption

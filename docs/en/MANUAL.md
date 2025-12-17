@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/MANUAL.md)
 
-**Version:** 3.2.3
+**Version:** 3.3.0
 **Target audience:** Security analysts, penetration testers, systems / network administrators
 **License:** GPLv3
 
@@ -64,6 +64,8 @@ RedAudit is not an exploit framework and does not perform automatic exploitation
 - Persistent defaults stored in `~/.redaudit/config.json` (optional, for automation).
 - Optional topology discovery (ARP/VLAN/LLDP + gateway/routes) for L2 context and "hidden network" hints.
 - Optional enhanced network discovery (`--net-discovery`) with broadcast/L2 signals and an opt-in `redteam` recon block (best-effort).
+- **Interactive HTML Dashboard** (`--html-report`): Self-contained visual report with charts and search. (v3.3)
+- **Webhook Alerting** (`--webhook`): Real-time finding notifications to external services. (v3.3)
 - Bilingual messages (English / Spanish).
 
 ---
@@ -237,6 +239,7 @@ At a high level, a run of RedAudit follows this sequence:
 6. **Post-processing & reporting**
    - Consolidates all collected data into a structured JSON report.
    - Generates a text/Markdown summary.
+   - Generates an interactive HTML Dashboard (`--html-report`).
    - Optionally encrypts the report files using `cryptography` (Fernet).
 
 The control logic for this pipeline lives mainly in the package `redaudit/core`.
@@ -353,6 +356,8 @@ The most important options:
 | `--diff OLD NEW`            | Compare two JSON reports and generate delta analysis. **(v3.0)**                                                  |
 | `--cve-lookup`              | Enable CVE correlation via NVD API. **(v3.0)**                                                                    |
 | `--nvd-key KEY`             | NVD API key for faster rate limits (optional). **(v3.0)**                                                         |
+| `--html-report`             | Generate interactive HTML dashboard. **(v3.3)**                                                                   |
+| `--webhook URL`             | POST findings to this URL (e.g., Slack/Teams webhook). **(v3.3)**                                                 |
 | `-V`, `--version`           | Print RedAudit version and exit.                                                                                         |
 
 Persistent defaults: if `--save-defaults` is used, RedAudit stores settings under `defaults` in `~/.redaudit/config.json` and reuses them as defaults in future runs.
@@ -417,6 +422,7 @@ After a run, RedAudit creates a timestamped output directory (v2.8+) such as:
 └── RedAudit_2025-01-15_21-30-45/
     ├── redaudit_20250115_213045.json
     ├── redaudit_20250115_213045.txt
+    ├── redaudit_20250115_213045.html # v3.3 Interactive Dashboard
     ├── findings.jsonl                # v3.1 flat findings export (SIEM/AI)
     ├── assets.jsonl                  # v3.1 flat assets export (SIEM/AI)
     ├── summary.json                  # v3.1 compact dashboard summary

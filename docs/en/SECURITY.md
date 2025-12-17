@@ -157,7 +157,20 @@ RedAudit v3.2 introduces **Active Reconnaissance** capabilities (`--redteam`, `-
 4. **Monitor Impact**: Watch for network congestion or service degradation
 5. **Disable bettercap**: Unless absolutely necessary, avoid `--redteam-active-l2` (enables potentially destructive L2 attacks)
 
-## 12. License
+## 12. HTML Dashboard & Webhook Security (v3.3+)
+
+### HTML Reports (`--html-report`)
+
+- **Offline/Air-gap Safe**: The generated HTML reports are fully self-contained. All CSS (Bootstrap) and JS (Chart.js) logic is embedded directly into the file. No external requests are made when opening the report, making it safe for air-gapped analysis stations.
+- **No Remote Tracking**: No analytics or tracking pixels are included.
+
+### Webhook Alerts (`--webhook`)
+
+- **Sensitive Data Transmission**: This feature sends finding details (Target IP, Vulnerability Title, Severity) to the configured URL.
+- **HTTPS Required**: Always use `https://` webhook URLs to protect this data in transit.
+- **Verification**: Ensure the webhook URL is correct and trusted (e.g., your internal Slack/Teams instance) to avoid leaking vulnerability data to third parties.
+
+## 13. License
 
 This security model is part of the RedAudit project and is covered by the
 **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](../../LICENSE) for the full text.

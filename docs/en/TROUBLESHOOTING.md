@@ -153,4 +153,33 @@ sudo apt update && sudo apt install nbtscan netdiscover fping avahi-utils snmp l
 - Ensure no MAC filtering is blocking your interface.
 - Select the correct interface explicitly: `--net-discovery-interface eth0`.
 
+### 14. HTML Report Generation Failed (v3.3)
+
+**Symptom**: "Error generating HTML report" or report file is 0 bytes.
+**Cause**:
+
+- Missing `jinja2` template engine (rare, installed by default).
+- Permission denied when writing to output directory.
+**Resolution**:
+
+```bash
+# Verify installation
+python3 -c "import jinja2; print('ok')"
+
+# Check permissions
+touch ~/Documents/RedAuditReports/test_write
+```
+
+### 15. Webhook Alert Failed (v3.3)
+
+**Symptom**: "Failed to send webhook" warning in logs.
+**Cause**:
+
+- Invalid URL format.
+- Destination server down or unreachable (404/500).
+- Network blocking outbound connections.
+**Resolution**:
+- Test URL with curl: `curl -X POST -d '{"test":true}' YOUR_WEBHOOK_URL`
+- Verify URL starts with `http://` or `https://`.
+
 RedAudit and this troubleshooting guide are part of a GPLv3-licensed project. See [LICENSE](../../LICENSE).

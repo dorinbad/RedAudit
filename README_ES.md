@@ -4,7 +4,7 @@
 
 RedAudit es una herramienta CLI para auditoría de red estructurada y hardening en sistemas Kali/Debian.
 
-![Versión](https://img.shields.io/badge/versión-3.2.3-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/versión-3.3.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)
 ![Licencia](https://img.shields.io/badge/licencia-GPLv3-green?style=flat-square)
 
@@ -16,7 +16,7 @@ RedAudit es una herramienta CLI para auditoría de red estructurada y hardening 
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
 |_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.2.3
+                                      v3.3.0
       Herramienta Interactiva de Auditoría de Red
 ```
 
@@ -216,6 +216,8 @@ Para más ejemplos incluyendo IPv6, correlación CVE, pivoting SOCKS5 e integrac
 - `--net-discovery`: Descubrimiento L2/broadcast mejorado **(v3.2+)**
 - `--cve-lookup`: Correlación CVE vía API NVD **(v3.0)**
 - `--diff OLD NEW`: Análisis diferencial entre escaneos **(v3.0)**
+- `--html-report`: Genera dashboard HTML interactivo **(v3.3)**
+- `--webhook URL`: Envía alertas en tiempo real a endpoint webhook **(v3.3)**
 - `--ipv6`: Modo solo IPv6 **(v3.0)**
 - `-y, --yes`: Omitir confirmaciones (modo automatización)
 

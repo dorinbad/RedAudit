@@ -11,6 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
+## [3.3.0] - 2025-12-17 (DX Improvements)
+
+### Added
+
+- **Interactive HTML Dashboard** (`--html-report`): Generate standalone HTML reports with Bootstrap + Chart.js.
+  - Dark theme with premium aesthetics
+  - Severity distribution doughnut chart and Top 10 ports bar chart
+  - Sortable tables for hosts and findings
+  - Risk score color-coding (green/orange/red)
+  - MAC address and vendor columns in host table
+  - Self-contained: works offline, no external dependencies at runtime
+
+- **Visual HTML Diff Report** (`--diff`): Compare two scans with side-by-side visual output.
+  - New template: `redaudit/templates/diff.html.j2`
+  - New function: `format_diff_html()` in `diff.py`
+  - Highlights: new hosts (green), removed hosts (red), changed ports (yellow)
+  - Badges for severity changes and port deltas
+
+- **Webhook Alerting** (`--webhook URL`): Real-time alerts for high-severity findings.
+  - New module: `redaudit/utils/webhook.py`
+  - Sends JSON payloads to any webhook endpoint (Slack, Discord, Teams, custom)
+  - Filters: only HIGH and CRITICAL severity findings trigger alerts
+  - Includes: asset IP, finding title, severity, port, timestamp
+  - Timeout: 10 seconds per request with error handling
+
+### Changed
+
+- **reporter.py**: Now generates HTML report automatically when `--html-report` flag is set.
+- **reporter.py**: Sends webhook alerts after scan completion when `--webhook URL` is provided.
+- **cli.py**: Added `--html-report` and `--webhook URL` flags.
+- **pyproject.toml**: Templates directory included in package data.
+- **Installer**: Added `python3-jinja2` as dependency for HTML template rendering.
+
+### Fixed
+
+- **HTML Report Error Visibility**: Errors during HTML generation now display in console (not just log file).
+- **Bandit CI**: Configured to skip B101 (assert) in tests directory.
+
 ## [3.2.3] - 2025-12-16 (HyperScan + Stealth Mode)
 
 ### Added
