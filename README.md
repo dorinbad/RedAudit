@@ -277,6 +277,8 @@ RedAudit can check for and install updates automatically:
 - **Auto-Restart**: Automatically restarts with new code using `os.execv()`
 - **Skip Flag**: Use `--skip-update-check` to disable update checking
 
+> **Note (version not refreshed)**: If the banner/version does not refresh after an update, restart your terminal or run `hash -r` (zsh/bash) to clear the command cache.
+
 > **Note**: The updater verifies git commit hashes for integrity but does not perform cryptographic signature verification. See [SECURITY.md](docs/en/SECURITY.md#7-reliable-auto-update) for details.
 
 **Alternative invocation:**

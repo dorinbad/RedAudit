@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
+## [3.4.4] - 2025-12-17 (Hotfix)
+
+### Fixed
+
+- **Defaults workflow**: Choosing "Use defaults and continue" now actually applies defaults; starting "immediately" no longer re-asks scan parameters, and can reuse saved targets when available.
+- **Docs**: Added a note about restarting the terminal / `hash -r` if the banner version doesn't refresh after updating.
+
 ## [3.4.3] - 2025-12-17 (Hotfix)
 
 ### Fixed
