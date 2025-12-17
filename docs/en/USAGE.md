@@ -106,7 +106,7 @@ Note: for limited mode without sudo/root, add `--allow-non-root` (some scan feat
 
 **Notes**: Playbooks are deduplicated (one per host + category) and are skipped when report encryption is enabled (`--encrypt`).
 
-### v3.5 (In Development)
+### v3.5.0 Features
 
 | Flag | Description |
 | :--- | :--- |
@@ -268,7 +268,7 @@ export NVD_API_KEY="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 Create `~/.redaudit/config.json`:
 
-**Note**: The `version` field in `~/.redaudit/config.json` is the **config schema version** (currently `3.2.3`) and does not need to match the RedAudit application version (v3.4.2).
+**Note**: The `version` field in `~/.redaudit/config.json` is the **config schema version** (currently `3.2.3`) and does not need to match the RedAudit application version (v3.5.0).
 
 ```json
 {

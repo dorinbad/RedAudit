@@ -28,7 +28,7 @@ This document outlines the technical roadmap, planned architectural improvements
 | Priority | Feature | Status | Description |
 | :--- | :--- | :--- | :--- |
 | **Medium** | **Containerization** | Paused | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
-| **Medium** | **Centralized CommandRunner** | 🚧 In Progress (v3.5) | Single module for external command execution: args as list (anti-injection), configurable timeouts, retries with backoff, secret redaction in logs, dry-run support. Refactors 50+ subprocess calls. |
+| **Medium** | **Centralized CommandRunner** | ✅ **Implemented (v3.5.0)** | Single module for external command execution: args as list (anti-injection), configurable timeouts, retries with backoff, secret redaction in logs, dry-run support. Refactors subprocess calls across the codebase. |
 | **Medium** | **Full `--dry-run` Support** | 🎯 Planned | Propagate `--dry-run` flag to all modules so commands are printed but not executed. Depends on CommandRunner. Useful for auditing and debugging. |
 | **Low** | **Single Version Source** | 🎯 Planned | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. |
 | **Low** | **TTY Autodetection** | 🎯 Planned | Auto-disable colors when stdout is not a TTY (pipes/CI). Flag `--no-color` already exists but behavior not fully implemented. |
@@ -120,7 +120,15 @@ redaudit --net-discovery --redteam --target 10.0.0.0/8
 
 ## Completed Milestones
 
-### v3.4.4 (Hotfix - December 2025) -> **CURRENT**
+### v3.5.0 (Release - December 2025) -> **CURRENT**
+
+*Minor release focused on reliability during long scans and safer external command execution.*
+
+- [x] **Prevent sleep during scans**: Best-effort system/display sleep inhibition while a scan is running (opt-out with `--no-prevent-sleep`).
+- [x] **Centralized CommandRunner**: Unified execution of external tools with timeouts, retries, secret redaction, and incremental `--dry-run` rollout.
+- [x] **Dry-run improvements**: More modules respect `--dry-run`, with clear documentation that rollout is incremental.
+
+### v3.4.4 (Hotfix - December 2025)
 
 *Patch release focused on smoothing the defaults flow and update UX.*
 

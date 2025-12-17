@@ -28,7 +28,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 | Prioridad | Característica | Estado | Descripción |
 | :--- | :--- | :--- | :--- |
 | **Media** | **Contenedorización** | Aparcado | Dockerfile oficial y configuración Docker Compose para contenedores de auditoría efímeros. |
-| **Media** | **CommandRunner Centralizado** | 🚧 En progreso (v3.5) | Módulo único para ejecución de comandos externos: args como lista (anti-inyección), timeouts configurables, reintentos con backoff, redacción de secretos en logs, soporte dry-run. Refactoriza 50+ llamadas subprocess. |
+| **Media** | **CommandRunner Centralizado** | ✅ **Implementado (v3.5.0)** | Módulo único para ejecución de comandos externos: args como lista (anti-inyección), timeouts configurables, reintentos con backoff, redacción de secretos en logs, soporte dry-run. Refactoriza llamadas subprocess en el codebase. |
 | **Media** | **Soporte Completo `--dry-run`** | 🎯 Planificado | Propagar flag `--dry-run` a todos los módulos para que los comandos se impriman pero no se ejecuten. Depende de CommandRunner. Útil para auditoría y debugging. |
 | **Baja** | **Única Fuente de Versión** | 🎯 Planificado | Leer versión de `pyproject.toml` via `importlib.metadata` en vez de `VERSION = "x.y.z"` manual. Previene drift de versiones entre archivos. |
 | **Baja** | **Autodetección TTY** | 🎯 Planificado | Desactivar colores automáticamente cuando stdout no es un TTY (pipes/CI). Flag `--no-color` ya existe pero el comportamiento no está completamente implementado. |
@@ -120,7 +120,15 @@ redaudit --net-discovery --redteam --target 10.0.0.0/8
 
 ## Hitos Completados
 
-### v3.4.4 (Hotfix - Diciembre 2025) -> **ACTUAL**
+### v3.5.0 (Release - Diciembre 2025) -> **ACTUAL**
+
+*Release menor centrada en fiabilidad durante escaneos largos y ejecución más segura de comandos externos.*
+
+- [x] **Evitar reposo durante escaneos**: Inhibición best-effort del reposo del sistema/pantalla mientras se ejecuta un escaneo (opt-out con `--no-prevent-sleep`).
+- [x] **CommandRunner centralizado**: Ejecución unificada de herramientas externas con timeouts, reintentos, redacción de secretos y despliegue incremental de `--dry-run`.
+- [x] **Mejoras en dry-run**: Más módulos respetan `--dry-run`, con documentación clara de que el despliegue es incremental.
+
+### v3.4.4 (Hotfix - Diciembre 2025)
 
 *Patch centrado en pulir el flujo de defaults y la UX tras actualizar.*
 

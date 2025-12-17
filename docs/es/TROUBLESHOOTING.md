@@ -67,6 +67,15 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 - **Por qué**: Esencial para identificar cajas IoT, firewalls o servidores filtrados que ocultan su SO.
 - **Verificar**: Buscar el marcador `[deep]` en la salida CLI.
 
+### 6b. Reposo del sistema / apagado de pantalla durante escaneos largos (v3.5+)
+
+**Síntoma**: Tu VM/portátil entra en reposo o se apaga la pantalla mientras RedAudit está ejecutándose.
+**Explicación**: RedAudit intenta una inhibición **best-effort** del reposo/pantalla mientras el escaneo está en curso para evitar pausas involuntarias.
+**Notas**:
+
+- Depende de las herramientas disponibles en el sistema (p.ej., `systemd-inhibit` en Linux, `xset` para X11/DPMS).
+- Puedes desactivarlo con `--no-prevent-sleep`.
+
 ### 7. Advertencia "Cryptography not available"
 
 **Síntoma**: Ves una advertencia sobre `python3-cryptography` no disponible.

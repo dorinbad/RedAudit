@@ -1,8 +1,8 @@
-# Manual de Usuario de RedAudit v3.4.2 (ES)
+# Manual de Usuario de RedAudit v3.5.0 (ES)
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](../en/MANUAL.md)
 
-**Versión:** 3.4.0
+**Versión:** 3.5.0
 **Fecha:** Diciembre 2025
 **Audiencia objetivo:** Analistas de seguridad, pentesters, administradores de sistemas / redes
 **Licencia:** GPLv3
