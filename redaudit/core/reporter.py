@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from redaudit.utils.constants import SCHEMA_VERSION, VERSION, SECURE_FILE_MODE
+from redaudit.utils.paths import get_default_reports_base_dir, maybe_chown_tree_to_invoking_user
 from redaudit.core.crypto import encrypt_data
 from redaudit.core.entity_resolver import reconcile_assets
 from redaudit.core.siem import enrich_report_for_siem
@@ -421,7 +422,7 @@ def save_results(
     if not output_dir:
         # Fallback: create new timestamped folder
         ts_folder = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        output_base = config.get("output_dir", os.path.expanduser("~/Documents/RedAuditReports"))
+        output_base = config.get("output_dir") or get_default_reports_base_dir()
         output_dir = os.path.join(output_base, f"RedAudit_{ts_folder}")
 
     base = os.path.join(output_dir, f"{prefix}redaudit_{ts}")
@@ -546,6 +547,7 @@ def save_results(
                 if logger:
                     logger.warning("Webhook alerting failed: %s", webhook_err)
 
+        maybe_chown_tree_to_invoking_user(output_dir)
         return True
 
     except Exception as exc:
