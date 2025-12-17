@@ -524,7 +524,7 @@ def save_results(
             try:
                 from redaudit.core.playbook_generator import save_playbooks
 
-                playbook_count = save_playbooks(results, output_dir)
+                playbook_count = save_playbooks(results, output_dir, logger=logger)
                 if playbook_count > 0 and print_fn and t_fn:
                     print_fn(t_fn("playbooks_generated", playbook_count), "OKGREEN")
             except Exception as pb_err:

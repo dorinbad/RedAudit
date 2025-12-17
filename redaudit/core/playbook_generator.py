@@ -10,14 +10,9 @@ v3.4: Generate actionable remediation playbooks per finding type.
 import os
 import re
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-try:
-    from jinja2 import Environment, PackageLoader, select_autoescape
-except ImportError:
-    Environment = None  # type: ignore
-
-from redaudit.utils.constants import VERSION
+from redaudit.utils.constants import SECURE_FILE_MODE, VERSION
 
 # Playbook categories based on finding patterns
 PLAYBOOK_PATTERNS = {
@@ -72,6 +67,63 @@ COMPILED_PATTERNS: Dict[str, List[re.Pattern]] = {}
 for category, patterns in PLAYBOOK_PATTERNS.items():
     COMPILED_PATTERNS[category] = [re.compile(p, re.IGNORECASE) for p in patterns]
 
+_PORT_PATTERNS = [
+    re.compile(r"\bport\s*(\d{1,5})\b", re.IGNORECASE),
+    re.compile(r"\b(\d{1,5})/(?:tcp|udp)\b", re.IGNORECASE),
+]
+
+
+def _coerce_port(value: Any) -> Optional[int]:
+    if isinstance(value, int):
+        port = value
+    elif isinstance(value, str):
+        raw = value.strip()
+        if not raw.isdigit():
+            return None
+        port = int(raw)
+    else:
+        return None
+
+    return port if 0 < port < 65536 else None
+
+
+def _extract_port(finding: Dict) -> Optional[int]:
+    port = _coerce_port(finding.get("port"))
+    if port is not None:
+        return port
+
+    url = finding.get("url")
+    if isinstance(url, str):
+        match = re.search(r":(\d{1,5})(?:/|$)", url)
+        if match:
+            port = _coerce_port(match.group(1))
+            if port is not None:
+                return port
+
+    candidate_texts: List[str] = []
+    for key in ("descriptive_title", "category"):
+        val = finding.get(key)
+        if isinstance(val, str):
+            candidate_texts.append(val)
+
+    nikto = finding.get("nikto_findings", [])
+    if isinstance(nikto, list):
+        candidate_texts.extend(line for line in nikto[:10] if isinstance(line, str))
+
+    obs = finding.get("parsed_observations", [])
+    if isinstance(obs, list):
+        candidate_texts.extend(line for line in obs[:10] if isinstance(line, str))
+
+    for text in candidate_texts:
+        for pattern in _PORT_PATTERNS:
+            match = pattern.search(text)
+            if match:
+                port = _coerce_port(match.group(1))
+                if port is not None:
+                    return port
+
+    return None
+
 
 def classify_finding(finding: Dict) -> Optional[str]:
     """
@@ -124,7 +176,13 @@ def classify_finding(finding: Dict) -> Optional[str]:
     combined = " ".join(search_texts).lower()
 
     # Match against patterns (order matters - more specific first)
-    for category in ["cve_remediation", "tls_hardening", "http_headers", "web_hardening", "port_hardening"]:
+    for category in [
+        "cve_remediation",
+        "tls_hardening",
+        "http_headers",
+        "web_hardening",
+        "port_hardening",
+    ]:
         for pattern in COMPILED_PATTERNS.get(category, []):
             if pattern.search(combined):
                 return category
@@ -144,9 +202,16 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
     Returns:
         Playbook dictionary with title, steps, references
     """
-    title = finding.get("descriptive_title") or finding.get("url") or f"Finding on {host}"
-    severity = finding.get("severity", "info").upper()
-    port = finding.get("port", "")
+    descriptive_title = finding.get("descriptive_title")
+    url = finding.get("url")
+    title = (
+        descriptive_title
+        if isinstance(descriptive_title, str) and descriptive_title.strip()
+        else url if isinstance(url, str) and url.strip() else f"Finding on {host}"
+    )
+    severity_val = finding.get("severity", "info")
+    severity = severity_val.upper() if isinstance(severity_val, str) else str(severity_val).upper()
+    port = _extract_port(finding)
 
     playbook = {
         "title": title,
@@ -251,11 +316,18 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
             "Replace insecure protocols (telnet→SSH, FTP→SFTP)",
             "Enable encryption where possible",
         ]
-        playbook["commands"] = [
-            f"# Check service: netstat -tlnp | grep :{port}",
-            f"# Block port: iptables -A INPUT -p tcp --dport {port} -j DROP",
-            "# Disable service: systemctl disable <service>",
-        ]
+        if port is not None:
+            playbook["commands"] = [
+                f"# Check service: netstat -tlnp | grep :{port}",
+                f"# Block port: iptables -A INPUT -p tcp --dport {port} -j DROP",
+                "# Disable service: systemctl disable <service>",
+            ]
+        else:
+            playbook["commands"] = [
+                "# Identify listening services: netstat -tlnp",
+                "# Block port (replace <port>): iptables -A INPUT -p tcp --dport <port> -j DROP",
+                "# Disable service: systemctl disable <service>",
+            ]
         playbook["references"] = [
             "https://www.cisecurity.org/cis-benchmarks/",
         ]
@@ -288,7 +360,6 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
                 continue
 
             # Deduplicate: one playbook per category per host
-            category_key = f"{host}:{category}"
             if category in seen_categories[host]:
                 continue
 
@@ -328,34 +399,40 @@ def render_playbook_markdown(playbook: Dict) -> str:
         lines.append(f"{i}. {step}")
 
     if playbook.get("commands"):
-        lines.extend([
-            "",
-            "## Suggested Commands",
-            "",
-            "```bash",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Suggested Commands",
+                "",
+                "```bash",
+            ]
+        )
         lines.extend(playbook["commands"])
         lines.append("```")
 
     if playbook.get("references"):
-        lines.extend([
-            "",
-            "## References",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## References",
+                "",
+            ]
+        )
         for ref in playbook["references"]:
             lines.append(f"- {ref}")
 
-    lines.extend([
-        "",
-        "---",
-        f"*Generated by RedAudit v{VERSION}*",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            f"*Generated by RedAudit v{VERSION}*",
+        ]
+    )
 
     return "\n".join(lines)
 
 
-def save_playbooks(results: Dict, output_dir: str) -> int:
+def save_playbooks(results: Dict, output_dir: str, logger=None) -> int:
     """
     Generate and save playbooks for all findings.
 
@@ -371,7 +448,12 @@ def save_playbooks(results: Dict, output_dir: str) -> int:
         return 0
 
     playbooks_dir = os.path.join(output_dir, "playbooks")
-    os.makedirs(playbooks_dir, exist_ok=True)
+    try:
+        os.makedirs(playbooks_dir, exist_ok=True)
+    except Exception as exc:
+        if logger:
+            logger.warning("Could not create playbooks directory %s: %s", playbooks_dir, exc)
+        return 0
 
     count = 0
     for playbook in playbooks:
@@ -384,8 +466,15 @@ def save_playbooks(results: Dict, output_dir: str) -> int:
             markdown = render_playbook_markdown(playbook)
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(markdown)
+            try:
+                os.chmod(filepath, SECURE_FILE_MODE)
+            except Exception as chmod_err:
+                if logger:
+                    logger.debug("Could not chmod playbook %s: %s", filepath, chmod_err)
             count += 1
-        except Exception:
+        except Exception as exc:
+            if logger:
+                logger.debug("Failed to write playbook %s: %s", filepath, exc)
             continue
 
     return count
