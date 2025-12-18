@@ -279,10 +279,10 @@ RedAudit can check for and install updates automatically:
 - **Startup Check**: Prompts to check for updates when launching in interactive mode
 - **Staged Installation**: Updates use atomic staging with automatic rollback on failure (v3.2.2+)
 - **Auto-Install**: Downloads and installs updates via `git clone`
-- **Auto-Restart**: Automatically restarts with new code using `os.execv()`
+- **Post-update restart**: After installing an update, RedAudit displays a restart notice and exits. Start a new terminal session to load the new version.
 - **Skip Flag**: Use `--skip-update-check` to disable update checking
 
-> **Note (version not refreshed)**: If the banner/version does not refresh after an update, restart your terminal or run `hash -r` (zsh/bash) to clear the command cache.
+> **Note (version not refreshed)**: If you still see the old version after updating, restart your terminal (recommended) or run `hash -r` (zsh/bash) to clear the command cache.
 
 > **Note**: The updater verifies git commit hashes for integrity but does not perform cryptographic signature verification. See [SECURITY.md](docs/en/SECURITY.md#7-reliable-auto-update) for details.
 

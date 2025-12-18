@@ -283,7 +283,7 @@ RedAudit puede verificar e instalar actualizaciones automáticamente:
 - **Verificación al Inicio**: Pregunta si deseas buscar actualizaciones en modo interactivo
 - **Instalación Staged**: Las actualizaciones usan staging atómico con rollback automático en caso de fallo (v3.2.2+)
 - **Auto-Instalación**: Descarga e instala actualizaciones vía `git clone`
-- **Auto-Reinicio**: Se reinicia automáticamente con el nuevo código usando `os.execv()`
+- **Reinicio post-actualización**: Tras instalar una actualización, RedAudit muestra un aviso de reinicio y sale. Inicia un nuevo terminal para cargar la nueva versión.
 - **Flag de Omisión**: Usa `--skip-update-check` para desactivar la verificación
 
 > **Nota**: El actualizador verifica hashes de commit de git para integridad pero no realiza verificación de firmas criptográficas. Ver [SECURITY.md](docs/es/SECURITY.md#7-auto-actualización-fiable) para detalles.
