@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "redaudit"
-version = "3.5.2"
+version = "3.5.3"
 description = "CLI tool for structured network auditing and hardening on Kali/Debian systems"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -55,7 +55,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/dorinbadea/RedAudit"
-Documentation = "https://github.com/dorinbadea/RedAudit/blob/main/docs/en/MANUAL.md"
+Documentation = "https://github.com/dorinbadea/RedAudit/blob/main/docs/MANUAL.en.md"
 Repository = "https://github.com/dorinbadea/RedAudit"
 Issues = "https://github.com/dorinbadea/RedAudit/issues"
 Changelog = "https://github.com/dorinbadea/RedAudit/blob/main/CHANGELOG.md"

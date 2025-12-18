@@ -31,7 +31,6 @@ from typing import Any, Callable, Dict, Optional
 from redaudit.utils.constants import (
     VERSION,
     DEFAULT_LANG,
-    MAX_CIDR_LENGTH,
     COLORS,
     DEFAULT_THREADS,
     MAX_THREADS,
@@ -59,6 +58,12 @@ from redaudit.utils.paths import (
 from redaudit.utils.i18n import TRANSLATIONS, get_text
 from redaudit.utils.dry_run import is_dry_run
 from redaudit.core.command_runner import CommandRunner
+from redaudit.core.wizard import WizardMixin
+from redaudit.core.nuclei import (
+    is_nuclei_available,
+    run_nuclei_scan,
+    get_http_targets_from_hosts,
+)
 from redaudit.core.crypto import (
     is_crypto_available,
     derive_key_from_password,
@@ -190,7 +195,7 @@ class _ActivityIndicator:
             time.sleep(self._refresh_s)
 
 
-class InteractiveNetworkAuditor:
+class InteractiveNetworkAuditor(WizardMixin):
     """Main orchestrator for RedAudit scans."""
 
     def __init__(self):
@@ -762,116 +767,7 @@ class InteractiveNetworkAuditor:
             self.print_status(self.t("missing_opt", ", ".join(missing)), "WARNING")
         return True
 
-    # ---------- Input utilities ----------
-
-    def ask_yes_no(self, question, default="yes"):
-        """Ask a yes/no question."""
-        default = default.lower()
-        opts = (
-            self.t("ask_yes_no_opts")
-            if default in ("yes", "y", "s", "si", "sí")
-            else self.t("ask_yes_no_opts_neg")
-        )
-        valid = {
-            "yes": True,
-            "y": True,
-            "s": True,
-            "si": True,
-            "sí": True,
-            "no": False,
-            "n": False,
-        }
-        while True:
-            try:
-                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-                ans = (
-                    input(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}{opts}: ")
-                    .strip()
-                    .lower()
-                )
-                if ans == "":
-                    return valid.get(default, True)
-                if ans in valid:
-                    return valid[ans]
-            except KeyboardInterrupt:
-                print("")
-                self.signal_handler(None, None)
-                sys.exit(0)
-
-    def ask_number(self, question, default=10, min_val=1, max_val=1000):
-        """Ask for a number within a range."""
-        default_return = default
-        default_display = default
-        if isinstance(default, str) and default.lower() in ("all", "todos", "todo"):
-            default_return = "all"
-            default_display = "todos" if self.lang == "es" else "all"
-        while True:
-            try:
-                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-                ans = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default_display}]: "
-                ).strip()
-                if ans == "":
-                    return default_return
-                if ans.lower() in ("todos", "todo", "all"):
-                    return "all"
-                try:
-                    num = int(ans)
-                    if min_val <= num <= max_val:
-                        return num
-                    self.print_status(self.t("val_out_of_range", min_val, max_val), "WARNING")
-                except ValueError:
-                    continue
-            except KeyboardInterrupt:
-                print("")
-                self.signal_handler(None, None)
-                sys.exit(0)
-
-    def ask_choice(self, question, options, default=0):
-        """Ask to choose from a list of options."""
-        print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-        print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
-        for i, opt in enumerate(options):
-            # Use an ASCII marker for maximum terminal compatibility.
-            marker = f"{self.COLORS['BOLD']}>{self.COLORS['ENDC']}" if i == default else " "
-            print(f"  {marker} {i + 1}. {opt}")
-        while True:
-            try:
-                ans = input(
-                    f"\n{self.t('select_opt')} [1-{len(options)}] ({default + 1}): "
-                ).strip()
-                if ans == "":
-                    return default
-                try:
-                    idx = int(ans) - 1
-                    if 0 <= idx < len(options):
-                        return idx
-                except ValueError:
-                    continue
-            except KeyboardInterrupt:
-                print("")
-                self.signal_handler(None, None)
-                sys.exit(0)
-
-    def ask_manual_network(self):
-        """Ask for manual network CIDR input."""
-        while True:
-            try:
-                net = input(
-                    f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} CIDR (e.g. 192.168.1.0/24): "
-                ).strip()
-                if len(net) > MAX_CIDR_LENGTH:
-                    self.print_status(self.t("invalid_cidr"), "WARNING")
-                    continue
-                try:
-                    ipaddress.ip_network(net, strict=False)
-                    return net
-                except ValueError:
-                    self.print_status(self.t("invalid_cidr"), "WARNING")
-            except KeyboardInterrupt:
-                print("")
-                self.signal_handler(None, None)
-                sys.exit(0)
+    # ---------- Input utilities (inherited from WizardMixin) ----------
 
     # ---------- Network detection ----------
 
@@ -1799,57 +1695,7 @@ class InteractiveNetworkAuditor:
             self.logger,
         )
 
-    # ---------- Interactive flow ----------
-
-    def clear_screen(self):
-        """Clear the terminal screen."""
-        if is_dry_run(self.config.get("dry_run")):
-            return
-        os.system("clear" if os.name == "posix" else "cls")
-
-    def print_banner(self):
-        """Print the RedAudit banner."""
-        subtitle = self.t("banner_subtitle")
-        banner = f"""
-{self.COLORS['FAIL']}
- ____          _    {self.COLORS['BOLD']}{self.COLORS['HEADER']}_             _ _ _{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|  _ \\ ___  __| |  {self.COLORS['BOLD']}{self.COLORS['HEADER']}/ \\  _   _  __| (_) |_{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-| |_) / _ \\/ _` | {self.COLORS['BOLD']}{self.COLORS['HEADER']}/ _ \\| | | |/ _` | | __|{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|  _ <  __/ (_| |{self.COLORS['BOLD']}{self.COLORS['HEADER']}/ ___ \\ |_| | (_| | | |_{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|_| \\_\\___|\\__,_|{self.COLORS['BOLD']}{self.COLORS['HEADER']}/_/   \\_\\__,_|\\__,_|_|\\__|{self.COLORS['ENDC']}
-                                     {self.COLORS['CYAN']}v{VERSION}{self.COLORS['ENDC']}
-{self.COLORS['OKBLUE']}══════════════════════════════════════════════════════{self.COLORS['ENDC']}
-{self.COLORS['BOLD']}{subtitle}{self.COLORS['ENDC']}
-{self.COLORS['OKBLUE']}══════════════════════════════════════════════════════{self.COLORS['ENDC']}
-"""
-        print(banner)
-
-    def show_main_menu(self):
-        """
-        Display main menu and return user choice.
-
-        Returns:
-            int: 0=exit, 1=scan, 2=update, 3=diff
-        """
-        print(f"\n{self.COLORS['HEADER']}RedAudit v{VERSION}{self.COLORS['ENDC']}")
-        print("─" * 60)
-        print(f"  {self.COLORS['CYAN']}1){self.COLORS['ENDC']} {self.t('menu_option_scan')}")
-        print(f"  {self.COLORS['CYAN']}2){self.COLORS['ENDC']} {self.t('menu_option_update')}")
-        print(f"  {self.COLORS['CYAN']}3){self.COLORS['ENDC']} {self.t('menu_option_diff')}")
-        print(f"  {self.COLORS['CYAN']}0){self.COLORS['ENDC']} {self.t('menu_option_exit')}")
-        print("─" * 60)
-
-        while True:
-            try:
-                ans = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('menu_prompt')} "
-                ).strip()
-                if ans in ("0", "1", "2", "3"):
-                    return int(ans)
-                self.print_status(self.t("menu_invalid_option"), "WARNING")
-            except KeyboardInterrupt:
-                print("")
-                return 0
+    # ---------- Interactive flow (UI methods inherited from WizardMixin) ----------
 
     def interactive_setup(self):
         """Run interactive configuration setup."""
@@ -2236,6 +2082,51 @@ class InteractiveNetworkAuditor:
 
             if self.config.get("scan_vulnerabilities") and not self.interrupted:
                 self.scan_vulnerabilities_concurrent(results)
+
+            # v3.6: Nuclei template scanning (if available and enabled)
+            if (
+                self.config.get("nuclei_enabled", False)
+                and is_nuclei_available()
+                and not self.interrupted
+            ):
+                self.print_status(self.t("nuclei_scan_start"), "INFO")
+                try:
+                    nuclei_targets = get_http_targets_from_hosts(results)
+                    if nuclei_targets:
+                        nuclei_result = run_nuclei_scan(
+                            targets=nuclei_targets,
+                            output_dir=self.config["output_dir"],
+                            severity="medium,high,critical",
+                            timeout=300,
+                            logger=self.logger,
+                            dry_run=bool(self.config.get("dry_run", False)),
+                            print_status=self.print_status,
+                        )
+                        if nuclei_result.get("findings"):
+                            # Merge nuclei findings into vulnerabilities
+                            for finding in nuclei_result["findings"]:
+                                self.results["vulnerabilities"].append(
+                                    {
+                                        "host": finding.get("host", ""),
+                                        "source": "nuclei",
+                                        "template_id": finding.get("template_id"),
+                                        "name": finding.get("name"),
+                                        "severity": finding.get("severity"),
+                                        "matched_at": finding.get("matched_at"),
+                                        "cve_ids": finding.get("cve_ids", []),
+                                        "reference": finding.get("reference", []),
+                                    }
+                                )
+                            self.print_status(
+                                self.t("nuclei_findings", len(nuclei_result["findings"])),
+                                "OK",
+                            )
+                        else:
+                            self.print_status(self.t("nuclei_no_findings"), "INFO")
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning("Nuclei scan failed: %s", e, exc_info=True)
+                    self.print_status(f"Nuclei: {e}", "WARNING")
 
             generate_summary(self.results, self.config, all_hosts, results, self.scan_start_time)
             self.save_results(partial=self.interrupted)
