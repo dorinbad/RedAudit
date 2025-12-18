@@ -287,6 +287,20 @@ TRANSLATIONS = {
         "nuclei_findings": "✓ Nuclei found {} vulnerabilities",
         "nuclei_no_findings": "Nuclei scan completed (no findings)",
         "nuclei_q": "Run Nuclei vulnerability scanner (templates)?",
+        # v3.7: Interactive webhooks
+        "webhook_q": "Configure real-time alert webhook (Slack/Teams/PagerDuty)?",
+        "webhook_url_prompt": "Webhook URL (must start with https://):",
+        "webhook_invalid_url": "Invalid webhook URL. Must start with https://",
+        "webhook_configured": "✓ Webhook configured: {}",
+        "webhook_test_q": "Send a test alert to verify the webhook?",
+        "webhook_test_success": "✓ Test webhook sent successfully",
+        "webhook_test_failed": "⚠️  Test webhook failed: {}",
+        # v3.7: Advanced Net Discovery wizard
+        "net_discovery_advanced_q": "Configure advanced Net Discovery options?",
+        "net_discovery_snmp_prompt": "SNMP community string (default: public):",
+        "net_discovery_dns_zone_prompt": "DNS zone for zone transfer attempts (optional):",
+        "net_discovery_max_targets_prompt": "Max targets for Red Team modules (default: 50):",
+        "net_discovery_options_saved": "✓ Net Discovery options saved",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -565,6 +579,20 @@ TRANSLATIONS = {
         "nuclei_findings": "✓ Nuclei encontró {} vulnerabilidades",
         "nuclei_no_findings": "Escaneo Nuclei completado (sin hallazgos)",
         "nuclei_q": "¿Ejecutar escáner de vulnerabilidades Nuclei (templates)?",
+        # v3.7: Webhooks interactivos
+        "webhook_q": "¿Configurar webhook de alertas en tiempo real (Slack/Teams/PagerDuty)?",
+        "webhook_url_prompt": "URL del webhook (debe empezar con https://):",
+        "webhook_invalid_url": "URL de webhook inválida. Debe empezar con https://",
+        "webhook_configured": "✓ Webhook configurado: {}",
+        "webhook_test_q": "¿Enviar alerta de prueba para verificar el webhook?",
+        "webhook_test_success": "✓ Webhook de prueba enviado correctamente",
+        "webhook_test_failed": "⚠️  Webhook de prueba fallido: {}",
+        # v3.7: Opciones avanzadas Net Discovery
+        "net_discovery_advanced_q": "¿Configurar opciones avanzadas de Net Discovery?",
+        "net_discovery_snmp_prompt": "Cadena de comunidad SNMP (por defecto: public):",
+        "net_discovery_dns_zone_prompt": "Zona DNS para intentos de transferencia (opcional):",
+        "net_discovery_max_targets_prompt": "Máx. objetivos para módulos Red Team (por defecto: 50):",
+        "net_discovery_options_saved": "✓ Opciones de Net Discovery guardadas",
     },
 }
 

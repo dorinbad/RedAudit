@@ -1,0 +1,90 @@
+# RedAudit Filebeat Configuration
+# Ingest JSONL exports (findings.jsonl, assets.jsonl) into Elasticsearch/Logstash
+#
+# Usage:
+#   1. Copy this file to /etc/filebeat/filebeat.yml (or merge with existing)
+#   2. Update paths.base to your RedAudit reports directory
+#   3. Configure output.elasticsearch or output.logstash
+#   4. filebeat setup && systemctl restart filebeat
+
+filebeat.inputs:
+  # Ingest RedAudit findings (vulnerabilities, alerts)
+  - type: log
+    id: redaudit-findings
+    enabled: true
+    paths:
+      - "${paths.base:/home/*/Documents/RedAuditReports}/**/findings.jsonl"
+    json.keys_under_root: true
+    json.add_error_key: true
+    json.message_key: log
+    fields:
+      log.type: redaudit.findings
+    fields_under_root: true
+    # Multiline: each line is a complete JSON object
+    multiline.type: pattern
+    multiline.pattern: '^\{'
+    multiline.negate: true
+    multiline.match: after
+
+  # Ingest RedAudit assets (discovered hosts, services)
+  - type: log
+    id: redaudit-assets
+    enabled: true
+    paths:
+      - "${paths.base:/home/*/Documents/RedAuditReports}/**/assets.jsonl"
+    json.keys_under_root: true
+    json.add_error_key: true
+    fields:
+      log.type: redaudit.assets
+    fields_under_root: true
+
+# Processors for ECS compliance
+processors:
+  - timestamp:
+      field: "@timestamp"
+      layouts:
+        - "2006-01-02T15:04:05.000Z"
+        - "2006-01-02T15:04:05Z"
+      ignore_failure: true
+
+  - rename:
+      fields:
+        - from: "host.ip"
+          to: "host.ip_list"
+      ignore_missing: true
+      fail_on_error: false
+
+  - add_fields:
+      target: ecs
+      fields:
+        version: "8.11.0"
+
+  - add_fields:
+      target: event
+      fields:
+        module: redaudit
+        dataset: redaudit.scan
+
+# Output to Elasticsearch (direct)
+output.elasticsearch:
+  enabled: false  # Enable and configure if using direct ES output
+  hosts: ["https://localhost:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "${ES_PASSWORD}"
+  ssl.verification_mode: "certificate"
+  index: "redaudit-%{+yyyy.MM.dd}"
+
+# Output to Logstash (recommended for processing)
+output.logstash:
+  enabled: true
+  hosts: ["localhost:5044"]
+
+# Logging
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat-redaudit
+  keepfiles: 7
+  permissions: 0640

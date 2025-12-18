@@ -2625,6 +2625,19 @@ class InteractiveNetworkAuditor(WizardMixin):
                         else (expand_user_path(persisted_userlist) if persisted_userlist else None)
                     )
 
+                # v3.7: Advanced Net Discovery options (SNMP community, DNS zone, max targets)
+                nd_options = self.ask_net_discovery_options()
+                self.config["net_discovery_snmp_community"] = nd_options.get(
+                    "snmp_community", "public"
+                )
+                self.config["net_discovery_dns_zone"] = nd_options.get("dns_zone", "")
+                self.config["net_discovery_max_targets"] = nd_options.get("redteam_max_targets", 50)
+
+        # v3.7: Interactive webhook configuration
+        webhook_url = self.ask_webhook_url()
+        if webhook_url:
+            self.config["webhook_url"] = webhook_url
+
         self.setup_encryption()
 
     def _show_defaults_summary(self, persisted_defaults: Dict) -> None:

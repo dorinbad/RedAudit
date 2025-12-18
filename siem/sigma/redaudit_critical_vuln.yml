@@ -1,0 +1,32 @@
+title: RedAudit Critical Vulnerability Detection
+id: 5a3b7d1e-8f2c-4e6a-b9d1-2c3e4f5a6b7c
+status: stable
+level: high
+description: Detects critical severity vulnerabilities discovered by RedAudit scans
+author: RedAudit Team
+date: 2025/12/18
+references:
+  - https://github.com/dorinbadea/RedAudit
+logsource:
+  product: redaudit
+  service: findings
+detection:
+  selection:
+    event.module: redaudit
+    vulnerability.severity:
+      - critical
+      - high
+  condition: selection
+fields:
+  - host.ip
+  - host.name
+  - vulnerability.id
+  - vulnerability.severity
+  - vulnerability.description
+  - vulnerability.score
+falsepositives:
+  - Known test/lab environments
+  - Intentionally vulnerable hosts for training
+tags:
+  - attack.reconnaissance
+  - attack.t1595
