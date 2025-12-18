@@ -88,6 +88,7 @@ def run_local_query(query: str, timeout: int = 30) -> Optional[List[Dict]]:
             return None
 
         import json
+
         return json.loads(result.stdout)
 
     except subprocess.TimeoutExpired:
@@ -139,6 +140,7 @@ def run_remote_query(
             return None
 
         import json
+
         return json.loads(result.stdout)
 
     except subprocess.TimeoutExpired:
@@ -167,7 +169,7 @@ def verify_host(
     Returns:
         Dict with query results and verification status
     """
-    results = {
+    results: Dict[str, Any] = {
         "host": host,
         "verified": False,
         "queries": {},
@@ -183,7 +185,7 @@ def verify_host(
             continue
 
         query_def = VERIFICATION_QUERIES[query_name]
-        query_sql = query_def["query"]
+        query_sql: str = query_def["query"]  # type: ignore[index]
 
         query_result = run_remote_query(
             host=host,
@@ -231,7 +233,7 @@ def generate_verification_report(
     Returns:
         Verification report dict
     """
-    report = {
+    report: Dict[str, Any] = {
         "verified_hosts": 0,
         "failed_hosts": 0,
         "hosts": [],

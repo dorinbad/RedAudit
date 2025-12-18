@@ -1990,6 +1990,11 @@ class InteractiveNetworkAuditor(WizardMixin):
             os.makedirs(self.config["_actual_output_dir"], exist_ok=True)
             maybe_chown_to_invoking_user(self.config["_actual_output_dir"])
 
+            # v3.7: Start session logging
+            from redaudit.utils.session_log import start_session_log
+
+            start_session_log(self.config["_actual_output_dir"], ts_folder)
+
             # Ensure network_info is populated for reports and topology discovery.
             if not self.results.get("network_info"):
                 try:
@@ -2272,6 +2277,13 @@ class InteractiveNetworkAuditor(WizardMixin):
             self.show_results()
 
         finally:
+            # v3.7: Stop session logging
+            from redaudit.utils.session_log import stop_session_log
+
+            session_log_path = stop_session_log()
+            if session_log_path and self.logger:
+                self.logger.info("Session log saved: %s", session_log_path)
+
             if inhibitor is not None:
                 try:
                     inhibitor.stop()
