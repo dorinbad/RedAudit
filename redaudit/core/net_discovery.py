@@ -743,14 +743,22 @@ def discover_networks(
         elif protocol == "hyperscan":
             _progress("HyperScan (parallel discovery)", step_index)
             try:
-                from redaudit.core.hyperscan import hyperscan_with_progress
+                from redaudit.core.hyperscan import hyperscan_full_discovery
 
                 if logger:
                     logger.info("Running HyperScan parallel discovery...")
 
-                hyperscan_result = hyperscan_with_progress(
+                def _hs_progress(completed: int, total: int, desc: str) -> None:
+                    try:
+                        pct = int((completed / total) * 100) if total else 0
+                        _progress(f"HyperScan: {desc} ({pct}%)", step_index)
+                    except Exception:
+                        return
+
+                hyperscan_result = hyperscan_full_discovery(
                     target_networks,
                     logger=logger,
+                    progress_callback=_hs_progress,
                 )
 
                 existing_ips = {h.get("ip") for h in result.get("arp_hosts", [])}
