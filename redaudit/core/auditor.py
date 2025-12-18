@@ -117,7 +117,7 @@ class _ActivityIndicator:
         self._label = str(label)[:50]
         self._message = str(initial)[:200]
         self._refresh_s = float(refresh_s) if refresh_s and refresh_s > 0 else 0.25
-        self._stream = stream if stream is not None else sys.stderr
+        self._stream = stream if stream is not None else getattr(sys, "__stdout__", sys.stdout)
         self._touch_activity = touch_activity
         self._stop = threading.Event()
         self._lock = threading.Lock()
@@ -1419,7 +1419,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                         TextColumn("{task.fields[detail]}", justify="left"),
                         TextColumn("ETA≤ {task.fields[eta_upper]}"),
                         TimeRemainingColumn(),
-                        console=Console(stderr=True),
+                        console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
                     ) as progress:
                         eta_upper_init = self._format_eta(
                             host_timeout_s * math.ceil(max(0, total) / threads)
@@ -1691,7 +1691,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                         TextColumn("{task.fields[detail]}", justify="left"),
                         TextColumn("ETA≤ {task.fields[eta_upper]}"),
                         TimeRemainingColumn(),
-                        console=Console(stderr=True),
+                        console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
                     ) as progress:
                         eta_upper_init = self._format_eta(remaining_budget_s / workers)
                         initial_detail = self._get_ui_detail()
@@ -2026,7 +2026,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                             SpinnerColumn(),
                             TextColumn("[bold cyan]Topology[/bold cyan] {task.description}"),
                             TimeElapsedColumn(),
-                            console=Console(stderr=True),
+                            console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
                             transient=True,
                         ) as progress:
                             task = progress.add_task("discovering...", total=None)
@@ -2098,7 +2098,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                             SpinnerColumn(),
                             TextColumn("[bold blue]Net Discovery[/bold blue] {task.description}"),
                             TimeElapsedColumn(),
-                            console=Console(stderr=True),
+                            console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
                             transient=True,
                         ) as progress:
                             task = progress.add_task("running...", total=None)

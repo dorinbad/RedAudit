@@ -13,7 +13,8 @@ import ipaddress
 import socket
 import struct
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+import sys
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from datetime import datetime
 
 from redaudit.core.command_runner import CommandRunner
@@ -21,6 +22,9 @@ from redaudit.utils.dry_run import is_dry_run
 
 
 _REDAUDIT_REDACT_ENV_KEYS = {"NVD_API_KEY", "GITHUB_TOKEN"}
+
+
+HyperScanProgressCallback = Callable[[int, int, str], None]
 
 
 def _make_runner(*, logger=None, dry_run: Optional[bool] = None, timeout: Optional[float] = None):
@@ -206,11 +210,21 @@ def hyperscan_tcp_sweep_sync(
     batch_size: int = DEFAULT_TCP_BATCH_SIZE,
     timeout: float = DEFAULT_TCP_TIMEOUT,
     logger=None,
+    progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> Dict[str, List[int]]:
     """
     Synchronous wrapper for hyperscan_tcp_sweep.
     """
-    return asyncio.run(hyperscan_tcp_sweep(targets, ports, batch_size, timeout, logger))
+    return asyncio.run(
+        hyperscan_tcp_sweep(
+            targets,
+            ports,
+            batch_size,
+            timeout,
+            logger,
+            progress_callback=progress_callback,
+        )
+    )
 
 
 # ============================================================================
@@ -674,6 +688,7 @@ def hyperscan_full_discovery(
     tcp_batch_size: int = DEFAULT_TCP_BATCH_SIZE,
     logger=None,
     dry_run: Optional[bool] = None,
+    progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> Dict:
     """
     Full parallel discovery combining TCP/UDP/ARP scans.
@@ -741,22 +756,82 @@ def hyperscan_full_discovery(
 
     start_time = time.time()
 
+    total = 100
+    completed = 0
+
+    valid_networks: List[Tuple[str, Any, List[str]]] = []
     for network in networks:
         try:
             net = ipaddress.ip_network(network, strict=False)
             all_ips = [str(h) for h in net.hosts()]
+            valid_networks.append((network, net, all_ips))
         except ValueError:
             continue
 
+    if not valid_networks:
+        if progress_callback:
+            try:
+                progress_callback(100, 100, "complete")
+            except Exception:
+                pass
+        results["duration_seconds"] = round(time.time() - start_time, 2)
+        return results
+
+    # Progress mapping: split 100% across networks and stages.
+    # This avoids premature 100% when scanning multiple networks.
+    net_share = 100.0 / float(len(valid_networks))
+    stage_weights = {
+        "arp": 0.15,
+        "udp": 0.25,
+        "tcp": 0.60,
+    }
+    if not include_arp:
+        stage_weights["arp"] = 0.0
+    if not include_udp:
+        stage_weights["udp"] = 0.0
+    if not include_tcp:
+        stage_weights["tcp"] = 0.0
+    weight_sum = sum(stage_weights.values()) or 1.0
+    for k in stage_weights:
+        stage_weights[k] = stage_weights[k] / weight_sum
+
+    def _report(progress: float, desc: str) -> None:
+        nonlocal completed
+        completed = max(0, min(int(round(progress)), total))
+        if progress_callback:
+            try:
+                progress_callback(completed, total, str(desc)[:200])
+            except Exception:
+                return
+
+    _report(0.0, "initializing")
+
+    for idx, (network, net, all_ips) in enumerate(valid_networks):
+        net_base = idx * net_share
+        net_end = (idx + 1) * net_share
+        net_span = max(0.0, net_end - net_base)
+
+        def _net_progress(stage_offset: float, stage_span: float, frac: float, desc: str) -> None:
+            pct = net_base + stage_offset + (stage_span * max(0.0, min(1.0, frac)))
+            _report(pct, desc)
+
         # 1. ARP sweep first (fastest for L2)
         if include_arp:
+            arp_off = net_span * 0.0
+            arp_span = net_span * stage_weights["arp"]
+            _net_progress(arp_off, arp_span, 0.0, f"ARP sweep ({network})")
             arp_results = hyperscan_arp_aggressive(network, logger=logger, dry_run=dry_run)
             results["arp_hosts"].extend(arp_results)
+            _net_progress(arp_off, arp_span, 1.0, f"ARP done ({network})")
 
         # 2. UDP IoT probes
         if include_udp:
+            udp_off = net_span * stage_weights["arp"]
+            udp_span = net_span * stage_weights["udp"]
+            _net_progress(udp_off, udp_span, 0.0, f"UDP probes ({network})")
             udp_results = hyperscan_udp_broadcast(network, logger=logger)
             results["udp_devices"].extend(udp_results)
+            _net_progress(udp_off, udp_span, 1.0, f"UDP done ({network})")
 
         # 3. TCP batch scan (on discovered hosts or full subnet)
         if include_tcp:
@@ -783,13 +858,26 @@ def hyperscan_full_discovery(
                 else:
                     targets = all_ips
 
+            tcp_off = net_span * (stage_weights["arp"] + stage_weights["udp"])
+            tcp_span = net_span * stage_weights["tcp"]
+
+            def _tcp_progress(c: int, t: int, desc: str) -> None:
+                frac = (float(c) / float(t)) if t else 0.0
+                _net_progress(tcp_off, tcp_span, frac, f"{desc} ({network})")
+
             tcp_results = hyperscan_tcp_sweep_sync(
-                targets, quick_ports, tcp_batch_size, logger=logger
+                targets,
+                quick_ports,
+                tcp_batch_size,
+                logger=logger,
+                progress_callback=_tcp_progress,
             )
 
             for ip, ports in tcp_results.items():
                 if ports:
                     results["tcp_hosts"][ip] = ports
+
+            _net_progress(tcp_off, tcp_span, 1.0, f"TCP done ({network})")
 
     # Calculate totals
     all_found = set()
@@ -802,6 +890,8 @@ def hyperscan_full_discovery(
 
     results["total_hosts_found"] = len(all_found)
     results["duration_seconds"] = round(time.time() - start_time, 2)
+
+    _report(100.0, "complete")
 
     if logger:
         logger.info(
@@ -968,6 +1058,7 @@ def hyperscan_with_progress(
     networks: List[str],
     print_fn=None,
     logger=None,
+    dry_run: Optional[bool] = None,
 ) -> Dict:
     """
     Run HyperScan with rich progress bars (for CLI integration).
@@ -994,16 +1085,19 @@ def hyperscan_with_progress(
         use_rich = False
 
     if use_rich:
+        from rich.console import Console
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
+            console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
         ) as progress:
             task_id = progress.add_task("[cyan]HyperScan Discovery...", total=100)
 
-            def progress_cb(completed, total, desc):
+            def progress_cb(completed: int, total: int, desc: str) -> None:
                 pct = (completed / total * 100) if total > 0 else 0
                 progress.update(task_id, completed=pct, description=f"[cyan]{desc}")
 
@@ -1011,6 +1105,8 @@ def hyperscan_with_progress(
             results = hyperscan_full_discovery(
                 networks,
                 logger=logger,
+                dry_run=dry_run,
+                progress_callback=progress_cb,
             )
 
             progress.update(task_id, completed=100)
@@ -1018,7 +1114,7 @@ def hyperscan_with_progress(
             return results
     else:
         # Fallback without rich
-        return hyperscan_full_discovery(networks, logger=logger)
+        return hyperscan_full_discovery(networks, logger=logger, dry_run=dry_run)
 
 
 # ============================================================================
