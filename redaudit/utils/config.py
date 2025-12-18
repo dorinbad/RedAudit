@@ -51,6 +51,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "cve_lookup_enabled": None,  # True/False
         "generate_txt": None,  # True/False
         "generate_html": None,  # True/False
+        # v3.5.5+: Optional template scanner toggle (if nuclei is installed)
+        "nuclei_enabled": None,  # True/False
     },
 }
 

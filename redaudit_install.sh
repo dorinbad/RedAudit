@@ -141,6 +141,25 @@ else
 fi
 
 # -------------------------------------------
+# 2c) Install nuclei (best-effort)
+# -------------------------------------------
+
+if ! command -v nuclei >/dev/null 2>&1; then
+    echo "[INFO] Installing nuclei (best-effort)..."
+    if apt-cache show nuclei >/dev/null 2>&1; then
+        if apt install -y nuclei; then
+            echo "[OK] nuclei installed"
+        else
+            echo "[WARN] Failed to install nuclei via apt. You can install it manually from https://github.com/projectdiscovery/nuclei"
+        fi
+    else
+        echo "[WARN] nuclei package not available via apt on this system. Install manually from https://github.com/projectdiscovery/nuclei"
+    fi
+else
+    echo "[OK] nuclei already installed"
+fi
+
+# -------------------------------------------
 # 2c) Install kerbrute (Red Team / Kerberos)
 # -------------------------------------------
 

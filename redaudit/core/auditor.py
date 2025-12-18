@@ -734,6 +734,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             "dig",
             "searchsploit",
             "testssl.sh",
+            "nuclei",
             # v3.1+: Topology discovery (optional)
             "arp-scan",
             "lldpctl",
@@ -1734,6 +1735,13 @@ class InteractiveNetworkAuditor(WizardMixin):
             "udp_mode",
             "udp_top_ports",
             "topology_enabled",
+            "topology_only",
+            "scan_mode",
+            "scan_vulnerabilities",
+            "nuclei_enabled",
+            "cve_lookup_enabled",
+            "generate_txt",
+            "generate_html",
         )
         has_scan_defaults = any(persisted_defaults.get(k) is not None for k in scan_default_keys)
 
@@ -1815,6 +1823,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     # v3.2.3+: New defaults
                     scan_mode=self.config.get("scan_mode"),
                     scan_vulnerabilities=self.config.get("scan_vulnerabilities"),
+                    nuclei_enabled=self.config.get("nuclei_enabled"),
                     cve_lookup_enabled=self.config.get("cve_lookup_enabled"),
                     generate_txt=self.config.get("save_txt_report"),
                     generate_html=self.config.get("save_html_report"),
@@ -2083,9 +2092,11 @@ class InteractiveNetworkAuditor(WizardMixin):
             if self.config.get("scan_vulnerabilities") and not self.interrupted:
                 self.scan_vulnerabilities_concurrent(results)
 
-            # v3.6: Nuclei template scanning (if available and enabled)
+            # Nuclei template scanning (optional; full mode only, if installed and enabled)
             if (
-                self.config.get("nuclei_enabled", False)
+                self.config.get("scan_vulnerabilities")
+                and self.config.get("scan_mode") == "completo"
+                and self.config.get("nuclei_enabled", False)
                 and is_nuclei_available()
                 and not self.interrupted
             ):
@@ -2095,7 +2106,9 @@ class InteractiveNetworkAuditor(WizardMixin):
                     if nuclei_targets:
                         nuclei_result = run_nuclei_scan(
                             targets=nuclei_targets,
-                            output_dir=self.config["output_dir"],
+                            output_dir=self.config.get("_actual_output_dir")
+                            or self.config.get("output_dir")
+                            or get_default_reports_base_dir(),
                             severity="medium,high,critical",
                             timeout=300,
                             logger=self.logger,
@@ -2214,6 +2227,7 @@ class InteractiveNetworkAuditor(WizardMixin):
 
         # 5. Vulnerabilities
         self.config["scan_vulnerabilities"] = defaults_for_run.get("scan_vulnerabilities", True)
+        self.config["nuclei_enabled"] = bool(defaults_for_run.get("nuclei_enabled", False))
         self.config["cve_lookup_enabled"] = defaults_for_run.get("cve_lookup_enabled", False)
 
         # 6. Output Dir
@@ -2242,7 +2256,13 @@ class InteractiveNetworkAuditor(WizardMixin):
             self.t("mode_full"),
         ]
         modes_map = {0: "rapido", 1: "normal", 2: "completo"}
-        self.config["scan_mode"] = modes_map[self.ask_choice(self.t("scan_mode"), scan_modes, 1)]
+        persisted_scan_mode = defaults_for_run.get("scan_mode")
+        scan_mode_default_idx = {"rapido": 0, "normal": 1, "completo": 2}.get(
+            persisted_scan_mode, 1
+        )
+        self.config["scan_mode"] = modes_map[
+            self.ask_choice(self.t("scan_mode"), scan_modes, scan_mode_default_idx)
+        ]
 
         if self.config["scan_mode"] != "rapido":
             limit = self.ask_number(self.t("ask_num_limit"), default="all")
@@ -2273,10 +2293,25 @@ class InteractiveNetworkAuditor(WizardMixin):
             )
             self.rate_limit_delay = float(delay)
 
-        self.config["scan_vulnerabilities"] = self.ask_yes_no(self.t("vuln_scan_q"), default="yes")
+        persisted_web_vulns = defaults_for_run.get("scan_vulnerabilities")
+        web_vulns_default = "no" if persisted_web_vulns is False else "yes"
+        self.config["scan_vulnerabilities"] = self.ask_yes_no(
+            self.t("vuln_scan_q"), default=web_vulns_default
+        )
+        self.config["nuclei_enabled"] = False
+        if (
+            self.config.get("scan_vulnerabilities")
+            and self.config.get("scan_mode") == "completo"
+            and is_nuclei_available()
+        ):
+            persisted_nuclei = defaults_for_run.get("nuclei_enabled")
+            default = "yes" if persisted_nuclei is True else "no"
+            self.config["nuclei_enabled"] = self.ask_yes_no(self.t("nuclei_q"), default=default)
 
         # v3.0.1: Ask about CVE correlation
-        if self.ask_yes_no(self.t("cve_lookup_q"), default="no"):
+        persisted_cve_lookup = defaults_for_run.get("cve_lookup_enabled")
+        cve_lookup_default = "yes" if persisted_cve_lookup is True else "no"
+        if self.ask_yes_no(self.t("cve_lookup_q"), default=cve_lookup_default):
             self.config["cve_lookup_enabled"] = True
             # Trigger API key setup if not configured
             self.setup_nvd_api_key()
@@ -2462,6 +2497,10 @@ class InteractiveNetworkAuditor(WizardMixin):
             (
                 "defaults_summary_web_vulns",
                 fmt_bool(persisted_defaults.get("scan_vulnerabilities")),
+            ),
+            (
+                "defaults_summary_nuclei",
+                fmt_bool(persisted_defaults.get("nuclei_enabled")),
             ),
             (
                 "defaults_summary_cve_lookup",
