@@ -15,6 +15,8 @@ Run these commands to get started immediately.
 
 **Interactive Wizard (Best for first time)**
 
+New in v3.7: Configures Webhooks, SIEM, and Advanced Network Discovery interactively.
+
 ```bash
 sudo redaudit
 ```
@@ -184,6 +186,8 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requires `--html-report`, disabled by `--encrypt`).
 - **.jsonl**: Streaming events for SIEM (disabled by `--encrypt`).
 - **.pcap**: Packet captures (only if Deep Scan + tcpdump + Root).
+- **session.log**: Raw terminal output with color codes (in `session_logs/`).
+- **session.txt**: Clean plain-text terminal output (in `session_logs/`).
 
 ---
 

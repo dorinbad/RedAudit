@@ -81,6 +81,8 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 
 All operations are logged to `~/.redaudit/logs/` with rotation policies (max 10MB, 5 backups). Logs contain execution timestamps, thread identifiers, and raw command invocations for accountability.
 
+**Session Capture Security (v3.7+)**: The `session_logs/` directory contains raw terminal output (`session.log`) which may include sensitive data displayed during the scan. These files are protected with `0o600` permissions.
+
 ## 5. CI/CD Security
 
 Automated security controls are integrated into the development pipeline:

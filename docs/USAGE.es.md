@@ -15,6 +15,8 @@ Ejecuta estos comandos para comenzar de inmediato.
 
 **Asistente Interactivo (Recomendado para primera vez)**
 
+Nuevo en v3.7: Configura Webhooks, SIEM y Descubrimiento Avanzado interactivamente.
+
 ```bash
 sudo redaudit
 ```
@@ -184,6 +186,8 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requiere `--html-report`, deshabilitado por `--encrypt`).
 - **.jsonl**: Eventos streaming para SIEM (deshabilitado por `--encrypt`).
 - **.pcap**: Capturas de paquetes (solo si Deep Scan + tcpdump + Root).
+- **session.log**: Salida de terminal raw con códigos de color (en `session_logs/`).
+- **session.txt**: Salida de terminal en texto plano limpio (en `session_logs/`).
 
 ---
 
