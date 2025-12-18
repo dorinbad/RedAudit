@@ -1990,6 +1990,11 @@ class InteractiveNetworkAuditor(WizardMixin):
             os.makedirs(self.config["_actual_output_dir"], exist_ok=True)
             maybe_chown_to_invoking_user(self.config["_actual_output_dir"])
 
+            # v3.7: Start session logging
+            from redaudit.utils.session_log import start_session_log
+
+            start_session_log(self.config["_actual_output_dir"], ts_folder)
+
             # Ensure network_info is populated for reports and topology discovery.
             if not self.results.get("network_info"):
                 try:
@@ -2272,6 +2277,13 @@ class InteractiveNetworkAuditor(WizardMixin):
             self.show_results()
 
         finally:
+            # v3.7: Stop session logging
+            from redaudit.utils.session_log import stop_session_log
+
+            session_log_path = stop_session_log()
+            if session_log_path and self.logger:
+                self.logger.info("Session log saved: %s", session_log_path)
+
             if inhibitor is not None:
                 try:
                     inhibitor.stop()
@@ -2624,6 +2636,19 @@ class InteractiveNetworkAuditor(WizardMixin):
                         if userlist
                         else (expand_user_path(persisted_userlist) if persisted_userlist else None)
                     )
+
+                # v3.7: Advanced Net Discovery options (SNMP community, DNS zone, max targets)
+                nd_options = self.ask_net_discovery_options()
+                self.config["net_discovery_snmp_community"] = nd_options.get(
+                    "snmp_community", "public"
+                )
+                self.config["net_discovery_dns_zone"] = nd_options.get("dns_zone", "")
+                self.config["net_discovery_max_targets"] = nd_options.get("redteam_max_targets", 50)
+
+        # v3.7: Interactive webhook configuration
+        webhook_url = self.ask_webhook_url()
+        if webhook_url:
+            self.config["webhook_url"] = webhook_url
 
         self.setup_encryption()
 

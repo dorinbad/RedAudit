@@ -286,3 +286,113 @@ class WizardMixin:
         # 8. Topology
         self.config["topology_enabled"] = defaults_for_run.get("topology_enabled", False)
         self.config["topology_only"] = defaults_for_run.get("topology_only", False)
+
+    # ---------- v3.7: Interactive Webhooks ----------
+
+    def ask_webhook_url(self) -> str:
+        """
+        Prompt user for webhook URL configuration.
+
+        Returns:
+            Webhook URL or empty string if skipped
+        """
+        if not self.ask_yes_no(self.t("webhook_q"), default="no"):
+            return ""
+
+        while True:
+            try:
+                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+                url = input(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('webhook_url_prompt')} "
+                ).strip()
+
+                if not url:
+                    return ""
+
+                # Basic validation
+                if not url.startswith("https://"):
+                    self.print_status(self.t("webhook_invalid_url"), "WARNING")
+                    continue
+
+                self.print_status(self.t("webhook_configured", url[:50] + "..."), "OK")
+
+                # Optional: test the webhook
+                if self.ask_yes_no(self.t("webhook_test_q"), default="no"):
+                    self._test_webhook(url)
+
+                return url
+
+            except KeyboardInterrupt:
+                print("")
+                return ""
+
+    def _test_webhook(self, url: str) -> bool:
+        """Send a test webhook to verify configuration."""
+        try:
+            from redaudit.utils.webhook import send_webhook
+
+            test_payload = {
+                "type": "test",
+                "message": "RedAudit webhook test",
+                "source": "wizard",
+            }
+            if send_webhook(url, test_payload):
+                self.print_status(self.t("webhook_test_success"), "OK")
+                return True
+            else:
+                self.print_status(self.t("webhook_test_failed", "Connection failed"), "WARNING")
+                return False
+        except Exception as e:
+            self.print_status(self.t("webhook_test_failed", str(e)), "WARNING")
+            return False
+
+    # ---------- v3.7: Advanced Net Discovery Options ----------
+
+    def ask_net_discovery_options(self) -> dict:
+        """
+        Prompt for advanced Net Discovery configuration.
+
+        Returns:
+            Dict with snmp_community, dns_zone, max_targets
+        """
+        options = {
+            "snmp_community": "public",
+            "dns_zone": "",
+            "redteam_max_targets": 50,
+        }
+
+        if not self.ask_yes_no(self.t("net_discovery_advanced_q"), default="no"):
+            return options
+
+        try:
+            # SNMP Community
+            print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+            snmp = input(
+                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('net_discovery_snmp_prompt')} "
+            ).strip()
+            if snmp:
+                options["snmp_community"] = snmp[:64]  # Safety limit
+
+            # DNS Zone
+            print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+            dns_zone = input(
+                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('net_discovery_dns_zone_prompt')} "
+            ).strip()
+            if dns_zone:
+                options["dns_zone"] = dns_zone[:128]
+
+            # Max targets
+            max_tgt = self.ask_number(
+                self.t("net_discovery_max_targets_prompt"),
+                default=50,
+                min_val=1,
+                max_val=500,
+            )
+            options["redteam_max_targets"] = max_tgt
+
+            self.print_status(self.t("net_discovery_options_saved"), "OK")
+
+        except KeyboardInterrupt:
+            print("")
+
+        return options

@@ -1,0 +1,42 @@
+title: RedAudit SSL/TLS Vulnerability
+id: 2f1e3d4c-5b6a-7c8d-9e0f-a1b2c3d4e5f6
+status: stable
+level: high
+description: Detects SSL/TLS vulnerabilities including weak ciphers, expired certs, and protocol issues
+author: RedAudit Team
+date: 2025/12/18
+references:
+  - https://github.com/dorinbadea/RedAudit
+  - https://testssl.sh/
+logsource:
+  product: redaudit
+  service: findings
+detection:
+  selection:
+    event.module: redaudit
+  keywords:
+    vulnerability.description|contains:
+      - "SSLv3"
+      - "TLSv1.0"
+      - "TLSv1.1"
+      - "RC4"
+      - "3DES"
+      - "BEAST"
+      - "POODLE"
+      - "DROWN"
+      - "Heartbleed"
+      - "expired certificate"
+      - "self-signed"
+      - "weak cipher"
+  condition: selection and keywords
+fields:
+  - host.ip
+  - host.port
+  - vulnerability.id
+  - vulnerability.description
+falsepositives:
+  - Internal/legacy systems with known exceptions
+  - Test environments
+tags:
+  - attack.credential_access
+  - attack.t1557

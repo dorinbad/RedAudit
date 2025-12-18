@@ -22,7 +22,7 @@ class TestWizardRedTeam(unittest.TestCase):
         app.setup_encryption = lambda *args, **kwargs: None
 
         app.ask_choice = Mock(side_effect=[1, 0, 0, 1])  # normal, udp quick, topo off, Red Team (B)
-        app.ask_number = Mock(side_effect=["all", 6])  # max_hosts, threads
+        app.ask_number = Mock(side_effect=["all", 6, 50])  # max_hosts, threads, max_targets
         app.ask_yes_no = Mock(
             side_effect=[
                 False,  # rate limiting
@@ -31,6 +31,8 @@ class TestWizardRedTeam(unittest.TestCase):
                 True,  # net discovery
                 True,  # active L2
                 True,  # kerbrute userenum
+                False,  # v3.7: net discovery advanced options
+                False,  # v3.7: webhook prompt
             ]
         )
 
@@ -59,6 +61,7 @@ class TestWizardRedTeam(unittest.TestCase):
                 True,  # vuln scan
                 False,  # cve lookup
                 True,  # net discovery
+                False,  # v3.7: webhook prompt
             ]
         )
 

@@ -11,6 +11,25 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (nada aún)
 
+## [3.7.0] - 2025-12-18 (UX del Wizard e Integración SIEM)
+
+### Añadido
+
+- **Webhooks Interactivos**: El wizard ahora solicita URL de webhook Slack/Teams/PagerDuty con alerta de prueba opcional.
+- **Net Discovery Avanzado en Wizard**: Cadena SNMP, zona DNS y máximo de objetivos ahora configurables en el wizard.
+- **Pipeline SIEM Nativo**: Incluye `siem/filebeat.yml`, `siem/logstash.conf` y 3 reglas Sigma para integración ELK/Splunk.
+- **Verificación Osquery**: Nuevo módulo `redaudit/core/osquery.py` para validación de configuración de hosts post-scan via SSH.
+- **Logging de Sesión**: Salida de terminal capturada automáticamente a carpeta `session_logs/` (`.log` raw + `.txt` limpio).
+- **Spinner de Progreso Nuclei**: Spinner animado Rich con tiempo transcurrido durante escaneos de templates Nuclei.
+
+### Corregido
+
+- **CI CodeQL**: Bajada de `codeql-action` a v3 por compatibilidad.
+
+### Cambiado
+
+- **Configuración webhook**: Ahora se persiste en `~/.redaudit/config.json` junto con otros defaults.
+
 ## [3.6.1] - 2025-12-18 (Calidad de Escaneo y UX)
 
 ### Añadido

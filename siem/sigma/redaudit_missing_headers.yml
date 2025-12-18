@@ -1,0 +1,35 @@
+title: RedAudit Missing Security Headers
+id: 8c4d2e3f-1a5b-4c7d-9e0f-1a2b3c4d5e6f
+status: stable
+level: medium
+description: Detects web applications with missing security headers (CSP, X-Frame-Options, HSTS)
+author: RedAudit Team
+date: 2025/12/18
+references:
+  - https://github.com/dorinbadea/RedAudit
+  - https://owasp.org/www-project-secure-headers/
+logsource:
+  product: redaudit
+  service: findings
+detection:
+  selection:
+    event.module: redaudit
+    vulnerability.category: web
+  keywords:
+    vulnerability.description|contains:
+      - "X-Frame-Options"
+      - "Content-Security-Policy"
+      - "X-Content-Type-Options"
+      - "Strict-Transport-Security"
+      - "HSTS"
+  condition: selection and keywords
+fields:
+  - host.ip
+  - url.full
+  - vulnerability.description
+falsepositives:
+  - Internal APIs without browser exposure
+  - Legacy applications pending remediation
+tags:
+  - attack.initial_access
+  - attack.t1190
