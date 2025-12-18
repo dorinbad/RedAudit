@@ -296,6 +296,7 @@ class TestScannerNmapArguments(unittest.TestCase):
         self.assertIn("-p-", args_full)
         self.assertIn("-sC", args_full)
         self.assertIn("-A", args_full)
+        self.assertNotIn("--open", args_full)
 
     def test_get_nmap_arguments_invalid_mode(self):
         """Test fallback for invalid mode."""
