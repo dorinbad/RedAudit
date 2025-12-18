@@ -1267,6 +1267,14 @@ class InteractiveNetworkAuditor(WizardMixin):
                             or vendor_map.get(mac.upper())
                             or vendor_map.get(mac.lower())
                         )
+                        # v3.6.1: Online fallback for unknown vendors
+                        if not vendor:
+                            try:
+                                from redaudit.utils.oui_lookup import lookup_vendor_online
+
+                                vendor = lookup_vendor_online(mac)
+                            except Exception:
+                                pass
                         if vendor:
                             deep_meta["vendor"] = vendor
             except Exception:

@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - (none yet)
 
+## [3.6.1] - 2025-12-18 (Scan Quality & UX)
+
+### Added
+
+- **Findings Consolidation**: Duplicate findings on same host (e.g., "Missing X-Frame-Options" on 5 ports) are now merged into single entries with `affected_ports` array.
+- **OUI Fallback Lookup**: New `redaudit/utils/oui_lookup.py` module for online MAC vendor lookup via macvendors.com when local database is incomplete.
+- **HTTPS Port Detection**: Expanded SSL/TLS detection to include common non-standard ports (8443, 4443, 9443, 49443).
+
+### Fixed
+
+- **Nuclei Integration Bug**: `get_http_targets_from_hosts()` was checking for `state != "open"` but RedAudit ports don't have a `state` field. Now uses `is_web_service` flag correctly.
+- **Progress Bar Noise**: Condensed nmap command output from full command to `[nmap] IP (scan type)` for cleaner terminal display.
+- **False Positive Handling**: When cross-validation detects Nikto reported a missing header that curl/wget shows as present, severity is now degraded to `info` with `verified: false`.
+
+### Changed
+
+- **testssl Execution**: Now runs on all HTTPS ports (8443, 49443, etc.), not just port 443.
+
 ## [3.6.0] - 2025-12-18 (Nuclei Enablement & UX)
 
 ### Added
