@@ -56,7 +56,9 @@ class SessionLogger:
         self.tee_stderr: Optional["TeeStream"] = None
         self.active = False
         self._encoding = "utf-8"
-        self._mode = (mode or os.environ.get("REDAUDIT_SESSION_LOG_MODE") or "lines").strip().lower()
+        self._mode = (
+            (mode or os.environ.get("REDAUDIT_SESSION_LOG_MODE") or "lines").strip().lower()
+        )
 
     def start(self) -> bool:
         """
@@ -202,7 +204,9 @@ class TeeStream(io.TextIOBase):
     Stream that writes to both terminal and log file.
     """
 
-    def __init__(self, terminal: TextIO, log_file: TextIO, prefix: str = "", *, mode: str = "lines"):
+    def __init__(
+        self, terminal: TextIO, log_file: TextIO, prefix: str = "", *, mode: str = "lines"
+    ):
         """
         Initialize tee stream.
 

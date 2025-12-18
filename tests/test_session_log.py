@@ -52,4 +52,3 @@ class TestTeeStream(unittest.TestCase):
         stream.write("b")
         stream.write("\n")
         self.assertEqual(log.getvalue(), "ab\n")
-
