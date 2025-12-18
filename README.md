@@ -62,6 +62,7 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 |:---|:---|:---|
 | **Core Scanner** | `nmap`, `python3-nmap` | TCP/UDP port scanning, service/version detection, OS fingerprinting. |
 | **Web Recon** | `whatweb`, `curl`, `wget`, `nikto` | Analyzes HTTP headers, technologies, and vulnerabilities. |
+| **Template Scanner** | `nuclei` | Community-driven vulnerability templates; auto-scans HTTP/HTTPS hosts (v3.6). |
 | **Exploit Intel** | `searchsploit` | Automatic ExploitDB lookup for services with detected versions. |
 | **CVE Intelligence** | NVD API | CVE correlation for detected service versions (v3.0). |
 | **SSL/TLS Analysis** | `testssl.sh` | Deep SSL/TLS vulnerability scanning (Heartbleed, POODLE, weak ciphers). |
@@ -117,10 +118,10 @@ redaudit/
 │   ├── report.html.j2  # HTML dashboard template (v3.3)
 │   └── diff.html.j2    # HTML diff template (v3.3)
 └── utils/              # Utilities
-	    ├── constants.py    # Configuration constants
-	    ├── i18n.py         # Internationalization
-	    ├── config.py       # Persistent configuration
-	    └── webhook.py      # Webhook alerting (v3.3)
+     ├── constants.py    # Configuration constants
+     ├── i18n.py         # Internationalization
+     ├── config.py       # Persistent configuration
+     └── webhook.py      # Webhook alerting (v3.3)
 ```
 
 ## Installation

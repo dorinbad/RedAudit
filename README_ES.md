@@ -62,6 +62,7 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 |:---|:---|:---|
 | **Escáner Core** | `nmap`, `python3-nmap` | Escaneo de puertos TCP/UDP, detección de servicios/versión, fingerprinting de SO. |
 | **Reconocimiento Web** | `whatweb`, `curl`, `wget`, `nikto` | Analiza cabeceras HTTP, tecnologías y vulnerabilidades. |
+| **Escáner Templates** | `nuclei` | Templates de vulnerabilidades community; escanea hosts HTTP/HTTPS automáticamente (v3.6). |
 | **Inteligencia de Exploits** | `searchsploit` | Búsqueda automática en ExploitDB para servicios con versiones detectadas. |
 | **Inteligencia CVE** | NVD API | Correlación de CVE para versiones de servicios detectados (v3.0). |
 | **Análisis SSL/TLS** | `testssl.sh` | Escaneo profundo de vulnerabilidades SSL/TLS (Heartbleed, POODLE, cifrados débiles). |
