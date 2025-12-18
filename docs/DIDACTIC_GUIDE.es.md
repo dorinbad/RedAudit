@@ -243,6 +243,7 @@ Estas son las ubicaciones de código más útiles pedagógicamente. Úsalas para
 | Mapeo schema ECS | `core/siem.py` | `build_ecs_event()` |
 | Cifrado | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
 | Generación de playbooks | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |
+| Logging de sesión (v3.7) | `utils/session_log.py` | `SessionLogger`, `start_session_log()` |
 
 > **Nota:** Evita referenciar números de línea específicos ya que cambian entre versiones. Referencia nombres de funciones en su lugar.
 
