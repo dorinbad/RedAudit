@@ -1707,7 +1707,6 @@ class InteractiveNetworkAuditor(WizardMixin):
                 BarColumn,
                 TextColumn,
                 TimeElapsedColumn,
-                TimeRemainingColumn,
             )
             from rich.console import Console
 
