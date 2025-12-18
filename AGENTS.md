@@ -41,16 +41,19 @@ E) Operational checklist (exact sequence)
 
 **Rules:**
 
+- **CRITICAL:** ALWAYS create a new branch (e.g., `docs/vX.Y-updates`). **NEVER commit directly to `main`.**
 - Do not redesign docs. Preserve tone/structure; make minimal insertions in the right place.
 - Keep EN/ES consistent: update both when behavior/UX changes.
 - Examples must match real flags, defaults, paths, and menus.
 
 **Method (in order):**
 
-1. Extract “truth from code”: real CLI flags/defaults + recent features (with file references).
-2. Audit docs vs inventory: mark missing/outdated/correct; do not touch what’s correct.
-3. Apply minimal edits directly to files.
-4. Run quality gate, then commit with intent (`docs(...)`).
+1. Create branch `docs/<topic>`.
+2. Extract “truth from code”: real CLI flags/defaults + recent features (with file references).
+3. Audit docs vs inventory: mark missing/outdated/correct; do not touch what’s correct.
+4. Apply minimal edits directly to files.
+5. Run quality gate, then commit with intent (`docs(...)`).
+6. Merge via Pull Request (or merge command if authorized), ensuring CI passes.
 
 ### 3) Release Audit (Gatekeeper)
 
