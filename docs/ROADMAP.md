@@ -20,16 +20,16 @@ This document outlines the technical roadmap, planned architectural improvements
 | :--- | :--- | :--- | :--- |
 | **Medium** | **Impacket Integration** | 🎯 Planned | Optional module `--redteam-deep` using Impacket (smbexec, wmiexec, secretsdump) on dummy credentials or detected null sessions. Generates PoC evidence to validate Blue Team detection (SMB signing, LAPS). |
 | **Medium** | **BloodHound Auto-Collector** | 🎯 Planned | Execute SharpHound/BloodHound.py on live Windows hosts (via detected psexec/winrm). Import JSON to local Neo4j and generate common attack paths report (Kerberoast, AS-REProast). Helps Blue Team prioritize AD hardening. |
-| **Medium** | **Nuclei Automation** | 🎯 Planned (v3.6) | Launch Nuclei on detected HTTP/HTTPS/services with community templates + option to load custom. Output merged in findings with PoC URLs. Enables simulating modern attacks and generating defensive Sigma rules. |
+| **Medium** | **Nuclei Automation** | ✅ **Implemented (v3.6)** | Launch Nuclei on detected HTTP/HTTPS hosts with community templates. Output merged in vulnerabilities. `nuclei.py` module with scan execution, JSONL parsing, finding normalization. Enable via config `nuclei_enabled=True`. |
 | **Low** | **Red Team Playbook Generation** | 🎯 Planned | For exploitable findings (e.g., high CVE, weak auth), generate automatic PoC scripts (Python/Impacket/Msfvenom suggestions) in evidence folder. Includes safeguards (labs only, `--dry-run`). Facilitates testing Blue Team controls (EDR, logging). |
 
 ### Code Quality / Technical Debt (Agreed Priorities)
 
 | Priority | Feature | Status | Description |
 | :--- | :--- | :--- | :--- |
-| **High** | **Single Version Source** | 🎯 Planned | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. Quick win (~30 min). |
-| **Medium** | **Refactor `auditor.py`** | 🎯 Planned | Split the 2600-line `auditor.py` into smaller modules: `wizard.py` (interactive UI), `orchestrator.py` (scan coordination). Reduces "God Object" pattern. |
-| **Medium** | **Increase Test Coverage** | 🎯 Planned | Raise test coverage from ~25% to >50%. Focus on edge cases in parsers for external tool outputs (nikto, testssl, nmap). |
+| **High** | **Single Version Source** | ✅ **Implemented (v3.6)** | Version read from `pyproject.toml` via `importlib.metadata`. Prevents version drift. |
+| **Medium** | **Refactor `auditor.py`** | ✅ **Implemented (v3.6)** | Extracted `wizard.py` with `WizardMixin` class. `auditor.py` reduced from 2592 to 2432 lines (-160). |
+| **Medium** | **Increase Test Coverage** | ✅ **Implemented (v3.6)** | Coverage increased from ~25% to 39.99%. Added 43 edge case tests for `scanner.py` functions. 254 tests total. |
 | **Low** | **PyPI Distribution** | 🚧 Deferred | Publish to PyPI for `pip install redaudit`. Foundation ready (`pyproject.toml`), blocked on Single Version Source. |
 | **Low** | **Containerization** | 🚧 Deferred | Dockerfile + Docker Compose. Deferred until v4.0 or explicit user demand. |
 

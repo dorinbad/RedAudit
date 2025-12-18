@@ -20,7 +20,7 @@ Este documento describe el roadmap técnico, las mejoras arquitectónicas planif
 | :--- | :--- | :--- | :--- |
 | **Media** | **Integración Impacket** | 🎯 Planificado | Módulo opcional `--redteam-deep` usando Impacket (smbexec, wmiexec, secretsdump) sobre credenciales dummy o null sessions detectadas. Genera evidencia PoC para validar detección Blue Team (SMB signing, LAPS). |
 | **Media** | **BloodHound Collector Automático** | 🎯 Planificado | Ejecutar SharpHound/BloodHound.py en hosts Windows vivos (via psexec/winrm detectado). Importar JSON a Neo4j local y generar reporte paths ataque comunes (Kerberoast, AS-REProast). Ayuda Blue Team a priorizar hardening AD. |
-| **Media** | **Automatización Nuclei** | 🎯 Planificado (v3.6) | Lanzar Nuclei sobre HTTP/HTTPS/servicios detectados con templates community + opción cargar custom. Output mergeado en findings con PoC URLs. Permite simular ataques modernos y generar Sigma rules defensivas. |
+| **Media** | **Automatización Nuclei** | ✅ **Implementado (v3.6)** | Lanzar Nuclei sobre hosts HTTP/HTTPS detectados con templates community. Output mergeado en vulnerabilidades. Módulo `nuclei.py` con ejecución, parseo JSONL, normalización. Activar via config `nuclei_enabled=True`. |
 | **Baja** | **Generación Playbook Red Team** | 🎯 Planificado | Por finding exploitable (ej: CVE alto, auth débil), generar scripts PoC automáticos (sugerencias Python/Impacket/Msfvenom) en carpeta evidence. Incluye safeguards (solo labs, `--dry-run`). Facilita testing controles Blue Team (EDR, logging). |
 
 ### Calidad de Código / Deuda Técnica (Prioridades Acordadas)

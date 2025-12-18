@@ -59,6 +59,11 @@ from redaudit.utils.i18n import TRANSLATIONS, get_text
 from redaudit.utils.dry_run import is_dry_run
 from redaudit.core.command_runner import CommandRunner
 from redaudit.core.wizard import WizardMixin
+from redaudit.core.nuclei import (
+    is_nuclei_available,
+    run_nuclei_scan,
+    get_http_targets_from_hosts,
+)
 from redaudit.core.crypto import (
     is_crypto_available,
     derive_key_from_password,
@@ -2077,6 +2082,51 @@ class InteractiveNetworkAuditor(WizardMixin):
 
             if self.config.get("scan_vulnerabilities") and not self.interrupted:
                 self.scan_vulnerabilities_concurrent(results)
+
+            # v3.6: Nuclei template scanning (if available and enabled)
+            if (
+                self.config.get("nuclei_enabled", False)
+                and is_nuclei_available()
+                and not self.interrupted
+            ):
+                self.print_status(self.t("nuclei_scan_start"), "INFO")
+                try:
+                    nuclei_targets = get_http_targets_from_hosts(results)
+                    if nuclei_targets:
+                        nuclei_result = run_nuclei_scan(
+                            targets=nuclei_targets,
+                            output_dir=self.config["output_dir"],
+                            severity="medium,high,critical",
+                            timeout=300,
+                            logger=self.logger,
+                            dry_run=bool(self.config.get("dry_run", False)),
+                            print_status=self.print_status,
+                        )
+                        if nuclei_result.get("findings"):
+                            # Merge nuclei findings into vulnerabilities
+                            for finding in nuclei_result["findings"]:
+                                self.results["vulnerabilities"].append(
+                                    {
+                                        "host": finding.get("host", ""),
+                                        "source": "nuclei",
+                                        "template_id": finding.get("template_id"),
+                                        "name": finding.get("name"),
+                                        "severity": finding.get("severity"),
+                                        "matched_at": finding.get("matched_at"),
+                                        "cve_ids": finding.get("cve_ids", []),
+                                        "reference": finding.get("reference", []),
+                                    }
+                                )
+                            self.print_status(
+                                self.t("nuclei_findings", len(nuclei_result["findings"])),
+                                "OK",
+                            )
+                        else:
+                            self.print_status(self.t("nuclei_no_findings"), "INFO")
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning("Nuclei scan failed: %s", e, exc_info=True)
+                    self.print_status(f"Nuclei: {e}", "WARNING")
 
             generate_summary(self.results, self.config, all_hosts, results, self.scan_start_time)
             self.save_results(partial=self.interrupted)

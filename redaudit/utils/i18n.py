@@ -277,6 +277,11 @@ TRANSLATIONS = {
         "disabled": "Disabled",
         # v3.2.3+: Stealth mode
         "stealth_mode_info": "Stealth mode: {} timing, {} thread(s), {}s+ delay",
+        # v3.6: Nuclei integration
+        "nuclei_scan_start": "Running Nuclei template scan on HTTP targets...",
+        "nuclei_findings": "✓ Nuclei found {} vulnerabilities",
+        "nuclei_no_findings": "Nuclei scan completed (no findings)",
+        "nuclei_q": "Run Nuclei vulnerability scanner (templates)?",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -545,6 +550,11 @@ TRANSLATIONS = {
         "disabled": "Desactivado",
         # v3.2.3+: Modo sigiloso
         "stealth_mode_info": "Modo sigiloso: timing {}, {} hilo(s), {}s+ retardo",
+        # v3.6: Integración Nuclei
+        "nuclei_scan_start": "Ejecutando escaneo de templates Nuclei en objetivos HTTP...",
+        "nuclei_findings": "✓ Nuclei encontró {} vulnerabilidades",
+        "nuclei_no_findings": "Escaneo Nuclei completado (sin hallazgos)",
+        "nuclei_q": "¿Ejecutar escáner de vulnerabilidades Nuclei (templates)?",
     },
 }
 
