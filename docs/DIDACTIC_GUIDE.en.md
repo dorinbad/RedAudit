@@ -243,6 +243,7 @@ These are the most pedagogically useful code locations. Use them for advanced st
 | ECS schema mapping | `core/siem.py` | `build_ecs_event()` |
 | Encryption | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
 | Playbook generation | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |
+| Session logging (v3.7) | `utils/session_log.py` | `SessionLogger`, `start_session_log()` |
 
 > **Note:** Avoid referencing specific line numbers as they change between versions. Reference function names instead.
 
