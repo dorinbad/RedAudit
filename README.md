@@ -2,8 +2,6 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](README_ES.md)
 
-RedAudit is a CLI tool for structured network auditing and hardening on Kali/Debian systems.
-
 ![Version](https://img.shields.io/github/v/tag/dorinbadea/RedAudit?sort=semver&style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-GPLv3-green?style=flat-square)
@@ -15,114 +13,162 @@ RedAudit is a CLI tool for structured network auditing and hardening on Kali/Deb
 |  _ \ ___  __| |  / \  _   _  __| (_) |_
 | |_) / _ \/ _` | / _ \| | | |/ _` | | __|
 |  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
-|_| \_\___|\__,_/_/   \_\__,_|\__,_|_|\__|
-                                      v3.5.1
-        Interactive Network Audit Tool
+|_| \_\___|__,_/_/   \_\__,_|\__,_|_|\__|
 ```
 
-## Overview
+## What is RedAudit?
 
-RedAudit automates the discovery, enumeration, and reporting phases of network security assessments. It is designed for use in controlled lab environments, defensive hardening workflows, and authorized offensive security exercises. By orchestrating standard industry tools into a coherent concurrent pipeline, it reduces manual overhead and ensures consistent output generation.
+RedAudit is a network auditing framework that orchestrates industry-standard security tools (nmap, nikto, testssl, nuclei) into a concurrent pipeline. It automates discovery-to-report workflows, producing structured JSON/HTML/JSONL artifacts suitable for SIEM ingestion or compliance reporting.
 
-The tool bridges the gap between ad-hoc scanning and formal auditing, providing structured artifacts (JSON/TXT/HTML/JSONL + remediation playbooks) that are ready for reporting workflows or SIEM analysis.
+**Use cases**: Defensive hardening, penetration test scoping, change tracking between assessments.
 
-## Features
+**Key differentiator**: Adaptive multi-phase scanning with automatic escalation—not just parallel execution of tools.
 
-- **3-Phase Adaptive Deep Scan**: Intelligent escalation (TCP aggressive → Priority UDP → Full UDP identity) triggered by host ambiguity
-- **Async UDP Priority Probe (v3.1.3)**: Fast concurrent asyncio probing of priority UDP ports during deep scan for rapid service triage
-- **Async Topology Discovery (v3.1.3)**: Parallelized L2/L3 collection (ARP/VLAN/LLDP + gateway/routes) for faster network mapping
-- **Smart-Check False Positive Filtering**: 3-layer verification (Content-Type, size checks, magic byte validation) reduces Nikto noise by 90%
-- **Cross-Validation (v3.1.4)**: Detects Nikto false positives by comparing findings with curl/wget headers
-- **Descriptive Titles (v3.1.4)**: Finding titles now describe the issue type, not just the URL
-- **Enhanced Net Discovery (v3.2)**: Broadcast/L2 discovery (DHCP/NetBIOS/mDNS/UPNP/ARP/fping) — auto-enabled in `full` mode (v3.2.1) and when topology is enabled (v3.2.3); the interactive wizard prompts and defaults to enabled. Red Team recon is opt-in via `--redteam`.
-- **Staged Atomic Installation with Rollback (v3.2.2)**: Updates use atomic staging with automatic rollback on failure.
-- **Network Topology Discovery**: Best-effort L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection
-- **CVE Intelligence**: NVD API 2.0 integration with CPE 2.3 matching, 7-day caching, and deterministic finding IDs
-- **SIEM-Ready Exports**: Auto-generated JSONL flat files (findings, assets, summary) with ECS v8.11 compliance
-- **Entity Resolution**: Multi-interface device consolidation via hostname/NetBIOS/mDNS fingerprinting
-- **Persistent Defaults**: User preferences stored in `~/.redaudit/config.json` for workflow automation
-- **Differential Analysis**: JSON report comparison engine to track network changes over time
-- **IPv6 + Proxy Support**: Full dual-stack scanning with SOCKS5 pivoting capabilities
-- **Report Encryption**: AES-128-CBC (Fernet) with PBKDF2-HMAC-SHA256 key derivation (480k iterations)
-- **Rate Limiting with Jitter**: Configurable inter-host delay (±30% randomization) for IDS evasion
-- **Subnet Leak Detection (v3.2.1)**: Automatically identifies potential hidden networks (e.g., Guest zones) by analyzing service leaks (headers, redirects).
-- **Interactive Main Menu (v3.2)**: Friendly entrypoint for scanning, updates, and diff analysis (no arguments required).
-- **HyperScan Module (v3.2.3)**: Ultra-fast parallel discovery (asyncio batch TCP, 45+ UDP ports, aggressive ARP, IoT broadcast) with backdoor detection.
-- **Stealth Mode (v3.2.3)**: `--stealth` flag enables T1 paranoid timing, single-thread scanning, and 5s+ delays for enterprise IDS evasion.
-- **Remediation Playbooks (v3.4.0+)**: Auto-generated Markdown playbooks per host/category in `<output_dir>/playbooks/` (TLS, headers, CVE, web, ports) (skipped when `--encrypt` is enabled).
-- **Prevent Sleep During Scans (v3.5)**: Best-effort system/display sleep inhibition while a scan is running (opt-out with `--no-prevent-sleep`).
-- **Centralized CommandRunner (v3.5)**: Single entry point for external commands with timeouts, retries, redaction, and full `--dry-run` support.
-- **Bilingual Interface**: Complete English/Spanish localization
+---
 
-## Architecture
+## Quick Start
+
+```bash
+# Install
+git clone https://github.com/dorinbadea/RedAudit.git
+cd RedAudit && sudo bash redaudit_install.sh
+
+# Run your first scan
+sudo redaudit --target 192.168.1.0/24 --mode normal --yes
+```
+
+For interactive mode (wizard-guided setup), simply run:
+
+```bash
+sudo redaudit
+```
+
+---
+
+## Core Capabilities
+
+### Scanning & Discovery
+
+| Capability | Description |
+|:---|:---|
+| **Adaptive Deep Scan** | 3-phase escalation (TCP → Priority UDP → Full UDP) based on host identity ambiguity |
+| **HyperScan** | Async batch TCP + UDP IoT broadcast + aggressive ARP for ultra-fast triage |
+| **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection |
+| **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPNP) for guest network detection |
+| **Stealth Mode** | T1 paranoid timing, single-thread, 5s+ delays for enterprise IDS evasion |
+
+### Intelligence & Correlation
+
+| Capability | Description |
+|:---|:---|
+| **CVE Correlation** | NVD API 2.0 with CPE 2.3 matching and 7-day cache |
+| **Exploit Lookup** | Automatic ExploitDB (`searchsploit`) queries for detected services |
+| **Template Scanning** | Nuclei community templates for HTTP/HTTPS vulnerability detection |
+| **Smart-Check Filter** | 3-layer false positive reduction (Content-Type, size, magic bytes) |
+| **Subnet Leak Detection** | Identifies hidden networks via HTTP redirect/header analysis |
+
+### Reporting & Integration
+
+| Capability | Description |
+|:---|:---|
+| **Multi-Format Output** | JSON, TXT, HTML dashboard, JSONL (ECS v8.11 compliant) |
+| **Remediation Playbooks** | Markdown guides auto-generated per host/category |
+| **Diff Analysis** | Compare JSON reports to track network changes over time |
+| **SIEM-Ready Exports** | JSONL with risk scoring and observable hashing for deduplication |
+| **Report Encryption** | AES-128-CBC (Fernet) with PBKDF2-HMAC-SHA256 key derivation |
+
+### Operations
+
+| Capability | Description |
+|:---|:---|
+| **Persistent Defaults** | User preferences stored in `~/.redaudit/config.json` |
+| **IPv6 + Proxy Support** | Full dual-stack scanning with SOCKS5 pivoting |
+| **Rate Limiting** | Configurable inter-host delay with ±30% jitter for IDS evasion |
+| **Bilingual Interface** | Complete English/Spanish localization |
+| **Auto-Update** | Atomic staged updates with automatic rollback on failure |
+
+---
+
+## How It Works
+
+### Architecture Overview
 
 RedAudit operates as an orchestration layer, managing concurrent execution threads for network interaction and data processing. It implements a two-phase architecture: generic discovery followed by targeted deep scans.
 
-| **Category** | **Tools** | **Purpose** |
-|:---|:---|:---|
-| **Core Scanner** | `nmap`, `python3-nmap` | TCP/UDP port scanning, service/version detection, OS fingerprinting. |
-| **Web Recon** | `whatweb`, `curl`, `wget`, `nikto` | Analyzes HTTP headers, technologies, and vulnerabilities. |
-| **Template Scanner** | `nuclei` | Community-driven vulnerability templates; auto-scans HTTP/HTTPS hosts (v3.6). |
-| **Exploit Intel** | `searchsploit` | Automatic ExploitDB lookup for services with detected versions. |
-| **CVE Intelligence** | NVD API | CVE correlation for detected service versions (v3.0). |
-| **SSL/TLS Analysis** | `testssl.sh` | Deep SSL/TLS vulnerability scanning (Heartbleed, POODLE, weak ciphers). |
-| **Traffic Capture** | `tcpdump`, `tshark` | Captures network packets for detailed protocol analysis. |
-| **DNS/Whois** | `dig`, `whois` | Reverse DNS lookups and ownership information for public IPs. |
-| **Diff Analysis** | Built-in | Compare JSON reports to track network changes over time (v3.0). |
-| **Pivoting** | `proxychains` wrapper | SOCKS5 proxy support for internal network access (v3.0). |
-| **Topology** | `arp-scan`, `ip route` | L2 discovery, VLAN detection, and gateway mapping (v3.1+). |
-| **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Enhanced broadcast/L2 discovery for guest networks (v3.2+). |
-| **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap`, `kerbrute`, `scapy` | Optional active enumeration (SNMP, SMB, LDAP, Kerberos, L2 attacks) for deep Blue Team analysis (v3.2+). |
-| **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT broadcast, aggressive ARP (v3.2.3). |
-| **Orchestrator** | `concurrent.futures` (Python) | Manages thread pools for parallel host scanning. |
-| **Command Execution** | Built-in (`CommandRunner`) | Centralized safe command execution (args lists, timeouts, retries, redaction, full `--dry-run` support) (v3.5). |
-| **Encryption** | `python3-cryptography` | AES-128 encryption for sensitive audit reports. |
-| **Remediation Playbooks** | Built-in | Generates actionable Markdown playbooks per host/category (v3.4.0+). |
-
-### System Overview
-
 ![System Overview](docs/images/system_overview_v3.png)
 
-Deep scans are triggered selectively: web auditing modules launch only upon detection of HTTP/HTTPS services, and SSL inspection is reserved for encrypted ports.
+### Adaptive Scanning Logic
 
-### Project Structure
+RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runtime heuristics to decide escalation:
 
-```text
-redaudit/
-├── core/               # Core functionality
-│   ├── auditor.py      # Main orchestrator class
-│   ├── prescan.py      # Asyncio fast port discovery
-│   ├── scanner.py      # Nmap scanning logic + IPv6 support
-│   ├── crypto.py       # AES-128 encryption/decryption
-│   ├── network.py      # Interface detection (IPv4/IPv6)
-│   ├── reporter.py     # JSON/TXT/HTML/JSONL + playbooks output
-│   ├── html_reporter.py  # Interactive HTML report generator (v3.3)
-│   ├── playbook_generator.py  # Remediation playbook generator (v3.4)
-│   ├── command_runner.py  # Centralized external command execution (v3.5)
-│   ├── power.py        # Best-effort sleep/display inhibition (v3.5)
-│   ├── updater.py      # Reliable auto-update (git clone)
-│   ├── verify_vuln.py  # Smart-Check false positive filtering
-│   ├── entity_resolver.py  # Multi-interface host grouping
-│   ├── siem.py         # Professional SIEM integration
-│   ├── nvd.py          # CVE correlation via NVD API
-│   ├── diff.py         # Differential analysis module
-│   ├── proxy.py        # SOCKS5 proxy support
-│   ├── scanner_versions.py  # Tool version detection (v3.1)
-│   ├── evidence_parser.py   # Observation extraction (v3.1)
-│   ├── jsonl_exporter.py    # JSONL exports (v3.1)
-│   ├── udp_probe.py     # Async UDP probing (v3.1.3)
-│   ├── topology.py      # Async topology discovery (v3.1+)
-│   ├── net_discovery.py # Enhanced network discovery (v3.2+)
-│   └── hyperscan.py     # Ultra-fast parallel discovery (v3.2.3)
-├── templates/          # HTML report / diff templates
-│   ├── report.html.j2  # HTML dashboard template (v3.3)
-│   └── diff.html.j2    # HTML diff template (v3.3)
-└── utils/              # Utilities
-     ├── constants.py    # Configuration constants
-     ├── i18n.py         # Internationalization
-     ├── config.py       # Persistent configuration
-     └── webhook.py      # Webhook alerting (v3.3)
 ```
+┌─────────────────────────────────────────────────────────────┐
+│                    PHASE 1: TCP Aggressive                  │
+│              All hosts: -A -p- -sV -Pn                      │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │  Identity Evaluation  │
+              │  • MAC extracted?     │
+              │  • OS fingerprint?    │
+              │  • Service versions?  │
+              └───────────┬───────────┘
+                          │
+            ┌─────────────┴─────────────┐
+            │                           │
+            ▼                           ▼
+    ┌───────────────┐          ┌────────────────┐
+    │ SUFFICIENT    │          │ AMBIGUOUS HOST │
+    │ Stop scanning │          │ Continue...    │
+    └───────────────┘          └───────┬────────┘
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────────┐
+                    │     PHASE 2a: Priority UDP           │
+                    │  17 common ports (DNS, DHCP, SNMP)   │
+                    └──────────────────┬───────────────────┘
+                                       │
+                          ┌────────────┴────────────┐
+                          │                         │
+                          ▼                         ▼
+                  ┌───────────────┐        ┌────────────────┐
+                  │ Identity found│        │ Still ambiguous│
+                  │ Stop          │        │ (full mode)    │
+                  └───────────────┘        └───────┬────────┘
+                                                   │
+                                                   ▼
+                              ┌─────────────────────────────────┐
+                              │     PHASE 2b: Extended UDP      │
+                              │  --top-ports N (configurable)   │
+                              └─────────────────────────────────┘
+```
+
+**Trigger Heuristics** (what makes a host "ambiguous"):
+
+- Few open ports (≤3)
+- Suspicious services (`unknown`, `tcpwrapped`)
+- Missing MAC/vendor data
+- Filtered or no-response ports
+
+**Result**: 50-80% faster scans compared to always-on UDP, while maintaining detection quality for IoT devices, filtered services, and legacy equipment.
+
+### Concurrency Model
+
+RedAudit uses Python's `ThreadPoolExecutor` to scan multiple hosts simultaneously.
+
+| Parameter | Default | Range | Notes |
+|:---|:---|:---|:---|
+| `--threads` | 6 | 1-16 | Threads share memory, execute nmap independently |
+| `--rate-limit` | 0 | 0-∞ | Seconds between hosts (±30% jitter applied) |
+
+**Guidance**:
+
+- **High threads (10-16)**: Faster, but more network noise. Risk of congestion.
+- **Low threads (1-4)**: Slower, stealthier, kinder to legacy networks.
+- **Rate limit >0**: Recommended for production environments to avoid IDS triggers.
+
+---
 
 ## Installation
 
@@ -139,7 +185,7 @@ sudo bash redaudit_install.sh
 
 ### Activating the Alias
 
-After installation, you need to reload your shell configuration to use the `redaudit` command:
+After installation, reload your shell configuration:
 
 | Distribution | Default Shell | Command |
 |:---|:---|:---|
@@ -148,38 +194,34 @@ After installation, you need to reload your shell configuration to use the `reda
 
 **Or simply open a new terminal window.**
 
-> **Why two shells?** Kali Linux switched from Bash to Zsh in 2020 for enhanced features and customization. Most other Debian-based distros still use Bash as default. The installer automatically detects your shell and configures the correct file.
-
 ### Post-Install Verification
 
-Verify installation integrity:
-
 ```bash
-# 1. Check command is available
-which redaudit  # Should return: /usr/local/bin/redaudit
-
-# 2. Verify version
-redaudit --version  # Should show: RedAudit v3.5.1
-
-# 3. Check core dependencies
-command -v nmap && command -v tcpdump && command -v python3  # All should succeed
-
-# 4. Optional: Run verification script
-bash redaudit_verify.sh  # Checks checksums, dependencies, and configuration
+which redaudit            # Should return: /usr/local/bin/redaudit
+redaudit --version        # Should show current version
+bash redaudit_verify.sh   # Full integrity check
 ```
 
-**Optional Configuration (v3.1.1):**
+---
+
+## Usage
+
+### Interactive Mode (Wizard)
+
+Launch without arguments for guided setup:
 
 ```bash
-# Store NVD API key for CVE correlation (one-time setup)
-redaudit  # Launches Interactive Main Menu (Scan / Update / Diff)
-
-# Set persistent defaults to avoid repeating flags
-redaudit --target 192.168.1.0/24 --threads 8 --rate-limit 1 --save-defaults --yes
-# Future runs will use these settings automatically
+sudo redaudit
 ```
 
-### Usage Examples
+The wizard will guide you through:
+
+1. **Target Selection**: Choose a local subnet or enter manual CIDR
+2. **Scan Mode**: Select FAST, NORMAL, or FULL
+3. **Options**: Configure threads, rate limiting, encryption
+4. **Authorization**: Confirm you have permission to scan
+
+### Non-Interactive / Automation
 
 ```bash
 # Quick host discovery
@@ -201,181 +243,139 @@ sudo redaudit --target 192.168.1.0/24 --net-discovery --topology --yes
 redaudit --diff ~/reports/monday.json ~/reports/friday.json
 ```
 
-For more examples including IPv6, CVE correlation, SOCKS5 pivoting, and SIEM integration, see:
-📖 **[Complete Usage Guide](docs/en/USAGE.md)**
+### Key CLI Options
 
-**Core CLI Options:**
-
-- `-t, --target`: Target network(s) in CIDR notation
-- `-m, --mode`: Scan mode (fast/normal/full, default: normal)
-- `-j, --threads`: Concurrent threads (1-16, default: 6)
-- `--rate-limit`: Delay between hosts in seconds (includes ±30% jitter)
-- `-e, --encrypt`: Encrypt reports with AES-128
-- `-o, --output`: Output directory (default: ~/Documents/RedAuditReports)
-- `--topology`: Enable network topology discovery **(v3.1+)**
-- `--net-discovery`: Enhanced L2/broadcast discovery **(v3.2+)**
-- `--cve-lookup`: CVE correlation via NVD API **(v3.0)**
-- `--diff OLD NEW`: Differential analysis between scans **(v3.0)**
-- `--html-report`: Generate interactive HTML dashboard **(v3.3)**
-- `--webhook URL`: Send real-time alerts to webhook endpoint **(v3.3)**
-- `Playbooks`: Auto-generated remediation playbooks in `<output_dir>/playbooks/` **(v3.4.0+, no flag; skipped when `--encrypt`)**
-- `--ipv6`: IPv6-only scanning mode **(v3.0)**
-- `-y, --yes`: Skip confirmations (automation mode)
+| Option | Description |
+|:---|:---|
+| `-t, --target` | Target network(s) in CIDR notation |
+| `-m, --mode` | Scan mode: `fast` / `normal` / `full` (default: normal) |
+| `-j, --threads` | Concurrent threads (1-16, default: 6) |
+| `--rate-limit` | Delay between hosts in seconds (±30% jitter) |
+| `-e, --encrypt` | Encrypt reports with AES-128 |
+| `-o, --output` | Output directory |
+| `--topology` | Enable network topology discovery |
+| `--net-discovery` | Enhanced L2/broadcast discovery |
+| `--cve-lookup` | CVE correlation via NVD API |
+| `--diff OLD NEW` | Differential analysis between scans |
+| `--html-report` | Generate interactive HTML dashboard |
+| `--stealth` | Enable paranoid timing for IDS evasion |
+| `-y, --yes` | Skip confirmations (automation mode) |
 
 See `redaudit --help` or [USAGE.md](docs/en/USAGE.md) for the complete list of 40+ options.
 
-## Configuration & Internal Parameters
+---
 
-### Concurrency (Threads)
+## Configuration
 
-RedAudit uses Python's `ThreadPoolExecutor` to scan multiple hosts simultaneously.
+### Scan Behavior
 
-- **Parameter**: `threads` (Default: 6).
-- **Range**: 1–16.
-- **Behavior**: These are *threads*, not processes. They share memory but execute Nmap instances independently.
-  - **Higher (10-16)**: Faster scan, but higher network noise and CPU load. Risk of congestion.
-  - **Lower (1-4)**: Slower, stealthier, kinder to legacy networks.
+| Parameter | Purpose | Recommendation |
+|:---|:---|:---|
+| `--threads N` | Parallel host scanning | 6 for balanced, 2-4 for stealth |
+| `--rate-limit N` | Inter-host delay (seconds) | 1-5s for production environments |
+| `--udp-ports N` | UDP ports in full mode | 100 (default), up to 500 for thorough |
+| `--stealth` | Paranoid mode | Use when IDS evasion is critical |
 
-### Rate Limiting (Stealth)
+### Output & Encryption
 
-Controlled by the `rate_limit_delay` parameter.
+Reports are saved to `~/Documents/RedAuditReports` (default) with timestamps.
 
-- **Mechanism**: Introduces a `time.sleep(N)` *before* each host scan task starts.
-- **Settings**:
-  - **0s**: Max speed. Best for CTFs or labs.
-  - **1-5s**: Balanced. Recommended for internal audits to avoid simple rate-limiter triggers.
-  - **>5s**: Paranoid/Conservative. Use for sensitive production environments.
+**Encryption** (when `-e, --encrypt` is used):
 
-### Adaptive Deep Scan
+1. A random 16-byte salt is generated
+2. Your password derives a 32-byte key via PBKDF2-HMAC-SHA256 (480k iterations)
+3. Files are encrypted using Fernet (AES-128-CBC)
+4. A `.salt` file is saved alongside encrypted reports
 
-RedAudit applies a smart 3-phase adaptive scan to maximize information gathering:
-
-1. **Phase 1 - Aggressive TCP**: Full port scan with version detection (`-A -p- -sV -Pn`)
-2. **Phase 2a - Priority UDP**: Quick scan of 17 common UDP ports (DNS, DHCP, SNMP, NetBIOS)
-3. **Phase 2b - Extended UDP identity**: Only in `full` mode if no identity found yet (`-O -sU --top-ports N`, configurable via `--udp-ports`)
-
-**Deep Scan features:**
-
-- **Concurrent PCAP Capture**: Traffic is captured during deep scans (not after)
-- **Banner Grab Fallback**: Uses `--script banner,ssl-cert` for unidentified ports
-- **Host Status Accuracy**: New status types (`up`, `filtered`, `no-response`, `down`)
-- **Intelligent Skip**: Phases 2a/2b are skipped if MAC/OS is already detected
-
-- **Trigger**: Automatic based on heuristics (few ports, suspicious services, etc.)
-- **Output**: Full logs, MAC/Vendor data, and (when captured) PCAP metadata in `host.deep_scan.pcap_capture`
-
-### UDP Taming
-
-Faster UDP scanning without sacrificing detection quality:
-
-- Uses `--top-ports N` (default: 100, configurable via `--udp-ports`) instead of full 65535 ports
-- Strict `--host-timeout 300s` per host
-- Reduced retries (`--max-retries 1`) for LAN efficiency
-- **Result**: 50-80% faster UDP scans
-
-### Reliable Auto-Update
-
-RedAudit can check for and install updates automatically:
-
-- **Startup Check**: Prompts to check for updates when launching in interactive mode
-- **Staged Installation**: Updates use atomic staging with automatic rollback on failure (v3.2.2+)
-- **Auto-Install**: Downloads and installs updates via `git clone`
-- **Post-update restart**: After installing an update, RedAudit displays a restart notice and exits. Start a new terminal session to load the new version.
-- **Skip Flag**: Use `--skip-update-check` to disable update checking
-
-> **Note (version not refreshed)**: If you still see the old version after updating, restart your terminal (recommended) or run `hash -r` (zsh/bash) to clear the command cache.
-
-> **Note**: The updater verifies git commit hashes for integrity but does not perform cryptographic signature verification. See [SECURITY.md](docs/en/SECURITY.md#7-reliable-auto-update) for details.
-
-**Alternative invocation:**
+**Decryption**:
 
 ```bash
-python -m redaudit --help
+python3 redaudit_decrypt.py /path/to/report.json.enc
 ```
 
-## 8. Reports, Encryption & Decryption
+### Persistence
 
-Reports are saved to `~/Documents/RedAuditReports` (default) with timestamps (invoking user’s home, even under `sudo`).
-
-### Encryption (`.enc`)
-
-If you check **"Encrypt reports?"** during setup:
-
-1. A random 16-byte salt is generated.
-2. Your password derives a 32-byte key via **PBKDF2HMAC-SHA256** (480,000 iterations).
-3. Files are encrypted using **Fernet (AES-128-CBC)**.
-    - `report.json` → `report.json.enc`
-    - `report.txt` → `report.txt.enc`
-    - A `.salt` file is saved alongside.
-
-### Decryption
-
-To read your reports, you **must** have the `.salt` file and recall your password.
+Store defaults to avoid repeating flags:
 
 ```bash
-python3 redaudit_decrypt.py /path/to/report_NAME.json.enc
+redaudit --target 192.168.1.0/24 --threads 8 --rate-limit 1 --save-defaults --yes
+# Future runs will use these settings automatically
 ```
 
-*The script automatically locates the corresponding `.salt` file.*
+Defaults are stored in `~/.redaudit/config.json`.
 
-## 9. Logging & Heartbeat
+---
 
-### Application Logs
+## Toolchain Reference
 
-Debug and audit logs are stored in `~/.redaudit/logs/`.
+RedAudit orchestrates these tools:
 
-- **Rotation**: Keeps last 5 logs, max 10MB each.
-- **Content**: Tracks user PID, command arguments, and exceptions.
+| Category | Tools | Purpose |
+|:---|:---|:---|
+| **Core Scanner** | `nmap`, `python3-nmap` | TCP/UDP scanning, service/version detection, OS fingerprinting |
+| **Web Recon** | `whatweb`, `curl`, `wget`, `nikto` | HTTP headers, technologies, vulnerabilities |
+| **Template Scanner** | `nuclei` | Community-driven vulnerability templates |
+| **Exploit Intel** | `searchsploit` | ExploitDB lookup for detected services |
+| **CVE Intelligence** | NVD API | CVE correlation for service versions |
+| **SSL/TLS Analysis** | `testssl.sh` | Deep SSL/TLS vulnerability scanning |
+| **Traffic Capture** | `tcpdump`, `tshark` | Packet capture for protocol analysis |
+| **DNS/Whois** | `dig`, `whois` | Reverse DNS and ownership lookup |
+| **Topology** | `arp-scan`, `ip route` | L2 discovery, VLAN detection, gateway mapping |
+| **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Broadcast/L2 discovery |
+| **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `kerbrute` | Optional active enumeration (opt-in) |
+| **Encryption** | `python3-cryptography` | AES-128 encryption for reports |
 
-### Heartbeat Monitor
+### Project Structure
 
-A background `threading.Thread` monitors the scan state every 30 seconds.
-
-- **<60s silence**: Normal (no output).
-- **60-300s silence**: Logs a **WARNING** that the tool may be busy.
-- **>300s silence**: Logs a **WARNING** with message "The active tool is still running; this is normal for slow or filtered hosts."
-- **Purpose**: Assures the operator that the tool is alive during long operations (e.g., deep scans, nikto, testssl).
-
-## 10. Verification Script
-
-Verify your environment integrity (checksums, dependencies, alias) at any time:
-
-```bash
-bash redaudit_verify.sh
+```text
+redaudit/
+├── core/                   # Core functionality
+│   ├── auditor.py          # Main orchestrator
+│   ├── wizard.py           # Interactive UI (WizardMixin)
+│   ├── scanner.py          # Nmap scanning logic + IPv6
+│   ├── nuclei.py           # Nuclei template scanner integration
+│   ├── prescan.py          # Asyncio fast port discovery
+│   ├── hyperscan.py        # Ultra-fast parallel discovery
+│   ├── topology.py         # Network topology discovery
+│   ├── net_discovery.py    # Enhanced L2/broadcast discovery
+│   ├── reporter.py         # JSON/TXT/HTML/JSONL output
+│   ├── playbook_generator.py # Remediation playbook generator
+│   ├── nvd.py              # CVE correlation via NVD API
+│   ├── siem.py             # SIEM integration (ECS v8.11)
+│   ├── diff.py             # Differential analysis
+│   ├── crypto.py           # AES-128 encryption/decryption
+│   ├── command_runner.py   # Safe external command execution
+│   ├── verify_vuln.py      # Smart-Check false positive filter
+│   └── updater.py          # Auto-update system
+├── templates/              # HTML report templates
+└── utils/                  # Utilities (i18n, config, constants)
 ```
 
-*Useful after OS updates or git pulls.*
+---
 
-## 11. Glossary
+## Reference
 
-### Infrastructure & Cryptography
+### Terminology
 
-- **Fernet**: Symmetric encryption standard using AES-128-CBC and HMAC-SHA256, providing authenticated encryption for report confidentiality.
-- **PBKDF2**: Password-Based Key Derivation Function 2. Transforms user passwords into cryptographic keys through 480,000 iterations to resist brute-force attacks.
-- **Salt**: Random 16-byte data added to password hashing to prevent rainbow table attacks, stored in `.salt` files alongside encrypted reports.
-- **Thread Pool**: Concurrent worker collection managed by `ThreadPoolExecutor` for parallel host scanning (default: 6 threads, configurable via `-j`).
-- **Heartbeat**: Background monitoring thread that checks scan progress every 30s and warns if tools are silent for >300s, indicating potential hangs.
-- **Rate Limiting**: Configurable inter-host delay with ±30% jitter to evade IDS threshold detection (activated via `--rate-limit`).
-- **ECS**: Elastic Common Schema v8.11 compatibility for SIEM integration with event typing, risk scoring (0-100), and observable hashing for deduplication.
-- **Finding ID**: Deterministic SHA256 hash (`asset_id + scanner + port + signature + title`) for cross-scan correlation and deduplication.
-- **CPE**: Common Platform Enumeration v2.3 format used for matching software versions against NVD CVE database.
-- **JSONL**: JSON Lines format - one JSON object per line, optimized for streaming ingestion into SIEM/AI pipelines.
+| Term | Definition |
+|:---|:---|
+| **Deep Scan** | Selective escalation (TCP + UDP fingerprinting) for ambiguous hosts |
+| **HyperScan** | Ultra-fast async discovery module (batch TCP, UDP IoT, aggressive ARP) |
+| **Smart-Check** | 3-layer false positive filter (Content-Type, size, magic bytes) |
+| **Entity Resolution** | Consolidation of multi-interface devices into unified assets |
+| **ECS** | Elastic Common Schema v8.11 for SIEM compatibility |
+| **Finding ID** | Deterministic SHA256 hash for cross-scan correlation |
+| **CPE** | Common Platform Enumeration v2.3 for NVD matching |
+| **JSONL** | JSON Lines format for streaming SIEM ingestion |
+| **Fernet** | Symmetric encryption (AES-128-CBC + HMAC-SHA256) |
+| **PBKDF2** | Password-based key derivation (480k iterations) |
+| **Thread Pool** | Concurrent workers for parallel host scanning |
+| **Rate Limiting** | Inter-host delay with ±30% jitter for IDS evasion |
+| **Heartbeat** | Background thread that warns if scan is silent >300s |
 
-### Operations & Reporting
+### Troubleshooting
 
-- **Entity Resolution**: Consolidation of multi-interface devices into `unified_assets[]` for cleaner asset tracking and SIEM ingestion.
-- **Deep Scan / Identity Refinement**: Selective escalation (TCP + UDP fingerprinting) to improve identification on ambiguous or filtered hosts.
-- **Remediation Playbook**: Auto-generated Markdown guide per host/category describing actionable remediation steps and references (saved under `<output_dir>/playbooks/`).
-- **Dry Run (`--dry-run`)**: Prints external commands that would run without executing them (full support; no external commands are executed).
-- **CommandRunner**: Central module that executes external commands with timeouts, retries, and secret redaction (foundation for `--dry-run`).
-- **Sleep Inhibition**: Best-effort prevention of system/display sleep during scans (enabled by default; opt-out with `--no-prevent-sleep`).
-
-**Note**: For detailed explanations of scanning strategies (Deep Scan, Smart-Check, Topology Discovery, etc.), see the Features section above.
-
-## 12. Troubleshooting
-
-For comprehensive troubleshooting covering all scenarios, see the full guide:
-📖 **[Complete Troubleshooting Guide](docs/en/TROUBLESHOOTING.md)**
+For comprehensive troubleshooting, see: 📖 **[Complete Troubleshooting Guide](docs/en/TROUBLESHOOTING.md)**
 
 **Quick Links**:
 
@@ -383,51 +383,31 @@ For comprehensive troubleshooting covering all scenarios, see the full guide:
 - [Scanning Problems](docs/en/TROUBLESHOOTING.md#5-scan-appears-frozen--long-pauses)
 - [Network Discovery Issues](docs/en/TROUBLESHOOTING.md#12-net-discovery-missing-tools--tool_missing-v32)
 - [Encryption/Decryption](docs/en/TROUBLESHOOTING.md#8-decryption-failed-invalid-token)
-- [Performance Tuning](docs/en/TROUBLESHOOTING.md#15-scans-too-slow-on-large-networks)
 
-## 13. Changelog
+### Logging
 
-See [CHANGELOG.md](CHANGELOG.md) for complete version history and detailed release notes.
-
-## 14. Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details.
-
-## 15. License
-
-RedAudit is released under the **GNU General Public License v3.0 (GPLv3)**.
-See the [LICENSE](LICENSE) file for the full text and terms.
-
-## 16. Internals & Glossary (Why RedAudit behaves this way)
-
-### Thread pool (`threads`)
-
-RedAudit uses a thread pool to scan multiple hosts in parallel.
-The `threads` setting controls how many hosts are scanned concurrently:
-
-- Low (2–4): slower but stealthier and less noisy.
-- Medium (default 6): balanced for most environments.
-- High (10–16): faster, but may create more noise and timeouts.
-
-### Rate limiting
-
-RedAudit can insert a small delay between host scans.
-This trades raw speed for stability and stealth during long operations.
-
-### Heartbeat & watchdog
-
-During long scans, RedAudit prints heartbeat messages if no output appears for a while.
-This helps distinguish a "silent but healthy" scan from a real freeze.
-
-### Encrypted reports
-
-Reports can be encrypted with a user password.
-Keys are derived with PBKDF2-HMAC-SHA256 (480k iterations) and a separate `.salt` file, so decryption is possible later with `redaudit_decrypt.py`.
-
-## 17. Legal Notice
-
-**RedAudit** is a security tool for **authorized auditing only**.
-Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
+Debug logs are stored in `~/.redaudit/logs/` (rotation: 5 files, 10MB each).
 
 ---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for details.
+
+## License
+
+RedAudit is released under the **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](LICENSE).
+
+---
+
+## Legal Notice
+
+**RedAudit** is a security tool for **authorized auditing only**. Scanning networks without permission is illegal. By using this tool, you accept full responsibility for your actions and agree to use it only on systems you own or have explicit authorization to test.
+
+---
+
 [Full Documentation](docs/README.md) | [Report Schema](docs/en/REPORT_SCHEMA.md) | [Security Specs](docs/en/SECURITY.md)
