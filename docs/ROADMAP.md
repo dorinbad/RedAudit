@@ -23,18 +23,26 @@ This document outlines the technical roadmap, planned architectural improvements
 | **Medium** | **Nuclei Automation** | 🎯 Planned (v3.6) | Launch Nuclei on detected HTTP/HTTPS/services with community templates + option to load custom. Output merged in findings with PoC URLs. Enables simulating modern attacks and generating defensive Sigma rules. |
 | **Low** | **Red Team Playbook Generation** | 🎯 Planned | For exploitable findings (e.g., high CVE, weak auth), generate automatic PoC scripts (Python/Impacket/Msfvenom suggestions) in evidence folder. Includes safeguards (labs only, `--dry-run`). Facilitates testing Blue Team controls (EDR, logging). |
 
-### Developer Experience / Technical Debt
+### Code Quality / Technical Debt (Agreed Priorities)
 
 | Priority | Feature | Status | Description |
 | :--- | :--- | :--- | :--- |
-| **Medium** | **Containerization** | Paused | Official Dockerfile and Docker Compose setup for ephemeral audit containers. |
+| **High** | **Single Version Source** | 🎯 Planned | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. Quick win (~30 min). |
+| **Medium** | **Refactor `auditor.py`** | 🎯 Planned | Split the 2600-line `auditor.py` into smaller modules: `wizard.py` (interactive UI), `orchestrator.py` (scan coordination). Reduces "God Object" pattern. |
+| **Medium** | **Increase Test Coverage** | 🎯 Planned | Raise test coverage from ~25% to >50%. Focus on edge cases in parsers for external tool outputs (nikto, testssl, nmap). |
+| **Low** | **PyPI Distribution** | 🚧 Deferred | Publish to PyPI for `pip install redaudit`. Foundation ready (`pyproject.toml`), blocked on Single Version Source. |
+| **Low** | **Containerization** | 🚧 Deferred | Dockerfile + Docker Compose. Deferred until v4.0 or explicit user demand. |
+
+### Developer Experience
+
+| Priority | Feature | Status | Description |
+| :--- | :--- | :--- | :--- |
 | **Medium** | **Centralized CommandRunner** | ✅ **Implemented (v3.5.0)** | Single module for external command execution: args as list (anti-injection), configurable timeouts, retries with backoff, secret redaction in logs, dry-run support. Refactors subprocess calls across the codebase. |
 | **Medium** | **Full `--dry-run` Support** | ✅ **Implemented (v3.5.1)** | Propagate `--dry-run` flag to all modules so commands are printed but not executed (no external commands run). Depends on CommandRunner. Useful for auditing and debugging. |
 | **Low** | **Silent Progress UI (ETA)** | ✅ **Implemented (v3.5.1)** | Replace periodic "heartbeat" clocking warnings with Rich progress bars where possible (clear bars + ETA), keeping the terminal output calm and operator-friendly. |
 | **Low** | **Net Discovery Activity Indicator** | ✅ **Implemented (v3.5.2)** | Adds visible activity feedback during Net Discovery phases and reduces noisy logs while progress UI is active; ETA display is now timeout-aware (upper bound). |
 | **Low** | **Output Folder Manifest** | ✅ **Implemented (v3.5.1)** | Add `run_manifest.json` to each output folder (when encryption is disabled) to provide counts + artifact list for reproducibility and SIEM pipelines. |
 | **Low** | **Post-update Restart Required** | ✅ **Implemented (v3.5.2)** | After installing an update, RedAudit shows a large restart notice, waits for confirmation, and exits to ensure the next run loads the new version cleanly. |
-| **Low** | **Single Version Source** | 🎯 Planned | Read version from `pyproject.toml` via `importlib.metadata` instead of manual `VERSION = "x.y.z"`. Prevents version drift across files. |
 | **Low** | **TTY Autodetection** | 🎯 Planned | Auto-disable colors when stdout is not a TTY (pipes/CI). Flag `--no-color` already exists but behavior not fully implemented. |
 | **Low** | **Interactive Webhook Config** | 🎯 Planned | Add webhook URL prompt to interactive wizard for advanced users. Currently webhook is CLI-only (`--webhook URL`). |
 | **Low** | **Interactive HTML Report Config** | 🎯 Planned | Add "Generate HTML report?" prompt to interactive wizard. Currently HTML report is CLI-only (`--html-report`). |
