@@ -312,6 +312,11 @@ def output_has_identity(records: List[Dict]) -> bool:
     for rec in records:
         stdout = rec.get("stdout", "") or ""
         stderr = rec.get("stderr", "") or ""
+        # Ensure str type (may be bytes from subprocess)
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
         combined = stdout + "\n" + stderr
 
         if not combined.strip():
