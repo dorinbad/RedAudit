@@ -743,12 +743,12 @@ def discover_networks(
         elif protocol == "hyperscan":
             _progress("HyperScan (parallel discovery)", step_index)
             try:
-                from redaudit.core.hyperscan import hyperscan_full_discovery
+                from redaudit.core.hyperscan import hyperscan_with_progress
 
                 if logger:
                     logger.info("Running HyperScan parallel discovery...")
 
-                hyperscan_result = hyperscan_full_discovery(
+                hyperscan_result = hyperscan_with_progress(
                     target_networks,
                     logger=logger,
                 )

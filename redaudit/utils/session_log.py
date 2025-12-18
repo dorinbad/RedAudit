@@ -232,6 +232,7 @@ class TeeStream(io.TextIOBase):
         """Return terminal's isatty status."""
         return self.terminal.isatty()
 
+    @property
     def encoding(self) -> str:  # type: ignore[override]
         """Return terminal's encoding."""
         enc = getattr(self.terminal, "encoding", None)

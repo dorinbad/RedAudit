@@ -11,6 +11,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - (nada aún)
 
+## [3.7.1] - 2025-12-18 (Hotfix Crítico)
+
+### Corregido
+
+- **Logging de Sesión**: `TeeStream.encoding` cambiado de método a `@property` para corregir crash de consola Rich.
+- **Deep Scan**: Corregido `TypeError: can't concat str to bytes` en `output_has_identity()` asegurando decodificación de stdout/stderr.
+- **Progreso HyperScan**: Ahora usa el wrapper `hyperscan_with_progress` en net_discovery para spinner visible.
+
 ## [3.7.0] - 2025-12-18 (UX del Wizard e Integración SIEM)
 
 ### Añadido
