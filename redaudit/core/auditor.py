@@ -1507,7 +1507,10 @@ class InteractiveNetworkAuditor(WizardMixin):
 
         for p in web_ports:
             port = p["port"]
-            scheme = "https" if "ssl" in p["service"].lower() or port == 443 else "http"
+            service = p["service"].lower()
+            # v3.6.1: Expanded HTTPS detection for non-standard ports
+            HTTPS_PORTS = {443, 8443, 4443, 9443, 49443}
+            scheme = "https" if port in HTTPS_PORTS or "ssl" in service else "http"
             url = f"{scheme}://{ip}:{port}/"
             finding = {"url": url, "port": port}
 

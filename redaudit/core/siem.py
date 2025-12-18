@@ -610,6 +610,24 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
     fps = detect_nikto_false_positives(vuln_record)
     if fps:
         enriched["potential_false_positives"] = fps
+        # v3.6.1: Degrade severity when cross-validation proves finding is wrong
+        # Only degrade if the primary issue was one of the validated headers
+        header_fp_count = sum(
+            1 for fp in fps if any(h in fp for h in ["X-Frame-Options", "X-Content-Type", "HSTS"])
+        )
+        if header_fp_count > 0:
+            enriched["verified"] = False
+            enriched["severity_note"] = (
+                enriched.get("severity_note", "")
+                + f" Cross-validation detected {header_fp_count} likely false positive(s)."
+            ).strip()
+            # Degrade to info if all significant findings were false positives
+            # Check if primary finding was one of the FP'd headers
+            primary_lower = primary_finding.lower()
+            if any(x in primary_lower for x in ["x-frame-options", "x-content-type", "hsts"]):
+                enriched["severity"] = "info"
+                enriched["severity_score"] = 10
+                enriched["normalized_severity"] = 1.0
 
     # v3.1: Generate finding_id for deduplication
     port = vuln_record.get("port", 0)
