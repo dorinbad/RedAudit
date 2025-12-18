@@ -228,6 +228,38 @@ class TestDiscoverNetworks(unittest.TestCase):
         self.assertTrue(any("ICMP" in c[0] for c in calls))
         self.assertTrue(all(c[2] == 2 for c in calls), "step_total should be 2 for 2 protocols")
 
+    @patch("redaudit.core.hyperscan.hyperscan_full_discovery")
+    @patch("redaudit.core.net_discovery._check_tools")
+    def test_discover_networks_hyperscan_uses_shared_progress(self, mock_tools, mock_hyperscan):
+        mock_tools.return_value = {"nmap": True, "fping": True, "nbtscan": False}
+        mock_hyperscan.return_value = {
+            "arp_hosts": [],
+            "udp_devices": [],
+            "tcp_hosts": {},
+            "duration_seconds": 0.1,
+        }
+
+        calls = []
+
+        def cb(label: str, step_index: int, step_total: int):
+            calls.append((label, step_index, step_total))
+
+        discover_networks(
+            target_networks=["192.168.1.0/24"],
+            protocols=["hyperscan"],
+            progress_callback=cb,
+        )
+
+        mock_hyperscan.assert_called_once()
+        kwargs = mock_hyperscan.call_args.kwargs
+        self.assertIn("progress_callback", kwargs)
+        self.assertTrue(callable(kwargs["progress_callback"]))
+
+        # Simulate HyperScan progress updates and ensure they flow into the outer callback.
+        hs_cb = kwargs["progress_callback"]
+        hs_cb(50, 100, "TCP sweep")
+        self.assertTrue(any("HyperScan:" in c[0] for c in calls))
+
 
 class TestRedTeamDiscovery(unittest.TestCase):
     """Test Red Team net discovery helpers (best-effort)."""
