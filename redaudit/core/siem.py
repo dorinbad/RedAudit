@@ -610,6 +610,24 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
     fps = detect_nikto_false_positives(vuln_record)
     if fps:
         enriched["potential_false_positives"] = fps
+        # v3.6.1: Degrade severity when cross-validation proves finding is wrong
+        # Only degrade if the primary issue was one of the validated headers
+        header_fp_count = sum(
+            1 for fp in fps if any(h in fp for h in ["X-Frame-Options", "X-Content-Type", "HSTS"])
+        )
+        if header_fp_count > 0:
+            enriched["verified"] = False
+            enriched["severity_note"] = (
+                enriched.get("severity_note", "")
+                + f" Cross-validation detected {header_fp_count} likely false positive(s)."
+            ).strip()
+            # Degrade to info if all significant findings were false positives
+            # Check if primary finding was one of the FP'd headers
+            primary_lower = primary_finding.lower()
+            if any(x in primary_lower for x in ["x-frame-options", "x-content-type", "hsts"]):
+                enriched["severity"] = "info"
+                enriched["severity_score"] = 10
+                enriched["normalized_severity"] = 1.0
 
     # v3.1: Generate finding_id for deduplication
     port = vuln_record.get("port", 0)
@@ -770,4 +788,68 @@ def enrich_report_for_siem(results: Dict, config: Dict) -> Dict:
         )
         summary["high_risk_hosts"] = sum(1 for r in risk_scores if r >= 70)
 
+    # v3.6.1: Consolidate duplicate findings by (host, title)
+    enriched["vulnerabilities"] = consolidate_findings(enriched.get("vulnerabilities", []))
+
     return enriched
+
+
+def consolidate_findings(vulnerabilities: List[Dict]) -> List[Dict]:
+    """
+    Group findings by (host, descriptive_title) and merge into single entries.
+
+    v3.6.1: Reduces noise when same vulnerability appears on multiple ports.
+    Example: "Missing X-Frame-Options" on ports 8182, 8183, 8184 -> one finding.
+
+    Args:
+        vulnerabilities: List of vulnerability entries (host + vulnerabilities list)
+
+    Returns:
+        Consolidated list with affected_ports arrays
+    """
+    if not vulnerabilities:
+        return []
+
+    # Group by (host, title)
+    grouped: Dict[tuple, List[Dict]] = {}
+    host_order: List[str] = []  # Preserve original order
+
+    for entry in vulnerabilities:
+        host = entry.get("host", "")
+        if host not in host_order:
+            host_order.append(host)
+
+        for vuln in entry.get("vulnerabilities", []):
+            title = vuln.get("descriptive_title") or vuln.get("url", "")
+            key = (host, title)
+            grouped.setdefault(key, []).append(vuln)
+
+    # Rebuild consolidated list
+    consolidated: Dict[str, List[Dict]] = {}
+    for (host, _title), vulns in grouped.items():
+        if host not in consolidated:
+            consolidated[host] = []
+
+        if len(vulns) == 1:
+            # Single finding - keep as-is
+            consolidated[host].append(vulns[0])
+        else:
+            # Multiple findings with same title - merge
+            merged = vulns[0].copy()
+            ports = sorted(set(v.get("port") for v in vulns if v.get("port")))
+            if ports:
+                merged["affected_ports"] = ports
+                merged["consolidated_count"] = len(vulns)
+                # Update severity note
+                existing_note = merged.get("severity_note", "")
+                merged["severity_note"] = (
+                    f"{existing_note} Consolidated from {len(vulns)} findings.".strip()
+                )
+            consolidated[host].append(merged)
+
+    # Return in original host order
+    return [
+        {"host": host, "vulnerabilities": consolidated.get(host, [])}
+        for host in host_order
+        if host in consolidated
+    ]

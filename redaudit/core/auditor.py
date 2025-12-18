@@ -354,14 +354,52 @@ class InteractiveNetworkAuditor(WizardMixin):
                 print(f"  {line}")  # lgtm[py/clear-text-logging-sensitive-data]
             sys.stdout.flush()
 
+    def _condense_for_ui(self, text: str) -> str:
+        """
+        Condense a log message for progress bar display.
+
+        Extracts only essential info (IP + scan type) from verbose nmap commands
+        to prevent terminal overflow when window is narrow.
+
+        v3.6.1: Addresses noisy progress bar issue during host scanning.
+        """
+        text = (text or "").replace("\r", " ").replace("\t", " ").strip()
+        if not text:
+            return ""
+        text = " ".join(text.split())
+
+        # Pattern: [type] IP → nmap ... or [type] IP → ...
+        # Extract: [type] IP (scan_mode)
+        m = re.match(r"^\[([^\]]+)\]\s+([\d\.]+)\s*→\s*(.*)$", text)
+        if m:
+            scan_type, ip, command = m.groups()
+
+            # Determine mode from command for user-friendly hint
+            mode_hint = ""
+            if "async UDP probe" in command.lower():
+                mode_hint = "UDP probe"
+            elif "-sU" in command:
+                mode_hint = "UDP scan"
+            elif "-p-" in command and ("-A" in command or "-sV" in command):
+                mode_hint = "full scan"
+            elif "--top-ports" in command:
+                mode_hint = "top ports"
+            elif "banner" in text.lower():
+                mode_hint = "banner grab"
+
+            if mode_hint:
+                return f"[{scan_type}] {ip} ({mode_hint})"
+            return f"[{scan_type}] {ip}"
+
+        # For other messages, just take first 60 chars
+        return text[:60] + ("…" if len(text) > 60 else "")
+
     def _set_ui_detail(self, text: str) -> None:
-        cleaned = (text or "").replace("\r", " ").replace("\t", " ").strip()
-        if not cleaned:
+        condensed = self._condense_for_ui(text)
+        if not condensed:
             return
-        cleaned = " ".join(cleaned.split())
-        cleaned = cleaned[:120]
         with self._ui_detail_lock:
-            self._ui_detail = cleaned
+            self._ui_detail = condensed
 
     def _get_ui_detail(self) -> str:
         with self._ui_detail_lock:
@@ -1229,6 +1267,14 @@ class InteractiveNetworkAuditor(WizardMixin):
                             or vendor_map.get(mac.upper())
                             or vendor_map.get(mac.lower())
                         )
+                        # v3.6.1: Online fallback for unknown vendors
+                        if not vendor:
+                            try:
+                                from redaudit.utils.oui_lookup import lookup_vendor_online
+
+                                vendor = lookup_vendor_online(mac)
+                            except Exception:
+                                pass
                         if vendor:
                             deep_meta["vendor"] = vendor
             except Exception:
@@ -1469,7 +1515,10 @@ class InteractiveNetworkAuditor(WizardMixin):
 
         for p in web_ports:
             port = p["port"]
-            scheme = "https" if "ssl" in p["service"].lower() or port == 443 else "http"
+            service = p["service"].lower()
+            # v3.6.1: Expanded HTTPS detection for non-standard ports
+            HTTPS_PORTS = {443, 8443, 4443, 9443, 49443}
+            scheme = "https" if port in HTTPS_PORTS or "ssl" in service else "http"
             url = f"{scheme}://{ip}:{port}/"
             finding = {"url": url, "port": port}
 

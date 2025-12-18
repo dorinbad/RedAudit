@@ -260,7 +260,13 @@ def get_http_targets_from_hosts(hosts: List[Dict]) -> List[str]:
 
     Returns:
         List of URLs for nuclei scanning
+
+    v3.6.1: Fixed bug where state check was skipping all ports (RedAudit
+    ports don't have a 'state' field). Now uses is_web_service flag.
     """
+    # Common HTTPS ports beyond 443
+    HTTPS_PORTS = {443, 8443, 4443, 9443, 49443}
+
     targets = []
 
     for host in hosts:
@@ -271,16 +277,19 @@ def get_http_targets_from_hosts(hosts: List[Dict]) -> List[str]:
         ports = host.get("ports", [])
         for port_info in ports:
             port = port_info.get("port")
-            service = port_info.get("service", "").lower()
-            state = port_info.get("state", "")
+            if not port:
+                continue
 
-            if state != "open":
+            service = port_info.get("service", "").lower()
+
+            # Only target web services (RedAudit already marks these)
+            if not port_info.get("is_web_service"):
                 continue
 
             # Determine if HTTP or HTTPS
-            if port == 443 or "https" in service or "ssl" in service:
+            if port in HTTPS_PORTS or "https" in service or "ssl" in service:
                 targets.append(f"https://{ip}:{port}")
-            elif port in (80, 8080, 8443, 8000, 8888) or "http" in service:
+            else:
                 targets.append(f"http://{ip}:{port}")
 
     return list(set(targets))
