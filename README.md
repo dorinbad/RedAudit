@@ -83,6 +83,18 @@ Each run creates a timestamped folder (default: `~/Documents/RedAuditReports/Red
 - Red Team features are opt-in and intended for authorized assessments only.
 - If you update and the banner/version does not refresh, restart the terminal or run `hash -r`.
 
+## Architecture
+
+System overview (current image):
+
+![RedAudit System Overview](docs/images/system_overview_v3.png)
+
+Module map (Mermaid, rendered SVG):
+
+![RedAudit Module Map](docs/images/architecture_modules.svg)
+
+Source: `docs/images/architecture_modules.mmd`
+
 ## Contributing
 
 See `.github/CONTRIBUTING.md`.

@@ -1,0 +1,164 @@
+%%{init: {'theme':'base','flowchart': {'curve':'linear','nodeSpacing': 30,'rankSpacing': 40},'themeVariables': {'fontFamily': 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial','fontSize': '14px','primaryColor': '#F6F8FA','primaryTextColor': '#0B0F14','primaryBorderColor': '#D0D7DE','lineColor': '#57606A','tertiaryColor': '#FFFFFF'}}}%%
+flowchart LR
+
+  %% ──────────────────────────────────────────────
+  %% RedAudit architecture (module-level map)
+  %% Source of truth: Python modules under `redaudit/` + entry wrappers.
+  %% Render to SVG:
+  %%   npx -p @mermaid-js/mermaid-cli mmdc -i docs/images/architecture_modules.mmd -o docs/images/architecture_modules.svg
+  %% ──────────────────────────────────────────────
+
+  classDef entry fill:#E7F3FF,stroke:#0969DA,stroke-width:1px,color:#0B0F14;
+  classDef core fill:#FFF8E7,stroke:#9A6700,stroke-width:1px,color:#0B0F14;
+  classDef util fill:#F6F8FA,stroke:#57606A,stroke-width:1px,color:#0B0F14;
+  classDef io fill:#EAF9EA,stroke:#1A7F37,stroke-width:1px,color:#0B0F14;
+  classDef ext fill:#FBEAEA,stroke:#CF222E,stroke-width:1px,color:#0B0F14;
+  classDef pkg fill:#FFFFFF,stroke:#D0D7DE,stroke-width:1px,stroke-dasharray: 3 3,color:#0B0F14;
+
+  %% Entry points / wrappers
+  subgraph EP["Entry points"]
+    direction TB
+    bin["/usr/local/bin/redaudit\n(installer wrapper)"]:::entry
+    legacy["redaudit.py\n(legacy wrapper)"]:::entry
+    decrypt["redaudit_decrypt.py\n(report decrypt tool)"]:::entry
+    verify["redaudit_verify.sh\n(install verification)"]:::entry
+    pkg_main["redaudit/__main__.py\npython -m redaudit"]:::entry
+    cli["redaudit/cli.py\nCLI + interactive wizard"]:::entry
+  end
+
+  %% Core package
+  subgraph CORE["Core (`redaudit/core/`)"]
+    direction TB
+    auditor["auditor.py\nInteractiveNetworkAuditor"]:::core
+    prescan["prescan.py\nasync port pre-scan"]:::core
+    scanner["scanner.py\nscan pipeline + capture"]:::core
+    udp_probe["udp_probe.py\nasync UDP probing"]:::core
+    network["network.py\nnet detection helpers"]:::core
+    topology["topology.py\n(topology discovery)"]:::core
+    net_discovery["net_discovery.py\n(discovery + redteam hooks)"]:::core
+    hyperscan["hyperscan.py\n(L2/ARP/UDP discovery)"]:::core
+
+    verify_vuln["verify_vuln.py\n(tool output hygiene)"]:::core
+    nvd["nvd.py\n(CVE enrichment)"]:::core
+    proxy["proxy.py\n(proxy manager)"]:::core
+    power["power.py\nSleepInhibitor"]:::core
+
+    reporter["reporter.py\nsave + exports orchestrator"]:::core
+    html_reporter["html_reporter.py\nHTML dashboard"]:::core
+    jsonl["jsonl_exporter.py\nJSONL exports"]:::core
+    playbooks["playbook_generator.py\nremediation playbooks"]:::core
+    siem["siem.py\nECS/CEF enrichment"]:::core
+    entity["entity_resolver.py\nasset reconciliation"]:::core
+    evidence["evidence_parser.py\nobservations/evidence"]:::core
+    versions["scanner_versions.py\nprovenance"]:::core
+
+    crypto["crypto.py\nencryption helpers"]:::core
+    cmd["command_runner.py\ncentral exec (dry-run-aware)"]:::core
+    updater["updater.py\nself-update"]:::core
+    diff["diff.py\nreport compare"]:::core
+  end
+
+  %% Utils package
+  subgraph UTILS["Utils (`redaudit/utils/`)"]
+    direction TB
+    constants["constants.py\nVERSION + defaults"]:::util
+    i18n["i18n.py\ntranslations"]:::util
+    paths["paths.py\nreport paths + sudo-safe HOME"]:::util
+    config["config.py\npersisted defaults"]:::util
+    dryrun["dry_run.py\nREDAUDIT_DRY_RUN"]:::util
+    webhook["webhook.py\nalerts/webhooks"]:::util
+  end
+
+  %% Templates package
+  subgraph TPL["Templates (`redaudit/templates/`)"]
+    direction TB
+    templates["templates/\nHTML + playbook assets"]:::pkg
+  end
+
+  %% External I/O
+  subgraph IO["Artifacts & I/O"]
+    direction TB
+    reports["Reports folder\n(JSON/TXT/HTML/JSONL/PCAP/Playbooks)"]:::io
+    fs["Filesystem\n(ownership, permissions)"]:::io
+  end
+
+  tools["External tools\n(nmap, tcpdump, nikto, testssl.sh, ...)\n(shell = false)"]:::ext
+  net["Network\n(target hosts/services)"]:::ext
+
+  %% ──────────────────────────────────────────────
+  %% Primary control flow
+  %% ──────────────────────────────────────────────
+  bin --> pkg_main
+  legacy --> pkg_main
+  pkg_main --> cli
+
+  cli <--> auditor
+  cli <--> updater
+  cli -. compare reports .-> diff
+
+  %% Orchestration
+  auditor <--> scanner
+  auditor <--> net_discovery
+  auditor <--> topology
+  auditor <--> udp_probe
+  auditor --> network
+  auditor -. optional .-> prescan
+  auditor -. optional .-> nvd
+  auditor -. hygiene .-> verify_vuln
+  auditor <--> reporter
+  auditor --> proxy
+  auditor --> power
+  auditor <--> cmd
+
+  %% Discovery stack
+  net_discovery <--> hyperscan
+  net_discovery <--> cmd
+  topology <--> cmd
+  network <--> cmd
+  proxy <--> cmd
+  power <--> cmd
+  versions <--> cmd
+  verify_vuln <--> cmd
+  updater <--> cmd
+  scanner <--> cmd
+
+  %% Reporting stack
+  reporter <--> html_reporter
+  reporter <--> jsonl
+  reporter <--> playbooks
+  reporter <--> siem
+  reporter <--> entity
+  reporter -. optional .-> webhook
+  reporter <--> versions
+  reporter <--> crypto
+
+  html_reporter --> templates
+  playbooks --> templates
+
+  %% Utilities (cross-cutting)
+  cli --> constants
+  cli --> i18n
+  cli --> paths
+  cli --> config
+  cli --> dryrun
+
+  auditor --> constants
+  auditor --> i18n
+  auditor --> paths
+  auditor --> config
+
+  updater --> constants
+  updater --> dryrun
+
+  cmd --> dryrun
+  reporter --> constants
+  reporter --> paths
+
+  %% External boundaries
+  cmd <--> tools
+  scanner <--> net
+  net_discovery <--> net
+  reporter <--> reports
+  paths <--> fs
+  reports <--> fs
+

@@ -83,6 +83,18 @@ Cada ejecución crea una carpeta con sello temporal (por defecto: `~/Documents/R
 - Las funciones Red Team son opt-in y solo para auditorías autorizadas.
 - Si actualizas y el banner/versión no se refresca, reinicia el terminal o ejecuta `hash -r`.
 
+## Arquitectura
+
+Visión general del sistema (imagen actual):
+
+![RedAudit System Overview](docs/images/system_overview_es_v3.png)
+
+Mapa de módulos (Mermaid, SVG renderizado):
+
+![RedAudit Module Map](docs/images/architecture_modules.svg)
+
+Fuente: `docs/images/architecture_modules.mmd`
+
 ## Contribuir
 
 Ver `.github/CONTRIBUTING.md`.
