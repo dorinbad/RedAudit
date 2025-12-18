@@ -1,1121 +1,260 @@
-# RedAudit Didactic Guide: Professional
+# RedAudit Instructor Guide
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](DIDACTIC_GUIDE.es.md)
 
-**Audience:** Students, Juniors
-**Scope:** Educational concepts, network theory as applied by RedAudit.
-**Source of Truth:** N/A (Educational)
+**Audience:** Instructors, Professors, Mentors
+**Purpose:** Teach network auditing concepts using RedAudit as a practical tool
+**Prerequisite Knowledge:** TCP/IP fundamentals, Linux CLI basics
+**Source of Truth:** `redaudit/core/auditor.py`
+
+> **This is NOT a software manual.** For CLI reference, see [USAGE.en.md](USAGE.en.md). For architecture details, see [MANUAL.en.md](MANUAL.en.md).
 
 ---
 
-## Manual for Professors and Instructors
+## 1. Executive Summary for Instructors
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](../es/DIDACTIC_GUIDE.md)
+### Session Planning Guide
 
-This guide is designed to help professors, instructors, and mentors explain the complete functionality of **RedAudit v3.5.0**. The document breaks down the tool from a pedagogical perspective, combining theory, visual diagrams, practical exercises, and code references.
-
-> **TL;DR for Instructors**: RedAudit is a network auditing orchestration tool perfect for teaching structured security workflows. Key teaching points: (1) Automated tool orchestration vs manual scanning, (2) Adaptive heuristics (Deep Scan triggers), (3) Professional reporting (SIEM-ready JSON). For a 60-minute lecture, focus on Sections 1-3. For hands-on labs, use Section 8 practical exercises. For research students, Section 5 provides Python internals reference.
-
----
-
-## Table of Contents
-
-1. [Introduction and Philosophy](#1-introduction-and-philosophy)
-2. [Operational Mechanics: The Complete Flow](#2-operational-mechanics-the-complete-flow)
-3. [Deep Scan Logic and Heuristics](#3-deep-scan-logic-and-heuristics)
-4. [Components and Tools](#4-components-and-tools)
-5. [Developer's Guide: Python Internals](#5-developers-guide-python-internals)
-6. [Security and File Management](#6-security-and-file-management)
-7. [Real Output Examples](#7-real-output-examples)
-8. [Educational Use Cases](#8-educational-use-cases)
-9. [Practical Exercises for Students](#9-practical-exercises-for-students)
-10. [Technical Glossary](#10-technical-glossary)
-11. [Source Code References](#11-source-code-references)
-
----
-
-## 1. Introduction and Philosophy
-
-### What is RedAudit?
-
-RedAudit isn't just "another scanning script." It's an **intelligent orchestration layer**.
-
-In offensive and defensive cybersecurity, professionals use dozens of individual tools (`nmap`, `nikto`, `testssl`, `tshark`). The problem RedAudit solves is **fragmentation** and **inconsistency**:
-
-- Running tools manually is slow and prone to human error.
-- Results end up scattered across multiple files with incompatible formats.
-- It's difficult to correlate data (e.g., what vulnerabilities does the service on port 443 of host X have?).
-
-### Pedagogical Objective
-
-When teaching RedAudit, the instructor should focus on three pillars:
-
-1. **Structured Auditing vs. Ad-hoc Scanning**: The importance of having a repeatable and verifiable process.
-2. **The "Funnel" Approach**: Start with a broad view (network discovery) and progressively narrow the focus (port scanning → version detection → exploit search).
-3. **Verifiable Evidence**: The importance of structured logs and JSON reports for professional report generation and forensic analysis.
-
-### Comparison with Other Tools
-
-| Tool | Type | Advantage | Limitation |
+| Duration | Scope | Topics | Lab |
 |:---|:---|:---|:---|
-| **Nmap** | Manual scanner | Maximum flexibility | Requires manual correlation |
-| **OpenVAS/Nessus** | Commercial suite | Complete GUI, vulnerability DB | Heavy, requires infrastructure |
-| **RedAudit** | CLI orchestrator | Automation + Structuring | Requires CLI knowledge |
+| **30 min** | Demo Only | What is orchestration? Live scan of 1 host. JSON output. | None |
+| **60 min** | Intro | Orchestration + Heuristics. Scan a /28 subnet. | Lab 1 (Basic) |
+| **90 min** | Standard | Above + Deep Scan logic + Reporting structure. | Lab 1 + Lab 2 |
+| **120 min** | Advanced | Above + SIEM integration + Code walkthrough. | All three labs |
+
+### Materials Checklist
+
+- [ ] VM with Kali/Parrot (RedAudit pre-installed)
+- [ ] Isolated lab network (10.0.0.0/24 or similar)
+- [ ] At least 3 target hosts with varied services (1 web, 1 SSH-only, 1 "empty")
+- [ ] Projector/screen for live demo
+- [ ] Printed rubric (Section 5)
 
 ---
 
-## 2. Operational Mechanics: The Complete Flow
+## 2. Core Teaching Concepts
 
-RedAudit's execution flow follows a strict logical sequence:
+### Concept 1: Orchestration vs. Manual Scanning
+
+**What to explain:**
+Running `nmap`, `nikto`, `testssl` manually produces scattered outputs. Correlating "what vulnerabilities exist on port 443 of host X?" requires manual grep/analysis.
+
+**Orchestration** means:
+
+1. A central program calls multiple tools in sequence.
+2. Results are unified into a single structured document (JSON).
+3. Decisions (e.g., "should we scan UDP?") are made automatically via heuristics.
+
+**Where in code:** [`run_complete_scan()`](../redaudit/core/auditor.py) orchestrates all phases.
+
+---
+
+### Concept 2: Evidence-Driven Auditing
+
+**What to explain:**
+Professional audits require **verifiable evidence**. A report stating "port 22 is open" is worthless without:
+
+- Timestamp of the scan
+- Tool and version used
+- Raw output (or hash thereof)
+
+**RedAudit provides:**
+
+- JSON with `timestamp`, `version`, `scan_duration`
+- Optional PCAP captures
+- File permissions (0600) to prevent tampering
+
+**Practical question:** "If a client disputes your findings, how do you prove you ran the scan correctly?"
+
+---
+
+### Concept 3: Heuristic Decision-Making (Deep Scan)
+
+**What to explain:**
+Scanning every host with full UDP (-p- -sU) would take hours. RedAudit uses **heuristics** to decide when extra effort is warranted.
+
+**Trigger conditions (verified against code):**
+
+| Condition | Reasoning |
+|:---|:---|
+| ≤3 open ports | Possible firewall, need deeper probing |
+| Services = `unknown` or `tcpwrapped` | Evasion detected, identity unclear |
+| No MAC/vendor extracted | Host identity unknown |
+| >8 open ports | Complex host, worth full enumeration |
+
+**Where in code:** Conditions in [`scan_host_ports()`](../redaudit/core/auditor.py)
+
+---
+
+### Concept 4: Structured Reporting (ECS Schema)
+
+**What to explain:**
+Raw text output is human-readable but machine-hostile. Structured JSON enables:
+
+- SIEM ingestion (Elasticsearch, Splunk)
+- Automated alerting
+- Trend analysis over time
+
+**RedAudit uses ECS v8.11** (Elastic Common Schema):
+
+- `host.ip`, `host.mac`, `host.os.name`
+- `vulnerability.severity`, `vulnerability.category`
+- `event.type: redaudit.scan.complete`
+
+**Where in code:** [`siem.py`](../redaudit/core/siem.py) defines ECS mappings.
+
+---
+
+## 3. Operational Flow (Simplified)
+
+Use this diagram in lectures. It accurately reflects the actual code flow.
 
 ```mermaid
-graph TD
-    A[Start: sudo redaudit] --> B[Environment Validation]
-    B --> C{Dependencies OK?}
-    C -->|No| D[Error: Install dependencies]
-    C -->|Yes| E[Main Menu]
-    E -->|Start Scan| F[Assistant: Target/Topology/Mode]
-    E -->|Update| U[Check for Updates]
-    E -->|Diff| Z[Compare Reports]
-    E -->|Exit| Q[End]
-    U --> E
-    F --> G[Discovery: nmap -sn]
-    G --> H[List of UP Hosts]
-    H --> I[Parallel Port Scanning]
-    I --> J{Trigger Deep Scan?}
-    J -->|No| K[Enrichment: Web/SSL/DNS]
-    J -->|Yes| L[Deep Scan: 3 Phases]
-    L --> K
-    K --> M[Artifacts Generation (JSON/TXT/HTML/JSONL/Playbooks)]
-    M --> N{Encryption?}
-    N -->|Yes| O[Encrypt with AES-128]
-    N -->|No| P[Save to ~/Documents/RedAuditReports]
-    O --> P
-    P --> Q[End]
+flowchart TD
+    A[Start] --> B{Dependencies OK?}
+    B -->|No| X[Exit with Error]
+    B -->|Yes| C[Discovery: nmap -sn]
+    C --> D[List of UP hosts]
+    D --> E[Parallel Port Scan]
+    E --> F{Trigger Deep Scan?}
+    F -->|No| G[Web/SSL/CVE Enrichment]
+    F -->|Yes| H[Deep Scan: 3 Phases]
+    H --> G
+    G --> I[Generate Artifacts]
+    I --> J{Encryption?}
+    J -->|Yes| K[AES-128 Encrypt]
+    J -->|No| L[Save Plain]
+    K --> L
+    L --> M[End]
 ```
 
-### Phase 1: Validation and Environment
-
-**Function in code**: [`check_dependencies()`](../../redaudit/core/auditor.py#L318-L369)
-
-Before touching the network, the program:
-
-- Verifies `sudo` permissions (necessary for raw sockets).
-- Checks critical dependencies (`nmap`, `python3-nmap`).
-- Detects optional tools (`nikto`, `testssl.sh`, `searchsploit`).
-
-### Phase 1.5: Interactive Configuration (New in v3.2)
-
-**Code Function**: [`show_main_menu()`](../../redaudit/core/auditor.py) and [`interactive_setup()`](../../redaudit/core/auditor.py)
-
-At startup, RedAudit presents a **Main Menu** allowing you to choose between scanning, checking for updates, comparing reports (Diff), or exiting.
-
-```text
-┌─────────────────────────────────────────────────┐
-│         RedAudit v3.5.0 - Main Menu            │
-├─────────────────────────────────────────────────┤
-│  [1] Start Network Scan (Wizard)               │
-│  [2] Check for Updates                          │
-│  [3] Diff Reports (JSON)                        │
-│  [0] Exit                                        │
-└─────────────────────────────────────────────────┘
-Your choice:
-```
-
-If converting to scan, the wizard requests:
-
-1. **Target**: IP or CIDR.
-2. **Topology**: Simplified choice between Full Scan, Standard (no topology), or Topology Only.
-3. **Mode**: Fast, Normal, or Full.
-
-### Phase 2: Discovery
-
-**Function in code**: [`scan_network_discovery()`](../../redaudit/core/auditor.py#L614-L629)
-
-Uses a fast ping sweep (`nmap -sn -T4 --max-retries 1`) to identify which hosts are `UP` in the target range. This avoids wasting time scanning empty IPs.
-
-**Estimated time**: ~1-5 seconds per /24 (256 IPs).
-
-### Phase 2b: Advanced Network Discovery (v3.2)
-
-**Function in code**: [`net_discovery.py`](../../redaudit/core/net_discovery.py)
-
-**v3.2.3**: **Auto-enabled in Full mode** (no flag needed). Also available via `--net-discovery` in other modes.
-
-RedAudit goes beyond ICMP and uses L2 protocols:
-
-- **ARP / Netdiscover**: Detects silent hosts on the local link.
-- **mDNS / Bonjour**: Discovers Apple/Linux devices and services (e.g., printers, Chromecast).
-- **NetBIOS / Nbtscan**: Resolves Windows hostnames and workgroups.
-- **Red Team (Opt-in)**: Active probing (SNMP, SMB, Kerberos) and passive listening (STP, CDP, LLMNR). Requires `--redteam` flag.
-
-This phase enriches the report with data invisible to a standard IP scanner.
-
-### Phase 3: Port Enumeration (Concurrent)
-
-**Function in code**: [`scan_hosts_concurrent()`](../../redaudit/core/auditor.py#L788-L840)
-
-This is where RedAudit shines. It uses a `ThreadPoolExecutor` to launch multiple Nmap instances in parallel.
-
-- **Configurable**: The user decides threads (1-16).
-- **Scan Modes**:
-  - `FAST`: Only the top 100 most common ports (`-F`).
-  - `NORMAL`: The top 1000 ports (`-T4 -F -sV`).
-  - `FULL`: Entire range 1-65535 (`-p- -sV -sC -A`).
-
-**Time impact**:
-
-- 1 host in NORMAL mode: ~30-60 seconds.
-- 10 hosts with 6 threads: ~60-120 seconds (parallelism).
-
-### Phase 4: Enrichment
-
-**Functions in code**:
-
-- [`http_enrichment()`](../../redaudit/core/scanner.py#L402-L441)
-- [`ssl_deep_analysis()`](../../redaudit/core/scanner.py#L553-L652)
-- [`exploit_lookup()`](../../redaudit/core/scanner.py#L480-L550)
-
-Once open ports are detected, RedAudit calls specialized tools based on the service:
-
-- If HTTP/HTTPS → Launches `whatweb`, `curl -I`, `nikto` (with false positive filtering).
-- If SSL/TLS → Launches `testssl.sh --quiet --fast`, `openssl s_client`.
-- If versions detected → Automatically searches `searchsploit` (ExploitDB).
-
-### Phase 4b: HTML Dashboard & Visualization (v3.3)
-
-**Code**: [`html_reporter.py`](../../redaudit/core/html_reporter.py)
-
-RedAudit v3.3 introduced an interactive **HTML Dashboard** (`--html-report`) (still supported in v3.4). Unlike static text files, this dashboard allows:
-
-- **Sorting/Filtering**: Sort hosts by Open Ports, OS, or Risk Score.
-- **Visual Charts**: Donut charts for OS distribution and Severity/Risk overview.
-- **Search**: Instant search across all findings.
-- **Offline Safety**: Fully self-contained (no external JS/CSS), safe for air-gapped labs.
-
-This teaches students the value of **data presentation**—raw data is useful for machines, but visualized data is crucial for executive decision-making.
+**Teaching tip:** Walk through the diagram before the first demo. After the demo, have students identify which phase they observed.
 
 ---
 
-### Phase 4c: Remediation Playbooks (v3.4)
+## 4. Guided Labs
 
-**Code**: [`playbook_generator.py`](../../redaudit/core/playbook_generator.py)
+### Lab 1: Basic Discovery (30 min)
 
-RedAudit v3.4 adds **Remediation Playbooks**: concise, actionable Markdown guides generated automatically after each scan in `<output_dir>/playbooks/`.
+**Objective:** Execute a scan, locate the output, interpret the JSON.
 
-- **One playbook per host + category** (deduplicated): TLS hardening, HTTP headers, CVE remediation, web hardening, port hardening.
-- **Teaching value**: bridges the gap between detection ("what is wrong") and operations ("what to do next"), without turning RedAudit into an exploit framework.
-- **Encryption behavior**: playbooks are plaintext artifacts and are skipped when report encryption is enabled.
+**Setup:**
 
-## 3. Deep Scan Logic and Heuristics
+- Target: Single host with SSH + HTTP (e.g., Metasploitable)
+- Mode: `normal`
 
-RedAudit's most advanced feature is its **autonomous decision-making** capability. It doesn't scan blindly; it decides when to go deeper based on heuristics.
+**Steps:**
 
-### When is Deep Scan Triggered? (Decision Code)
+1. Run: `sudo redaudit -t 10.0.0.5 -m normal --yes`
+2. Locate the output folder: `ls ~/Documents/RedAuditReports/`
+3. Open the JSON: `cat redaudit_*.json | jq '.hosts[0].ports'`
+4. Answer: How many ports are open? What services were detected?
 
-**Function in code**: [`scan_host_ports()`](../../redaudit/core/auditor.py#L738-L748)
-
-```python
-# Real code extract (auditor.py, lines 738-748)
-trigger_deep = False
-if total_ports > 8:
-    trigger_deep = True
-if suspicious:  # Services like 'vpn', 'proxy', 'tunnel'
-    trigger_deep = True
-if total_ports <= 3:
-    trigger_deep = True
-if total_ports > 0 and not any_version:
-    trigger_deep = True
-```
-
-**Activation Criteria**:
-
-1. **Few ports** (`<= 3`): Could be a firewall blocking.
-2. **Suspicious Services**: Names like `vpn`, `proxy`, `tunnel`, `socks`.
-3. **Lack of Versions**: Open ports but Nmap couldn't identify the software.
-4. **Too many ports** (`> 8`): Worth investing time in exhaustive OS and service enumeration.
-
-### The 3 Phases of Deep Scan
-
-**Function in code**: [`deep_scan_host()`](../../redaudit/core/auditor.py#L504-L612)
-
-```mermaid
-graph LR
-    A[Deep Scan Activated] --> B[Phase 1: Aggressive TCP]
-    B --> C{MAC/OS detected?}
-    C -->|Yes| D[SKIP Phase 2]
-    C -->|No| E[Phase 2a: Priority UDP]
-    E --> F{Mode = full?}
-    F -->|No| G[END]
-    F -->|Yes| H{Identity found?}
-    H -->|Yes| G
-    H -->|No| I[Phase 2b: UDP Top 100]
-    I --> G
-```
-
-If activated, Deep Scan executes an adaptive strategy:
-
-#### Phase 1: Aggressive TCP
-
-**Command**: `nmap -A -p- -sV --version-intensity 9 -Pn --open <IP>`
-
-- Objective: Force OS and service identification by all means.
-- **Traffic Capture**: Starts `tcpdump` in the background **before** the deep scan to capture the interaction (PCAP of ~20-50KB with 50 packet limit).
-- Duration: 120-180 seconds.
-
-#### Phase 2a: Priority UDP
-
-**Command**: `nmap -sU -Pn -p 53,67,68,123,137,138,161,162,... <IP>`
-
-- Scans only 17 critical UDP ports: `DNS`, `DHCP`, `NTP`, `SNMP`, `NetBIOS`.
-- Fast (~60-120s) and usually reveals host identity.
-- **Intelligence**: If Phase 1 already identified the OS or MAC address, this phase is **automatically skipped** ([code](../../redaudit/core/auditor.py#L552-L554)).
-
-#### Phase 2b: Extended UDP identity (Only in `full` mode)
-
-**Command**: `nmap -O -sU -Pn --top-ports N --max-retries 1 --host-timeout 300s <IP>`
-
-- Only executed if:
-  1. User specified `--udp-mode full`.
-  2. Previous phases failed to identify the host.
-- Port coverage is controlled by `--udp-ports` (range: 50-500, default: 100).
-- Uses v2.9 optimization: `--top-ports N` instead of `-p-` (50-80% faster).
-- It's the "last resort" because UDP scanning is slow and prone to false positives.
+**Expected Outcome:** Students can navigate the file structure and extract data from JSON.
 
 ---
 
-## 4. Components and Tools
+### Lab 2: Deep Scan Trigger Analysis (45 min)
 
-RedAudit acts as intelligent "glue" between external tools.
+**Objective:** Observe heuristic decision-making and understand adaptive behavior.
 
-| Component | External Tool | Function in RedAudit | Source Code |
-|:---|:---|:---|:---|
-| **Core Scanner** | `nmap` | Main packet scanning engine | [scanner.py](../../redaudit/core/scanner.py) |
-| **Net Discovery** | `netdiscover`, `nbtscan` | Enhanced L2/L3 discovery findings (v3.2) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
+**Setup:**
 
-### Technique Spotlight: Passive Pivot Discovery (Guest Networks)
+- Target A: Host with 10+ open ports (complex)
+- Target B: Host with 1 open port (minimal)
+- Mode: `full`
 
-*New in v3.2.3*
+**Steps:**
 
-Professional pentesters often find hidden networks not by scanning ranges, but by observing **leaks** in available services.
+1. Run: `sudo redaudit -t 10.0.0.0/28 -m full --yes`
+2. During scan, observe console output for `[deep]` markers.
+3. After scan, examine JSON for `deep_scan` objects.
+4. Compare Target A vs Target B: Which triggered Deep Scan? Why?
 
-**How RedAudit does it**:
-
-1. **Header Analysis**: Checks `Location` headers in HTTP redirects (e.g., `Location: http://192.168.189.1/login`).
-2. **Content Analysis**: Scans `Content-Security-Policy` and error messages.
-3. **Correlation**: If `192.168.189.1` is private but NOT in your target range, it reports a **Leak**.
-
-**Educational Value**: This teaches students that "Network Discovery" isn't just sending packets—it's also listening to what services *say* about their environment.
-
-### Technique Spotlight: Active Identity Probing (Red Team)
-
-*New in v3.2.3*
-
-For authorized assessments, finding usernames is key to lateral movement.
-
-**How RedAudit does it**:
-
-1. **Kerberos Enumeration**: Uses `kerbrute` (if trusted list provided) to validate users against the Domain Controller without locking accounts (Pre-Auth check).
-2. **SOCKS Proxying**: Uses `proxychains4` to route tools through compromised hosts if pivoting is enabled.
-
-**Risk**: High. Unlike leak detection, this actively touches the Domain Controller and generates logs (Event 4771).
-
-### Technique Spotlight: Visual Differential Analysis (v3.3)
-
-**Code**: [`diff.py`](../../redaudit/core/diff.py)
-
-Comparing two scans manually is tedious. RedAudit's `--diff` mode now generates a **Visual HTML Diff Report**.
-
-- **Traffic Light System**: Green (Fixed/Removed), Red (New/Added), Yellow (Modified).
-- **Use Case**: Prove to a client that "Patch Tuesday" updates actually closed port 445 on their servers.
-| **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `rpcclient`, `ldapsearch`, `bettercap` | Optional deep enumeration (SNMP walking, SMB shares, LDAP queries, fast port scanning) for comprehensive Blue Team analysis (v3.2+) | [net_discovery.py](../../redaudit/core/net_discovery.py) |
-| **Web Recon** | `whatweb`, `curl`, `nikto` | Web application analysis | [http_enrichment()](../../redaudit/core/scanner.py#L402-L441) |
-| **SSL/TLS** | `testssl.sh`, `openssl` | Encryption and certificate auditing | [ssl_deep_analysis()](../../redaudit/core/scanner.py#L553-L652) |
-| **Traffic** | `tcpdump`, `tshark` | Forensic evidence capture (PCAP) | [start_background_capture()](../../redaudit/core/scanner.py#L655-L731) |
-| **Exploits** | `searchsploit` | Known vulnerability correlation | [exploit_lookup()](../../redaudit/core/scanner.py#L480-L550) |
-| **DNS/Whois** | `dig`, `whois` | External network intelligence | [enrich_host_with_dns()](../../redaudit/core/scanner.py#L349-L372) |
-| **Orchestrator** | `ThreadPoolExecutor` | Thread management for parallel scanning | [auditor.py](../../redaudit/core/auditor.py#L788-L840) |
-| **HyperScan** | Python `asyncio` | Ultra-fast parallel discovery: batch TCP, UDP IoT, aggressive ARP (v3.2.3) | [hyperscan.py](../../redaudit/core/hyperscan.py) |
-| **Encryption** | `python3-cryptography` | AES-128 for sensitive reports | [crypto.py](../../redaudit/core/crypto.py) |
-
-### Reporting System
-
-Results aren't simply printed to screen. They're structured in JSON format with ECS v8.11 schema:
-
-**JSON Structure** ([REPORT_SCHEMA.md](REPORT_SCHEMA.md)):
-
-- `timestamp`: ISO 8601.
-- `version`: RedAudit version.
-- `network_info[]`: Detected interfaces.
-- `hosts[]`: Array of hosts with ports, services, vulnerabilities.
-- `unified_assets[]`: Multi-interface consolidation (v2.9).
-- `summary`: Aggregated statistics (total hosts, critical services, risk score).
-
-### Optimization for Professional Use
-
-**Team Design**: RedAudit generates structured reports designed for **multidisciplinary team consumption**, not just individual auditors.
-
-**Typical use cases in professional environments**:
-
-1. **Red Team/Blue Team** (5-10 professionals):
-   - **Red Team** executes scan and delivers JSON.
-   - **Blue Team** imports JSON into their SIEM (Splunk, ELK) for event correlation.
-   - **SOC** reviews alerts automatically generated by risk scores.
-
-2. **Security Consulting** (20-50 professionals):
-   - **Junior Auditor**: Executes RedAudit in the field.
-   - **Senior Analyst**: Reviews JSON, filters false positives.
-   - **Technical Writer**: Extracts data from JSON for executive report.
-   - **Client**: Receives readable TXT as executive summary.
-
-3. **DevSecOps Teams** (3-15 professionals):
-   - **CI/CD Pipeline**: Can run RedAudit in staging environments.
-   - **Centralized Dashboard**: Consumes JSON via API to show trends.
-   - **Development Team**: Receives notifications of unauthorized ports/services.
-
-**Practical example - Consulting workflow**:
-
-```text
-[Day 1 - Field]
-Junior Auditor → Executes: sudo redaudit --target 10.50.0.0/24 --mode full --encrypt
-               → Generates: redaudit_20251210_103045.json.enc
-
-[Day 2 - Office]
-Senior Analyst → Decrypts JSON
-                → Filters 200 hosts → Identifies 15 critical hosts
-                → Marks priority CVEs in JSON
-
-[Day 3 - Reporting]
-Technical Writer → Extracts from JSON:
-                   - Top 10 vulnerabilities
-                   - Unpatched hosts
-                   - EOL (End of Life) services
-                 → Generates executive PowerPoint report
-
-[Day 4 - Delivery]
-Client → Receives:
-          - Executive report (PowerPoint)
-          - Complete technical report (TXT)
-          - Raw data for their SIEM (JSON)
-          - PCAPs for forensic analysis (if requested)
-```
-
-**Structured format advantage**:
-
-- **Without RedAudit**: 10 professionals working with scattered `nmap`, `nikto`, `testssl` outputs → 40 hours/person of manual consolidation.
-- **With RedAudit**: 1 unified JSON → 5 hours/person of direct analysis.
-
-### SIEM Optimization (Security Information and Event Management)
-
-**ECS-Compliant Design**: RedAudit v2.9 generates reports following the **Elastic Common Schema (ECS) v8.11**, ensuring immediate compatibility with major market SIEMs.
-
-**Key fields optimized for SIEM** ([code](../../redaudit/core/siem.py)):
-
-- `event.type`: `redaudit.scan.complete`
-- `event.severity`: Automatically calculated (0-100)
-- `risk.score`: Risk score per host
-- `tags[]`: Auto-tagging (`high-risk`, `web-vulnerable`, `outdated-ssl`)
-- `vulnerability.severity`: Mapped to CVSS scale
-
-#### Example 1: Integration with Elasticsearch (ELK Stack)
-
-```bash
-# Automated ingestion script
-for json_file in ~/Documents/RedAuditReports/*/redaudit_*.json; do
-    curl -X POST "http://elasticsearch:9200/redaudit-scans/_doc" \
-         -H 'Content-Type: application/json' \
-         -d @${json_file}
-done
-```
-
-**Kibana Query**:
-
-```json
-{
-  "query": {
-    "bool": {
-      "must": [
-        { "match": { "event.type": "redaudit.scan.complete" }},
-        { "range": { "risk.score": { "gte": 70 }}}
-      ]
-    }
-  }
-}
-```
-
-#### Example 2: Integration with Splunk
-
-```bash
-# Send JSON to Splunk HEC (HTTP Event Collector)
-for json_file in ~/Documents/RedAuditReports/*/redaudit_*.json; do
-    curl -X POST "https://splunk-server:8088/services/collector/event" \
-         -H "Authorization: Splunk YOUR-HEC-TOKEN" \
-         -d "{\"event\": $(cat ${json_file})}"
-done
-```
-
-**Splunk Search**:
-
-```spl
-index="security" sourcetype="redaudit"
-| where risk.score > 70
-| stats count by host.ip, event.severity
-| sort -count
-```
-
-#### Example 3: Integration with Wazuh
-
-```bash
-# Copy JSON to Wazuh-monitored directory
-cp ~/Documents/RedAuditReports/*/redaudit_*.json /var/ossec/logs/redaudit/
-```
-
-**Custom Wazuh Rule** (`/var/ossec/etc/rules/redaudit_rules.xml`):
-
-```xml
-<group name="redaudit,">
-  <rule id="100100" level="10">
-    <decoded_as>json</decoded_as>
-    <field name="event.type">redaudit.scan.complete</field>
-    <field name="risk.score">^[7-9][0-9]|100$</field>
-    <description>RedAudit: High-risk host detected</description>
-  </rule>
-</group>
-```
-
-**Result**: 100 historical scans indexed in seconds, readable via Kibana/Splunk/Wazuh by the entire security team.
-
-This JSON enables direct integration with SIEMs (ELK, Splunk, Wazuh).
+**Discussion Prompt:** "What would happen if RedAudit always ran Deep Scan?"
 
 ---
 
-## 5. Developer's Guide: Python Internals
+### Lab 3: Report Integration Challenge (60 min)
 
-For programming students or security tool developers.
+**Objective:** Ingest RedAudit output into a SIEM-like system.
 
-### Class Architecture
+**Setup:**
 
-```mermaid
-classDiagram
-    class InteractiveNetworkAuditor {
-        +results: dict
-        +config: dict
-        +extra_tools: dict
-        +check_dependencies()
-        +scan_network_discovery()
-        +scan_hosts_concurrent()
-        +deep_scan_host()
-    }
-    class Scanner {
-        +sanitize_ip()
-        +get_nmap_arguments()
-        +run_nmap_command()
-        +exploit_lookup()
-        +ssl_deep_analysis()
-    }
-    class Reporter {
-        +generate_summary()
-        +save_results()
-    }
-    class Crypto {
-        +derive_key_from_password()
-        +encrypt_file()
-    }
-    InteractiveNetworkAuditor --> Scanner
-    InteractiveNetworkAuditor --> Reporter
-    InteractiveNetworkAuditor --> Crypto
-```
+- Previous scan results (JSON)
+- Elasticsearch instance (or Kibana sandbox)
+- Optional: jq, curl
 
-The code mainly resides in the `redaudit/core/` package:
+**Steps:**
 
-- **[`Auditor`](../../redaudit/core/auditor.py)** (`auditor.py`):
-  - Main class: `InteractiveNetworkAuditor`.
-  - Maintains global state (`self.results`, `self.config`).
-  - Handles user interaction loop and signals (Ctrl+C).
+1. Extract high-risk hosts: `cat redaudit_*.json | jq '.hosts[] | select(.risk_score > 70)'`
+2. Convert to JSONL: Use the `findings.jsonl` file directly.
+3. Ingest into Elasticsearch (example in [MANUAL.en.md](MANUAL.en.md#integration)).
+4. Create a simple Kibana visualization.
 
-- **[`Scanner`](../../redaudit/core/scanner.py)** (`scanner.py`):
-  - Contains pure functions and execution logic.
-  - Encapsulates `subprocess` calls to execute system tools.
-  - Parses raw text output from tools and converts to Python dictionaries.
-
-### Concurrency Patterns
-
-RedAudit uses `concurrent.futures.ThreadPoolExecutor` for I/O parallelism:
-
-```python
-# Real code from auditor.py (lines 814-828)
-with ThreadPoolExecutor(max_workers=self.config["threads"]) as executor:
-    futures = {}
-
-    for ip in unique_hosts:
-        if self.rate_limit_delay > 0:
-            time.sleep(self.rate_limit_delay)
-
-        future = executor.submit(self.scan_host_ports, ip)
-        futures[future] = ip
-
-    for future in as_completed(futures):
-        try:
-            result = future.result()
-            if result:
-                results.append(result)
-        except Exception as exc:
-            self.logger.error("Thread error for %s: %s", futures[future], exc)
-```
-
-**Teaching Note**: We use **Threads** not Processes because:
-
-- The main limitation is **I/O Bound** (waiting for network responses), not CPU.
-- Nmap does the heavy lifting; Python just waits.
-- Threads are lighter than processes (lower memory overhead).
-
-### Asyncio and Pre-scan
-
-**Code**: [`prescan.py`](../../redaudit/core/prescan.py)
-
-For ultra-fast port discovery, `asyncio` is used:
-
-```python
-# Real code from prescan.py (lines 14-37)
-async def check_port(ip: str, port: int, timeout: float = 0.5) -> bool:
-    try:
-        _, writer = await asyncio.wait_for(
-            asyncio.open_connection(ip, port),
-            timeout=timeout
-        )
-        writer.close()
-        await writer.wait_closed()
-        return True
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
-        return False
-```
-
-**Difference from Threads**:
-
-- `asyncio` allows opening **thousands of connections nearly simultaneously** in a single thread.
-- Used to quickly verify if a port responds (TCP Connect) before launching the heavy Nmap scan.
-- Example: Scan 65535 ports in ~10-30 seconds (vs. 10-20 minutes with Nmap).
-
-### The Heartbeat Monitor
-
-**Code**: [`_heartbeat_loop()`](../../redaudit/core/auditor.py#L246-L260)
-
-Since Nmap scans can take minutes without output, RedAudit implements a "heartbeat monitor":
-
-```python
-# Real code from auditor.py (lines 246-260)
-def _heartbeat_loop(self):
-    while not self.heartbeat_stop:
-        with self.activity_lock:
-            delta = (datetime.now() - self.last_activity).total_seconds()
-
-        phase = self.current_phase
-        if phase not in ("init", "saving", "interrupted"):
-            if HEARTBEAT_WARN_THRESHOLD <= delta < HEARTBEAT_FAIL_THRESHOLD:
-                self.print_status(self.t("heartbeat_warn", phase, int(delta)), "WARNING", False)
-            elif delta >= HEARTBEAT_FAIL_THRESHOLD:
-                self.print_status(self.t("heartbeat_fail", phase, int(delta)), "FAIL", False)
-
-        time.sleep(HEARTBEAT_INTERVAL)
-```
-
-- A background `daemon` thread.
-- Checks when something was last printed (`self.last_activity`).
-- If >60 seconds pass, prints a "Still working..." message so users don't think the program froze.
-
-### Subprocess and Zombie Management
-
-**Code**: [`signal_handler()`](../../redaudit/core/auditor.py#L262-L301)
-
-A key challenge in orchestration tools is cleanup when the user presses Ctrl+C:
-
-- RedAudit captures `SIGINT` (Ctrl+C).
-- Maintains a list of active subprocesses (`self._active_subprocesses`).
-- On exit, iterates over that list and sends `SIGTERM/SIGKILL` to ensure no orphaned `nmap` or `tcpdump` processes remain consuming resources.
-
-### Constants Customization (Advanced)
-
-**Key file**: [`constants.py`](../../redaudit/utils/constants.py)
-
-RedAudit centralizes all configurable values in a single file. This allows **behavior adaptation** based on the usage environment.
-
-**Key customizable constants**:
-
-| Constant | Default Value | When to Modify | Suggested New Value |
-|:---|:---:|:---|:---:|
-| `TRAFFIC_CAPTURE_PACKETS` | 50 | Need deep forensic analysis | 200-500 |
-| `DEEP_SCAN_TIMEOUT` | 400s | Very slow or saturated networks | 600-900s |
-| `PBKDF2_ITERATIONS` | 480,000 | Very old hardware (extreme slowness) | 100,000 |
-| `MAX_PORTS_DISPLAY` | 50 | Hosts with many services | 100-200 |
-| `HEARTBEAT_WARN_THRESHOLD` | 60s | Very fast scans (false warnings) | 120s |
-| `UDP_TOP_PORTS` | 100 | Need exhaustive UDP coverage | 1000 |
-
-#### Example 1: Increase PCAP limit for forensic analysis
-
-```python
-# Case: Investigating a security incident and need to
-# capture ALL SSL/TLS handshake traffic
-
-# Edit: redaudit/utils/constants.py
-TRAFFIC_CAPTURE_PACKETS = 200  # Was 50, now captures 4x more
-TRAFFIC_CAPTURE_MAX_DURATION = 60  # Was 120s, reduce to 60s to compensate
-```
-
-**Result**: PCAPs of ~100-150KB (vs ~20-50KB), but with complete SSL negotiation information.
-
-#### Example 2: Optimize for slow corporate networks
-
-```python
-# Case: Network with restrictive firewalls that delay responses
-
-# Edit: redaudit/utils/constants.py
-DEEP_SCAN_TIMEOUT = 600  # Was 400s, give 50% more time
-HEARTBEAT_WARN_THRESHOLD = 120  # Was 60s, avoid premature warnings
-```
-
-#### Example 3: Educational lab with old hardware
-
-```python
-# Case: Classroom PCs with <2GHz CPUs, encryption is slow
-
-# Edit: redaudit/utils/constants.py
-PBKDF2_ITERATIONS = 100000  # Was 480k, reduce to ~20% for speed
-MIN_PASSWORD_LENGTH = 8  # Was 12, allow shorter passwords
-```
-
-> [!WARNING]
-> **Security vs Performance**: Reducing `PBKDF2_ITERATIONS` makes encryption faster but **less secure**. Only do this in controlled environments (academic lab), **never in real audits**.
-
-**How to apply changes**:
-
-```bash
-# 1. Edit the file
-nano redaudit/utils/constants.py
-
-# 2. Restart RedAudit (changes load on import)
-sudo redaudit --target 192.168.1.0/24 --mode normal
-
-# 3. Verify they applied (check logs)
-tail -f ~/.redaudit/logs/redaudit_$(date +%Y%m%d).log
-```
-
-**Revert changes**:
-
-```bash
-# Restore defaults with git
-git checkout redaudit/utils/constants.py
-```
-
-**Teaching note for instructors**: Modifying `constants.py` is an **excellent exercise** for students to understand:
-
-- How configurable values affect program behavior
-- Trade-offs between speed, security, and coverage
-- Debugging through logs when something doesn't work as expected
+**Expected Outcome:** Students understand the bridge between scanning and operations.
 
 ---
 
-## 6. Security and File Management
+## 5. Assessment & Rubric
 
-### Generated File Permissions
+### Short-Answer Questions
 
-**Security Configuration**: [`SECURE_FILE_MODE`](../../redaudit/utils/constants.py#L62)
+1. What is the difference between `--mode fast` and `--mode full`?
+2. Under what conditions does RedAudit trigger a Deep Scan?
+3. Why are JSONL files not generated when `--encrypt` is enabled?
+4. What is the purpose of the `.salt` file?
 
-RedAudit sets restrictive permissions on **all** generated files to protect sensitive information:
+### Grading Rubric (Lab 2)
 
-```python
-# Constant in constants.py (line 62)
-SECURE_FILE_MODE = 0o600
-```
+| Criterion | Excellent (4) | Good (3) | Developing (2) | Incomplete (1) |
+|:---|:---|:---|:---|:---|
+| Identifies Deep Scan triggers | All 4 conditions | 3 conditions | 2 conditions | 0-1 conditions |
+| Explains reasoning | Clear, accurate | Minor errors | Vague | Missing |
+| Locates JSON evidence | Correct path + key | Correct path | Incorrect path | Not attempted |
 
-**What does `0o600` mean?**
+---
 
-In Unix octal notation:
+## 6. Common Student Errors
 
-- **6** (owner): Read (4) + Write (2) = **rw-**
-- **0** (group): No permissions = **---**
-- **0** (others): No permissions = **---**
+Based on real classroom observations:
 
-**Result**: Only the user who ran `sudo redaudit` can read/write these files.
-
-**Affected files** ([code](../../redaudit/core/reporter.py#L229)):
-
-1. `redaudit_YYYYMMDD_HHMMSS.json` (or `.json.enc`)
-2. `redaudit_YYYYMMDD_HHMMSS.txt` (or `.txt.enc`)
-3. `redaudit_YYYYMMDD_HHMMSS.salt` (for encrypted reports)
-4. PCAP files: `traffic_192_168_1_100_145832.pcap`
-
-**Terminal example**:
-
-```bash
-$ ls -la ~/Documents/RedAuditReports/RedAudit_2025-12-12_18-45-32/
--rw------- 1 root root 52480 Dec 12 18:47 redaudit_20251212_184532.json
--rw------- 1 root root  8192 Dec 12 18:47 redaudit_20251212_184532.txt
--rw------- 1 root root    16 Dec 12 18:47 redaudit_20251212_184532.salt
--rw------- 1 root root 102400 Dec 12 18:47 traffic_192_168_1_100_184533.pcap
-```
-
-> [!IMPORTANT]
-> If you need to share reports with other users, you must change permissions **manually**:
->
-> ```bash
-> sudo chmod 640 redaudit_*.json  # Allow group reading
-> sudo chown root:auditteam redaudit_*.json  # Change group
-> ```
-
-### Directory Structure
-
-**Default location** ([constant](../../redaudit/utils/constants.py#L55)):
-
-```text
-~/Documents/RedAuditReports/
-└── RedAudit_2025-12-12_18-45-32/  ← Timestamped folder (v2.8+)
-    ├── redaudit_20251212_184532.json
-    ├── redaudit_20251212_184532.txt
-    ├── redaudit_20251212_184532.salt
-    ├── traffic_192_168_1_50_184533.pcap
-    └── traffic_192_168_1_100_184533.pcap
-```
-
-**v2.8+ design advantage**: All files from a session (reports + PCAPs) are **grouped** in a single timestamped folder.
-
-**Customization**:
-
-```bash
-sudo redaudit --target 192.168.1.0/24 --output /mnt/audits/project_X
-```
-
-### Professional Team Usage
-
-For teams needing to centralize reports, it's recommended to mount a shared volume (NFS, SMB) at the output path:
-
-```bash
-# Example NFS mount on Linux
-sudo mount -t nfs server:/exports/redaudit_reports /mnt/redaudit_shared
-
-# Then, run RedAudit with the shared path
-sudo redaudit --target 192.168.1.0/24 --output /mnt/redaudit_shared/project_X
-```
-
-This ensures all team members can access generated reports while maintaining project and date organization.
-
-### Disk Space Requirements
-
-| Component | Approximate Size | Notes |
+| Error | Symptom | Correction |
 |:---|:---|:---|
-| **JSON Report** | 10-100 KB per host | Depends on number of ports and services |
-| **TXT Report** | 5-20 KB per host | Human-readable version |
-| **PCAP File** | 20-50 KB per deep scan host | Limited to 50 packets (v2.8.1) |
-| **Application Logs** | 1-10 MB/day | Automatic rotation (max 5 files) |
-
-**Practical estimate**:
-
-- Scan of 10 hosts (normal mode): ~2-5 MB total.
-- Scan of 100 hosts (full mode + deep scan): ~50-150 MB total.
-
-**Log location** ([code](../../redaudit/core/auditor.py#L190-L197)):
-
-```text
-~/.redaudit/logs/
-├── redaudit_20251212.log  ← Current log
-├── redaudit_20251211.log
-└── ...
-```
-
-**Automatic rotation**: Maximum 5 files of 10 MB each (total: 50 MB).
-
-### Network and Permission Considerations
-
-**Required permissions** ([verification](../../redaudit/core/auditor.py#L318-L324)):
-
-1. **`sudo` mandatory**: To create raw sockets (necessary for Nmap SYN scans).
-2. **System tool access**:
-   - `tcpdump`: Requires `CAP_NET_RAW` capability.
-   - `nmap`: Requires privileges for `-sS`, `-sU`, `-O`.
-
-**Firewalls and Filtering**:
-
-- Ensure the local firewall allows outbound traffic from the scanning interface.
-- In corporate networks, coordinate with the security team to avoid automatic blocks.
-
-**Temporary iptables rule example**:
-
-```bash
-# Allow ICMP output (ping sweep)
-sudo iptables -A OUTPUT -p icmp -j ACCEPT
-
-# Allow outbound TCP connections
-sudo iptables -A OUTPUT -p tcp --tcp-flags SYN,ACK SYN,ACK -j ACCEPT
-```
-
-### Password Security
-
-**Critical point**: Encryption passwords are **never** written to logs.
-
-**Secure handling code** ([crypto.py](../../redaudit/core/crypto.py)):
-
-```python
-# Passwords are handled in memory and derived to keys
-def derive_key_from_password(password: str) -> tuple[bytes, bytes]:
-    salt = os.urandom(SALT_SIZE)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=PBKDF2_ITERATIONS  # 480,000 iterations
-    )
-    key = kdf.derive(password.encode())
-    # Password is never saved, only the derived key in memory
-    return key, salt
-```
-
-**Note about salt**:
-
-- The `.salt` file **is not confidential**. It's a public cryptographic parameter necessary for key derivation.
-- Stored according to NIST SP 800-132 (cryptography standard).
-
-### Cleanup and Maintenance
-
-**Manual cleanup of old reports**:
-
-```bash
-# Delete reports older than 30 days
-find ~/Documents/RedAuditReports -type d -mtime +30 -exec rm -rf {} \;
-```
-
-**Log cleanup**:
-
-```bash
-# Logs rotate automatically, but you can force cleanup:
-rm -f ~/.redaudit/logs/redaudit_*.log.1  # Delete backups
-```
-
-**Recommended cleanup script**:
-
-```bash
-#!/bin/bash
-# cleanup_redaudit.sh
-retention_days=90
-
-# Clean old reports
-find ~/Documents/RedAuditReports -type d -mtime +${retention_days} -exec rm -rf {} \; 2>/dev/null
-
-# Clean old logs (keep only last 5)
-cd ~/.redaudit/logs
-ls -t redaudit_*.log | tail -n +6 | xargs rm -f 2>/dev/null
-
-echo "Cleanup completed: reports >$retention_days days deleted"
-```
+| Running without `sudo` | `Permission denied` on sockets | Explain raw socket requirements |
+| Scanning public IPs | Scan takes forever or fails | Use only lab networks. Discuss legality. |
+| Expecting playbooks with `--encrypt` | `playbooks/` folder empty | Encryption disables plaintext artifacts |
+| Comparing old/new reports fails | `--diff` returns "No scan performed" | Explain `--diff` is comparison-only, not a scan |
+| Editing constants.py without restarting | Changes don't apply | Python caches imports; restart is required |
+| Confusing scan mode with UDP mode | Wrong ports scanned | `--mode` ≠ `--udp-mode`. One is intensity, other is protocol scope. |
 
 ---
 
-## 7. Real Output Examples
+## 7. Code References for Teaching
 
-### Example 1: JSON Output from a Host
+These are the most pedagogically useful code locations. Use them for advanced students or live code walkthroughs.
 
-```json
-{
-  "ip": "192.168.1.100",
-  "hostname": "webserver.local",
-  "status": "up",
-  "ports": [
-    {
-      "port": 22,
-      "protocol": "tcp",
-      "service": "ssh",
-      "product": "OpenSSH",
-      "version": "8.2p1",
-      "is_web_service": false
-    },
-    {
-      "port": 443,
-      "protocol": "tcp",
-      "service": "https",
-      "product": "nginx",
-      "version": "1.18.0",
-      "is_web_service": true,
-      "tls_info": "TLS 1.3 (secure)",
-      "known_exploits": []
-    }
-  ],
-  "web_ports_count": 1,
-  "total_ports_found": 2,
-  "dns": {
-    "reverse": ["webserver.local."]
-  },
-  "deep_scan": {
-    "strategy": "adaptive_v2.8",
-    "mac_address": "00:0c:29:3f:4a:1b",
-    "vendor": "VMware, Inc.",
-    "pcap_capture": {
-      "pcap_file": "/path/to/traffic_192_168_1_100_145832.pcap",
-      "iface": "eth0"
-    }
-  }
-}
-```
-
-### Example 2: Console Log During Deep Scan
-
-```text
-[14:58:32] [WARNING] Host 192.168.1.50 → Triggering Deep Scan (Adaptive 3-Phase v2.8)
-[14:58:32] [WARNING] [deep] 192.168.1.50 → nmap -A -sV -Pn -p- --open --version-intensity 9 192.168.1.50 (~120-180s)
-[15:00:45] [WARNING] [deep] 192.168.1.50 → nmap -sU -Pn -p 53,67,68,123,137,138,161,162 --max-retries 1 192.168.1.50 (~60-120s, priority UDP)
-[15:02:12] [OKGREEN] [deep] 192.168.1.50 → Identity acquired! MAC: 08:00:27:ab:cd:ef (Cadmus Computer Systems)
-[15:02:12] [OKGREEN] Deep scan completed for 192.168.1.50 (total duration: 220.4s)
-```
-
----
-
-## 8. Educational Use Cases
-
-### Case 1: University Networking Lab
-
-**Objective**: Help students understand how TCP/IP protocols work.
-
-**Activity**:
-
-1. Set up a virtual network (VirtualBox/VMware) with 3-5 machines.
-2. Install different services (Apache, SSH, FTP, MySQL).
-3. Run `sudo redaudit --target 192.168.56.0/24 --mode normal`.
-4. Analyze the JSON report: Which ports are open? Why?
-
-**Questions for the instructor**:
-
-- Why does port 80 appear as `http` and not as a number?
-- What's the difference between an `open` and `filtered` port?
-
-### Case 2: Offensive Cybersecurity (Pentesting)
-
-**Objective**: Teach service enumeration methodology.
-
-**Activity**:
-
-1. Use a vulnerable machine (e.g., Metasploitable2).
-2. Run `sudo redaudit --target <METASPLOITABLE_IP> --mode full`.
-3. Review the `known_exploits` section of the JSON.
-4. Manually correlate with ExploitDB to verify.
-
-**Practical question**: How would you use `searchsploit` output to exploit a vulnerability?
-
-### Case 3: Systems Administration (DevOps)
-
-**Objective**: Server hardening audit.
-
-**Activity**:
-
-1. Scan a production server (with authorization).
-2. Identify unnecessary exposed services.
-3. Compare the "before" and "after" report of applying firewall rules.
-
----
-
-## 9. Practical Exercises for Students
-
-### Exercise 1: Heuristic Analysis (Intermediate Level)
-
-**Statement**: Modify the `auditor.py` code so Deep Scan is only triggered if there is exactly 1 open port.
-
-**Hint**: Look for the `scan_host_ports()` function and modify the logic in lines 738-748.
-
-**Solution**:
-
-```python
-# Change:
-if total_ports <= 3:
-    trigger_deep = True
-
-# To:
-if total_ports == 1:
-    trigger_deep = True
-```
-
-### Exercise 2: Add a New Tool (Advanced Level)
-
-**Statement**: Integrate the `enum4linux` tool for SMB enumeration when port 445 is detected.
-
-**Steps**:
-
-1. Add `enum4linux` to the tools list in `check_dependencies()`.
-2. Create an `smb_enumeration()` function in `scanner.py`.
-3. Call that function from `scan_host_ports()` when `port == 445`.
-
-### Exercise 3: Performance Optimization (Advanced Level)
-
-**Statement**: Measure scan execution time with 4, 8, and 16 threads. What's the optimal performance point?
-
-**Pseudocode**:
-
-```bash
-time sudo redaudit --target 192.168.1.0/24 --mode fast --threads 4
-time sudo redaudit --target 192.168.1.0/24 --mode fast --threads 8
-time sudo redaudit --target 192.168.1.0/24 --mode fast --threads 16
-```
-
-**Question**: Why don't more threads always mean faster?
-
----
-
-## 9. Technical Glossary
-
-| Term | Definition | Relevance in RedAudit |
+| Concept | File | Function/Area |
 |:---|:---|:---|
-| **AES-128** | Advanced Encryption Standard with 128-bit key | Encryption of sensitive reports |
-| **Asyncio** | Python library for asynchronous programming | Ultra-fast port pre-scan |
-| **Daemon Thread** | Thread that runs in background and closes when program finishes | Heartbeat monitor |
-| **Deep Scan** | Exhaustive scan with multiple phases (TCP + UDP) | Obtaining host identity |
-| **ECS (Elastic Common Schema)** | Standard schema for logs and events | JSON report format v2.9 |
-| **Fernet** | Symmetric encryption implementation in Python | Uses AES-128-CBC + HMAC-SHA256 |
-| **Heartbeat** | Periodic signal to indicate process is alive | Activity monitor in long scans |
-| **I/O Bound** | Process limited by input/output, not CPU | Why we use threads instead of processes |
-| **Nmap** | Network Mapper, open-source port scanner | RedAudit's main engine |
-| **PBKDF2** | Password-Based Key Derivation Function 2 | Encryption key derivation (480k iterations) |
-| **PCAP** | Packet Capture, network traffic file format | Evidence captured with tcpdump |
-| **Dry Run** | Mode that prints commands without executing them | `--dry-run` helps audit/debug command plan (no external commands are executed) |
-| **CommandRunner** | Centralized external command execution wrapper | Safer args-only execution with timeouts/retries/redaction; foundation for dry-run |
-| **Sleep Inhibitor** | Mechanism to prevent system/display sleep | Best-effort prevent sleep during long scans (opt-out `--no-prevent-sleep`) |
-| **SIGINT** | Interrupt signal (Ctrl+C) | Clean cancellation handling |
-| **SIEM** | Security Information and Event Management | Systems that consume RedAudit's JSON |
-| **ThreadPoolExecutor** | Python class for managing thread pools | Scan parallelization |
-| **UDP** | User Datagram Protocol, connectionless protocol | Harder to scan than TCP |
+| Main orchestration | `core/auditor.py` | `run_complete_scan()` |
+| Deep Scan triggers | `core/auditor.py` | `scan_host_ports()` (look for `trigger_deep`) |
+| Parallel execution | `core/auditor.py` | `scan_hosts_concurrent()` with `ThreadPoolExecutor` |
+| Async port probing | `core/prescan.py` | `check_port()` using `asyncio` |
+| ECS schema mapping | `core/siem.py` | `build_ecs_event()` |
+| Encryption | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
+| Playbook generation | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |
+
+> **Note:** Avoid referencing specific line numbers as they change between versions. Reference function names instead.
 
 ---
 
-## 10. Source Code References
+## 8. Further Reading
 
-To facilitate code study, here are the key entry points:
-
-### Main File
-
-- [redaudit.py](../../redaudit.py): Program entry point (`main()`).
-
-### Core Module
-
-- [auditor.py](../../redaudit/core/auditor.py): Main class `InteractiveNetworkAuditor`.
-- [scanner.py](../../redaudit/core/scanner.py): Scanning and enrichment functions.
-- [prescan.py](../../redaudit/core/prescan.py): Fast discovery with asyncio.
-- [crypto.py](../../redaudit/core/crypto.py): AES-128 encryption.
-- [reporter.py](../../redaudit/core/reporter.py): JSON/TXT report generation.
-- [siem.py](../../redaudit/core/siem.py): ECS v8.11 integration.
-
-### Critical Functions to Study
-
-| Function | File | Lines | Description |
-|:---|:---|:---|:---|
-| `deep_scan_host()` | auditor.py | 504-612 | Complete 3-phase Deep Scan logic |
-| `scan_host_ports()` | auditor.py | 631-786 | Main scan + trigger heuristic |
-| `exploit_lookup()` | scanner.py | 480-550 | Automatic SearchSploit search |
-| `ssl_deep_analysis()` | scanner.py | 553-652 | SSL/TLS analysis with testssl.sh |
-| `start_background_capture()` | scanner.py | 655-731 | Concurrent PCAP capture |
-| `check_port()` | prescan.py | 14-37 | Asynchronous TCP connection with asyncio |
+- [MANUAL.en.md](MANUAL.en.md) – Full architecture and CLI reference
+- [USAGE.en.md](USAGE.en.md) – Practical examples by scenario
+- [REPORT_SCHEMA.en.md](REPORT_SCHEMA.en.md) – JSON field definitions
+- [TROUBLESHOOTING.en.md](TROUBLESHOOTING.en.md) – Error resolution
 
 ---
 
-## Conclusion
-
-RedAudit is an ideal educational tool for teaching:
-
-1. **Networking**: How ports, protocols, and services work.
-2. **Programming**: Concurrency, asyncio, subprocess, and signal handling.
-3. **Cybersecurity**: Enumeration methodology, vulnerability correlation, and structured reporting.
-
-This guide should serve as a complete reference for instructors wishing to use RedAudit as a pedagogical tool in networking, systems administration, or cybersecurity courses.
+[Back to Documentation Index](INDEX.md)
