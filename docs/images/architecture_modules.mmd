@@ -1,11 +1,9 @@
-%%{init: {'theme':'base','flowchart': {'curve':'linear','nodeSpacing': 26,'rankSpacing': 42},'themeVariables': {'fontFamily': 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial','fontSize': '14px','primaryColor': '#F6F8FA','primaryTextColor': '#0B0F14','primaryBorderColor': '#D0D7DE','lineColor': '#57606A','tertiaryColor': '#FFFFFF'}}}%%
-flowchart LR
+%%{init: {'theme':'base','flowchart': {'curve':'linear','nodeSpacing': 14,'rankSpacing': 22},'themeVariables': {'fontFamily': 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial','fontSize': '13px','primaryColor': '#F6F8FA','primaryTextColor': '#0B0F14','primaryBorderColor': '#D0D7DE','lineColor': '#57606A','tertiaryColor': '#FFFFFF'}}}%%
+flowchart TB
 
   %% ──────────────────────────────────────────────
-  %% RedAudit architecture (functional view with module mapping)
-  %% Goal: match the System Overview PNG structure while keeping module-level traceability.
-  %% Render to SVG:
-  %%   npx -p @mermaid-js/mermaid-cli mmdc -i docs/images/architecture_modules.mmd -o docs/images/architecture_modules.svg
+  %% RedAudit architecture (compact functional map)
+  %% Goal: match the System Overview PNG layout while keeping module traceability.
   %% ──────────────────────────────────────────────
 
   classDef entry fill:#E7F3FF,stroke:#0969DA,stroke-width:1px,color:#0B0F14;
@@ -21,36 +19,65 @@ flowchart LR
   %% Update & entry
   %% ──────────────────────────────────────────────
   subgraph ENTRY["Update & Entry"]
-    direction TB
-    user_cli["User / CLI (Wizard)\n`redaudit/cli.py`"]:::orch
-    updater["Updater Module\n`redaudit/core/updater.py`"]:::orch
-    entrypoints["Launch scripts (wrappers)\n`/usr/local/bin/redaudit`, `python -m redaudit`, `redaudit.py`"]:::entry
+    direction LR
+    updater["Updater\n(updater.py)"]:::orch
+    user_cli["User / CLI\n(wizard)"]:::orch
+    entrypoints["Entry points\n(/usr/local/bin/redaudit\npython -m redaudit\nredaudit.py)"]:::entry
   end
 
-  updater <--> |checks / prompts| user_cli
-  user_cli <--> |feedback / updates| updater
+  updater <--> |checks/prompts| user_cli
   entrypoints --> user_cli
 
   %% ──────────────────────────────────────────────
   %% Orchestrator
   %% ──────────────────────────────────────────────
-  orchestrator["Orchestrator (Scan Controller)\n`redaudit/core/auditor.py`"]:::orch
+  orchestrator["Orchestrator\n(auditor.py)"]:::orch
   user_cli <--> orchestrator
 
   %% ──────────────────────────────────────────────
-  %% Scanning & enumeration (left block in PNG)
+  %% Main pipeline (compact three-column layout like PNG)
   %% ──────────────────────────────────────────────
-  subgraph SCANNING["Scanning & Enumeration"]
-    direction TB
-    prescan["Pre-scan (async TCP connect)\n`redaudit/core/prescan.py`"]:::scan
-    net_detect["Network Detection (IPv4/IPv6)\n`redaudit/core/network.py`"]:::scan
+  subgraph PIPE[""]
+    direction LR
 
-    subgraph SCANNER_ENGINE["Scanner Engine (Nmap + capture)\n`redaudit/core/scanner.py`"]
+    subgraph SCANNING["Scanning & Enumeration"]
       direction TB
-      nmap_engine["Nmap engine\n(scan + OS detection)"]:::scan
-      proxy_wrap["Proxy wrapper (optional)\n`redaudit/core/proxy.py`"]:::scan
-      udp_timing["UDP timing / probe\n`redaudit/core/udp_probe.py`"]:::scan
-      pcap_capture["PCAP micro-capture (best-effort)\n(scanner.py)"]:::scan
+      prescan["Pre-scan (async)\n(prescan.py)"]:::scan
+      net_detect["Network detection\n(IPv4/IPv6)\n(network.py)"]:::scan
+
+      subgraph SCANNER_ENGINE["Scanner (Nmap engine)\n(scanner.py)"]
+        direction TB
+        nmap_engine["Nmap scan\n+ OS detect"]:::scan
+        udp_timing["UDP probe/timing\n(udp_probe.py)"]:::scan
+        proxy_wrap["Proxy wrapper\n(proxy.py)"]:::scan
+        pcap_capture["PCAP capture\n(best-effort)"]:::scan
+      end
+    end
+
+    subgraph ANALYSIS["Analysis"]
+      direction TB
+      vuln_scans["Vuln scans\n(nikto/testssl)\n(scanner.py)"]:::analysis
+      smart_checks["Smart-check\n+ fingerprints\n(scanner.py)"]:::analysis
+      http_enrich["HTTP enrichment\n(scanner.py)"]:::analysis
+      tls_analysis["SSL/TLS analysis\n(scanner.py)"]:::analysis
+      exploit_lookup["Exploit lookup\n(searchsploit)\n(scanner.py)"]:::analysis
+      cve_corr["CVE correlation\n(nvd.py)"]:::analysis
+      fp_filter["Hygiene / FP filter\n(verify_vuln.py)"]:::analysis
+    end
+
+    subgraph OUTPUT["Reporting & Output"]
+      direction TB
+      entity["Entity resolution\n(entity_resolver.py)"]:::report
+      siem["SIEM formatter\n(ECS/CEF)\n(siem.py)"]:::report
+      reporter["Reporter\n(JSON/TXT)\n(reporter.py)"]:::report
+      encryption["Encryption (AES)\n(crypto.py)"]:::report
+
+      subgraph EXPORTS["Exports (if not encrypted)"]
+        direction TB
+        html["HTML dashboard\n(html_reporter.py)"]:::report
+        jsonl["JSONL exports\n(jsonl_exporter.py)"]:::report
+        playbooks["Playbooks\n(playbook_generator.py)"]:::report
+      end
     end
   end
 
@@ -58,42 +85,10 @@ flowchart LR
   %% Discovery & topology (center below orchestrator in PNG)
   %% ──────────────────────────────────────────────
   subgraph DISCOVERY["Discovery & Topology"]
-    direction TB
-    net_discovery["Network Discovery\n(protocol/L2 discovery + opt-in redteam)\n`redaudit/core/net_discovery.py`"]:::scan
-    hyperscan["Active L2 / ARP discovery (optional)\n`redaudit/core/hyperscan.py`"]:::scan
-    topology["Topology mapping (optional)\n`redaudit/core/topology.py`"]:::scan
-  end
-
-  %% ──────────────────────────────────────────────
-  %% Analysis (center block in PNG)
-  %% ──────────────────────────────────────────────
-  subgraph ANALYSIS["Analysis"]
-    direction TB
-    vuln_scans["Vulnerability scanners\n(Nikto, testssl.sh)\n`redaudit/core/scanner.py`"]:::analysis
-    smart_checks["Smart-check + fingerprints\n(magic bytes / heuristics)\n`redaudit/core/scanner.py`"]:::analysis
-    http_enrich["HTTP enrichment\n(headers, redirects, metadata)\n`redaudit/core/scanner.py`"]:::analysis
-    tls_analysis["SSL/TLS deep analysis\n`redaudit/core/scanner.py`"]:::analysis
-    exploit_lookup["Exploit lookup\n(searchsploit)\n`redaudit/core/scanner.py`"]:::analysis
-    cve_corr["CVE correlation (NVD)\n`redaudit/core/nvd.py`"]:::analysis
-    fp_filter["False-positive filter / hygiene\n`redaudit/core/verify_vuln.py`"]:::analysis
-  end
-
-  %% ──────────────────────────────────────────────
-  %% Reporting & output (right block in PNG)
-  %% ──────────────────────────────────────────────
-  subgraph OUTPUT["Reporting & Output"]
-    direction TB
-    entity["Entity resolution\n(unify multi-interface assets)\n`redaudit/core/entity_resolver.py`"]:::report
-    siem["SIEM formatter (ECS/CEF)\n`redaudit/core/siem.py`"]:::report
-    reporter["Reporter (JSON/TXT)\n`redaudit/core/reporter.py`"]:::report
-    encryption["Encryption (AES)\n`redaudit/core/crypto.py`"]:::report
-
-    subgraph EXPORTS["Exports (encryption disabled)"]
-      direction TB
-      html["HTML dashboard\n`redaudit/core/html_reporter.py`"]:::report
-      jsonl["JSONL exports\n`redaudit/core/jsonl_exporter.py`"]:::report
-      playbooks["Remediation playbooks\n`redaudit/core/playbook_generator.py`"]:::report
-    end
+    direction LR
+    net_discovery["Network discovery\n(net_discovery.py)"]:::scan
+    hyperscan["Active L2/ARP\n(hyperscan.py)"]:::scan
+    topology["Topology\n(topology.py)"]:::scan
   end
 
   %% ──────────────────────────────────────────────
@@ -101,20 +96,20 @@ flowchart LR
   %% ──────────────────────────────────────────────
   subgraph AUX["Auxiliary & Shared Services"]
     direction TB
-    cmd["Command execution layer\n(dry-run aware)\n`redaudit/core/command_runner.py`"]:::aux
-    dryrun["Dry-run policy\n`redaudit/utils/dry_run.py`"]:::aux
-    power["Sleep inhibition (best-effort)\n`redaudit/core/power.py`"]:::aux
-    cfg["Persisted defaults\n`redaudit/utils/config.py`"]:::aux
-    i18n["i18n translations\n`redaudit/utils/i18n.py`"]:::aux
-    paths["Paths & sudo-safe HOME\n`redaudit/utils/paths.py`"]:::aux
-    constants["Version & constants\n`redaudit/utils/constants.py`"]:::aux
-    diff["Report diff / compare\n`redaudit/core/diff.py`"]:::aux
+    cmd["Command runner\n(dry-run aware)\n(command_runner.py)"]:::aux
+    power["Sleep inhibitor\n(power.py)"]:::aux
+    cfg["Defaults/config\n(config.py)"]:::aux
+    i18n["i18n\n(i18n.py)"]:::aux
+    paths["Paths + sudo-safe HOME\n(paths.py)"]:::aux
+    constants["Version/constants\n(constants.py)"]:::aux
+    dryrun["Dry-run policy\n(dry_run.py)"]:::aux
+    diff["Report compare\n(diff.py)"]:::aux
   end
 
   %% ──────────────────────────────────────────────
   %% External boundaries
   %% ──────────────────────────────────────────────
-  ext_tools["External tools\n(nmap, tcpdump, nikto, testssl.sh, searchsploit, ...)\n(shell=false)"]:::ext
+  ext_tools["External tools\n(shell=false)\n(nmap, tcpdump, nikto, testssl,\nsearchsploit, ...)"]:::ext
   targets["Target network\n(hosts/services)"]:::ext
   nvd_api["NVD API"]:::ext
   exploitdb["ExploitDB / searchsploit DB"]:::ext
@@ -125,26 +120,24 @@ flowchart LR
   %% ──────────────────────────────────────────────
   %% Control flow (two-way where results flow back)
   %% ──────────────────────────────────────────────
-  orchestrator <--> prescan
-  orchestrator <--> net_detect
-  orchestrator <--> nmap_engine
-  orchestrator <--> pcap_capture
-  orchestrator -. "--net-discovery | full mode" .-> net_discovery
+  orchestrator <--> SCANNING
+  orchestrator <--> ANALYSIS
+  orchestrator <--> OUTPUT
+  orchestrator -. "--net-discovery / full mode" .-> net_discovery
   orchestrator -. "user accepts prompt" .-> topology
   net_discovery -. "active L2 (opt-in)" .-> hyperscan
 
   %% Service data and analysis flow
   nmap_engine <--> vuln_scans
   nmap_engine <--> smart_checks
-  vuln_scans <--> fp_filter
-  http_enrich <--> fp_filter
-  tls_analysis <--> fp_filter
-  smart_checks <--> fp_filter
-
   nmap_engine <--> http_enrich
   nmap_engine <--> tls_analysis
   nmap_engine <--> exploit_lookup
   nmap_engine <--> cve_corr
+  vuln_scans <--> fp_filter
+  smart_checks <--> fp_filter
+  http_enrich <--> fp_filter
+  tls_analysis <--> fp_filter
 
   %% Reporting flow
   fp_filter <--> entity
