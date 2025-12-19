@@ -88,7 +88,6 @@ sudo redaudit
 | **Rate Limiting** | Retardo inter-host configurable con jitter ±30% para evasión IDS |
 | **Interfaz Bilingüe** | Localización completa Inglés/Español |
 | **Auto-Actualización** | Actualizaciones atómicas staged con rollback automático en caso de fallo |
-| **Verificación Osquery** | Validación de configuración post-scan via SSH (nuevo en v3.7) |
 
 ---
 
