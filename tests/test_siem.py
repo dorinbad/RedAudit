@@ -181,6 +181,19 @@ class TestSIEM(unittest.TestCase):
         self.assertEqual(enriched["severity"], "high")
         self.assertGreaterEqual(enriched["severity_score"], 70)
 
+    def test_enrich_vulnerability_severity_explicit_nuclei(self):
+        """Preserve explicit severity for nuclei-like findings."""
+        vuln = {
+            "source": "nuclei",
+            "severity": "high",
+            "template_id": "unit-test-template",
+            "name": "Unit Test Finding",
+        }
+        enriched = enrich_vulnerability_severity(vuln)
+        self.assertEqual(enriched["severity"], "high")
+        self.assertGreaterEqual(enriched["severity_score"], 70)
+        self.assertEqual(enriched["original_severity"]["tool"], "nuclei")
+
     def test_enrich_report_for_siem(self):
         """Test full SIEM report enrichment."""
         results = {
