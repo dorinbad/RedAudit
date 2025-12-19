@@ -481,16 +481,28 @@ class InteractiveNetworkAuditor(WizardMixin):
             width=self._terminal_width(),
         )
 
+    def _safe_text_column(self, *args, **kwargs):
+        try:
+            from rich.progress import TextColumn
+        except ImportError:
+            return None
+        try:
+            return TextColumn(*args, **kwargs)
+        except TypeError:
+            kwargs.pop("overflow", None)
+            kwargs.pop("no_wrap", None)
+            return TextColumn(*args, **kwargs)
+
     def _progress_columns(self, *, show_detail: bool, show_eta: bool, show_elapsed: bool):
         try:
-            from rich.progress import SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+            from rich.progress import SpinnerColumn, BarColumn, TimeElapsedColumn
         except ImportError:
             return []
         width = self._terminal_width()
         bar_width = max(8, min(28, width // 4))
         columns = [
             SpinnerColumn(),
-            TextColumn(
+            self._safe_text_column(
                 "[progress.description]{task.description}",
                 overflow="ellipsis",
                 no_wrap=True,
@@ -498,19 +510,23 @@ class InteractiveNetworkAuditor(WizardMixin):
         ]
         if width >= 70:
             columns.append(BarColumn(bar_width=bar_width))
-            columns.append(TextColumn("[progress.percentage]{task.percentage:>3.0f}%"))
+            columns.append(self._safe_text_column("[progress.percentage]{task.percentage:>3.0f}%"))
         if width >= 90:
-            columns.append(TextColumn("({task.completed}/{task.total})"))
+            columns.append(self._safe_text_column("({task.completed}/{task.total})"))
         if show_elapsed and width >= 100:
             columns.append(TimeElapsedColumn())
         if show_detail and width >= 80:
-            columns.append(TextColumn("{task.fields[detail]}", overflow="ellipsis"))
+            columns.append(self._safe_text_column("{task.fields[detail]}", overflow="ellipsis"))
         if show_eta and width >= 110:
-            columns.append(TextColumn("ETA≤ {task.fields[eta_upper]}"))
+            columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
             columns.append(
-                TextColumn("{task.fields[eta_est]}", overflow="ellipsis", justify="right")
+                self._safe_text_column(
+                    "{task.fields[eta_est]}",
+                    overflow="ellipsis",
+                    justify="right",
+                )
             )
-        return columns
+        return [c for c in columns if c is not None]
 
     @staticmethod
     def _parse_host_timeout_s(nmap_args: str) -> Optional[float]:
@@ -2325,13 +2341,12 @@ class InteractiveNetworkAuditor(WizardMixin):
                         from rich.progress import (
                             Progress,
                             SpinnerColumn,
-                            TextColumn,
                             TimeElapsedColumn,
                         )
 
                         with Progress(
                             SpinnerColumn(),
-                            TextColumn(
+                            self._safe_text_column(
                                 "[bold cyan]Topology[/bold cyan] {task.description}",
                                 overflow="ellipsis",
                                 no_wrap=True,
@@ -2400,13 +2415,12 @@ class InteractiveNetworkAuditor(WizardMixin):
                         from rich.progress import (
                             Progress,
                             SpinnerColumn,
-                            TextColumn,
                             TimeElapsedColumn,
                         )
 
                         with Progress(
                             SpinnerColumn(),
-                            TextColumn(
+                            self._safe_text_column(
                                 "[bold blue]Net Discovery[/bold blue] {task.description}",
                                 overflow="ellipsis",
                                 no_wrap=True,
