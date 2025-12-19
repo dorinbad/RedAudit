@@ -32,6 +32,7 @@ class TestWizardRedTeam(unittest.TestCase):
                 True,  # active L2
                 True,  # kerbrute userenum
                 False,  # v3.7: net discovery advanced options
+                False,  # v3.8: agentless verification
                 False,  # v3.7: webhook prompt
             ]
         )
@@ -61,6 +62,7 @@ class TestWizardRedTeam(unittest.TestCase):
                 True,  # vuln scan
                 False,  # cve lookup
                 True,  # net discovery
+                False,  # v3.8: agentless verification
                 False,  # v3.7: webhook prompt
             ]
         )
