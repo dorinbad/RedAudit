@@ -427,6 +427,16 @@ class InteractiveNetworkAuditor(WizardMixin):
         with self._ui_detail_lock:
             self._ui_detail = condensed
 
+    @staticmethod
+    def _coerce_text(value: object) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        if isinstance(value, str):
+            return value
+        return str(value)
+
     def _phase_detail(self) -> str:
         phase = (self.current_phase or "").strip()
         if not phase:
@@ -1182,7 +1192,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             has_identity = output_has_identity([rec1])
             mac, vendor = extract_vendor_mac(rec1.get("stdout", ""))
             os_detected = extract_os_detection(
-                (rec1.get("stdout", "") or "") + "\n" + (rec1.get("stderr", "") or "")
+                f"{self._coerce_text(rec1.get('stdout'))}\n{self._coerce_text(rec1.get('stderr'))}"
             )
 
             if mac:
@@ -1300,7 +1310,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                             deep_obj["vendor"] = v2b
                     if "os_detected" not in deep_obj:
                         os2b = extract_os_detection(
-                            (rec2b.get("stdout", "") or "") + "\n" + (rec2b.get("stderr", "") or "")
+                            f"{self._coerce_text(rec2b.get('stdout'))}\n{self._coerce_text(rec2b.get('stderr'))}"
                         )
                         if os2b:
                             deep_obj["os_detected"] = os2b

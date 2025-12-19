@@ -384,8 +384,14 @@ def run_nmap_command(
 
     duration = time.time() - start
     record["returncode"] = res.returncode
-    record["stdout"] = (res.stdout or "")[:8000]
-    record["stderr"] = (res.stderr or "")[:2000]
+    stdout = res.stdout or ""
+    stderr = res.stderr or ""
+    if isinstance(stdout, bytes):
+        stdout = stdout.decode("utf-8", errors="replace")
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="replace")
+    record["stdout"] = str(stdout)[:8000]
+    record["stderr"] = str(stderr)[:2000]
     record["duration_seconds"] = round(duration, 2)
     if res.timed_out:
         record["error"] = f"Timeout after {timeout}s"
