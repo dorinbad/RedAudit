@@ -388,11 +388,17 @@ class InteractiveNetworkAuditor(WizardMixin):
             return ""
         text = " ".join(text.split())
 
-        # Pattern: [type] IP → nmap ... or [type] IP → ...
-        # Extract: [type] IP (scan_mode)
-        m = re.match(r"^\[([^\]]+)\]\s+([\d\.]+)\s*→\s*(.*)$", text)
+        # Pattern: [type] TARGET → command ...
+        # TARGET may be IP, host, or IP:port.
+        m = re.match(r"^\[([^\]]+)\]\s+([^\s]+)\s*→\s*(.*)$", text)
         if m:
             scan_type, ip, command = m.groups()
+            scan_type_norm = scan_type.lower()
+
+            if scan_type_norm in ("testssl", "nikto", "whatweb", "nuclei"):
+                return f"{scan_type_norm} {ip}"
+            if scan_type_norm in ("agentless", "verify"):
+                return f"agentless {ip}"
 
             # Determine mode from command for user-friendly hint
             mode_hint = ""
@@ -408,8 +414,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                 mode_hint = "banner grab"
 
             if mode_hint:
-                return f"[{scan_type}] {ip} ({mode_hint})"
-            return f"[{scan_type}] {ip}"
+                return f"{scan_type} {ip} ({mode_hint})"
+            return f"{scan_type} {ip}"
 
         # For other messages, just take first 60 chars
         return text[:60] + ("…" if len(text) > 60 else "")
@@ -421,9 +427,40 @@ class InteractiveNetworkAuditor(WizardMixin):
         with self._ui_detail_lock:
             self._ui_detail = condensed
 
+    def _phase_detail(self) -> str:
+        phase = (self.current_phase or "").strip()
+        if not phase:
+            return ""
+        if phase.startswith("vulns:testssl:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"testssl {target}"
+        if phase.startswith("vulns:nikto:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"nikto {target}"
+        if phase.startswith("vulns:whatweb:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"whatweb {target}"
+        if phase.startswith("ports:"):
+            target = phase.split(":", 1)[1]
+            return f"nmap {target}"
+        if phase.startswith("deep:"):
+            target = phase.split(":", 1)[1]
+            return f"deep scan {target}"
+        if phase.startswith("discovery:"):
+            target = phase.split(":", 1)[1]
+            return f"discovery {target}"
+        if phase == "vulns":
+            return "web vuln scan"
+        if phase == "net_discovery":
+            return "net discovery"
+        if phase == "topology":
+            return "topology"
+        return phase[:60]
+
     def _get_ui_detail(self) -> str:
         with self._ui_detail_lock:
-            return self._ui_detail
+            detail = self._ui_detail
+        return detail or self._phase_detail()
 
     def _touch_activity(self) -> None:
         with self.activity_lock:
@@ -515,17 +552,20 @@ class InteractiveNetworkAuditor(WizardMixin):
             columns.append(self._safe_text_column("({task.completed}/{task.total})"))
         if show_elapsed and width >= 100:
             columns.append(TimeElapsedColumn())
-        if show_detail and width >= 80:
+        if show_detail and width >= 70:
             columns.append(self._safe_text_column("{task.fields[detail]}", overflow="ellipsis"))
-        if show_eta and width >= 110:
-            columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
-            columns.append(
-                self._safe_text_column(
-                    "{task.fields[eta_est]}",
-                    overflow="ellipsis",
-                    justify="right",
+        if show_eta:
+            if width >= 110:
+                columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
+                columns.append(
+                    self._safe_text_column(
+                        "{task.fields[eta_est]}",
+                        overflow="ellipsis",
+                        justify="right",
+                    )
                 )
-            )
+            elif width >= 80:
+                columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
         return [c for c in columns if c is not None]
 
     @staticmethod
@@ -1095,6 +1135,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             return None
 
         self.current_phase = f"deep:{safe_ip}"
+        self._set_ui_detail(f"[deep] {safe_ip} tcp")
         deep_obj = {"strategy": "adaptive_v2.8", "commands": []}
 
         self.print_status(
@@ -1178,6 +1219,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     ),
                     "WARNING",
                 )
+                self._set_ui_detail(f"[deep] {safe_ip} udp probe")
                 udp_probe_timeout = 0.8
                 probe_start = time.time()
                 udp_probe = run_udp_probe(
@@ -1240,6 +1282,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                         self.t("deep_udp_full_cmd", safe_ip, " ".join(cmd_p2b), udp_top_ports),
                         "WARNING",
                     )
+                    self._set_ui_detail(f"[deep] {safe_ip} udp top {udp_top_ports}")
                     deep_obj["udp_top_ports"] = udp_top_ports
                     rec2b = run_nmap_command(
                         cmd_p2b,
@@ -1279,6 +1322,7 @@ class InteractiveNetworkAuditor(WizardMixin):
     def scan_network_discovery(self, network):
         """Perform network discovery scan."""
         self.current_phase = f"discovery:{network}"
+        self._set_ui_detail(f"[nmap] {network} discovery")
         self.logger.info("Discovery on %s", network)
         args = get_nmap_arguments("rapido")
         self.print_status(self.t("nmap_cmd", network, f"nmap {args} {network}"), "INFO")
@@ -1318,6 +1362,11 @@ class InteractiveNetworkAuditor(WizardMixin):
             return {"ip": host, "error": "Invalid IP"}
 
         self.current_phase = f"ports:{safe_ip}"
+        mode_label = str(self.config.get("scan_mode", "") or "").strip()
+        if mode_label:
+            self._set_ui_detail(f"[nmap] {safe_ip} ({mode_label})")
+        else:
+            self._set_ui_detail(f"[nmap] {safe_ip}")
         args = get_nmap_arguments(self.config["scan_mode"])
         self.logger.debug("Nmap scan %s %s", safe_ip, args)
         self.print_status(self.t("nmap_cmd", safe_ip, f"nmap {args} {safe_ip}"), "INFO")
@@ -1767,6 +1816,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                 # TestSSL deep analysis (only in completo mode)
                 if self.config["scan_mode"] == "completo" and self.extra_tools.get("testssl.sh"):
                     self.current_phase = f"vulns:testssl:{ip}:{port}"
+                    self._set_ui_detail(f"[testssl] {ip}:{port}")
                     self.print_status(
                         f"[testssl] {ip}:{port} → {self.t('testssl_analysis', ip, port)}", "INFO"
                     )
@@ -1783,6 +1833,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             if self.extra_tools.get("whatweb"):
                 try:
                     self.current_phase = f"vulns:whatweb:{ip}:{port}"
+                    self._set_ui_detail(f"[whatweb] {ip}:{port}")
                     runner = CommandRunner(
                         logger=self.logger,
                         dry_run=bool(self.config.get("dry_run", False)),
@@ -1811,6 +1862,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             if self.config["scan_mode"] == "completo" and self.extra_tools.get("nikto"):
                 try:
                     self.current_phase = f"vulns:nikto:{ip}:{port}"
+                    self._set_ui_detail(f"[nikto] {ip}:{port}")
                     from redaudit.core.verify_vuln import filter_nikto_false_positives
 
                     runner = CommandRunner(
@@ -1871,6 +1923,7 @@ class InteractiveNetworkAuditor(WizardMixin):
         remaining_budget_s = float(sum(budgets.values()))
 
         self.current_phase = "vulns"
+        self._set_ui_detail("web vuln scan")
         self.print_status(self.t("vuln_analysis", len(web_hosts)), "HEADER")
         workers = min(3, self.config["threads"])
         workers = max(1, int(workers))
@@ -2658,7 +2711,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                             with self._progress_ui():
                                 with Progress(
                                     *self._progress_columns(
-                                        show_detail=False,
+                                        show_detail=True,
                                         show_eta=True,
                                         show_elapsed=False,
                                     ),
@@ -2672,6 +2725,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                                             total_batches * nuclei_timeout_s
                                         ),
                                         eta_est="",
+                                        detail=f"{len(nuclei_targets)} targets",
                                     )
 
                                     def _nuclei_progress(
@@ -2696,6 +2750,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                                                 eta_est=(
                                                     f"ETA≈ {eta_est_val}" if eta_est_val else ""
                                                 ),
+                                                detail=f"batch {completed}/{total}",
                                             )
                                         except Exception:
                                             pass
