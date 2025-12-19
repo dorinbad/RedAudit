@@ -369,6 +369,7 @@ class WizardMixin:
             print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
             snmp = input(
                 f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('net_discovery_snmp_prompt')} "
+                f"[{options['snmp_community']}]: "
             ).strip()
             if snmp:
                 options["snmp_community"] = snmp[:64]  # Safety limit

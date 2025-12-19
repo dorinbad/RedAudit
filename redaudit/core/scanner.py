@@ -220,7 +220,10 @@ def get_nmap_arguments(mode: str, config: Optional[Dict] = None) -> str:
         "rapido": f"-sn -{timing} --max-retries 1 --host-timeout 10s",
         "normal": f"-{timing} -F -sV --version-intensity 5 --host-timeout 60s --open",
         # v2.9: Reduced max-retries from 2 to 1 for LAN efficiency
-        "completo": f"-{timing} -p- -sV -sC -A --version-intensity 9 --host-timeout 300s --max-retries 1 --open",
+        # NOTE: Do not use --open here. In full scans we still want host records even when
+        # a host has zero open ports; --open can suppress the host from XML output and can
+        # trigger unnecessary deep-scan fallbacks.
+        "completo": f"-{timing} -p- -sV -sC -A --version-intensity 9 --host-timeout 300s --max-retries 1",
     }
     return args.get(mode, args["normal"])
 
@@ -260,6 +263,10 @@ def extract_vendor_mac(text: str) -> tuple:
     """
     if not text:
         return None, None
+    if isinstance(text, bytes):
+        text = text.decode("utf-8", errors="replace")
+    if not isinstance(text, str):
+        text = str(text)
     # Standard Nmap MAC line: MAC Address: 00:11:22:33:44:55 (Vendor Name)
     match = re.search(r"MAC Address: ([0-9A-Fa-f:]+) \((.*?)\)", text)
     if match:

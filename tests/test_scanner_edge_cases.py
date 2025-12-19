@@ -296,6 +296,7 @@ class TestScannerNmapArguments(unittest.TestCase):
         self.assertIn("-p-", args_full)
         self.assertIn("-sC", args_full)
         self.assertIn("-A", args_full)
+        self.assertNotIn("--open", args_full)
 
     def test_get_nmap_arguments_invalid_mode(self):
         """Test fallback for invalid mode."""
@@ -327,6 +328,14 @@ class TestScannerOutputHasIdentity(unittest.TestCase):
         """Test detection of MAC address."""
         records = [{"stdout": "MAC Address: 00:11:22:33:44:55 (Vendor)"}]
         self.assertTrue(output_has_identity(records))
+
+    def test_extract_vendor_mac_accepts_bytes(self):
+        """extract_vendor_mac should accept bytes output from subprocess."""
+        from redaudit.core.scanner import extract_vendor_mac
+
+        mac, vendor = extract_vendor_mac(b"MAC Address: 00:11:22:33:44:55 (Vendor)\n")
+        self.assertEqual(mac, "00:11:22:33:44:55")
+        self.assertEqual(vendor, "Vendor")
 
     def test_output_has_identity_with_os_details(self):
         """Test detection of OS details."""

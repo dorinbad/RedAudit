@@ -19,6 +19,7 @@ import ipaddress
 import os
 import re
 import shutil
+import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -748,10 +749,35 @@ def discover_networks(
                 if logger:
                     logger.info("Running HyperScan parallel discovery...")
 
+                last_pct = -1
+                last_desc = ""
+                last_t = 0.0
+
                 def _hs_progress(completed: int, total: int, desc: str) -> None:
                     try:
                         pct = int((completed / total) * 100) if total else 0
-                        _progress(f"HyperScan: {desc} ({pct}%)", step_index)
+                        nonlocal last_pct, last_desc, last_t
+                        now = time.monotonic()
+                        desc_norm = str(desc or "")[:120]
+
+                        # Avoid flooding Rich with redraw updates (can cause flicker). Only update
+                        # when progress changes meaningfully, the stage label changes, or enough
+                        # time has elapsed.
+                        should_update = False
+                        if pct == 100 and completed >= total:
+                            should_update = True
+                        elif desc_norm and desc_norm != last_desc:
+                            should_update = True
+                        elif pct >= 0 and pct != last_pct and (pct - last_pct) >= 3:
+                            should_update = True
+                        elif now - last_t >= 0.35:
+                            should_update = True
+
+                        if should_update:
+                            _progress(f"HyperScan: {desc_norm} ({pct}%)", step_index)
+                            last_pct = pct
+                            last_desc = desc_norm
+                            last_t = now
                     except Exception:
                         return
 
@@ -802,18 +828,25 @@ def discover_networks(
             except Exception as exc:
                 errors.append(f"hyperscan: {exc}")
 
+    _progress("Finalizing discovery", step_total)
+
     # Analyze for candidate VLANs
     result["candidate_vlans"] = _analyze_vlans(result)
 
     # Red Team techniques (optional)
     if redteam:
+        _progress("Red Team discovery", step_total)
         _run_redteam_discovery(
             result,
             target_networks,
             interface=interface,
             redteam_options=redteam_options,
             logger=logger,
+            progress_callback=progress_callback,
         )
+        _progress("Red Team discovery complete", step_total)
+
+    _progress("Discovery complete", step_total)
 
     return result
 
@@ -854,6 +887,7 @@ def _run_redteam_discovery(
     interface: Optional[str] = None,
     redteam_options: Optional[Dict[str, Any]] = None,
     logger=None,
+    progress_callback: Optional[ProgressCallback] = None,
 ) -> None:
     """
     Run optional Red Team discovery techniques.
@@ -866,6 +900,8 @@ def _run_redteam_discovery(
     max_targets = options.get("max_targets", 50)
     if not isinstance(max_targets, int) or max_targets < 1 or max_targets > 500:
         max_targets = 50
+
+    # Best-effort: fine-grained red team progress can be surfaced by callers.
 
     iface = _sanitize_iface(interface)
 
