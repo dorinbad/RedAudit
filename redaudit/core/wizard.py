@@ -12,6 +12,8 @@ Contains interactive UI methods: prompts, menus, input utilities.
 import os
 import sys
 import ipaddress
+import re
+import shutil
 from typing import Dict, List
 
 from redaudit.utils.constants import (
@@ -131,6 +133,44 @@ class WizardMixin:
         sys.stdout.write("\r")
         sys.stdout.flush()
 
+    def _menu_width(self) -> int:
+        try:
+            columns = shutil.get_terminal_size((80, 20)).columns
+        except Exception:
+            columns = 80
+        if columns <= 2:
+            return max(columns, 1)
+        return columns - 1
+
+    def _strip_ansi(self, text: str) -> str:
+        return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+    def _truncate_menu_text(self, text: str, width: int) -> str:
+        if width <= 0:
+            return ""
+        plain = self._strip_ansi(text)
+        if len(plain) <= width:
+            return text
+        if width <= 3:
+            return plain[:width]
+        target = width - 3
+        out = []
+        visible = 0
+        idx = 0
+        while idx < len(text) and visible < target:
+            if text[idx] == "\x1b":
+                match = re.match(r"\x1b\[[0-9;]*m", text[idx:])
+                if match:
+                    out.append(match.group(0))
+                    idx += len(match.group(0))
+                    continue
+            out.append(text[idx])
+            visible += 1
+            idx += 1
+        out.append("...")
+        out.append(self.COLORS["ENDC"])
+        return "".join(out)
+
     def _arrow_menu(
         self,
         question: str,
@@ -143,19 +183,39 @@ class WizardMixin:
             return 0
         index = max(0, min(default, len(options) - 1)) if options else 0
         rendered_lines = 0
+        width = self._menu_width()
+        sep = "─" * min(60, width)
 
         while True:
-            lines = []
+            lines = [""]
             if header:
-                lines.append(f"\n{self.COLORS['HEADER']}{header}{self.COLORS['ENDC']}")
-                lines.append("─" * 60)
+                lines.append(
+                    self._truncate_menu_text(
+                        f"{self.COLORS['HEADER']}{header}{self.COLORS['ENDC']}", width
+                    )
+                )
+                lines.append(self._truncate_menu_text(sep, width))
             else:
-                lines.append(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-            lines.append(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
+                lines.append(
+                    self._truncate_menu_text(
+                        f"{self.COLORS['OKBLUE']}{'—' * min(60, width)}{self.COLORS['ENDC']}",
+                        width,
+                    )
+                )
+            lines.append(
+                self._truncate_menu_text(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}", width
+                )
+            )
             for i, opt in enumerate(options):
                 marker = f"{self.COLORS['BOLD']}❯{self.COLORS['ENDC']}" if i == index else " "
-                lines.append(f"  {marker} {opt}")
-            lines.append(f"{self.COLORS['OKBLUE']}{self.t('menu_nav_hint')}{self.COLORS['ENDC']}")
+                lines.append(self._truncate_menu_text(f"  {marker} {opt}", width))
+            lines.append(
+                self._truncate_menu_text(
+                    f"{self.COLORS['OKBLUE']}{self.t('menu_nav_hint')}{self.COLORS['ENDC']}",
+                    width,
+                )
+            )
 
             if rendered_lines:
                 self._clear_menu_lines(rendered_lines)
@@ -166,10 +226,10 @@ class WizardMixin:
             key = self._read_key()
             if not key:
                 continue
-            if key in ("up", "k"):
+            if key in ("up", "k", "left", "h"):
                 index = (index - 1) % len(options)
                 continue
-            if key in ("down", "j"):
+            if key in ("down", "j", "right", "l"):
                 index = (index + 1) % len(options)
                 continue
             if key == "enter":
@@ -238,9 +298,10 @@ class WizardMixin:
         default = default.lower()
         if self._use_arrow_menu():
             default_idx = 0 if default in ("yes", "y", "s", "si", "sí") else 1
+            is_yes_default = default_idx == 0
             options = [
-                self.t("yes_option"),
-                self.t("no_option"),
+                self.t("yes_default") if is_yes_default else self.t("yes_option"),
+                self.t("no_default") if not is_yes_default else self.t("no_option"),
             ]
             try:
                 return self._arrow_menu(question, options, default_idx) == 0
