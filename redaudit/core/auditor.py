@@ -1937,12 +1937,14 @@ class InteractiveNetworkAuditor(WizardMixin):
                     should_skip_config = True
                     auto_start = True
                 elif choice == 1:
-                    if self.ask_yes_no(self.t("defaults_show_summary_q"), default="no"):
+                    show_summary = self.ask_yes_no(self.t("defaults_show_summary_q"), default="no")
+                    if show_summary:
                         self._show_defaults_summary(persisted_defaults)
-
-                    if self.ask_yes_no(self.t("defaults_use_immediately_q"), default="yes"):
-                        should_skip_config = True
-                        auto_start = True
+                        # Only offer an "immediate start" path after the user has explicitly
+                        # reviewed the persisted defaults.
+                        if self.ask_yes_no(self.t("defaults_use_immediately_q"), default="no"):
+                            should_skip_config = True
+                            auto_start = True
 
         print(f"\n{self.COLORS['HEADER']}{self.t('scan_config')}{self.COLORS['ENDC']}")
         print("=" * 60)
