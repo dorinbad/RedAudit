@@ -51,6 +51,7 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 | **Pipeline SIEM Nativo** | v3.7.0 | `siem/`. Configs para Filebeat/Logstash + reglas Sigma. |
 | **Verificación Osquery** | v3.7.0 | `redaudit/core/osquery.py`. Verificación de host post-scan vía SSH. |
 | **Logging de Sesión** | v3.7.0 | `redaudit/utils/session_log.py`. Captura salida de terminal a `.log` y `.txt`. |
+| **Progreso estable (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/net_discovery.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Reduce flickering y muestra ETA. |
 
 ### Escaneo Avanzado y Automatización
 
