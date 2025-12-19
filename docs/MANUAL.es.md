@@ -112,7 +112,7 @@ Deshabilitar con `--no-deep-scan`.
 
 ## 5. Referencia CLI (Completa)
 
-Flags verificadas contra `redaudit --help` (v3.5.2):
+Flags verificadas contra `redaudit --help` (v3.7.2):
 
 ### Core
 
@@ -172,6 +172,8 @@ Flags verificadas contra `redaudit --help` (v3.5.2):
 | `--webhook URL` | POST alertas para hallazgos high/critical |
 | `--no-txt-report` | Omitir generación de reporte TXT |
 | `--no-vuln-scan` | Omitir escaneo nikto/vulnerabilidades web |
+| `--nuclei` | Habilitar escaneo de plantillas Nuclei (requiere `nuclei`) |
+| `--no-nuclei` | Deshabilitar Nuclei (ignora defaults) |
 
 ### Correlación CVE
 
