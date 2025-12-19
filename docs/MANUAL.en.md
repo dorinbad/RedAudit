@@ -108,11 +108,21 @@ When enabled (default), RedAudit performs additional scanning on hosts where ini
 
 Disable with `--no-deep-scan`.
 
+### Agentless Verification (Optional)
+
+When enabled, RedAudit runs lightweight Nmap scripts against hosts that expose SMB/RDP/LDAP/SSH/HTTP to enrich identity
+data (OS hints, domain info, titles/headers, and basic fingerprints). This does **not** use credentials and is opt-in
+to keep noise
+predictable.
+
+- Enable via wizard prompt or `--agentless-verify`.
+- Limit scope with `--agentless-verify-max-targets` (default: 20).
+
 ---
 
 ## 5. CLI Reference (Complete)
 
-Flags verified against `redaudit --help` (v3.7.2):
+Flags verified against `redaudit --help` (vNext, unreleased):
 
 ### Core
 
@@ -174,6 +184,14 @@ Flags verified against `redaudit --help` (v3.7.2):
 | `--no-vuln-scan` | Skip nikto/web vulnerability scanning |
 | `--nuclei` | Enable Nuclei template scanning (requires `nuclei`) |
 | `--no-nuclei` | Disable Nuclei (overrides defaults) |
+
+### Verification (Agentless)
+
+| Flag | Description |
+|:---|:---|
+| `--agentless-verify` | Enable agentless verification (SMB/RDP/LDAP/SSH/HTTP) |
+| `--no-agentless-verify` | Disable agentless verification (overrides defaults) |
+| `--agentless-verify-max-targets N` | Cap verification targets (1-200, default: 20) |
 
 ### CVE Correlation
 

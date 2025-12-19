@@ -117,9 +117,10 @@ flowchart TD
     C --> D[Lista de hosts UP]
     D --> E[Escaneo Paralelo de Puertos]
     E --> F{¿Disparar Deep Scan?}
-    F -->|No| G[Enriquecimiento Web/SSL/CVE]
+    F -->|No| V[Verificación sin agente (opcional)]
     F -->|Sí| H[Deep Scan: 3 Fases]
-    H --> G
+    H --> V
+    V --> G[Enriquecimiento Web/SSL/CVE]
     G --> I[Generar Artefactos]
     I --> J{¿Cifrado?}
     J -->|Sí| K[Cifrar AES-128]

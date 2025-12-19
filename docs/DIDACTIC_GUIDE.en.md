@@ -117,9 +117,10 @@ flowchart TD
     C --> D[List of UP hosts]
     D --> E[Parallel Port Scan]
     E --> F{Trigger Deep Scan?}
-    F -->|No| G[Web/SSL/CVE Enrichment]
+    F -->|No| V[Agentless verification (optional)]
     F -->|Yes| H[Deep Scan: 3 Phases]
-    H --> G
+    H --> V
+    V --> G[Web/SSL/CVE Enrichment]
     G --> I[Generate Artifacts]
     I --> J{Encryption?}
     J -->|Yes| K[AES-128 Encrypt]

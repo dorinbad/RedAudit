@@ -108,11 +108,20 @@ Cuando está habilitado (por defecto), RedAudit realiza escaneos adicionales en 
 
 Deshabilitar con `--no-deep-scan`.
 
+### Verificación sin agente (Opcional)
+
+Cuando está habilitado, RedAudit ejecuta scripts ligeros de Nmap sobre hosts con SMB/RDP/LDAP/SSH/HTTP para enriquecer la
+identidad (pistas de SO, dominio, títulos/cabeceras y fingerprints básicos). No usa credenciales y es opt-in para mantener el ruido
+controlado.
+
+- Activar desde el wizard o con `--agentless-verify`.
+- Limitar alcance con `--agentless-verify-max-targets` (defecto: 20).
+
 ---
 
 ## 5. Referencia CLI (Completa)
 
-Flags verificadas contra `redaudit --help` (v3.7.2):
+Flags verificadas contra `redaudit --help` (vNext, sin publicar):
 
 ### Core
 
@@ -174,6 +183,14 @@ Flags verificadas contra `redaudit --help` (v3.7.2):
 | `--no-vuln-scan` | Omitir escaneo nikto/vulnerabilidades web |
 | `--nuclei` | Habilitar escaneo de plantillas Nuclei (requiere `nuclei`) |
 | `--no-nuclei` | Deshabilitar Nuclei (ignora defaults) |
+
+### Verificación (Sin Agente)
+
+| Flag | Descripción |
+|:---|:---|
+| `--agentless-verify` | Verificación sin agente (SMB/RDP/LDAP/SSH/HTTP) |
+| `--no-agentless-verify` | Desactivar verificación sin agente (sobrescribe defaults) |
+| `--agentless-verify-max-targets N` | Límite de objetivos (1-200, defecto: 20) |
 
 ### Correlación CVE
 

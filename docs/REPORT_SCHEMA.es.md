@@ -48,9 +48,19 @@ El contenedor de nivel superior para la sesión de escaneo.
 | `network_info` | `array` | Lista de objetos de interfaz de red |
 | `topology` | `object` | (Opcional) Salida best-effort de descubrimiento de topología (ARP/VLAN/LLDP + gateway/rutas) **(v3.1+)** |
 | `net_discovery` | `object` | (Opcional) Salida de descubrimiento de red mejorado (DHCP/NetBIOS/mDNS/UPNP) **(v3.2+)** |
+| `agentless_verify` | `object` | (Opcional) Resumen de verificación sin agente (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
 | `hosts` | `array` | Lista de objetos `Host` (ver abajo) |
 | `vulnerabilities` | `array` | Lista de hallazgos de vulnerabilidades |
 | `summary` | `object` | Estadísticas agregadas |
+
+### Objeto Verificación sin agente (Opcional) (vNext)
+
+Este bloque solo aparece si la verificación sin agente está habilitada.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `targets` | integer | Número de objetivos elegibles seleccionados |
+| `completed` | integer | Número de verificaciones completadas |
 
 ### Objeto Net Discovery (Opcional) (v3.2+)
 
@@ -137,6 +147,8 @@ Campos adicionales a nivel de host:
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `os_detected` | string | (Opcional) Fingerprint de SO (best-effort; normalmente desde salida de deep scan) **(v3.1.4+)** |
+| `agentless_probe` | object | (Opcional) Salida raw de probes SMB/RDP/LDAP/SSH/HTTP **(vNext)** |
+| `agentless_fingerprint` | object | (Opcional) Hints normalizados de identidad (ver abajo) **(vNext)** |
 
 ```json
 {
@@ -166,6 +178,28 @@ Campos adicionales a nivel de host:
   ]
 }
 ```
+
+### Objeto Fingerprint sin agente (Opcional) (vNext)
+
+Hints normalizados derivados de probes SMB/RDP/LDAP. Todos los campos son opcionales.
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `domain` | string | Pista de dominio DNS o NetBIOS |
+| `computer_name` | string | Hostname desde hints RDP/SMB |
+| `product_version` | string | Versión de producto RDP (best-effort) |
+| `os` | string | Hint de SO desde scripts SMB |
+| `workgroup` | string | Workgroup SMB |
+| `smb_signing_enabled` | boolean | SMB signing habilitado (best-effort) |
+| `smb_signing_required` | boolean | SMB signing requerido (best-effort) |
+| `smbv1_detected` | boolean | Presencia de SMBv1 detectada |
+| `http_title` | string | Título HTTP desde el probe sin agente |
+| `http_server` | string | Header Server HTTP |
+| `ssh_hostkeys` | array | Fingerprints de host key SSH (best-effort) |
+| `defaultNamingContext` | string | LDAP RootDSE default naming context |
+| `rootDomainNamingContext` | string | LDAP RootDSE root domain naming context |
+| `dnsHostName` | string | LDAP RootDSE DNS host name |
+| `ldapServiceName` | string | LDAP RootDSE service name |
 
 **Tipos de Estado de Host**:
 

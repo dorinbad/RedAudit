@@ -20,13 +20,7 @@ These features are approved but **not yet implemented** in the codebase.
 
 ### Red Team Extensions (Priority: Medium)
 
-*Requires specialized authorization and safe-guards.*
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Impacket Integration** | 🎯 Planned | Optional module `--redteam-deep` using `smbexec`/`secretsdump` (via Python library, not subprocess) on null sessions. |
-| **BloodHound Collector** | 🎯 Planned | Execution of SharpHound/BloodHound.py on live Windows hosts to generate graph data for AD attack path analysis. |
-| **Red Team Playbooks** | 🎯 Planned | Automated generation of PoC scripts (Python/Msfvenom suggestions) for verified exploitable findings (Labs only). |
+*(No medium priority items currently pending)*
 
 ### Infrastructure (Priority: Low)
 
@@ -49,7 +43,6 @@ Features currently present using `redaudit --version` >= v3.6.0.
 | **Interactive Webhooks** | v3.7.0 | `redaudit/core/wizard.py`. Configure Slack/Teams directly in wizard. |
 | **Advanced Net Discovery Wizard** | v3.7.0 | `redaudit/core/wizard.py`. Configure SNMP/DNS/Targets interactively. |
 | **Native SIEM Pipeline** | v3.7.0 | `siem/`. Configs for Filebeat/Logstash + Sigma rules. |
-| **Osquery Verification** | v3.7.0 | `redaudit/core/osquery.py`. Post-scan SSH host verification. |
 | **Session Logging** | v3.7.0 | `redaudit/utils/session_log.py`. Captures terminal output to `.log` and `.txt`. |
 | **Stable Progress (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/net_discovery.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Avoids flicker and shows ETA. |
 
@@ -58,6 +51,7 @@ Features currently present using `redaudit --version` >= v3.6.0.
 | Feature | Version | Verification |
 | :--- | :--- | :--- |
 | **Nuclei Integration** | v3.6.0 | Module `redaudit/core/nuclei.py`. Runs templates when Nuclei is installed and explicitly enabled (wizard or `--nuclei`). |
+| **Agentless Verification** | vNext | `redaudit/core/agentless_verify.py`. Optional SMB/RDP/LDAP/SSH/HTTP fingerprinting (wizard or `--agentless-verify`). |
 | **Playbook Generation** | v3.4.0 | Module `redaudit/core/playbook_generator.py`. Creates MD remediation guides in `playbooks/`. |
 | **Red Team: Kerberos** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `kerbrute` for user enumeration if approved. |
 | **Red Team: SNMP/SMB** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `snmpwalk` and `enum4linux`. |

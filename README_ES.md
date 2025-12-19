@@ -55,6 +55,7 @@ sudo redaudit
 | **HyperScan** | Batch TCP async + broadcast UDP IoT + ARP agresivo para triage ultrarrápido |
 | **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas |
 | **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPNP) para detección de redes de invitados |
+| **Verificación sin agente** | Probing SMB/RDP/LDAP/SSH/HTTP opcional para fingerprinting sin credenciales |
 | **Modo Sigiloso** | Timing paranoid T1, mono-hilo, retardos 5s+ para evasión IDS empresarial |
 
 ### Inteligencia y Correlación

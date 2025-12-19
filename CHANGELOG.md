@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- (none yet)
+### Added
+
+- **Agentless verification**: Optional SMB/RDP/LDAP/SSH/HTTP fingerprinting stage (wizard or `--agentless-verify`), with a configurable target cap.
+- **CLI flags**: `--agentless-verify`, `--no-agentless-verify`, and `--agentless-verify-max-targets`.
 
 ## [3.7.2] - 2025-12-19 (UX & Progress Hotfix)
 

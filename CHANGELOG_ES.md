@@ -9,7 +9,10 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Sin Publicar]
 
-- (nada aún)
+### Añadido
+
+- **Verificación sin agente**: Etapa opcional de fingerprinting SMB/RDP/LDAP/SSH/HTTP (wizard o `--agentless-verify`), con límite configurable de objetivos.
+- **Flags CLI**: `--agentless-verify`, `--no-agentless-verify` y `--agentless-verify-max-targets`.
 
 ## [3.7.2] - 2025-12-19 (Hotfix UX y Progreso)
 

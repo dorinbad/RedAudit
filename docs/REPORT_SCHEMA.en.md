@@ -48,9 +48,19 @@ The top-level container for the scan session.
 | `network_info` | `array` | List of network interface objects |
 | `topology` | `object` | (Optional) Best-effort topology discovery output (ARP/VLAN/LLDP + gateway/routes) **(v3.1+)** |
 | `net_discovery` | `object` | (Optional) Enhanced network discovery output (DHCP/NetBIOS/mDNS/UPNP) **(v3.2+)** |
+| `agentless_verify` | `object` | (Optional) Agentless verification summary (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
 | `hosts` | `array` | List of `Host` objects (see below) |
 | `vulnerabilities` | `array` | List of vulnerability findings |
 | `summary` | `object` | Aggregated statistics |
+
+### Agentless Verification Object (Optional) (vNext)
+
+This field appears only if agentless verification was enabled.
+
+| Field | Type | Description |
+|---|---|---|
+| `targets` | integer | Number of eligible targets selected for verification |
+| `completed` | integer | Number of verification attempts completed |
 
 ### Net Discovery Object (Optional) (v3.2+)
 
@@ -137,6 +147,8 @@ Additional host-level fields:
 | Field | Type | Description |
 |---|---|---|
 | `os_detected` | string | (Optional) OS fingerprint (best-effort, usually from deep scan output) **(v3.1.4+)** |
+| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
+| `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(vNext)** |
 
 ```json
 {
@@ -166,6 +178,28 @@ Additional host-level fields:
   ]
 }
 ```
+
+### Agentless Fingerprint Object (Optional) (vNext)
+
+Normalized hints derived from SMB/RDP/LDAP probes. All fields are optional.
+
+| Field | Type | Description |
+|---|---|---|
+| `domain` | string | DNS or NetBIOS domain name hint |
+| `computer_name` | string | Hostname from RDP/SMB hints |
+| `product_version` | string | RDP product version (best-effort) |
+| `os` | string | OS hint from SMB scripts |
+| `workgroup` | string | SMB workgroup name |
+| `smb_signing_enabled` | boolean | SMB signing enabled (best-effort) |
+| `smb_signing_required` | boolean | SMB signing required (best-effort) |
+| `smbv1_detected` | boolean | SMBv1 presence detected |
+| `http_title` | string | HTTP title hint from agentless probe |
+| `http_server` | string | HTTP server header hint |
+| `ssh_hostkeys` | array | SSH host key fingerprints (best-effort) |
+| `defaultNamingContext` | string | LDAP RootDSE default naming context |
+| `rootDomainNamingContext` | string | LDAP RootDSE root domain naming context |
+| `dnsHostName` | string | LDAP RootDSE DNS host name |
+| `ldapServiceName` | string | LDAP RootDSE service name |
 
 **Host Status Types**:
 

@@ -137,6 +137,9 @@ Grouped by operational function. Verified against the current codebase.
 | `--udp-mode` | `quick` (priority ports) or `full` (top ports) |
 | `--redteam` | Add AD/Kerberos/SNMP recon techniques |
 | `--redteam-active-l2` | Enable noisier L2 active probing |
+| `--agentless-verify` | Enable agentless verification (SMB/RDP/LDAP/SSH/HTTP) |
+| `--no-agentless-verify` | Disable agentless verification (overrides defaults) |
+| `--agentless-verify-max-targets N` | Cap agentless verification targets (1-200, default: 20) |
 
 ### Reporting & Integration
 
