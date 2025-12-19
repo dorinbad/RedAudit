@@ -952,6 +952,59 @@ class InteractiveNetworkAuditor(WizardMixin):
         self.results["network_info"] = nets
         return nets
 
+    def _collect_discovery_hosts(self, target_networks: List[str]) -> List[str]:
+        """Collect host IPs from enhanced discovery results (best-effort)."""
+        discovery = self.results.get("net_discovery") or {}
+        ips = set()
+
+        def _add_ip(value):
+            ip = sanitize_ip(value)
+            if ip:
+                ips.add(ip)
+
+        for ip in discovery.get("alive_hosts", []) or []:
+            _add_ip(ip)
+        for host in discovery.get("arp_hosts", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for host in discovery.get("netbios_hosts", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for host in discovery.get("upnp_devices", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for svc in discovery.get("mdns_services", []) or []:
+            if isinstance(svc, dict):
+                _add_ip(svc.get("ip"))
+        for srv in discovery.get("dhcp_servers", []) or []:
+            if isinstance(srv, dict):
+                _add_ip(srv.get("ip"))
+        for ip in (discovery.get("hyperscan_tcp_hosts") or {}).keys():
+            _add_ip(ip)
+
+        if not ips:
+            return []
+
+        networks = []
+        for net in target_networks or []:
+            try:
+                networks.append(ipaddress.ip_network(str(net), strict=False))
+            except Exception:
+                continue
+
+        if networks:
+            filtered = []
+            for ip in ips:
+                try:
+                    ip_obj = ipaddress.ip_address(ip)
+                except Exception:
+                    continue
+                if any(ip_obj in net for net in networks if net.version == ip_obj.version):
+                    filtered.append(ip)
+            return sorted(filtered)
+
+        return sorted(ips)
+
     def ask_network_range(self):
         """Ask user to select target network(s)."""
         print(f"\n{self.COLORS['HEADER']}{self.t('selection_target')}{self.COLORS['ENDC']}")
@@ -2508,12 +2561,31 @@ class InteractiveNetworkAuditor(WizardMixin):
                         self.logger.debug("Net discovery exception details", exc_info=True)
                     self.results["net_discovery"] = {"enabled": True, "error": str(exc)}
 
+            discovery_hosts = self._collect_discovery_hosts(
+                self.config.get("target_networks", []) or []
+            )
+            if discovery_hosts:
+                self.print_status(
+                    self.t("net_discovery_seed_hosts", len(discovery_hosts)),
+                    "INFO",
+                )
+
             all_hosts = []
             for network in self.config["target_networks"]:
                 if self.interrupted:
                     break
                 hosts = self.scan_network_discovery(network)
                 all_hosts.extend(hosts)
+
+            if discovery_hosts:
+                before = set(all_hosts)
+                all_hosts.extend(discovery_hosts)
+                added = len(set(all_hosts) - before)
+                if added > 0:
+                    self.print_status(
+                        self.t("net_discovery_seed_added", added),
+                        "INFO",
+                    )
 
             if not all_hosts:
                 self.print_status(self.t("no_hosts"), "WARNING")

@@ -236,6 +236,16 @@ class WizardMixin:
     def ask_yes_no(self, question: str, default: str = "yes") -> bool:
         """Ask a yes/no question."""
         default = default.lower()
+        if self._use_arrow_menu():
+            default_idx = 0 if default in ("yes", "y", "s", "si", "sí") else 1
+            options = [
+                self.t("yes_option"),
+                self.t("no_option"),
+            ]
+            try:
+                return self._arrow_menu(question, options, default_idx) == 0
+            except Exception:
+                pass
         opts = (
             self.t("ask_yes_no_opts")
             if default in ("yes", "y", "s", "si", "sí")
