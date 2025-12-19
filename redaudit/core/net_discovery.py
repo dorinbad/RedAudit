@@ -19,6 +19,7 @@ import ipaddress
 import os
 import re
 import shutil
+import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -748,10 +749,35 @@ def discover_networks(
                 if logger:
                     logger.info("Running HyperScan parallel discovery...")
 
+                last_pct = -1
+                last_desc = ""
+                last_t = 0.0
+
                 def _hs_progress(completed: int, total: int, desc: str) -> None:
                     try:
                         pct = int((completed / total) * 100) if total else 0
-                        _progress(f"HyperScan: {desc} ({pct}%)", step_index)
+                        nonlocal last_pct, last_desc, last_t
+                        now = time.monotonic()
+                        desc_norm = str(desc or "")[:120]
+
+                        # Avoid flooding Rich with redraw updates (can cause flicker). Only update
+                        # when progress changes meaningfully, the stage label changes, or enough
+                        # time has elapsed.
+                        should_update = False
+                        if pct == 100 and completed >= total:
+                            should_update = True
+                        elif desc_norm and desc_norm != last_desc:
+                            should_update = True
+                        elif pct >= 0 and pct != last_pct and (pct - last_pct) >= 3:
+                            should_update = True
+                        elif now - last_t >= 0.35:
+                            should_update = True
+
+                        if should_update:
+                            _progress(f"HyperScan: {desc_norm} ({pct}%)", step_index)
+                            last_pct = pct
+                            last_desc = desc_norm
+                            last_t = now
                     except Exception:
                         return
 

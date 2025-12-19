@@ -2293,17 +2293,81 @@ class InteractiveNetworkAuditor(WizardMixin):
                 try:
                     nuclei_targets = get_http_targets_from_hosts(results)
                     if nuclei_targets:
-                        nuclei_result = run_nuclei_scan(
-                            targets=nuclei_targets,
-                            output_dir=self.config.get("_actual_output_dir")
+                        output_dir = (
+                            self.config.get("_actual_output_dir")
                             or self.config.get("output_dir")
-                            or get_default_reports_base_dir(),
-                            severity="medium,high,critical",
-                            timeout=300,
-                            logger=self.logger,
-                            dry_run=bool(self.config.get("dry_run", False)),
-                            print_status=self.print_status,
+                            or get_default_reports_base_dir()
                         )
+
+                        # Prefer a single Progress instance managed by the auditor to avoid
+                        # competing Rich Live displays (which can cause flicker/no output).
+                        nuclei_result = None
+                        try:
+                            from rich.progress import (
+                                Progress,
+                                SpinnerColumn,
+                                BarColumn,
+                                TextColumn,
+                                TimeElapsedColumn,
+                            )
+                            from rich.console import Console
+
+                            batch_size = 25
+                            total_batches = max(1, int(math.ceil(len(nuclei_targets) / batch_size)))
+                            with self._progress_ui():
+                                with Progress(
+                                    SpinnerColumn(),
+                                    TextColumn("[progress.description]{task.description}"),
+                                    BarColumn(),
+                                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                                    TextColumn("({task.completed}/{task.total})"),
+                                    TimeElapsedColumn(),
+                                    TextColumn("{task.fields[eta]}", justify="right"),
+                                    console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
+                                    transient=False,
+                                ) as progress:
+                                    task = progress.add_task(
+                                        f"[cyan]Nuclei (0/{total_batches})",
+                                        total=total_batches,
+                                        eta="ETA≈ --:--",
+                                    )
+
+                                    def _nuclei_progress(
+                                        completed: int, total: int, eta: str
+                                    ) -> None:
+                                        try:
+                                            progress.update(
+                                                task,
+                                                completed=completed,
+                                                description=f"[cyan]Nuclei ({completed}/{total})",
+                                                eta=str(eta or "").strip() or "ETA≈ --:--",
+                                            )
+                                        except Exception:
+                                            pass
+
+                                    nuclei_result = run_nuclei_scan(
+                                        targets=nuclei_targets,
+                                        output_dir=output_dir,
+                                        severity="medium,high,critical",
+                                        timeout=300,
+                                        batch_size=batch_size,
+                                        progress_callback=_nuclei_progress,
+                                        use_internal_progress=False,
+                                        logger=self.logger,
+                                        dry_run=bool(self.config.get("dry_run", False)),
+                                        print_status=self.print_status,
+                                    )
+                        except Exception:
+                            nuclei_result = run_nuclei_scan(
+                                targets=nuclei_targets,
+                                output_dir=output_dir,
+                                severity="medium,high,critical",
+                                timeout=300,
+                                logger=self.logger,
+                                dry_run=bool(self.config.get("dry_run", False)),
+                                print_status=self.print_status,
+                            )
+
                         if nuclei_result.get("findings"):
                             # Merge nuclei findings into vulnerabilities
                             for finding in nuclei_result["findings"]:

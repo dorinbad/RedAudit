@@ -12,7 +12,7 @@ import json
 import shutil
 import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from redaudit.core.command_runner import CommandRunner
 from redaudit.utils.dry_run import is_dry_run
@@ -55,6 +55,8 @@ def run_nuclei_scan(
     rate_limit: int = 150,
     timeout: int = 300,
     batch_size: int = 25,
+    progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    use_internal_progress: bool = True,
     logger=None,
     dry_run: bool = False,
     print_status=None,
@@ -201,46 +203,71 @@ def run_nuclei_scan(
 
             batch_durations.append(time.time() - batch_start)
 
-        # Rich progress UI (best-effort)
-        try:
-            from rich.progress import (
-                Progress,
-                SpinnerColumn,
-                BarColumn,
-                TextColumn,
-                TimeElapsedColumn,
-            )
-            from rich.console import Console
-
-            console = Console()
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                TimeElapsedColumn(),
-                TextColumn("{task.fields[eta]}", justify="right"),
-                console=console,
-                transient=True,
-            ) as progress:
-                task = progress.add_task(
-                    f"[cyan]Nuclei (0/{total_batches})",
-                    total=total_batches,
-                    eta="ETA≈ --:--",
+        if progress_callback is not None:
+            # External progress management (preferred when another rich Live/Progress is active).
+            for idx, batch in enumerate(batches, start=1):
+                _run_one_batch(idx, batch)
+                avg = (sum(batch_durations) / len(batch_durations)) if batch_durations else 0.0
+                remaining = max(0, total_batches - idx)
+                eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
+                try:
+                    progress_callback(idx, total_batches, f"ETA≈ {eta}")
+                except Exception:
+                    pass
+        elif use_internal_progress:
+            # Rich progress UI (best-effort)
+            try:
+                from rich.progress import (
+                    Progress,
+                    SpinnerColumn,
+                    BarColumn,
+                    TextColumn,
+                    TimeElapsedColumn,
                 )
-                for idx, batch in enumerate(batches, start=1):
-                    _run_one_batch(idx, batch)
-                    avg = (sum(batch_durations) / len(batch_durations)) if batch_durations else 0.0
-                    remaining = max(0, total_batches - idx)
-                    eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
-                    progress.update(
-                        task,
-                        advance=1,
-                        description=f"[cyan]Nuclei ({idx}/{total_batches})",
-                        eta=f"ETA≈ {eta}",
+                from rich.console import Console
+
+                console = Console()
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                    TimeElapsedColumn(),
+                    TextColumn("{task.fields[eta]}", justify="right"),
+                    console=console,
+                    transient=False,
+                ) as progress:
+                    task = progress.add_task(
+                        f"[cyan]Nuclei (0/{total_batches})",
+                        total=total_batches,
+                        eta="ETA≈ --:--",
                     )
-        except Exception:
-            # Fallback: batch-by-batch status
+                    for idx, batch in enumerate(batches, start=1):
+                        _run_one_batch(idx, batch)
+                        avg = (
+                            (sum(batch_durations) / len(batch_durations))
+                            if batch_durations
+                            else 0.0
+                        )
+                        remaining = max(0, total_batches - idx)
+                        eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
+                        progress.update(
+                            task,
+                            advance=1,
+                            description=f"[cyan]Nuclei ({idx}/{total_batches})",
+                            eta=f"ETA≈ {eta}",
+                        )
+            except Exception:
+                # Fallback: batch-by-batch status
+                for idx, batch in enumerate(batches, start=1):
+                    if print_status:
+                        print_status(
+                            f"[nuclei] batch {idx}/{total_batches} ({len(batch)} targets)",
+                            "INFO",
+                        )
+                    _run_one_batch(idx, batch)
+        else:
+            # No internal UI: batch-by-batch status
             for idx, batch in enumerate(batches, start=1):
                 if print_status:
                     print_status(
