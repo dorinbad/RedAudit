@@ -1438,20 +1438,36 @@ class InteractiveNetworkAuditor(WizardMixin):
             deep_enabled = self.config.get("deep_id_scan", True)
             # In full scan mode we already run aggressive nmap; avoid redundant deep scans.
             allow_deep_heuristic = self.config.get("scan_mode") != "completo"
+            deep_reasons = []
             if deep_enabled and allow_deep_heuristic:
                 if total_ports > 8:
                     trigger_deep = True
+                    deep_reasons.append("many_ports")
                 if suspicious:
                     trigger_deep = True
+                    deep_reasons.append("suspicious_service")
                 # Skip deep scan for completely quiet hosts (0 open ports); it tends to add a lot of time
                 # and usually yields little beyond MAC/vendor (which we already capture when available).
                 if 0 < total_ports <= 3:
                     trigger_deep = True
+                    deep_reasons.append("low_visibility")
                 if total_ports > 0 and not any_version:
                     trigger_deep = True
+                    deep_reasons.append("no_version_info")
                 # If identity signals are already strong, skip deep scan unless host is suspicious.
                 if identity_score >= 3 and not suspicious and total_ports <= 12 and any_version:
                     trigger_deep = False
+                    deep_reasons.append("identity_strong")
+
+            host_record["smart_scan"] = {
+                "mode": self.config.get("scan_mode"),
+                "identity_score": identity_score,
+                "signals": identity_signals,
+                "suspicious_service": suspicious,
+                "trigger_deep": bool(trigger_deep),
+                "reasons": deep_reasons,
+                "deep_scan_executed": False,
+            }
 
             # SearchSploit exploit lookup for services with version info
             if self.extra_tools.get("searchsploit"):
@@ -1473,6 +1489,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     host_record["deep_scan"] = deep
                     if deep.get("os_detected"):
                         host_record["os_detected"] = deep["os_detected"]
+                    host_record["smart_scan"]["deep_scan_executed"] = True
 
             enrich_host_with_dns(host_record, self.extra_tools)
             enrich_host_with_whois(host_record, self.extra_tools)
