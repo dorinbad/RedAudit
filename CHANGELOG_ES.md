@@ -16,6 +16,10 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [3.8.1] - 2025-12-20 (Corrección Feedback Visual)
 
+### Añadido
+
+- **Navegación del Wizard**: Nueva función `ask_choice_with_back` añade opción "< Volver" a los menús del wizard, permitiendo navegación paso a paso sin reiniciar toda la configuración.
+
 ### Corregido
 
 - **ETA Eliminado**: Eliminadas estimaciones ETA poco fiables de barras de progreso (se congelaban o mostraban valores incorrectos); ahora solo muestra tiempo transcurrido.

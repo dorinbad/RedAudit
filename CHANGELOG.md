@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.8.1] - 2025-12-20 (Visual Feedback Fix)
 
+### Added
+
+- **Wizard Navigation**: New `ask_choice_with_back` function adds "< Go Back" option to wizard menus, enabling step-by-step navigation without restarting the entire configuration.
+
 ### Fixed
 
 - **ETA Removed**: Eliminated unreliable ETA estimates from progress bars (were freezing or showing incorrect values); now displays elapsed time only.
