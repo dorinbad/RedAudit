@@ -51,7 +51,7 @@ sudo redaudit
 
 | Capacidad | Descripción |
 |:---|:---|
-| **Deep Scan Adaptativo** | Escalación de 3 fases (TCP → UDP Prioritario → UDP Completo) basada en ambigüedad del host |
+| **Deep Scan Adaptativo** | Escalación en 3 fases (TCP → UDP Prioritario → UDP Extendido) solo cuando la identidad es débil o el host no responde |
 | **HyperScan** | Batch TCP async + broadcast UDP IoT + ARP agresivo para triage ultrarrápido |
 | **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas |
 | **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPNP) para detección de redes de invitados |
@@ -107,16 +107,18 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                    FASE 1: TCP Agresivo                     │
-│              Todos los hosts: -A -p- -sV -Pn                │
+│          FASE 1: Perfil Nmap según el modo de escaneo        │
+│        rápido/normal/completo definen el scan base           │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
               ┌───────────────────────┐
               │  Evaluación Identidad │
-              │  • ¿MAC extraída?     │
-              │  • ¿Fingerprint SO?   │
-              │  • ¿Versiones servs?  │
+              │  • ¿MAC/vendor?       │
+              │  • ¿Hostname/DNS?     │
+              │  • ¿Versión servicio? │
+              │  • ¿CPE/banner?       │
+              │  • ¿Hints sin agente? │
               └───────────┬───────────┘
                           │
             ┌─────────────┴─────────────┐
@@ -129,8 +131,8 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │     FASE 2a: UDP Prioritario         │
-                    │  17 puertos comunes (DNS, DHCP, SNMP)│
+                    │  FASE 2a: UDP Prioritario (rápido/normal) │
+                    │  17 puertos comunes (DNS, DHCP, SNMP)     │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
@@ -148,14 +150,19 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
                               └─────────────────────────────────┘
 ```
 
-**Heurísticas de Disparo** (qué hace un host "ambiguo"):
+En modo **full/completo**, el deep scan normalmente se omite porque el perfil base ya es agresivo. Solo se usa como
+fallback cuando un host no responde.
+
+**Heurísticas de Disparo** (qué hace un host "ambiguo", sobre todo en rápido/normal):
 
 - Pocos puertos abiertos (≤3)
 - Servicios sospechosos (`unknown`, `tcpwrapped`)
-- Falta de datos MAC/vendor
-- Puertos filtrados o sin respuesta
+- Falta de MAC/vendor/hostname
+- Sin versión de servicio (score de identidad bajo)
+- Puertos filtrados o sin respuesta (fallback)
 
-**Resultado**: Escaneos 50-80% más rápidos comparado con UDP siempre activo, manteniendo calidad de detección para dispositivos IoT, servicios filtrados y equipos legacy.
+**Resultado**: Escaneos más rápidos que UDP siempre activo, manteniendo calidad de detección para IoT, servicios filtrados
+y equipos legacy.
 
 ### Modelo de Concurrencia
 
@@ -363,7 +370,7 @@ redaudit/
 
 | Término | Definición |
 |:---|:---|
-| **Deep Scan** | Escalación selectiva (fingerprinting TCP + UDP) para hosts ambiguos |
+| **Deep Scan** | Escalación selectiva (fingerprinting TCP + UDP) cuando la identidad es débil o el host no responde |
 | **HyperScan** | Módulo de descubrimiento async ultrarrápido (batch TCP, UDP IoT, ARP agresivo) |
 | **Smart-Check** | Filtro de falsos positivos en 3 capas (Content-Type, tamaño, magic bytes) |
 | **Entity Resolution** | Consolidación de dispositivos multi-interfaz en activos unificados |

@@ -51,7 +51,7 @@ sudo redaudit
 
 | Capability | Description |
 |:---|:---|
-| **Adaptive Deep Scan** | 3-phase escalation (TCP → Priority UDP → Full UDP) based on host identity ambiguity |
+| **Adaptive Deep Scan** | 3-phase escalation (TCP → Priority UDP → Extended UDP) only when identity is weak or host is unresponsive |
 | **HyperScan** | Async batch TCP + UDP IoT broadcast + aggressive ARP for ultra-fast triage |
 | **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection |
 | **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPNP) for guest network detection |
@@ -107,16 +107,18 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                    PHASE 1: TCP Aggressive                  │
-│              All hosts: -A -p- -sV -Pn                      │
+│              PHASE 1: Mode-Specific Nmap Profile            │
+│        fast/normal/full modes drive the base scan           │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
               ┌───────────────────────┐
               │  Identity Evaluation  │
-              │  • MAC extracted?     │
-              │  • OS fingerprint?    │
-              │  • Service versions?  │
+              │  • MAC/vendor?        │
+              │  • Hostname/DNS?      │
+              │  • Service version?   │
+              │  • CPE/banner?        │
+              │  • Agentless hints?   │
               └───────────┬───────────┘
                           │
             ┌─────────────┴─────────────┐
@@ -129,8 +131,8 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │     PHASE 2a: Priority UDP           │
-                    │  17 common ports (DNS, DHCP, SNMP)   │
+                    │   PHASE 2a: Priority UDP (fast/normal)│
+                    │   17 common ports (DNS, DHCP, SNMP)  │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
@@ -143,19 +145,23 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
                                                    │
                                                    ▼
                               ┌─────────────────────────────────┐
-                              │     PHASE 2b: Extended UDP      │
+                              │   PHASE 2b: Extended UDP        │
                               │  --top-ports N (configurable)   │
                               └─────────────────────────────────┘
 ```
 
-**Trigger Heuristics** (what makes a host "ambiguous"):
+In **full/completo** mode, the deep identity scan is generally skipped because the base profile is already aggressive.
+It only runs as a fallback when a host does not respond.
+
+**Trigger Heuristics** (what makes a host "ambiguous", mostly in fast/normal):
 
 - Few open ports (≤3)
 - Suspicious services (`unknown`, `tcpwrapped`)
-- Missing MAC/vendor data
-- Filtered or no-response ports
+- Missing MAC/vendor/hostname
+- No version info (low identity score)
+- Filtered or no-response ports (deep scan fallback)
 
-**Result**: 50-80% faster scans compared to always-on UDP, while maintaining detection quality for IoT devices, filtered services, and legacy equipment.
+**Result**: Faster scans than always-on UDP, while preserving identity for IoT, filtered services, and legacy devices.
 
 ### Concurrency Model
 
@@ -363,7 +369,7 @@ redaudit/
 
 | Term | Definition |
 |:---|:---|
-| **Deep Scan** | Selective escalation (TCP + UDP fingerprinting) for ambiguous hosts |
+| **Deep Scan** | Selective escalation (TCP + UDP fingerprinting) when identity is weak or host is unresponsive |
 | **HyperScan** | Ultra-fast async discovery module (batch TCP, UDP IoT, aggressive ARP) |
 | **Smart-Check** | 3-layer false positive filter (Content-Type, size, magic bytes) |
 | **Entity Resolution** | Consolidation of multi-interface devices into unified assets |
