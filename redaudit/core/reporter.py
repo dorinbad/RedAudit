@@ -202,9 +202,10 @@ def generate_summary(
     duration = datetime.now() - scan_start_time if scan_start_time is not None else None
     total_vulns = sum(len(v.get("vulnerabilities", [])) for v in results.get("vulnerabilities", []))
 
+    unique_hosts = {h for h in (all_hosts or []) if isinstance(h, str) and h.strip()}
     summary = {
         "networks": len(config.get("target_networks", [])),
-        "hosts_found": len(all_hosts),
+        "hosts_found": len(unique_hosts),
         "hosts_scanned": len(scanned_results),
         "vulns_found": total_vulns,
         "duration": str(duration).split(".")[0] if duration else None,
@@ -219,7 +220,7 @@ def generate_summary(
         "topology": results.get("topology") or {},
         "net_discovery": _summarize_net_discovery(results.get("net_discovery") or {}),
         "host_scan": {
-            "targets": len(all_hosts),
+            "targets": len(unique_hosts),
             "scanned": len(scanned_results),
             "threads": config.get("threads"),
         },
