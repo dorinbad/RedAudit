@@ -4,7 +4,7 @@
 
 **Audience:** Developers, SIEM Engineers
 **Scope:** JSON structure, field definitions, data types.
-**Source of Truth:** `redaudit/reporting/json_reporter.py`
+**Source of Truth:** `redaudit/core/reporter.py`
 
 ---
 
@@ -48,9 +48,79 @@ The top-level container for the scan session.
 | `network_info` | `array` | List of network interface objects |
 | `topology` | `object` | (Optional) Best-effort topology discovery output (ARP/VLAN/LLDP + gateway/routes) **(v3.1+)** |
 | `net_discovery` | `object` | (Optional) Enhanced network discovery output (DHCP/NetBIOS/mDNS/UPNP) **(v3.2+)** |
+| `agentless_verify` | `object` | (Optional) Agentless verification summary (SMB/RDP/LDAP/SSH/HTTP) **(v3.8+)** |
+| `nuclei` | `object` | (Optional) Nuclei scan summary (targets, findings, status) **(v3.7+)** |
+| `config_snapshot` | `object` | Sanitized run configuration snapshot (no secrets) **(v3.7+)** |
+| `pipeline` | `object` | Pipeline summary (net discovery, host scan, agentless, nuclei, vuln scan) **(v3.7+)** |
+| `smart_scan_summary` | `object` | SmartScan decision summary (identity score, deep scan counts) **(v3.7+)** |
 | `hosts` | `array` | List of `Host` objects (see below) |
 | `vulnerabilities` | `array` | List of vulnerability findings |
 | `summary` | `object` | Aggregated statistics |
+
+### Agentless Verification Object (Optional) (vNext)
+
+This field appears only if agentless verification was enabled.
+
+| Field | Type | Description |
+|---|---|---|
+| `targets` | integer | Number of eligible targets selected for verification |
+| `completed` | integer | Number of verification attempts completed |
+
+### Nuclei Summary Object (Optional) (v3.7+)
+
+Appears only when Nuclei scanning is enabled and available.
+
+| Field | Type | Description |
+|---|---|---|
+| `enabled` | boolean | True when nuclei ran (best-effort) |
+| `targets` | integer | HTTP/HTTPS targets submitted to nuclei |
+| `findings` | integer | Nuclei findings parsed into the report |
+| `success` | boolean | Whether nuclei produced an output file |
+| `output_file` | string | Relative path to nuclei output file (best-effort) |
+| `error` | string | Error message if nuclei failed (best-effort) |
+
+### Config Snapshot (v3.7+)
+
+Sanitized run configuration, stored for reproducibility.
+
+| Field | Type | Description |
+|---|---|---|
+| `targets` | array | Target networks scanned |
+| `scan_mode` | string | Scan mode (rapido/normal/completo) |
+| `threads` | integer | Concurrency level used |
+| `udp_mode` | string | UDP scan mode (quick/full) |
+| `udp_top_ports` | integer | UDP top-ports coverage |
+| `topology_enabled` | boolean | Topology discovery enabled |
+| `net_discovery_enabled` | boolean | Enhanced discovery enabled |
+| `net_discovery_redteam` | boolean | Red Team discovery enabled |
+| `windows_verify_enabled` | boolean | Agentless verification enabled |
+| `scan_vulnerabilities` | boolean | Web vuln scan enabled |
+| `nuclei_enabled` | boolean | Nuclei enabled |
+| `cve_lookup_enabled` | boolean | NVD enrichment enabled |
+| `dry_run` | boolean | Dry-run mode |
+
+### Pipeline Summary (v3.7+)
+
+Compact roll-up for dashboards.
+
+| Field | Type | Description |
+|---|---|---|
+| `host_scan` | object | Targets scanned + threads |
+| `net_discovery` | object | Counts for DHCP/ARP/NetBIOS/UPNP + redteam summary |
+| `agentless_verify` | object | Targets + completed + protocol counts |
+| `nuclei` | object | Nuclei summary (targets/findings) |
+| `vulnerability_scan` | object | Total findings + sources |
+
+### Smart Scan Summary (v3.7+)
+
+| Field | Type | Description |
+|---|---|---|
+| `hosts` | integer | Hosts evaluated for SmartScan |
+| `identity_score_avg` | number | Average identity score |
+| `deep_scan_triggered` | integer | Hosts that triggered deep scan |
+| `deep_scan_executed` | integer | Hosts where deep scan ran |
+| `signals` | object | Signal counts (hostname, cpe, agentless, etc.) |
+| `reasons` | object | Trigger reasons (many_ports, suspicious_service, etc.) |
 
 ### Net Discovery Object (Optional) (v3.2+)
 
@@ -137,6 +207,8 @@ Additional host-level fields:
 | Field | Type | Description |
 |---|---|---|
 | `os_detected` | string | (Optional) OS fingerprint (best-effort, usually from deep scan output) **(v3.1.4+)** |
+| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
+| `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(vNext)** |
 
 ```json
 {
@@ -166,6 +238,28 @@ Additional host-level fields:
   ]
 }
 ```
+
+### Agentless Fingerprint Object (Optional) (vNext)
+
+Normalized hints derived from SMB/RDP/LDAP probes. All fields are optional.
+
+| Field | Type | Description |
+|---|---|---|
+| `domain` | string | DNS or NetBIOS domain name hint |
+| `computer_name` | string | Hostname from RDP/SMB hints |
+| `product_version` | string | RDP product version (best-effort) |
+| `os` | string | OS hint from SMB scripts |
+| `workgroup` | string | SMB workgroup name |
+| `smb_signing_enabled` | boolean | SMB signing enabled (best-effort) |
+| `smb_signing_required` | boolean | SMB signing required (best-effort) |
+| `smbv1_detected` | boolean | SMBv1 presence detected |
+| `http_title` | string | HTTP title hint from agentless probe |
+| `http_server` | string | HTTP server header hint |
+| `ssh_hostkeys` | array | SSH host key fingerprints (best-effort) |
+| `defaultNamingContext` | string | LDAP RootDSE default naming context |
+| `rootDomainNamingContext` | string | LDAP RootDSE root domain naming context |
+| `dnsHostName` | string | LDAP RootDSE DNS host name |
+| `ldapServiceName` | string | LDAP RootDSE service name |
 
 **Host Status Types**:
 

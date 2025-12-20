@@ -114,6 +114,8 @@ class TestDefaultConfig(unittest.TestCase):
             "net_discovery_kerberos_userenum",
             "net_discovery_kerberos_realm",
             "net_discovery_kerberos_userlist",
+            "windows_verify_enabled",
+            "windows_verify_max_targets",
         ]:
             self.assertIn(k, DEFAULT_CONFIG["defaults"])
 
@@ -229,6 +231,8 @@ class TestPersistentDefaults(unittest.TestCase):
                         net_discovery_kerberos_userenum=True,
                         net_discovery_kerberos_realm="EXAMPLE.LOCAL",
                         net_discovery_kerberos_userlist="~/users.txt",
+                        windows_verify_enabled=True,
+                        windows_verify_max_targets=25,
                         bogus_key="ignored",
                     )
                     self.assertTrue(ok)
@@ -249,6 +253,8 @@ class TestPersistentDefaults(unittest.TestCase):
         self.assertEqual(defaults["net_discovery_kerberos_userenum"], True)
         self.assertEqual(defaults["net_discovery_kerberos_realm"], "EXAMPLE.LOCAL")
         self.assertEqual(defaults["net_discovery_kerberos_userlist"], "~/users.txt")
+        self.assertEqual(defaults["windows_verify_enabled"], True)
+        self.assertEqual(defaults["windows_verify_max_targets"], 25)
         self.assertNotIn("bogus_key", defaults)
 
 

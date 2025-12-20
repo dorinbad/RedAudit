@@ -137,6 +137,9 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | `--udp-mode` | `quick` (puertos prioritarios) o `full` (top ports) |
 | `--redteam` | Añade técnicas de recon AD/Kerberos/SNMP |
 | `--redteam-active-l2` | Habilita sondeo activo L2 más ruidoso |
+| `--agentless-verify` | Verificación sin agente (SMB/RDP/LDAP/SSH/HTTP) |
+| `--no-agentless-verify` | Desactivar verificación sin agente (sobrescribe defaults) |
+| `--agentless-verify-max-targets N` | Límite de objetivos para verificación (1-200, defecto: 20) |
 
 ### Reportes e Integración
 
@@ -188,8 +191,13 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requiere `--html-report`, deshabilitado por `--encrypt`).
 - **.jsonl**: Eventos streaming para SIEM (deshabilitado por `--encrypt`).
 - **.pcap**: Capturas de paquetes (solo si Deep Scan + tcpdump + Root).
-- **session.log**: Salida de terminal raw con códigos de color (en `session_logs/`).
-- **session.txt**: Salida de terminal en texto plano limpio (en `session_logs/`).
+- **session_*.log**: Salida de terminal raw con códigos de color (en `session_logs/`).
+- **session_*.txt**: Salida de terminal en texto plano limpio (en `session_logs/`).
+
+**Notas de Progreso/ETA:**
+
+- `ETA≤` muestra el límite superior basado en timeouts para el lote actual.
+- `ETA≈` es una estimación dinámica basada en hosts completados.
 
 ---
 

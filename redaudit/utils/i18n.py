@@ -50,7 +50,7 @@ TRANSLATIONS = {
         "mode_fast": "FAST (Discovery only)",
         "mode_normal": "NORMAL (Discovery + Top Ports)",
         "mode_full": "FULL (Full Ports + Scripts + Vulns + Deep Identity Scan)",
-        "threads": "Concurrent threads:",
+        "threads": "Concurrent threads (higher = faster/noisier):",
         "vuln_scan_q": "Run web vulnerability analysis?",
         "cve_lookup_q": "Enable CVE correlation via NVD? (slower, enriches with CVE data)",
         "gen_txt": "Generate additional TXT report?",
@@ -65,11 +65,17 @@ TRANSLATIONS = {
         "progress": "Progress: {}/{} hosts",
         "worker_error": "[worker error] {}",
         "vuln_analysis": "Analyzing vulnerabilities on {} web hosts...",
+        "windows_verify_label": "Agentless verification",
+        "windows_verify_start": "Running agentless verification on {} target(s)...",
+        "windows_verify_none": "No compatible targets detected for agentless verification.",
+        "windows_verify_done": "Agentless verification completed for {} host(s)",
+        "windows_verify_limit": "Agentless verification capped at {} targets",
         "vulns_found": "⚠️  Vulnerabilities found on {}",
         "no_hosts": "No hosts found.",
         "exec_params": "EXECUTION PARAMETERS",
         "web_vulns": "Web vulns",
         "cve_lookup": "CVE correlation (NVD)",
+        "windows_verify": "Agentless verify",
         "targets": "Targets",
         "mode": "Mode",
         "output": "Output",
@@ -99,7 +105,7 @@ TRANSLATIONS = {
         "encryption_enabled": "✓ Encryption enabled",
         "cryptography_required": "Error: Encryption requires python3-cryptography. Install with: sudo apt install python3-cryptography",
         "rate_limiting": "Enable rate limiting (slower but stealthier)?",
-        "rate_delay": "Delay between hosts (seconds):",
+        "rate_delay": "Delay between hosts (seconds; 0 = none):",
         "ports_truncated": "⚠️  {}: {} ports found, showing top 50",
         # v3.1+: Persisted defaults
         "save_defaults_q": "Save these settings as defaults for future runs?",
@@ -142,6 +148,7 @@ TRANSLATIONS = {
         "defaults_summary_cve_lookup": "CVE correlation",
         "defaults_summary_txt_report": "TXT report",
         "defaults_summary_html_report": "HTML report",
+        "defaults_summary_windows_verify": "Agentless verify",
         "defaults_ignore_confirm": "OK. Saved defaults will be ignored for this run.",
         "jsonl_exports": "JSONL exports: {} findings, {} assets",
         # v3.1+: UDP configuration
@@ -232,6 +239,8 @@ TRANSLATIONS = {
         "net_discovery_start": "Running enhanced network discovery (DHCP/NetBIOS/mDNS)...",
         "net_discovery_dhcp_found": "✓ Found {} DHCP server(s)",
         "net_discovery_vlans_found": "⚠️  Detected {} potential guest network(s)/VLAN(s)",
+        "net_discovery_seed_hosts": "Net Discovery identified {} host(s) to include in the scan",
+        "net_discovery_seed_added": "Added {} host(s) missed by ICMP discovery",
         "net_discovery_q": "Enable enhanced network discovery (DHCP/NetBIOS/mDNS/UPNP)?",
         "net_discovery_redteam_q": "Include Red Team techniques (SNMP/SMB enum, slower/noisier)?",
         "redteam_mode_q": "Red Team options:",
@@ -247,15 +256,22 @@ TRANSLATIONS = {
             "Enable Kerberos user enumeration via Kerbrute when Kerberos/AD is detected? "
             "(Authorized testing only)"
         ),
-        "kerberos_realm_q": "Kerberos realm (optional; leave blank to auto-detect)",
-        "kerberos_userlist_q": "Username wordlist path for Kerbrute (leave blank to skip)",
+        "kerberos_realm_q": "Kerberos realm (optional; ENTER to auto-detect, e.g., corp.local)",
+        "kerberos_userlist_q": (
+            "Username wordlist path for Kerbrute (optional; e.g., /usr/share/wordlists/usernames.txt)"
+        ),
         # v3.2.2+: Main menu
         "menu_option_scan": "Start scan (wizard)",
         "menu_option_update": "Check for updates",
         "menu_option_diff": "Diff reports (JSON)",
         "menu_option_exit": "Exit",
         "menu_prompt": "Select option [0-3]:",
+        "menu_nav_hint": "Use ↑/↓/←/→ and Enter to select.",
         "menu_invalid_option": "Invalid option. Please select 0-3.",
+        "yes_option": "Yes",
+        "yes_default": "Yes (default)",
+        "no_option": "No",
+        "no_default": "No (default)",
         "diff_enter_old_path": "Path to OLD report (JSON):",
         "diff_enter_new_path": "Path to NEW report (JSON):",
         # v3.2.2+: Simplified topology prompt
@@ -287,9 +303,11 @@ TRANSLATIONS = {
         "nuclei_findings": "✓ Nuclei found {} vulnerabilities",
         "nuclei_no_findings": "Nuclei scan completed (no findings)",
         "nuclei_q": "Run Nuclei vulnerability scanner (templates)?",
+        "windows_verify_q": "Enable agentless verification (SMB/RDP/LDAP/SSH/HTTP)?",
+        "windows_verify_max_q": "Max targets for agentless verification (1-200; higher = slower):",
         # v3.7: Interactive webhooks
         "webhook_q": "Configure real-time alert webhook (Slack/Teams/PagerDuty)?",
-        "webhook_url_prompt": "Webhook URL (must start with https://):",
+        "webhook_url_prompt": "Webhook URL (https://..., e.g., https://hooks.slack.com/...):",
         "webhook_invalid_url": "Invalid webhook URL. Must start with https://",
         "webhook_configured": "✓ Webhook configured: {}",
         "webhook_test_q": "Send a test alert to verify the webhook?",
@@ -297,9 +315,13 @@ TRANSLATIONS = {
         "webhook_test_failed": "⚠️  Test webhook failed: {}",
         # v3.7: Advanced Net Discovery wizard
         "net_discovery_advanced_q": "Configure advanced Net Discovery options?",
-        "net_discovery_snmp_prompt": "SNMP community string (ENTER = default)",
-        "net_discovery_dns_zone_prompt": "DNS zone for zone transfer attempts (optional; ENTER to skip):",
-        "net_discovery_max_targets_prompt": "Max targets for Red Team modules (default: 50):",
+        "net_discovery_snmp_prompt": "SNMP community string (ENTER = public)",
+        "net_discovery_dns_zone_prompt": (
+            "DNS zone for transfer attempts (optional; ENTER to skip, e.g., corp.local):"
+        ),
+        "net_discovery_max_targets_prompt": (
+            "Max targets for Red Team modules (default: 50; higher = slower):"
+        ),
         "net_discovery_options_saved": "✓ Net Discovery options saved",
     },
     "es": {
@@ -340,7 +362,7 @@ TRANSLATIONS = {
         "mode_fast": "RÁPIDO (solo discovery)",
         "mode_normal": "NORMAL (Discovery + Puertos principales)",
         "mode_full": "COMPLETO (Puertos + Scripts + Vulns + Escaneo de identidad profundo)",
-        "threads": "Hilos concurrentes:",
+        "threads": "Hilos concurrentes (más alto = más rápido/ruidoso):",
         "vuln_scan_q": "¿Ejecutar análisis de vulnerabilidades web?",
         "cve_lookup_q": "¿Activar correlación CVE vía NVD? (más lento, enriquece con datos CVE)",
         "gen_txt": "¿Generar reporte TXT adicional?",
@@ -355,11 +377,17 @@ TRANSLATIONS = {
         "progress": "Progreso: {}/{} hosts",
         "worker_error": "[error de trabajador] {}",
         "vuln_analysis": "Analizando vulnerabilidades en {} hosts web...",
+        "windows_verify_label": "Verificación sin agente",
+        "windows_verify_start": "Ejecutando verificación sin agente en {} objetivo(s)...",
+        "windows_verify_none": "No se detectaron objetivos compatibles para verificación sin agente.",
+        "windows_verify_done": "Verificación sin agente completada en {} host(s)",
+        "windows_verify_limit": "Verificación sin agente limitada a {} objetivos",
         "vulns_found": "⚠️  Vulnerabilidades registradas en {}",
         "no_hosts": "No se encontraron hosts.",
         "exec_params": "PARÁMETROS DE EJECUCIÓN",
         "web_vulns": "Vulnerabilidades web",
         "cve_lookup": "Correlación CVE (NVD)",
+        "windows_verify": "Verificación sin agente",
         "targets": "Objetivos",
         "mode": "Modo",
         "output": "Salida",
@@ -389,7 +417,7 @@ TRANSLATIONS = {
         "encryption_enabled": "✓ Cifrado activado",
         "cryptography_required": "Error: El cifrado requiere python3-cryptography. Instala con: sudo apt install python3-cryptography",
         "rate_limiting": "¿Activar limitación de velocidad (más lento pero más sigiloso)?",
-        "rate_delay": "Retardo entre hosts (segundos):",
+        "rate_delay": "Retardo entre hosts (segundos; 0 = ninguno):",
         "ports_truncated": "⚠️  {}: {} puertos encontrados, mostrando los 50 principales",
         # v3.1+: Defaults persistentes
         "save_defaults_q": "¿Guardar estos ajustes como valores por defecto para futuras ejecuciones?",
@@ -432,6 +460,7 @@ TRANSLATIONS = {
         "defaults_summary_cve_lookup": "Correlación CVE",
         "defaults_summary_txt_report": "Reporte TXT",
         "defaults_summary_html_report": "Reporte HTML",
+        "defaults_summary_windows_verify": "Verificación sin agente",
         "defaults_ignore_confirm": "OK. Los defaults guardados se ignorarán en esta ejecución.",
         "jsonl_exports": "Exportaciones JSONL: {} hallazgos, {} activos",
         # v3.1+: Configuración UDP
@@ -526,6 +555,8 @@ TRANSLATIONS = {
         "net_discovery_start": "Ejecutando descubrimiento de red mejorado (DHCP/NetBIOS/mDNS)...",
         "net_discovery_dhcp_found": "✓ Encontrado(s) {} servidor(es) DHCP",
         "net_discovery_vlans_found": "⚠️  Detectada(s) {} red(es) de invitados/VLAN(s) potencial(es)",
+        "net_discovery_seed_hosts": "Net Discovery identificó {} hosts para incluir en el escaneo",
+        "net_discovery_seed_added": "Añadidos {} hosts que no respondieron al ICMP",
         "net_discovery_q": "¿Activar descubrimiento de red mejorado (DHCP/NetBIOS/mDNS/UPNP)?",
         "net_discovery_redteam_q": "¿Incluir técnicas Red Team (enum SNMP/SMB, más lento/ruidoso)?",
         "redteam_mode_q": "Opciones de Red Team:",
@@ -539,15 +570,22 @@ TRANSLATIONS = {
             "¿Habilitar enumeración de usuarios Kerberos con Kerbrute cuando se detecte Kerberos/AD? "
             "(Solo con autorización)"
         ),
-        "kerberos_realm_q": "Realm de Kerberos (opcional; en blanco para autodetectar)",
-        "kerberos_userlist_q": "Ruta al wordlist de usuarios para Kerbrute (en blanco para omitir)",
+        "kerberos_realm_q": "Realm de Kerberos (opcional; ENTER para autodetectar, ej. corp.local)",
+        "kerberos_userlist_q": (
+            "Ruta al wordlist de usuarios para Kerbrute (opcional; ej. /usr/share/wordlists/usernames.txt)"
+        ),
         # v3.2.2+: Menú principal
         "menu_option_scan": "Iniciar escaneo (wizard)",
         "menu_option_update": "Buscar actualizaciones",
         "menu_option_diff": "Comparar reportes (JSON)",
         "menu_option_exit": "Salir",
         "menu_prompt": "Selecciona una opción [0-3]:",
+        "menu_nav_hint": "Usa ↑/↓/←/→ y Enter para seleccionar.",
         "menu_invalid_option": "Opción inválida. Selecciona 0-3.",
+        "yes_option": "Sí",
+        "yes_default": "Sí (por defecto)",
+        "no_option": "No",
+        "no_default": "No (por defecto)",
         "diff_enter_old_path": "Ruta al reporte ANTERIOR (JSON):",
         "diff_enter_new_path": "Ruta al reporte NUEVO (JSON):",
         # v3.2.2+: Prompt de topología simplificado
@@ -579,9 +617,11 @@ TRANSLATIONS = {
         "nuclei_findings": "✓ Nuclei encontró {} vulnerabilidades",
         "nuclei_no_findings": "Escaneo Nuclei completado (sin hallazgos)",
         "nuclei_q": "¿Ejecutar escáner de vulnerabilidades Nuclei (templates)?",
+        "windows_verify_q": "¿Activar verificación sin agente (SMB/RDP/LDAP/SSH/HTTP)?",
+        "windows_verify_max_q": "Máximo de objetivos para verificación sin agente (1-200; más alto = más lento):",
         # v3.7: Webhooks interactivos
         "webhook_q": "¿Configurar webhook de alertas en tiempo real (Slack/Teams/PagerDuty)?",
-        "webhook_url_prompt": "URL del webhook (debe empezar con https://):",
+        "webhook_url_prompt": "URL del webhook (https://..., ej. https://hooks.slack.com/...):",
         "webhook_invalid_url": "URL de webhook inválida. Debe empezar con https://",
         "webhook_configured": "✓ Webhook configurado: {}",
         "webhook_test_q": "¿Enviar alerta de prueba para verificar el webhook?",
@@ -589,9 +629,13 @@ TRANSLATIONS = {
         "webhook_test_failed": "⚠️  Webhook de prueba fallido: {}",
         # v3.7: Opciones avanzadas Net Discovery
         "net_discovery_advanced_q": "¿Configurar opciones avanzadas de Net Discovery?",
-        "net_discovery_snmp_prompt": "Cadena de comunidad SNMP (ENTER = por defecto)",
-        "net_discovery_dns_zone_prompt": "Zona DNS para intentos de transferencia (opcional; ENTER para omitir):",
-        "net_discovery_max_targets_prompt": "Máx. objetivos para módulos Red Team (por defecto: 50):",
+        "net_discovery_snmp_prompt": "Cadena de comunidad SNMP (ENTER = public)",
+        "net_discovery_dns_zone_prompt": (
+            "Zona DNS para intentos de transferencia (opcional; ENTER para omitir, ej. corp.local):"
+        ),
+        "net_discovery_max_targets_prompt": (
+            "Máx. objetivos para módulos Red Team (por defecto: 50; más alto = más lento):"
+        ),
         "net_discovery_options_saved": "✓ Opciones de Net Discovery guardadas",
     },
 }

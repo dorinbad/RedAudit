@@ -12,6 +12,8 @@ Contains interactive UI methods: prompts, menus, input utilities.
 import os
 import sys
 import ipaddress
+import re
+import shutil
 from typing import Dict, List
 
 from redaudit.utils.constants import (
@@ -62,6 +64,186 @@ class WizardMixin:
 
     # ---------- Menu utilities ----------
 
+    def _use_arrow_menu(self) -> bool:
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            return False
+        if os.environ.get("REDAUDIT_BASIC_PROMPTS", "").strip():
+            return False
+        return True
+
+    def _read_key(self) -> str:
+        if os.name == "nt":
+            try:
+                import msvcrt
+
+                ch = msvcrt.getch()
+                if ch in (b"\x00", b"\xe0"):
+                    key = msvcrt.getch()
+                    return {
+                        b"H": "up",
+                        b"P": "down",
+                        b"K": "left",
+                        b"M": "right",
+                    }.get(key, "")
+                if ch in (b"\r", b"\n"):
+                    return "enter"
+                if ch == b"\x03":
+                    raise KeyboardInterrupt
+                try:
+                    return ch.decode("utf-8", errors="ignore")
+                except Exception:
+                    return ""
+            except Exception:
+                return ""
+
+        try:
+            import termios
+            import tty
+
+            fd = sys.stdin.fileno()
+            old = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+                if ch == "\x1b":
+                    seq = sys.stdin.read(2)
+                    return {
+                        "[A": "up",
+                        "[B": "down",
+                        "[C": "right",
+                        "[D": "left",
+                    }.get(seq, "esc")
+                if ch in ("\r", "\n"):
+                    return "enter"
+                if ch == "\x03":
+                    raise KeyboardInterrupt
+                return ch
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        except Exception:
+            return ""
+
+    def _clear_menu_lines(self, line_count: int) -> None:
+        if line_count <= 0:
+            return
+        for i in range(line_count):
+            sys.stdout.write("\r\x1b[2K")
+            if i < line_count - 1:
+                sys.stdout.write("\x1b[1A")
+        sys.stdout.write("\r")
+        sys.stdout.flush()
+
+    def _menu_width(self) -> int:
+        try:
+            columns = shutil.get_terminal_size((80, 20)).columns
+        except Exception:
+            columns = 80
+        if columns <= 2:
+            return max(columns, 1)
+        return columns - 1
+
+    def _strip_ansi(self, text: str) -> str:
+        return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+    def _truncate_menu_text(self, text: str, width: int) -> str:
+        if width <= 0:
+            return ""
+        plain = self._strip_ansi(text)
+        if len(plain) <= width:
+            return text
+        if width <= 3:
+            return plain[:width]
+        target = width - 3
+        out = []
+        visible = 0
+        idx = 0
+        while idx < len(text) and visible < target:
+            if text[idx] == "\x1b":
+                match = re.match(r"\x1b\[[0-9;]*m", text[idx:])
+                if match:
+                    out.append(match.group(0))
+                    idx += len(match.group(0))
+                    continue
+            out.append(text[idx])
+            visible += 1
+            idx += 1
+        out.append("...")
+        out.append(self.COLORS["ENDC"])
+        return "".join(out)
+
+    def _arrow_menu(
+        self,
+        question: str,
+        options: List[str],
+        default: int = 0,
+        *,
+        header: str = "",
+    ) -> int:
+        if not options:
+            return 0
+        index = max(0, min(default, len(options) - 1)) if options else 0
+        rendered_lines = 0
+        width = self._menu_width()
+        sep = "─" * min(60, width)
+
+        while True:
+            lines = [""]
+            if header:
+                lines.append(
+                    self._truncate_menu_text(
+                        f"{self.COLORS['HEADER']}{header}{self.COLORS['ENDC']}", width
+                    )
+                )
+                lines.append(self._truncate_menu_text(sep, width))
+            else:
+                lines.append(
+                    self._truncate_menu_text(
+                        f"{self.COLORS['OKBLUE']}{'—' * min(60, width)}{self.COLORS['ENDC']}",
+                        width,
+                    )
+                )
+            lines.append(
+                self._truncate_menu_text(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}", width
+                )
+            )
+            for i, opt in enumerate(options):
+                marker = f"{self.COLORS['BOLD']}❯{self.COLORS['ENDC']}" if i == index else " "
+                lines.append(self._truncate_menu_text(f"  {marker} {opt}", width))
+            lines.append(
+                self._truncate_menu_text(
+                    f"{self.COLORS['OKBLUE']}{self.t('menu_nav_hint')}{self.COLORS['ENDC']}",
+                    width,
+                )
+            )
+
+            if rendered_lines:
+                self._clear_menu_lines(rendered_lines)
+            sys.stdout.write("\n".join(lines))
+            sys.stdout.flush()
+            rendered_lines = len(lines)
+
+            key = self._read_key()
+            if not key:
+                continue
+            if key in ("up", "k", "left", "h"):
+                index = (index - 1) % len(options)
+                continue
+            if key in ("down", "j", "right", "l"):
+                index = (index + 1) % len(options)
+                continue
+            if key == "enter":
+                print("")
+                return index
+            if key.isdigit():
+                idx = int(key) - 1
+                if 0 <= idx < len(options):
+                    print("")
+                    return idx
+            if key in ("esc", "q"):
+                print("")
+                return index
+
     def show_main_menu(self) -> int:
         """
         Display main menu and return user choice.
@@ -69,6 +251,21 @@ class WizardMixin:
         Returns:
             int: 0=exit, 1=scan, 2=update, 3=diff
         """
+        if self._use_arrow_menu():
+            opts = [
+                f"1) {self.t('menu_option_scan')}",
+                f"2) {self.t('menu_option_update')}",
+                f"3) {self.t('menu_option_diff')}",
+                f"0) {self.t('menu_option_exit')}",
+            ]
+            choice = self._arrow_menu(
+                self.t("menu_prompt"),
+                opts,
+                0,
+                header=f"RedAudit v{VERSION}",
+            )
+            return 0 if choice == 3 else choice + 1
+
         print(f"\n{self.COLORS['HEADER']}RedAudit v{VERSION}{self.COLORS['ENDC']}")
         print("─" * 60)
         print(f"  {self.COLORS['CYAN']}1){self.COLORS['ENDC']} {self.t('menu_option_scan')}")
@@ -99,6 +296,17 @@ class WizardMixin:
     def ask_yes_no(self, question: str, default: str = "yes") -> bool:
         """Ask a yes/no question."""
         default = default.lower()
+        if self._use_arrow_menu():
+            default_idx = 0 if default in ("yes", "y", "s", "si", "sí") else 1
+            is_yes_default = default_idx == 0
+            options = [
+                self.t("yes_default") if is_yes_default else self.t("yes_option"),
+                self.t("no_default") if not is_yes_default else self.t("no_option"),
+            ]
+            try:
+                return self._arrow_menu(question, options, default_idx) == 0
+            except Exception:
+                pass
         opts = (
             self.t("ask_yes_no_opts")
             if default in ("yes", "y", "s", "si", "sí")
@@ -161,6 +369,11 @@ class WizardMixin:
 
     def ask_choice(self, question: str, options: List[str], default: int = 0) -> int:
         """Ask to choose from a list of options."""
+        if self._use_arrow_menu():
+            try:
+                return self._arrow_menu(question, options, default)
+            except Exception:
+                pass
         print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
         print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
         for i, opt in enumerate(options):

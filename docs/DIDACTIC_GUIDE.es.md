@@ -117,9 +117,10 @@ flowchart TD
     C --> D[Lista de hosts UP]
     D --> E[Escaneo Paralelo de Puertos]
     E --> F{¿Disparar Deep Scan?}
-    F -->|No| G[Enriquecimiento Web/SSL/CVE]
+    F -->|No| V[Verificación sin agente (opcional)]
     F -->|Sí| H[Deep Scan: 3 Fases]
-    H --> G
+    H --> V
+    V --> G[Enriquecimiento Web/SSL/CVE]
     G --> I[Generar Artefactos]
     I --> J{¿Cifrado?}
     J -->|Sí| K[Cifrar AES-128]
@@ -227,6 +228,7 @@ Basados en observaciones reales en aula:
 | Comparar reportes viejos/nuevos falla | `--diff` devuelve "No scan performed" | Explicar que `--diff` es solo comparación, no escaneo |
 | Editar constants.py sin reiniciar | Los cambios no aplican | Python cachea imports; reinicio requerido |
 | Confundir modo scan con modo UDP | Se escanean puertos incorrectos | `--mode` ≠ `--udp-mode`. Uno es intensidad, otro es alcance de protocolo. |
+| Tratar el ETA como exacto | ETA parece “clavado” o muy alto | Explicar `ETA≤` como límite por timeout y `ETA≈` como estimación dinámica |
 
 ---
 
@@ -239,11 +241,13 @@ Estas son las ubicaciones de código más útiles pedagógicamente. Úsalas para
 | Orquestación principal | `core/auditor.py` | `run_complete_scan()` |
 | Disparadores de Deep Scan | `core/auditor.py` | `scan_host_ports()` (buscar `trigger_deep`) |
 | Ejecución paralela | `core/auditor.py` | `scan_hosts_concurrent()` con `ThreadPoolExecutor` |
+| UI de progreso + ETA | `core/auditor.py` | `_progress_columns()` y `scan_hosts_concurrent()` |
+| Escaneos con timeout | `core/auditor.py` | `_run_nmap_xml_scan()` |
 | Sondeo async de puertos | `core/prescan.py` | `check_port()` usando `asyncio` |
 | Mapeo schema ECS | `core/siem.py` | `build_ecs_event()` |
 | Cifrado | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
 | Generación de playbooks | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |
-| Logging de sesión (v3.7) | `utils/session_log.py` | `SessionLogger`, `start_session_log()` |
+| Logging de sesión (v3.7) | `utils/session_log.py` | `SessionLogger`, `start_session_log()` (`session_logs/session_*.log/.txt`) |
 
 > **Nota:** Evita referenciar números de línea específicos ya que cambian entre versiones. Referencia nombres de funciones en su lugar.
 

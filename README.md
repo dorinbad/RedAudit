@@ -55,6 +55,7 @@ sudo redaudit
 | **HyperScan** | Async batch TCP + UDP IoT broadcast + aggressive ARP for ultra-fast triage |
 | **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection |
 | **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPNP) for guest network detection |
+| **Agentless Verification** | Optional SMB/RDP/LDAP/SSH/HTTP probes to fingerprint devices without credentials |
 | **Stealth Mode** | T1 paranoid timing, single-thread, 5s+ delays for enterprise IDS evasion |
 
 ### Intelligence & Correlation
@@ -84,6 +85,7 @@ sudo redaudit
 | **Persistent Defaults** | User preferences stored in `~/.redaudit/config.json` |
 | **Interactive Webhooks** | Real-time alerts via Slack, Teams, or PagerDuty (wizard-configurable) |
 | **Session Logging** | Dual-format terminal output capture (`.log` raw + `.txt` clean) for audit trails |
+| **Timeout-Safe Scanning** | Host scans are bounded by hard timeouts; progress shows upper-bound ETA |
 | **IPv6 + Proxy Support** | Full dual-stack scanning with SOCKS5 pivoting |
 | **Rate Limiting** | Configurable inter-host delay with ±30% jitter for IDS evasion |
 | **Bilingual Interface** | Complete English/Spanish localization |

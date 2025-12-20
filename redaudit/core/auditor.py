@@ -12,6 +12,7 @@ import sys
 import signal
 import shutil
 import subprocess
+import shlex
 import threading
 import time
 import random
@@ -26,7 +27,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, as_completed, wait
 from logging.handlers import RotatingFileHandler
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from redaudit.utils.constants import (
     VERSION,
@@ -63,6 +64,11 @@ from redaudit.core.nuclei import (
     is_nuclei_available,
     run_nuclei_scan,
     get_http_targets_from_hosts,
+)
+from redaudit.core.agentless_verify import (
+    select_agentless_probe_targets,
+    probe_agentless_services,
+    summarize_agentless_fingerprint,
 )
 from redaudit.core.crypto import (
     is_crypto_available,
@@ -124,6 +130,13 @@ class _ActivityIndicator:
         self._thread: Optional[threading.Thread] = None
         self._frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
+    def _terminal_width(self) -> int:
+        try:
+            width = shutil.get_terminal_size((80, 24)).columns
+        except Exception:
+            width = 80
+        return max(40, int(width))
+
     def update(self, message: str) -> None:
         with self._lock:
             self._message = str(message)[:200]
@@ -149,7 +162,8 @@ class _ActivityIndicator:
     def _clear_line(self) -> None:
         try:
             if getattr(self._stream, "isatty", lambda: False)():
-                self._stream.write("\r" + (" " * 120) + "\r")
+                width = max(10, self._terminal_width() - 1)
+                self._stream.write("\r" + (" " * width) + "\r")
                 self._stream.flush()
         except Exception:
             pass
@@ -172,11 +186,15 @@ class _ActivityIndicator:
 
             if getattr(self._stream, "isatty", lambda: False)():
                 frame = self._frames[tick % len(self._frames)]
-                line = f"{frame} {self._label}: {msg}  (elapsed {elapsed:0.0f}s)"
+                width = max(10, self._terminal_width() - 1)
+                if width >= 70:
+                    line = f"{frame} {self._label}: {msg}  (elapsed {elapsed:0.0f}s)"
+                else:
+                    line = f"{frame} {self._label}: {msg}"
                 # Avoid excessive writes if the line didn't change.
                 if line != last_line:
                     try:
-                        self._stream.write("\r" + line[:120].ljust(120))
+                        self._stream.write("\r" + line[:width].ljust(width))
                         self._stream.flush()
                     except Exception:
                         pass
@@ -252,6 +270,9 @@ class InteractiveNetworkAuditor(WizardMixin):
             "net_discovery_kerberos_realm": None,
             "net_discovery_kerberos_userlist": None,
             "net_discovery_active_l2": False,
+            # v3.8: Agentless Windows verification (SMB/RDP/LDAP)
+            "windows_verify_enabled": False,
+            "windows_verify_max_targets": 20,
         }
 
         self.encryption_enabled = False
@@ -313,12 +334,21 @@ class InteractiveNetworkAuditor(WizardMixin):
         is_tty = sys.stdout.isatty()
         status_display = status_map.get(status, status)
 
-        color = self.COLORS.get(status, self.COLORS["OKBLUE"]) if is_tty else ""
+        color_key = status
+        if status_display == "OK":
+            color_key = "OKGREEN"
+        elif status_display in ("WARN", "WARNING"):
+            color_key = "WARNING"
+        elif status_display in ("FAIL", "ERROR"):
+            color_key = "FAIL"
+        elif status_display == "INFO":
+            color_key = "OKBLUE"
+        color = self.COLORS.get(color_key, self.COLORS["OKBLUE"]) if is_tty else ""
         endc = self.COLORS["ENDC"] if is_tty else ""
 
         # Wrap long messages on word boundaries to avoid splitting words mid-line.
         msg = "" if message is None else str(message)
-        if self._ui_progress_active and is_tty and not force:
+        if self._ui_progress_active and not force:
             if not self._should_emit_during_progress(msg, status_display):
                 # Store last suppressed line so progress UIs can surface "what's happening"
                 # without flooding the terminal with logs.
@@ -368,11 +398,17 @@ class InteractiveNetworkAuditor(WizardMixin):
             return ""
         text = " ".join(text.split())
 
-        # Pattern: [type] IP → nmap ... or [type] IP → ...
-        # Extract: [type] IP (scan_mode)
-        m = re.match(r"^\[([^\]]+)\]\s+([\d\.]+)\s*→\s*(.*)$", text)
+        # Pattern: [type] TARGET → command ...
+        # TARGET may be IP, host, or IP:port.
+        m = re.match(r"^\[([^\]]+)\]\s+([^\s]+)\s*→\s*(.*)$", text)
         if m:
             scan_type, ip, command = m.groups()
+            scan_type_norm = scan_type.lower()
+
+            if scan_type_norm in ("testssl", "nikto", "whatweb", "nuclei"):
+                return f"{scan_type_norm} {ip}"
+            if scan_type_norm in ("agentless", "verify"):
+                return f"agentless {ip}"
 
             # Determine mode from command for user-friendly hint
             mode_hint = ""
@@ -388,8 +424,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                 mode_hint = "banner grab"
 
             if mode_hint:
-                return f"[{scan_type}] {ip} ({mode_hint})"
-            return f"[{scan_type}] {ip}"
+                return f"{scan_type} {ip} ({mode_hint})"
+            return f"{scan_type} {ip}"
 
         # For other messages, just take first 60 chars
         return text[:60] + ("…" if len(text) > 60 else "")
@@ -401,9 +437,136 @@ class InteractiveNetworkAuditor(WizardMixin):
         with self._ui_detail_lock:
             self._ui_detail = condensed
 
+    @staticmethod
+    def _coerce_text(value: object) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        if isinstance(value, str):
+            return value
+        return str(value)
+
+    @staticmethod
+    def _parse_url_target(value: object) -> Tuple[str, int, str]:
+        if not isinstance(value, str):
+            return "", 0, ""
+        raw = value.strip()
+        if not raw:
+            return "", 0, ""
+        if "://" not in raw:
+            host = raw
+            port = 0
+            scheme = ""
+            if raw.count(":") == 1:
+                host_part, port_part = raw.split(":", 1)
+                host = host_part.strip()
+                try:
+                    port = int(port_part)
+                except Exception:
+                    port = 0
+            return host, port, scheme
+        try:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(raw)
+            host = parsed.hostname or ""
+            port = parsed.port or 0
+            scheme = parsed.scheme or ""
+            if not port:
+                if scheme == "https":
+                    port = 443
+                elif scheme == "http":
+                    port = 80
+            return host, port, scheme
+        except Exception:
+            return "", 0, ""
+
+    def _merge_nuclei_findings(self, findings: List[Dict[str, Any]]) -> int:
+        if not findings:
+            return 0
+        host_map: Dict[str, Dict[str, Any]] = {}
+        for entry in self.results.get("vulnerabilities", []):
+            if not isinstance(entry, dict):
+                continue
+            host = entry.get("host")
+            if host and isinstance(entry.get("vulnerabilities"), list):
+                host_map[str(host)] = entry
+
+        merged = 0
+        for finding in findings:
+            if not isinstance(finding, dict):
+                continue
+            matched_at = finding.get("matched_at") or finding.get("host") or ""
+            host, port, scheme = self._parse_url_target(str(matched_at))
+            if not host:
+                host, port, scheme = self._parse_url_target(str(finding.get("host") or ""))
+            if not host:
+                continue
+
+            name = finding.get("name") or finding.get("template_id") or "nuclei"
+            vuln = {
+                "url": matched_at or "",
+                "port": port or 0,
+                "severity": finding.get("severity", "info"),
+                "category": "vuln",
+                "source": "nuclei",
+                "template_id": finding.get("template_id"),
+                "name": name,
+                "description": finding.get("description", ""),
+                "matched_at": matched_at or "",
+                "matcher_name": finding.get("matcher_name", ""),
+                "reference": finding.get("reference", []),
+                "tags": finding.get("tags", []),
+                "cve_ids": finding.get("cve_ids", []),
+                "descriptive_title": f"Nuclei: {name}",
+            }
+            if scheme:
+                vuln["scheme"] = scheme
+
+            entry = host_map.get(host)
+            if not entry:
+                entry = {"host": host, "vulnerabilities": []}
+                self.results.setdefault("vulnerabilities", []).append(entry)
+                host_map[host] = entry
+            entry["vulnerabilities"].append(vuln)
+            merged += 1
+        return merged
+
+    def _phase_detail(self) -> str:
+        phase = (self.current_phase or "").strip()
+        if not phase:
+            return ""
+        if phase.startswith("vulns:testssl:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"testssl {target}"
+        if phase.startswith("vulns:nikto:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"nikto {target}"
+        if phase.startswith("vulns:whatweb:"):
+            target = ":".join(phase.split(":")[2:])
+            return f"whatweb {target}"
+        if phase.startswith("ports:"):
+            target = phase.split(":", 1)[1]
+            return f"nmap {target}"
+        if phase.startswith("deep:"):
+            target = phase.split(":", 1)[1]
+            return f"deep scan {target}"
+        if phase.startswith("discovery:"):
+            target = phase.split(":", 1)[1]
+            return f"discovery {target}"
+        if phase == "vulns":
+            return "web vuln scan"
+        if phase == "net_discovery":
+            return "net discovery"
+        if phase == "topology":
+            return "topology"
+        return phase[:60]
+
     def _get_ui_detail(self) -> str:
         with self._ui_detail_lock:
-            return self._ui_detail
+            detail = self._ui_detail
+        return detail or self._phase_detail()
 
     def _touch_activity(self) -> None:
         with self.activity_lock:
@@ -443,6 +606,183 @@ class InteractiveNetworkAuditor(WizardMixin):
         m = (sec % 3600) // 60
         s = sec % 60
         return f"{h:d}:{m:02d}:{s:02d}" if h else f"{m:d}:{s:02d}"
+
+    def _terminal_width(self, fallback: int = 100) -> int:
+        try:
+            width = shutil.get_terminal_size((fallback, 24)).columns
+        except Exception:
+            width = fallback
+        return max(60, int(width))
+
+    def _progress_console(self):
+        try:
+            from rich.console import Console
+        except ImportError:
+            return None
+        return Console(
+            file=getattr(sys, "__stdout__", sys.stdout),
+            width=self._terminal_width(),
+        )
+
+    def _safe_text_column(self, *args, **kwargs):
+        try:
+            from rich.progress import TextColumn
+        except ImportError:
+            return None
+        try:
+            return TextColumn(*args, **kwargs)
+        except TypeError:
+            kwargs.pop("overflow", None)
+            kwargs.pop("no_wrap", None)
+            return TextColumn(*args, **kwargs)
+
+    def _progress_columns(self, *, show_detail: bool, show_eta: bool, show_elapsed: bool):
+        try:
+            from rich.progress import SpinnerColumn, BarColumn, TimeElapsedColumn
+        except ImportError:
+            return []
+        width = self._terminal_width()
+        bar_width = max(8, min(28, width // 4))
+        columns = [
+            SpinnerColumn(),
+            self._safe_text_column(
+                "[progress.description]{task.description}",
+                overflow="ellipsis",
+                no_wrap=True,
+            ),
+        ]
+        if width >= 70:
+            columns.append(BarColumn(bar_width=bar_width))
+            columns.append(self._safe_text_column("[progress.percentage]{task.percentage:>3.0f}%"))
+        if width >= 90:
+            columns.append(self._safe_text_column("({task.completed}/{task.total})"))
+        if show_elapsed and width >= 100:
+            columns.append(TimeElapsedColumn())
+        if show_detail and width >= 70:
+            columns.append(self._safe_text_column("{task.fields[detail]}", overflow="ellipsis"))
+        if show_eta:
+            if width >= 110:
+                columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
+                columns.append(
+                    self._safe_text_column(
+                        "{task.fields[eta_est]}",
+                        overflow="ellipsis",
+                        justify="right",
+                    )
+                )
+            elif width >= 80:
+                columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
+        return [c for c in columns if c is not None]
+
+    def _scan_mode_host_timeout_s(self) -> float:
+        mode = str(self.config.get("scan_mode") or "").strip().lower()
+        if mode in ("fast", "rapido"):
+            return 10.0
+        if mode in ("full", "completo"):
+            return 300.0
+        return 60.0
+
+    @staticmethod
+    def _extract_nmap_xml(raw: str) -> str:
+        if not raw:
+            return ""
+        start = raw.find("<nmaprun")
+        if start < 0:
+            start = raw.find("<?xml")
+        if start > 0:
+            raw = raw[start:]
+        end = raw.rfind("</nmaprun>")
+        if end >= 0:
+            raw = raw[: end + len("</nmaprun>")]
+        return raw.strip()
+
+    def _lookup_topology_identity(self, ip: str) -> Tuple[Optional[str], Optional[str]]:
+        topo = self.results.get("topology") if isinstance(self.results, dict) else None
+        if not isinstance(topo, dict):
+            return None, None
+        for iface in topo.get("interfaces", []) or []:
+            arp = (iface or {}).get("arp") or {}
+            for host in arp.get("hosts", []) or []:
+                if host.get("ip") == ip:
+                    mac = host.get("mac")
+                    vendor = host.get("vendor")
+                    if isinstance(vendor, str) and "unknown" in vendor.lower():
+                        vendor = None
+                    return mac, vendor
+        return None, None
+
+    def _run_nmap_xml_scan(self, target: str, args: str) -> Tuple[Optional[Any], str]:
+        """
+        Run an nmap scan with XML output and enforce a hard timeout.
+
+        Returns:
+            (PortScanner or None, error message string if any)
+        """
+        if is_dry_run(self.config.get("dry_run")):
+            return None, "dry_run"
+        if shutil.which("nmap") is None:
+            return None, "nmap_not_available"
+        if nmap is None:
+            return None, "python_nmap_missing"
+
+        host_timeout_s = self._parse_host_timeout_s(args)
+        if host_timeout_s is None:
+            host_timeout_s = self._scan_mode_host_timeout_s()
+        timeout_s = max(30.0, host_timeout_s + 30.0)
+        cmd = ["nmap"] + shlex.split(args) + ["-oX", "-", target]
+
+        record_sink: Dict[str, Any] = {"commands": []}
+        rec = run_nmap_command(
+            cmd,
+            int(timeout_s),
+            target,
+            record_sink,
+            logger=self.logger,
+            dry_run=False,
+            max_stdout=0,
+            max_stderr=2000,
+            include_full_output=True,
+        )
+
+        if rec.get("error"):
+            return None, str(rec["error"])
+
+        raw_stdout = self._coerce_text(rec.get("stdout_full") or rec.get("stdout") or "")
+        xml_output = self._extract_nmap_xml(raw_stdout)
+        if not xml_output:
+            raw_stderr = self._coerce_text(rec.get("stderr_full") or rec.get("stderr") or "")
+            xml_output = self._extract_nmap_xml(raw_stderr)
+        if not xml_output:
+            stderr = self._coerce_text(rec.get("stderr", "")).strip()
+            if len(stderr) > 200:
+                stderr = f"{stderr[:200].rstrip()}..."
+            return None, stderr or "empty_nmap_output"
+
+        nm = nmap.PortScanner()
+        analyser = getattr(nm, "analyse_nmap_xml_scan", None) or getattr(
+            nm, "analyze_nmap_xml_scan", None
+        )
+        if analyser:
+            try:
+                analyser(
+                    xml_output,
+                    nmap_err=self._coerce_text(rec.get("stderr", "")),
+                    nmap_err_keep_trace=self._coerce_text(rec.get("stderr", "")),
+                    nmap_warn_keep_trace="",
+                )
+            except Exception as exc:
+                msg = str(exc).strip().replace("\n", " ")
+                if len(msg) > 200:
+                    msg = f"{msg[:200].rstrip()}..."
+                return None, f"nmap_xml_parse_error: {msg or 'invalid_xml'}"
+        else:
+            # Fallback for stubs or older python-nmap builds without XML parser.
+            try:
+                nm.scan(target, arguments=args)
+            except Exception as exc:
+                return None, f"nmap_scan_fallback_error: {exc}"
+
+        return nm, ""
 
     @staticmethod
     def _parse_host_timeout_s(nmap_args: str) -> Optional[float]:
@@ -868,6 +1208,59 @@ class InteractiveNetworkAuditor(WizardMixin):
         self.results["network_info"] = nets
         return nets
 
+    def _collect_discovery_hosts(self, target_networks: List[str]) -> List[str]:
+        """Collect host IPs from enhanced discovery results (best-effort)."""
+        discovery = self.results.get("net_discovery") or {}
+        ips = set()
+
+        def _add_ip(value):
+            ip = sanitize_ip(value)
+            if ip:
+                ips.add(ip)
+
+        for ip in discovery.get("alive_hosts", []) or []:
+            _add_ip(ip)
+        for host in discovery.get("arp_hosts", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for host in discovery.get("netbios_hosts", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for host in discovery.get("upnp_devices", []) or []:
+            if isinstance(host, dict):
+                _add_ip(host.get("ip"))
+        for svc in discovery.get("mdns_services", []) or []:
+            if isinstance(svc, dict):
+                _add_ip(svc.get("ip"))
+        for srv in discovery.get("dhcp_servers", []) or []:
+            if isinstance(srv, dict):
+                _add_ip(srv.get("ip"))
+        for ip in (discovery.get("hyperscan_tcp_hosts") or {}).keys():
+            _add_ip(ip)
+
+        if not ips:
+            return []
+
+        networks = []
+        for net in target_networks or []:
+            try:
+                networks.append(ipaddress.ip_network(str(net), strict=False))
+            except Exception:
+                continue
+
+        if networks:
+            filtered = []
+            for ip in ips:
+                try:
+                    ip_obj = ipaddress.ip_address(ip)
+                except Exception:
+                    continue
+                if any(ip_obj in net for net in networks if net.version == ip_obj.version):
+                    filtered.append(ip)
+            return sorted(filtered)
+
+        return sorted(ips)
+
     def ask_network_range(self):
         """Ask user to select target network(s)."""
         print(f"\n{self.COLORS['HEADER']}{self.t('selection_target')}{self.COLORS['ENDC']}")
@@ -958,6 +1351,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             return None
 
         self.current_phase = f"deep:{safe_ip}"
+        self._set_ui_detail(f"[deep] {safe_ip} tcp")
         deep_obj = {"strategy": "adaptive_v2.8", "commands": []}
 
         self.print_status(
@@ -1004,7 +1398,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             has_identity = output_has_identity([rec1])
             mac, vendor = extract_vendor_mac(rec1.get("stdout", ""))
             os_detected = extract_os_detection(
-                (rec1.get("stdout", "") or "") + "\n" + (rec1.get("stderr", "") or "")
+                f"{self._coerce_text(rec1.get('stdout'))}\n{self._coerce_text(rec1.get('stderr'))}"
             )
 
             if mac:
@@ -1041,6 +1435,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     ),
                     "WARNING",
                 )
+                self._set_ui_detail(f"[deep] {safe_ip} udp probe")
                 udp_probe_timeout = 0.8
                 probe_start = time.time()
                 udp_probe = run_udp_probe(
@@ -1103,6 +1498,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                         self.t("deep_udp_full_cmd", safe_ip, " ".join(cmd_p2b), udp_top_ports),
                         "WARNING",
                     )
+                    self._set_ui_detail(f"[deep] {safe_ip} udp top {udp_top_ports}")
                     deep_obj["udp_top_ports"] = udp_top_ports
                     rec2b = run_nmap_command(
                         cmd_p2b,
@@ -1120,7 +1516,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                             deep_obj["vendor"] = v2b
                     if "os_detected" not in deep_obj:
                         os2b = extract_os_detection(
-                            (rec2b.get("stdout", "") or "") + "\n" + (rec2b.get("stderr", "") or "")
+                            f"{self._coerce_text(rec2b.get('stdout'))}\n{self._coerce_text(rec2b.get('stderr'))}"
                         )
                         if os2b:
                             deep_obj["os_detected"] = os2b
@@ -1142,6 +1538,7 @@ class InteractiveNetworkAuditor(WizardMixin):
     def scan_network_discovery(self, network):
         """Perform network discovery scan."""
         self.current_phase = f"discovery:{network}"
+        self._set_ui_detail(f"[nmap] {network} discovery")
         self.logger.info("Discovery on %s", network)
         args = get_nmap_arguments("rapido")
         self.print_status(self.t("nmap_cmd", network, f"nmap {args} {network}"), "INFO")
@@ -1151,12 +1548,31 @@ class InteractiveNetworkAuditor(WizardMixin):
         try:
             # Nmap host discovery can look "stuck" on larger subnets; keep a visible activity
             # indicator while the scan is running.
-            with _ActivityIndicator(
-                label=f"Discovery {network}",
-                initial="nmap host discovery...",
-                touch_activity=self._touch_activity,
-            ):
-                nm.scan(hosts=network, arguments=args)
+            try:
+                from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
+
+                with self._progress_ui():
+                    with Progress(
+                        SpinnerColumn(),
+                        self._safe_text_column(
+                            f"[cyan]Discovery {network}[/cyan] {{task.description}}",
+                            overflow="ellipsis",
+                            no_wrap=True,
+                        ),
+                        TimeElapsedColumn(),
+                        console=self._progress_console(),
+                        transient=True,
+                    ) as progress:
+                        task = progress.add_task("nmap host discovery...", total=None)
+                        nm.scan(hosts=network, arguments=args)
+                        progress.update(task, description="complete")
+            except Exception:
+                with _ActivityIndicator(
+                    label=f"Discovery {network}",
+                    initial="nmap host discovery...",
+                    touch_activity=self._touch_activity,
+                ):
+                    nm.scan(hosts=network, arguments=args)
         except Exception as exc:
             self.logger.error("Discovery failed on %s: %s", network, exc)
             self.logger.debug("Discovery exception details for %s", network, exc_info=True)
@@ -1181,6 +1597,11 @@ class InteractiveNetworkAuditor(WizardMixin):
             return {"ip": host, "error": "Invalid IP"}
 
         self.current_phase = f"ports:{safe_ip}"
+        mode_label = str(self.config.get("scan_mode", "") or "").strip()
+        if mode_label:
+            self._set_ui_detail(f"[nmap] {safe_ip} ({mode_label})")
+        else:
+            self._set_ui_detail(f"[nmap] {safe_ip}")
         args = get_nmap_arguments(self.config["scan_mode"])
         self.logger.debug("Nmap scan %s %s", safe_ip, args)
         self.print_status(self.t("nmap_cmd", safe_ip, f"nmap {args} {safe_ip}"), "INFO")
@@ -1194,10 +1615,38 @@ class InteractiveNetworkAuditor(WizardMixin):
                 "status": STATUS_DOWN,
                 "dry_run": True,
             }
-        nm = nmap.PortScanner()
-
         try:
-            nm.scan(safe_ip, arguments=args)
+            nm, scan_error = self._run_nmap_xml_scan(safe_ip, args)
+            if not nm:
+                self.logger.warning("Nmap scan failed for %s: %s", safe_ip, scan_error)
+                self.print_status(
+                    f"⚠️  Nmap scan failed {safe_ip}: {scan_error}",
+                    "FAIL",
+                    force=True,
+                )
+                mac, vendor = self._lookup_topology_identity(safe_ip)
+                if not mac:
+                    mac = get_neighbor_mac(safe_ip)
+                deep_meta = None
+                if mac or vendor:
+                    deep_meta = {"strategy": "topology", "commands": []}
+                    if mac:
+                        deep_meta["mac_address"] = mac
+                    if vendor:
+                        deep_meta["vendor"] = vendor
+                return {
+                    "ip": safe_ip,
+                    "hostname": "",
+                    "ports": [],
+                    "web_ports_count": 0,
+                    "total_ports_found": 0,
+                    "status": STATUS_NO_RESPONSE,
+                    "error": scan_error,
+                    "scan_timeout_s": (
+                        self._parse_host_timeout_s(args) or self._scan_mode_host_timeout_s()
+                    ),
+                    "deep_scan": deep_meta,
+                }
             if safe_ip not in nm.all_hosts():
                 # Host didn't respond to initial scan - do deep scan
                 deep = None
@@ -1335,22 +1784,71 @@ class InteractiveNetworkAuditor(WizardMixin):
                             if extra.get("ssl_cert"):
                                 port_info["ssl_cert"] = extra["ssl_cert"]
 
+            # Evidence-based identity signal scoring to avoid unnecessary deep scans.
+            identity_score = 0
+            identity_signals = []
+            if host_record.get("hostname"):
+                identity_score += 1
+                identity_signals.append("hostname")
+            if any_version:
+                identity_score += 1
+                identity_signals.append("service_version")
+            if any(p.get("cpe") for p in ports):
+                identity_score += 1
+                identity_signals.append("cpe")
+            deep_meta = host_record.get("deep_scan") or {}
+            if deep_meta.get("mac_address") or deep_meta.get("vendor"):
+                identity_score += 1
+                identity_signals.append("mac_vendor")
+            if host_record.get("os_detected"):
+                identity_score += 1
+                identity_signals.append("os_detected")
+            if any(p.get("banner") for p in ports):
+                identity_score += 1
+                identity_signals.append("banner")
+            if self.logger:
+                self.logger.debug(
+                    "Identity signals for %s: score=%s (%s)",
+                    safe_ip,
+                    identity_score,
+                    ",".join(identity_signals) or "none",
+                )
+
             # Heuristics for deep identity scan
             trigger_deep = False
             deep_enabled = self.config.get("deep_id_scan", True)
             # In full scan mode we already run aggressive nmap; avoid redundant deep scans.
             allow_deep_heuristic = self.config.get("scan_mode") != "completo"
+            deep_reasons = []
             if deep_enabled and allow_deep_heuristic:
                 if total_ports > 8:
                     trigger_deep = True
+                    deep_reasons.append("many_ports")
                 if suspicious:
                     trigger_deep = True
+                    deep_reasons.append("suspicious_service")
                 # Skip deep scan for completely quiet hosts (0 open ports); it tends to add a lot of time
                 # and usually yields little beyond MAC/vendor (which we already capture when available).
                 if 0 < total_ports <= 3:
                     trigger_deep = True
+                    deep_reasons.append("low_visibility")
                 if total_ports > 0 and not any_version:
                     trigger_deep = True
+                    deep_reasons.append("no_version_info")
+                # If identity signals are already strong, skip deep scan unless host is suspicious.
+                if identity_score >= 3 and not suspicious and total_ports <= 12 and any_version:
+                    trigger_deep = False
+                    deep_reasons.append("identity_strong")
+
+            host_record["smart_scan"] = {
+                "mode": self.config.get("scan_mode"),
+                "identity_score": identity_score,
+                "signals": identity_signals,
+                "suspicious_service": suspicious,
+                "trigger_deep": bool(trigger_deep),
+                "reasons": deep_reasons,
+                "deep_scan_executed": False,
+            }
 
             # SearchSploit exploit lookup for services with version info
             if self.extra_tools.get("searchsploit"):
@@ -1372,6 +1870,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     host_record["deep_scan"] = deep
                     if deep.get("os_detected"):
                         host_record["os_detected"] = deep["os_detected"]
+                    host_record["smart_scan"]["deep_scan_executed"] = True
 
             enrich_host_with_dns(host_record, self.extra_tools)
             enrich_host_with_whois(host_record, self.extra_tools)
@@ -1404,23 +1903,15 @@ class InteractiveNetworkAuditor(WizardMixin):
         results = []
         threads = max(1, int(self.config.get("threads", 1)))
         start_t = time.time()
-        host_timeout_s = (
-            self._parse_host_timeout_s(
-                get_nmap_arguments(self.config.get("scan_mode"), self.config)
-            )
-            or 60.0
+        host_timeout_s = self._parse_host_timeout_s(
+            get_nmap_arguments(self.config.get("scan_mode"), self.config)
         )
+        if host_timeout_s is None:
+            host_timeout_s = self._scan_mode_host_timeout_s()
 
         # Try to use rich for better progress visualization
         try:
-            from rich.progress import (
-                Progress,
-                SpinnerColumn,
-                BarColumn,
-                TextColumn,
-                TimeElapsedColumn,
-            )
-            from rich.console import Console
+            from rich.progress import Progress
 
             use_rich = True
         except ImportError:
@@ -1447,16 +1938,12 @@ class InteractiveNetworkAuditor(WizardMixin):
                 if use_rich and total > 0:
                     # Rich progress bar (quiet UI + timeout-aware upper bound ETA)
                     with Progress(
-                        SpinnerColumn(),
-                        TextColumn("[progress.description]{task.description}"),
-                        BarColumn(),
-                        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                        TextColumn("({task.completed}/{task.total})"),
-                        TimeElapsedColumn(),
-                        TextColumn("{task.fields[detail]}", justify="left"),
-                        TextColumn("ETA≤ {task.fields[eta_upper]}"),
-                        TextColumn("{task.fields[eta_est]}", justify="right"),
-                        console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
+                        *self._progress_columns(
+                            show_detail=True,
+                            show_eta=True,
+                            show_elapsed=True,
+                        ),
+                        console=self._progress_console(),
                     ) as progress:
                         eta_upper_init = self._format_eta(
                             host_timeout_s * math.ceil(max(0, total) / threads)
@@ -1471,6 +1958,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                         )
                         pending = set(futures)
                         last_detail = initial_detail
+                        last_eta_upper = eta_upper_init
+                        last_eta_est = ""
                         while pending:
                             if self.interrupted:
                                 for pending_fut in pending:
@@ -1484,6 +1973,30 @@ class InteractiveNetworkAuditor(WizardMixin):
                             if detail != last_detail:
                                 progress.update(task, detail=detail)
                                 last_detail = detail
+
+                            # Keep ETA moving even when no hosts finish (long-running scans).
+                            if pending:
+                                remaining = max(0, total - done)
+                                elapsed_s = max(0.001, time.time() - start_t)
+                                rate = done / elapsed_s if done else 0.0
+                                eta_est_val = (
+                                    self._format_eta(remaining / rate)
+                                    if rate > 0.0 and remaining
+                                    else ""
+                                )
+                                eta_upper = self._format_eta(
+                                    host_timeout_s * math.ceil(remaining / threads)
+                                    if remaining
+                                    else 0
+                                )
+                                if eta_upper != last_eta_upper or eta_est_val != last_eta_est:
+                                    progress.update(
+                                        task,
+                                        eta_upper=eta_upper,
+                                        eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
+                                    )
+                                    last_eta_upper = eta_upper
+                                    last_eta_est = eta_est_val
 
                             for fut in completed:
                                 host_ip = futures.get(fut)
@@ -1502,7 +2015,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                                 eta_est_val = (
                                     self._format_eta(remaining / rate)
                                     if rate > 0.0 and remaining
-                                    else "--:--"
+                                    else ""
                                 )
                                 eta_upper = self._format_eta(
                                     host_timeout_s * math.ceil(remaining / threads)
@@ -1514,9 +2027,11 @@ class InteractiveNetworkAuditor(WizardMixin):
                                     advance=1,
                                     description=f"[cyan]{self.t('scanned_host', host_ip)}",
                                     eta_upper=eta_upper,
-                                    eta_est=f"ETA≈ {eta_est_val}",
+                                    eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
                                     detail=last_detail,
                                 )
+                                last_eta_upper = eta_upper
+                                last_eta_est = eta_est_val
                 else:
                     # Fallback to basic progress (throttled, includes timeout-aware upper bound ETA)
                     for fut in as_completed(futures):
@@ -1591,6 +2106,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                 # TestSSL deep analysis (only in completo mode)
                 if self.config["scan_mode"] == "completo" and self.extra_tools.get("testssl.sh"):
                     self.current_phase = f"vulns:testssl:{ip}:{port}"
+                    self._set_ui_detail(f"[testssl] {ip}:{port}")
                     self.print_status(
                         f"[testssl] {ip}:{port} → {self.t('testssl_analysis', ip, port)}", "INFO"
                     )
@@ -1607,6 +2123,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             if self.extra_tools.get("whatweb"):
                 try:
                     self.current_phase = f"vulns:whatweb:{ip}:{port}"
+                    self._set_ui_detail(f"[whatweb] {ip}:{port}")
                     runner = CommandRunner(
                         logger=self.logger,
                         dry_run=bool(self.config.get("dry_run", False)),
@@ -1635,6 +2152,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             if self.config["scan_mode"] == "completo" and self.extra_tools.get("nikto"):
                 try:
                     self.current_phase = f"vulns:nikto:{ip}:{port}"
+                    self._set_ui_detail(f"[nikto] {ip}:{port}")
                     from redaudit.core.verify_vuln import filter_nikto_false_positives
 
                     runner = CommandRunner(
@@ -1695,20 +2213,14 @@ class InteractiveNetworkAuditor(WizardMixin):
         remaining_budget_s = float(sum(budgets.values()))
 
         self.current_phase = "vulns"
+        self._set_ui_detail("web vuln scan")
         self.print_status(self.t("vuln_analysis", len(web_hosts)), "HEADER")
         workers = min(3, self.config["threads"])
         workers = max(1, int(workers))
 
         # Try to use rich for progress visualization
         try:
-            from rich.progress import (
-                Progress,
-                SpinnerColumn,
-                BarColumn,
-                TextColumn,
-                TimeElapsedColumn,
-            )
-            from rich.console import Console
+            from rich.progress import Progress
 
             use_rich = True
         except ImportError:
@@ -1728,16 +2240,12 @@ class InteractiveNetworkAuditor(WizardMixin):
                 if use_rich and total > 0:
                     # Rich progress bar for vulnerability scanning (quiet UI + timeout-aware upper bound ETA)
                     with Progress(
-                        SpinnerColumn(),
-                        TextColumn("[progress.description]{task.description}"),
-                        BarColumn(),
-                        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                        TextColumn("({task.completed}/{task.total})"),
-                        TimeElapsedColumn(),
-                        TextColumn("{task.fields[detail]}", justify="left"),
-                        TextColumn("ETA≤ {task.fields[eta_upper]}"),
-                        TextColumn("{task.fields[eta_est]}", justify="right"),
-                        console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
+                        *self._progress_columns(
+                            show_detail=True,
+                            show_eta=True,
+                            show_elapsed=True,
+                        ),
+                        console=self._progress_console(),
                     ) as progress:
                         eta_upper_init = self._format_eta(remaining_budget_s / workers)
                         initial_detail = self._get_ui_detail()
@@ -1792,14 +2300,14 @@ class InteractiveNetworkAuditor(WizardMixin):
                                 eta_est_val = (
                                     self._format_eta(remaining / rate)
                                     if rate > 0.0 and remaining
-                                    else "--:--"
+                                    else ""
                                 )
                                 progress.update(
                                     task,
                                     advance=1,
                                     description=f"[cyan]{self.t('scanned_host', host_ip)}",
                                     eta_upper=self._format_eta(remaining_budget_s / workers),
-                                    eta_est=f"ETA≈ {eta_est_val}",
+                                    eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
                                     detail=last_detail,
                                 )
                 else:
@@ -1831,6 +2339,190 @@ class InteractiveNetworkAuditor(WizardMixin):
                                 update_activity=False,
                                 force=True,
                             )
+
+    def run_agentless_verification(self, host_results):
+        """
+        Agentless verification (SMB/RDP/LDAP/SSH/HTTP) using Nmap scripts.
+
+        This is opt-in and best-effort. It enriches host records with
+        fingerprint hints (domain/computer name/signing posture/title/server).
+        """
+        if self.interrupted or not self.config.get("windows_verify_enabled", False):
+            return
+
+        targets = select_agentless_probe_targets(host_results)
+        if not targets:
+            self.print_status(self.t("windows_verify_none"), "INFO")
+            return
+
+        max_targets = int(self.config.get("windows_verify_max_targets", 20) or 20)
+        max_targets = min(max(max_targets, 1), 200)
+        if len(targets) > max_targets:
+            targets = sorted(targets, key=lambda t: t.ip)[:max_targets]
+            self.print_status(self.t("windows_verify_limit", max_targets), "WARNING")
+
+        self.print_status(self.t("windows_verify_start", len(targets)), "HEADER")
+
+        host_index = {h.get("ip"): h for h in host_results if isinstance(h, dict)}
+        results: List[Dict[str, Any]] = []
+
+        workers = min(4, max(1, int(self.config.get("threads", 1))))
+        start_t = time.time()
+
+        try:
+            from rich.progress import Progress
+
+            use_rich = True
+        except ImportError:
+            use_rich = False
+
+        with self._progress_ui():
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {
+                    executor.submit(
+                        probe_agentless_services,
+                        t,
+                        logger=self.logger,
+                        dry_run=bool(self.config.get("dry_run", False)),
+                    ): t.ip
+                    for t in targets
+                }
+
+                total = len(futures)
+                done = 0
+
+                if use_rich and total > 0:
+                    upper_per_target_s = 60.0
+                    with Progress(
+                        *self._progress_columns(
+                            show_detail=True,
+                            show_eta=True,
+                            show_elapsed=True,
+                        ),
+                        console=self._progress_console(),
+                    ) as progress:
+                        task = progress.add_task(
+                            f"[cyan]{self.t('windows_verify_label')}",
+                            total=total,
+                            detail="",
+                            eta_upper=self._format_eta(
+                                upper_per_target_s * math.ceil(total / workers)
+                            ),
+                            eta_est="",
+                        )
+                        pending = set(futures)
+                        while pending:
+                            if self.interrupted:
+                                for pending_fut in pending:
+                                    pending_fut.cancel()
+                                break
+                            completed, pending = wait(
+                                pending, timeout=0.25, return_when=FIRST_COMPLETED
+                            )
+                            for fut in completed:
+                                ip = futures.get(fut)
+                                try:
+                                    res = fut.result()
+                                except Exception as exc:
+                                    res = {"ip": ip, "error": str(exc)}
+                                    if self.logger:
+                                        self.logger.debug(
+                                            "Windows verify failed for %s", ip, exc_info=True
+                                        )
+                                results.append(res)
+                                done += 1
+                                elapsed_s = max(0.001, time.time() - start_t)
+                                rate = done / elapsed_s if done else 0.0
+                                remaining = max(0, total - done)
+                                eta_est_val = (
+                                    self._format_eta(remaining / rate)
+                                    if rate > 0.0 and remaining
+                                    else ""
+                                )
+                                if ip:
+                                    progress.update(task, detail=f"{ip}")
+                                progress.update(
+                                    task,
+                                    advance=1,
+                                    description=f"[cyan]{self.t('windows_verify_label')} ({done}/{total})",
+                                    eta_upper=self._format_eta(
+                                        upper_per_target_s * math.ceil(remaining / workers)
+                                        if remaining
+                                        else 0
+                                    ),
+                                    eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
+                                )
+                else:
+                    for fut in as_completed(futures):
+                        if self.interrupted:
+                            for pending_fut in futures:
+                                pending_fut.cancel()
+                            break
+                        ip = futures.get(fut)
+                        try:
+                            res = fut.result()
+                        except Exception as exc:
+                            res = {"ip": ip, "error": str(exc)}
+                            if self.logger:
+                                self.logger.debug("Windows verify failed for %s", ip, exc_info=True)
+                        results.append(res)
+                        done += 1
+                        if total and done % max(1, total // 10) == 0:
+                            remaining = max(0, total - done)
+                            rate = done / max(0.001, (time.time() - start_t))
+                            eta_est_val = (
+                                self._format_eta(remaining / rate)
+                                if rate > 0.0 and remaining
+                                else "--:--"
+                            )
+                            self.print_status(
+                                f"{self.t('windows_verify_label')} {done}/{total} | ETA≈ {eta_est_val}",
+                                "INFO",
+                                update_activity=False,
+                                force=True,
+                            )
+
+        for res in results:
+            ip = res.get("ip")
+            if not ip or ip not in host_index:
+                continue
+            host = host_index[ip]
+            host["agentless_probe"] = res
+            agentless_fp = summarize_agentless_fingerprint(res)
+            host["agentless_fingerprint"] = agentless_fp
+            smart = host.get("smart_scan")
+            if isinstance(smart, dict) and isinstance(agentless_fp, dict) and agentless_fp:
+                signals = list(smart.get("signals") or [])
+                if "agentless" not in signals:
+                    signals.append("agentless")
+                    try:
+                        smart["identity_score"] = int(smart.get("identity_score", 0)) + 1
+                    except Exception:
+                        smart["identity_score"] = smart.get("identity_score", 0)
+                hint_keys = []
+                for key in (
+                    "domain",
+                    "dns_domain_name",
+                    "dns_computer_name",
+                    "computer_name",
+                    "os",
+                    "http_title",
+                    "http_server",
+                    "smb_signing_required",
+                    "smbv1_detected",
+                ):
+                    if agentless_fp.get(key) not in (None, ""):
+                        hint_keys.append(key)
+                if hint_keys:
+                    smart["agentless_hints"] = hint_keys
+                smart["signals"] = signals
+
+        self.results["agentless_verify"] = {
+            "targets": len(targets),
+            "completed": len(results),
+        }
+        self.results["hosts"] = host_results
+        self.print_status(self.t("windows_verify_done", len(results)), "OKGREEN")
 
     # ---------- Reporting ----------
 
@@ -1940,11 +2632,6 @@ class InteractiveNetworkAuditor(WizardMixin):
                     show_summary = self.ask_yes_no(self.t("defaults_show_summary_q"), default="no")
                     if show_summary:
                         self._show_defaults_summary(persisted_defaults)
-                        # Only offer an "immediate start" path after the user has explicitly
-                        # reviewed the persisted defaults.
-                        if self.ask_yes_no(self.t("defaults_use_immediately_q"), default="no"):
-                            should_skip_config = True
-                            auto_start = True
 
         print(f"\n{self.COLORS['HEADER']}{self.t('scan_config')}{self.COLORS['ENDC']}")
         print("=" * 60)
@@ -2011,6 +2698,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                     net_discovery_kerberos_userlist=self.config.get(
                         "net_discovery_kerberos_userlist"
                     ),
+                    windows_verify_enabled=self.config.get("windows_verify_enabled"),
+                    windows_verify_max_targets=self.config.get("windows_verify_max_targets"),
                     lang=self.lang,
                 )
                 self.print_status(
@@ -2075,16 +2764,18 @@ class InteractiveNetworkAuditor(WizardMixin):
                         from rich.progress import (
                             Progress,
                             SpinnerColumn,
-                            TextColumn,
                             TimeElapsedColumn,
                         )
-                        from rich.console import Console
 
                         with Progress(
                             SpinnerColumn(),
-                            TextColumn("[bold cyan]Topology[/bold cyan] {task.description}"),
+                            self._safe_text_column(
+                                "[bold cyan]Topology[/bold cyan] {task.description}",
+                                overflow="ellipsis",
+                                no_wrap=True,
+                            ),
                             TimeElapsedColumn(),
-                            console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
+                            console=self._progress_console(),
                             transient=True,
                         ) as progress:
                             task = progress.add_task("discovering...", total=None)
@@ -2109,6 +2800,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     self.results["topology"] = {"enabled": True, "error": str(exc)}
 
                 if self.config.get("topology_only"):
+                    self.config["rate_limit_delay"] = self.rate_limit_delay
                     generate_summary(self.results, self.config, [], [], self.scan_start_time)
                     self.save_results(partial=self.interrupted)
                     self.show_results()
@@ -2147,60 +2839,68 @@ class InteractiveNetworkAuditor(WizardMixin):
                         from rich.progress import (
                             Progress,
                             SpinnerColumn,
-                            TextColumn,
                             TimeElapsedColumn,
                         )
-                        from rich.console import Console
 
-                        with Progress(
-                            SpinnerColumn(),
-                            TextColumn("[bold blue]Net Discovery[/bold blue] {task.description}"),
-                            TimeElapsedColumn(),
-                            console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
-                            transient=True,
-                        ) as progress:
-                            task = progress.add_task("running...", total=None)
+                        with self._progress_ui():
+                            with Progress(
+                                SpinnerColumn(),
+                                self._safe_text_column(
+                                    "[bold blue]Net Discovery[/bold blue] {task.description}",
+                                    overflow="ellipsis",
+                                    no_wrap=True,
+                                ),
+                                TimeElapsedColumn(),
+                                console=self._progress_console(),
+                                transient=True,
+                            ) as progress:
+                                task = progress.add_task("running...", total=None)
 
-                            def _nd_progress(label: str, step_index: int, step_total: int) -> None:
-                                try:
-                                    progress.update(
-                                        task,
-                                        description=f"{label} ({step_index}/{step_total})",
-                                    )
-                                except Exception:
-                                    pass
+                                def _nd_progress(
+                                    label: str, step_index: int, step_total: int
+                                ) -> None:
+                                    try:
+                                        progress.update(
+                                            task,
+                                            description=f"{label} ({step_index}/{step_total})",
+                                        )
+                                    except Exception:
+                                        pass
 
-                            self.results["net_discovery"] = discover_networks(
-                                target_networks=self.config.get("target_networks", []),
-                                interface=iface,
-                                protocols=self.config.get("net_discovery_protocols"),
-                                redteam=self.config.get("net_discovery_redteam", False),
-                                redteam_options=redteam_options,
-                                extra_tools=self.extra_tools,
-                                progress_callback=_nd_progress,
-                                logger=self.logger,
-                            )
-                            progress.update(task, description="complete")
+                                self.results["net_discovery"] = discover_networks(
+                                    target_networks=self.config.get("target_networks", []),
+                                    interface=iface,
+                                    protocols=self.config.get("net_discovery_protocols"),
+                                    redteam=self.config.get("net_discovery_redteam", False),
+                                    redteam_options=redteam_options,
+                                    extra_tools=self.extra_tools,
+                                    progress_callback=_nd_progress,
+                                    logger=self.logger,
+                                )
+                                progress.update(task, description="complete")
                     except ImportError:
                         # Fallback without progress bar
-                        with _ActivityIndicator(
-                            label="Net Discovery",
-                            touch_activity=self._touch_activity,
-                        ) as indicator:
+                        with self._progress_ui():
+                            with _ActivityIndicator(
+                                label="Net Discovery",
+                                touch_activity=self._touch_activity,
+                            ) as indicator:
 
-                            def _nd_progress(label: str, step_index: int, step_total: int) -> None:
-                                indicator.update(f"{label} ({step_index}/{step_total})")
+                                def _nd_progress(
+                                    label: str, step_index: int, step_total: int
+                                ) -> None:
+                                    indicator.update(f"{label} ({step_index}/{step_total})")
 
-                            self.results["net_discovery"] = discover_networks(
-                                target_networks=self.config.get("target_networks", []),
-                                interface=iface,
-                                protocols=self.config.get("net_discovery_protocols"),
-                                redteam=self.config.get("net_discovery_redteam", False),
-                                redteam_options=redteam_options,
-                                extra_tools=self.extra_tools,
-                                progress_callback=_nd_progress,
-                                logger=self.logger,
-                            )
+                                self.results["net_discovery"] = discover_networks(
+                                    target_networks=self.config.get("target_networks", []),
+                                    interface=iface,
+                                    protocols=self.config.get("net_discovery_protocols"),
+                                    redteam=self.config.get("net_discovery_redteam", False),
+                                    redteam_options=redteam_options,
+                                    extra_tools=self.extra_tools,
+                                    progress_callback=_nd_progress,
+                                    logger=self.logger,
+                                )
 
                     # Log discovered DHCP servers
                     dhcp_servers = self.results["net_discovery"].get("dhcp_servers", [])
@@ -2238,12 +2938,31 @@ class InteractiveNetworkAuditor(WizardMixin):
                         self.logger.debug("Net discovery exception details", exc_info=True)
                     self.results["net_discovery"] = {"enabled": True, "error": str(exc)}
 
+            discovery_hosts = self._collect_discovery_hosts(
+                self.config.get("target_networks", []) or []
+            )
+            if discovery_hosts:
+                self.print_status(
+                    self.t("net_discovery_seed_hosts", len(discovery_hosts)),
+                    "INFO",
+                )
+
             all_hosts = []
             for network in self.config["target_networks"]:
                 if self.interrupted:
                     break
                 hosts = self.scan_network_discovery(network)
                 all_hosts.extend(hosts)
+
+            if discovery_hosts:
+                before = set(all_hosts)
+                all_hosts.extend(discovery_hosts)
+                added = len(set(all_hosts) - before)
+                if added > 0:
+                    self.print_status(
+                        self.t("net_discovery_seed_added", added),
+                        "INFO",
+                    )
 
             if not all_hosts:
                 self.print_status(self.t("no_hosts"), "WARNING")
@@ -2255,6 +2974,10 @@ class InteractiveNetworkAuditor(WizardMixin):
                 all_hosts = all_hosts[:max_val]
 
             results = self.scan_hosts_concurrent(all_hosts)
+
+            # v3.8: Agentless Windows verification (SMB/RDP/LDAP) - opt-in
+            if not self.interrupted:
+                self.run_agentless_verification(results)
 
             # v3.0.1: CVE correlation via NVD (optional; can be slow)
             if self.config.get("cve_lookup_enabled") and not self.interrupted:
@@ -2303,44 +3026,55 @@ class InteractiveNetworkAuditor(WizardMixin):
                         # competing Rich Live displays (which can cause flicker/no output).
                         nuclei_result = None
                         try:
-                            from rich.progress import (
-                                Progress,
-                                SpinnerColumn,
-                                BarColumn,
-                                TextColumn,
-                                TimeElapsedColumn,
-                            )
-                            from rich.console import Console
+                            from rich.progress import Progress
 
                             batch_size = 25
+                            nuclei_timeout_s = 300
                             total_batches = max(1, int(math.ceil(len(nuclei_targets) / batch_size)))
+                            progress_start_t = time.time()
                             with self._progress_ui():
                                 with Progress(
-                                    SpinnerColumn(),
-                                    TextColumn("[progress.description]{task.description}"),
-                                    BarColumn(),
-                                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                                    TextColumn("({task.completed}/{task.total})"),
-                                    TimeElapsedColumn(),
-                                    TextColumn("{task.fields[eta]}", justify="right"),
-                                    console=Console(file=getattr(sys, "__stdout__", sys.stdout)),
+                                    *self._progress_columns(
+                                        show_detail=True,
+                                        show_eta=True,
+                                        show_elapsed=False,
+                                    ),
+                                    console=self._progress_console(),
                                     transient=False,
                                 ) as progress:
                                     task = progress.add_task(
                                         f"[cyan]Nuclei (0/{total_batches})",
                                         total=total_batches,
-                                        eta="ETA≈ --:--",
+                                        eta_upper=self._format_eta(
+                                            total_batches * nuclei_timeout_s
+                                        ),
+                                        eta_est="",
+                                        detail=f"{len(nuclei_targets)} targets",
                                     )
 
                                     def _nuclei_progress(
                                         completed: int, total: int, eta: str
                                     ) -> None:
                                         try:
+                                            remaining = max(0, total - completed)
+                                            elapsed_s = max(0.001, time.time() - progress_start_t)
+                                            rate = completed / elapsed_s if completed else 0.0
+                                            eta_est_val = (
+                                                self._format_eta(remaining / rate)
+                                                if rate > 0.0 and remaining
+                                                else ""
+                                            )
                                             progress.update(
                                                 task,
                                                 completed=completed,
                                                 description=f"[cyan]Nuclei ({completed}/{total})",
-                                                eta=str(eta or "").strip() or "ETA≈ --:--",
+                                                eta_upper=self._format_eta(
+                                                    remaining * nuclei_timeout_s if remaining else 0
+                                                ),
+                                                eta_est=(
+                                                    f"ETA≈ {eta_est_val}" if eta_est_val else ""
+                                                ),
+                                                detail=f"batch {completed}/{total}",
                                             )
                                         except Exception:
                                             pass
@@ -2349,7 +3083,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                                         targets=nuclei_targets,
                                         output_dir=output_dir,
                                         severity="medium,high,critical",
-                                        timeout=300,
+                                        timeout=nuclei_timeout_s,
                                         batch_size=batch_size,
                                         progress_callback=_nuclei_progress,
                                         use_internal_progress=False,
@@ -2368,25 +3102,27 @@ class InteractiveNetworkAuditor(WizardMixin):
                                 print_status=self.print_status,
                             )
 
-                        if nuclei_result.get("findings"):
-                            # Merge nuclei findings into vulnerabilities
-                            for finding in nuclei_result["findings"]:
-                                self.results["vulnerabilities"].append(
-                                    {
-                                        "host": finding.get("host", ""),
-                                        "source": "nuclei",
-                                        "template_id": finding.get("template_id"),
-                                        "name": finding.get("name"),
-                                        "severity": finding.get("severity"),
-                                        "matched_at": finding.get("matched_at"),
-                                        "cve_ids": finding.get("cve_ids", []),
-                                        "reference": finding.get("reference", []),
-                                    }
+                        findings = nuclei_result.get("findings") or []
+                        nuclei_summary = {
+                            "enabled": True,
+                            "targets": len(nuclei_targets),
+                            "findings": len(findings),
+                            "success": bool(nuclei_result.get("success")),
+                            "error": nuclei_result.get("error"),
+                        }
+                        raw_file = nuclei_result.get("raw_output_file")
+                        if raw_file and isinstance(raw_file, str):
+                            try:
+                                nuclei_summary["output_file"] = os.path.relpath(
+                                    raw_file, output_dir
                                 )
-                            self.print_status(
-                                self.t("nuclei_findings", len(nuclei_result["findings"])),
-                                "OK",
-                            )
+                            except Exception:
+                                nuclei_summary["output_file"] = raw_file
+                        self.results["nuclei"] = nuclei_summary
+
+                        merged = self._merge_nuclei_findings(findings)
+                        if merged > 0:
+                            self.print_status(self.t("nuclei_findings", merged), "OK")
                         else:
                             self.print_status(self.t("nuclei_no_findings"), "INFO")
                 except Exception as e:
@@ -2394,6 +3130,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                         self.logger.warning("Nuclei scan failed: %s", e, exc_info=True)
                     self.print_status(f"Nuclei: {e}", "WARNING")
 
+            self.config["rate_limit_delay"] = self.rate_limit_delay
             generate_summary(self.results, self.config, all_hosts, results, self.scan_start_time)
             self.save_results(partial=self.interrupted)
             self.show_results()
@@ -2528,6 +3265,16 @@ class InteractiveNetworkAuditor(WizardMixin):
         self.config["net_discovery_kerberos_userlist"] = (
             expand_user_path(userlist) if userlist else None
         )
+
+        # 10. Agentless Windows verification
+        self.config["windows_verify_enabled"] = bool(
+            defaults_for_run.get("windows_verify_enabled", False)
+        )
+        max_targets = defaults_for_run.get("windows_verify_max_targets")
+        if isinstance(max_targets, int) and 1 <= max_targets <= 200:
+            self.config["windows_verify_max_targets"] = max_targets
+        else:
+            self.config["windows_verify_max_targets"] = 20
 
     def _configure_scan_interactive(self, defaults_for_run: Dict) -> None:
         """Interactive prompt sequence for scan configuration."""
@@ -2767,6 +3514,26 @@ class InteractiveNetworkAuditor(WizardMixin):
                 self.config["net_discovery_dns_zone"] = nd_options.get("dns_zone", "")
                 self.config["net_discovery_max_targets"] = nd_options.get("redteam_max_targets", 50)
 
+        # v3.8: Agentless Windows verification (SMB/RDP/LDAP)
+        persisted_win_verify = defaults_for_run.get("windows_verify_enabled")
+        win_default = "yes" if persisted_win_verify is True else "no"
+        if self.ask_yes_no(self.t("windows_verify_q"), default=win_default):
+            self.config["windows_verify_enabled"] = True
+            persisted_max = defaults_for_run.get("windows_verify_max_targets")
+            max_default = (
+                persisted_max
+                if isinstance(persisted_max, int) and 1 <= persisted_max <= 200
+                else 20
+            )
+            self.config["windows_verify_max_targets"] = self.ask_number(
+                self.t("windows_verify_max_q"),
+                default=max_default,
+                min_val=1,
+                max_val=200,
+            )
+        else:
+            self.config["windows_verify_enabled"] = False
+
         # v3.7: Interactive webhook configuration
         webhook_url = self.ask_webhook_url()
         if webhook_url:
@@ -2839,6 +3606,10 @@ class InteractiveNetworkAuditor(WizardMixin):
             (
                 "defaults_summary_html_report",
                 fmt_bool(persisted_defaults.get("generate_html")),
+            ),
+            (
+                "defaults_summary_windows_verify",
+                fmt_bool(persisted_defaults.get("windows_verify_enabled")),
             ),
         ]
 

@@ -137,6 +137,9 @@ Grouped by operational function. Verified against the current codebase.
 | `--udp-mode` | `quick` (priority ports) or `full` (top ports) |
 | `--redteam` | Add AD/Kerberos/SNMP recon techniques |
 | `--redteam-active-l2` | Enable noisier L2 active probing |
+| `--agentless-verify` | Enable agentless verification (SMB/RDP/LDAP/SSH/HTTP) |
+| `--no-agentless-verify` | Disable agentless verification (overrides defaults) |
+| `--agentless-verify-max-targets N` | Cap agentless verification targets (1-200, default: 20) |
 
 ### Reporting & Integration
 
@@ -188,8 +191,13 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requires `--html-report`, disabled by `--encrypt`).
 - **.jsonl**: Streaming events for SIEM (disabled by `--encrypt`).
 - **.pcap**: Packet captures (only if Deep Scan + tcpdump + Root).
-- **session.log**: Raw terminal output with color codes (in `session_logs/`).
-- **session.txt**: Clean plain-text terminal output (in `session_logs/`).
+- **session_*.log**: Raw terminal output with color codes (in `session_logs/`).
+- **session_*.txt**: Clean plain-text terminal output (in `session_logs/`).
+
+**Progress/ETA Notes:**
+
+- `ETA≤` shows the timeout-based upper bound for the current batch.
+- `ETA≈` is a dynamic estimate based on completed hosts.
 
 ---
 

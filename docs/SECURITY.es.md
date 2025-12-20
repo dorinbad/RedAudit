@@ -57,7 +57,7 @@ El cifrado de reportes se gestiona mediante la librería `cryptography` para ase
 
 Todas las operaciones se registran en `~/.redaudit/logs/` con políticas de rotación (máx 10MB, 5 backups). Los logs contienen marcas de tiempo de ejecución, identificadores de hilos e invocaciones de comandos raw para rendición de cuentas.
 
-**Seguridad de Captura de Sesión (v3.7+)**: El directorio `session_logs/` contiene la salida raw de terminal (`session.log`) que puede incluir datos sensibles mostrados durante el escaneo. Estos archivos están protegidos con permisos `0o600`.
+**Seguridad de Captura de Sesión (v3.7+)**: El directorio `session_logs/` contiene la salida raw de terminal (`session_*.log`) que puede incluir datos sensibles mostrados durante el escaneo. Estos archivos están protegidos con permisos `0o600`.
 
 ## 5. Seguridad CI/CD
 
