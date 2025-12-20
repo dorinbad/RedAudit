@@ -14,6 +14,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Agentless verification**: Optional SMB/RDP/LDAP/SSH/HTTP fingerprinting stage (wizard or `--agentless-verify`), with a configurable target cap.
 - **CLI flags**: `--agentless-verify`, `--no-agentless-verify`, and `--agentless-verify-max-targets`.
 
+## [3.8.2] - 2025-12-20 (UX Polish)
+
+### Added
+
+- **HTML Watermark**: Professional footer in HTML reports with GPLv3 license, author (Dorin Badea), and GitHub link.
+
+### Fixed
+
+- **Spinner Removed**: Eliminated spinner from progress bars (was causing display freezes during long phases); now shows clean bar + percentage + elapsed time.
+
+## [3.8.1] - 2025-12-20 (Visual Feedback Fix)
+
+### Added
+
+- **Wizard Navigation**: New `ask_choice_with_back` function adds "< Go Back" option to wizard menus, enabling step-by-step navigation without restarting the entire configuration.
+
+### Fixed
+
+- **ETA Removed**: Eliminated unreliable ETA estimates from progress bars (were freezing or showing incorrect values); now displays elapsed time only.
+- **Progress Bar Truncation**: Fixed text truncation issue where long descriptions made progress bars unreadable (`Escaneado 192.168.178… ETA≤ …`).
+- **Heartbeat Messages**: Added periodic heartbeat messages every 30-60s during long phases (Net Discovery, Host Scan) to indicate activity.
+- **Device Type Detection**: Improved `device_type_hints` detection—added AVM/Fritz to router patterns, hostname-based mobile detection (iPhone, iPad, Android).
+
+### Changed
+
+- **Progress Display**: Simplified progress columns to: spinner + description + bar + percentage + elapsed time.
+- **Net Discovery Labels**: Truncated phase labels to 35 characters to prevent overflow.
+
+## [3.8.0] - 2025-12-20 (Net Discovery UX)
+
+### Added
+
+- **Net Discovery Progress Bar**: Replaced generic spinner with full Rich progress bar showing percentage, phase description, and ETA during network discovery (~10 min phase now shows real progress).
+- **SmartScan Device Detection**: Automatic device type classification from vendor/UPNP/mDNS/service signatures (mobile, printer, router, IoT, smart_tv, hypervisor).
+- **SmartScan Topology Signals**: Identity scoring now includes net_discovery results (ARP, UPNP, mDNS) for better deep scan decisions.
+- **Wizard UX Hints**: Added examples to SNMP community, DNS zone, and webhook URL prompts.
+
+### Changed
+
+- **HyperScan Throttling**: Reduced progress update threshold from 3% to 1% and interval from 0.35s to 0.25s for smoother, more responsive feedback during parallel discovery.
+- **SmartScan Full Mode**: Full scan mode no longer disables deep scan heuristics; instead uses higher identity threshold (4 vs 3) for more thorough discovery.
+- **SmartScan Network Infrastructure**: Routers and network devices now always trigger deep scan for complete infrastructure mapping.
+
 ## [3.7.3] - 2025-12-20 (Scan Reliability & Reporting Accuracy)
 
 ### Fixed
