@@ -12,6 +12,7 @@ import sys
 import signal
 import shutil
 import subprocess
+import shlex
 import threading
 import time
 import random
@@ -663,6 +664,65 @@ class InteractiveNetworkAuditor(WizardMixin):
             elif width >= 80:
                 columns.append(self._safe_text_column("ETA≤ {task.fields[eta_upper]}"))
         return [c for c in columns if c is not None]
+
+    def _run_nmap_xml_scan(self, target: str, args: str) -> Tuple[Optional[Any], str]:
+        """
+        Run an nmap scan with XML output and enforce a hard timeout.
+
+        Returns:
+            (PortScanner or None, error message string if any)
+        """
+        if is_dry_run(self.config.get("dry_run")):
+            return None, "dry_run"
+        if shutil.which("nmap") is None:
+            return None, "nmap_not_available"
+        if nmap is None:
+            return None, "python_nmap_missing"
+
+        host_timeout_s = self._parse_host_timeout_s(args) or 60.0
+        timeout_s = max(30.0, host_timeout_s + 30.0)
+        cmd = ["nmap"] + shlex.split(args) + ["-oX", "-", target]
+
+        record_sink: Dict[str, Any] = {"commands": []}
+        rec = run_nmap_command(
+            cmd,
+            int(timeout_s),
+            target,
+            record_sink,
+            logger=self.logger,
+            dry_run=False,
+        )
+
+        if rec.get("error"):
+            return None, str(rec["error"])
+
+        xml_output = self._coerce_text(rec.get("stdout", ""))
+        if not xml_output.strip():
+            stderr = self._coerce_text(rec.get("stderr", "")).strip()
+            return None, stderr or "empty_nmap_output"
+
+        nm = nmap.PortScanner()
+        analyser = getattr(nm, "analyse_nmap_xml_scan", None) or getattr(
+            nm, "analyze_nmap_xml_scan", None
+        )
+        if analyser:
+            try:
+                analyser(
+                    xml_output,
+                    nmap_err=self._coerce_text(rec.get("stderr", "")),
+                    nmap_err_keep_trace=self._coerce_text(rec.get("stderr", "")),
+                    nmap_warn_keep_trace="",
+                )
+            except Exception as exc:
+                return None, f"nmap_xml_parse_error: {exc}"
+        else:
+            # Fallback for stubs or older python-nmap builds without XML parser.
+            try:
+                nm.scan(target, arguments=args)
+            except Exception as exc:
+                return None, f"nmap_scan_fallback_error: {exc}"
+
+        return nm, ""
 
     @staticmethod
     def _parse_host_timeout_s(nmap_args: str) -> Optional[float]:
@@ -1495,10 +1555,25 @@ class InteractiveNetworkAuditor(WizardMixin):
                 "status": STATUS_DOWN,
                 "dry_run": True,
             }
-        nm = nmap.PortScanner()
-
         try:
-            nm.scan(safe_ip, arguments=args)
+            nm, scan_error = self._run_nmap_xml_scan(safe_ip, args)
+            if not nm:
+                self.logger.warning("Nmap scan failed for %s: %s", safe_ip, scan_error)
+                self.print_status(
+                    f"⚠️  Nmap scan failed {safe_ip}: {scan_error}",
+                    "FAIL",
+                    force=True,
+                )
+                return {
+                    "ip": safe_ip,
+                    "hostname": "",
+                    "ports": [],
+                    "web_ports_count": 0,
+                    "total_ports_found": 0,
+                    "status": STATUS_NO_RESPONSE,
+                    "error": scan_error,
+                    "scan_timeout_s": self._parse_host_timeout_s(args) or 60.0,
+                }
             if safe_ip not in nm.all_hosts():
                 # Host didn't respond to initial scan - do deep scan
                 deep = None
@@ -1811,6 +1886,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                         )
                         pending = set(futures)
                         last_detail = initial_detail
+                        last_eta_upper = eta_upper_init
+                        last_eta_est = ""
                         while pending:
                             if self.interrupted:
                                 for pending_fut in pending:
@@ -1824,6 +1901,30 @@ class InteractiveNetworkAuditor(WizardMixin):
                             if detail != last_detail:
                                 progress.update(task, detail=detail)
                                 last_detail = detail
+
+                            # Keep ETA moving even when no hosts finish (long-running scans).
+                            if pending:
+                                remaining = max(0, total - done)
+                                elapsed_s = max(0.001, time.time() - start_t)
+                                rate = done / elapsed_s if done else 0.0
+                                eta_est_val = (
+                                    self._format_eta(remaining / rate)
+                                    if rate > 0.0 and remaining
+                                    else ""
+                                )
+                                eta_upper = self._format_eta(
+                                    host_timeout_s * math.ceil(remaining / threads)
+                                    if remaining
+                                    else 0
+                                )
+                                if eta_upper != last_eta_upper or eta_est_val != last_eta_est:
+                                    progress.update(
+                                        task,
+                                        eta_upper=eta_upper,
+                                        eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
+                                    )
+                                    last_eta_upper = eta_upper
+                                    last_eta_est = eta_est_val
 
                             for fut in completed:
                                 host_ip = futures.get(fut)
@@ -1857,6 +1958,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                                     eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
                                     detail=last_detail,
                                 )
+                                last_eta_upper = eta_upper
+                                last_eta_est = eta_est_val
                 else:
                     # Fallback to basic progress (throttled, includes timeout-aware upper bound ETA)
                     for fut in as_completed(futures):
