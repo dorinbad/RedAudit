@@ -99,7 +99,7 @@ sudo redaudit
 
 RedAudit opera como una capa de orquestación, gestionando hilos de ejecución concurrentes para la interacción de red y el procesamiento de datos. Implementa una arquitectura de dos fases: descubrimiento genérico seguido de escaneos profundos dirigidos.
 
-![Vista General del Sistema](docs/images/system_overview_es_v3.png)
+![Vista General del Sistema](docs/images/system_overview_v3.7.3.png)
 
 ### Lógica de Escaneo Adaptativo
 

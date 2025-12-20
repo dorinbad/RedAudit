@@ -99,7 +99,7 @@ sudo redaudit
 
 RedAudit operates as an orchestration layer, managing concurrent execution threads for network interaction and data processing. It implements a two-phase architecture: generic discovery followed by targeted deep scans.
 
-![System Overview](docs/images/system_overview_v3.png)
+![System Overview](docs/images/system_overview_en_v3.7.3.png)
 
 ### Adaptive Scanning Logic
 
