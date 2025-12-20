@@ -1,57 +1,32 @@
 # RedAudit v3.8.2 Release Notes
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](RELEASE_NOTES_v3.8.2_ES.md)
-
 **Release Date:** 2025-12-20
-**Focus:** UX Polish
 
----
+[![Ver en Español](https://img.shields.io/badge/🇪🇸_Español-red?style=flat-square)](RELEASE_NOTES_v3.8.2_ES.md)
 
-## What's New
+## Overview
+
+RedAudit v3.8.2 is a UX polish release focused on **wizard navigation** and **visual feedback improvements**.
+
+## Added
+
+### Wizard Navigation (v3.8.1)
+
+- Step-by-step navigation with "< Go Back" option in all wizard menus
+- Allows reviewing and modifying previous choices without restarting
 
 ### HTML Report Watermark
 
-Professional footer added to HTML reports with:
+- Professional footer with GPLv3 license, author credit (Dorin Badea), and GitHub repository link
 
-- GPLv3 license notice
-- Author credit (Dorin Badea)
-- GitHub repository link
+## Fixed
 
-### Progress Bar Improvements
+### Progress Bar Display
 
-- **Spinner Removed**: Eliminated `SpinnerColumn` from progress bars (was causing display freezes during long phases)
-- Progress now displays: `description + bar + percentage + elapsed time`
+- Removed `SpinnerColumn` that caused display freezes during long Net Discovery and Deep Scan phases
+- Progress now shows: `description + bar + percentage + elapsed time`
 
----
+## Documentation
 
-## Changelog Summary
-
-### Added
-
-- Professional watermark in HTML reports
-
-### Fixed
-
-- Progress bar display freezes during Net Discovery and Deep Scan phases
-
----
-
-## Installation
-
-```bash
-cd ~/RedAudit
-git fetch origin
-git checkout main
-git pull
-sudo ./redaudit_install.sh -y
-```
-
----
-
-## Upgrade Notes
-
-This is a minor UX polish release. No breaking changes or configuration updates required.
-
----
-
-**Full Changelog:** [CHANGELOG.md](../../CHANGELOG.md)
+- [Full Changelog](../../CHANGELOG.md)
+- [Roadmap](../ROADMAP.en.md)

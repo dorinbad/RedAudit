@@ -1,57 +1,32 @@
-# RedAudit v3.8.2 — Notas de la Versión
-
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](RELEASE_NOTES_v3.8.2.md)
+# Notas de Versión RedAudit v3.8.2
 
 **Fecha de lanzamiento:** 2025-12-20
-**Enfoque:** Pulido UX
 
----
+[![View in English](https://img.shields.io/badge/🇬🇧_English-blue?style=flat-square)](RELEASE_NOTES_v3.8.2.md)
 
-## Novedades
+## Resumen
+
+RedAudit v3.8.2 es un release de pulido UX enfocado en **navegación del wizard** y **mejoras de feedback visual**.
+
+## Añadido
+
+### Navegación del Wizard (v3.8.1)
+
+- Navegación paso a paso con opción "< Volver" en todos los menús del wizard
+- Permite revisar y modificar elecciones previas sin reiniciar
 
 ### Marca de Agua en Reportes HTML
 
-Añadido footer profesional en reportes HTML con:
+- Footer profesional con licencia GPLv3, crédito del autor (Dorin Badea) y enlace al repositorio GitHub
 
-- Aviso de licencia GPLv3
-- Crédito del autor (Dorin Badea)
-- Enlace al repositorio GitHub
+## Corregido
 
-### Mejoras en Barras de Progreso
+### Display de Barras de Progreso
 
-- **Spinner Eliminado**: Se eliminó `SpinnerColumn` de las barras de progreso (causaba congelaciones durante fases largas)
+- Eliminado `SpinnerColumn` que causaba congelaciones durante fases largas de Net Discovery y Deep Scan
 - El progreso ahora muestra: `descripción + barra + porcentaje + tiempo transcurrido`
 
----
+## Documentación
 
-## Resumen de Cambios
-
-### Añadido
-
-- Marca de agua profesional en reportes HTML
-
-### Corregido
-
-- Congelaciones en barras de progreso durante Net Discovery y Deep Scan
-
----
-
-## Instalación
-
-```bash
-cd ~/RedAudit
-git fetch origin
-git checkout main
-git pull
-sudo ./redaudit_install.sh -y
-```
-
----
-
-## Notas de Actualización
-
-Esta es una versión menor de pulido UX. No hay cambios disruptivos ni actualizaciones de configuración requeridas.
-
----
-
-**Changelog completo:** [CHANGELOG_ES.md](../../CHANGELOG_ES.md)
+- [Registro de cambios completo](../../CHANGELOG_ES.md)
+- [Roadmap](../ROADMAP.es.md)
