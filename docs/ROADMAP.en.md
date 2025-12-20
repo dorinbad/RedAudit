@@ -64,6 +64,7 @@ Features currently present using `redaudit --version` >= v3.6.0.
 | :--- | :--- | :--- |
 | **Single Version Source** | v3.5.4 | Version now resolves reliably across install modes: `importlib.metadata` when available, plus a packaged `redaudit/VERSION` fallback for script-based `/usr/local/lib/redaudit` installs. |
 | **Centralized CommandRunner** | v3.5.0 | `redaudit/core/command_runner.py` handles all subprocesses safely. |
+| **Timeout-Safe Host Scans** | vNext | `redaudit/core/auditor.py` enforces hard timeouts for nmap host scans, keeping progress responsive. |
 | **Persistent Config** | v3.1.1 | `~/.redaudit/config.json` stores user defaults. |
 | **Async Discovery** | v3.1.3 | `redaudit/core/hyperscan.py` uses `asyncio` for fast port probing. |
 | **Quiet Progress UI (with detail)** | v3.6.0 | `redaudit/core/auditor.py` reduces terminal noise while progress bars are active and surfaces “what’s happening” inside the progress line. |

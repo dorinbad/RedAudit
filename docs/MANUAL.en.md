@@ -90,6 +90,10 @@ RedAudit checks for updates on startup (interactive mode). To skip: `--skip-upda
 | `normal` | Top 1000 ports, version detection | whatweb, searchsploit |
 | `full` | All 65535 ports, scripts, OS detection | whatweb, nikto, testssl.sh, nuclei (if installed and enabled), searchsploit |
 
+**Timeout behavior:** Host scans are bounded by the nmap `--host-timeout` for the selected mode (full: 300s). RedAudit
+enforces a hard timeout and marks the host as no-response if it is exceeded, keeping scans responsive on IoT/embedded
+devices.
+
 ### Adaptive Deep Scan
 
 When enabled (default), RedAudit performs additional scanning on hosts where initial results are ambiguous:
@@ -240,7 +244,8 @@ Default output path: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/`
 | `run_manifest.json` | If encryption disabled | Session metadata |
 | `playbooks/*.md` | If encryption disabled | Remediation guides |
 | `traffic_*.pcap` | If deep scan triggers and tcpdump available | Packet captures |
-| `session_logs/*` | Always | Session logs (`.log` raw, `.txt` clean) |
+| `session_logs/session_*.log` | Always | Session logs (raw with ANSI) |
+| `session_logs/session_*.txt` | Always | Session logs (clean text) |
 
 ### Encryption Behavior
 
@@ -313,7 +318,7 @@ done
 | Permission denied | Running without sudo | Use `sudo redaudit` |
 | nmap: command not found | Missing dependency | Run `sudo bash redaudit_install.sh` |
 | Decryption failed: Invalid token | Wrong password or corrupted .salt | Verify password; ensure .salt file exists |
-| Scan appears frozen | Deep scan on complex host | Monitor heartbeat output; reduce scope with `--max-hosts` |
+| Scan appears frozen | Deep scan or slow host | Check `session_logs/` for the active tool; reduce scope with `--max-hosts` |
 | No playbooks generated | Encryption enabled | Playbooks require `--encrypt` to be disabled |
 
 See [TROUBLESHOOTING.en.md](TROUBLESHOOTING.en.md) for complete error reference.

@@ -191,8 +191,13 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requires `--html-report`, disabled by `--encrypt`).
 - **.jsonl**: Streaming events for SIEM (disabled by `--encrypt`).
 - **.pcap**: Packet captures (only if Deep Scan + tcpdump + Root).
-- **session.log**: Raw terminal output with color codes (in `session_logs/`).
-- **session.txt**: Clean plain-text terminal output (in `session_logs/`).
+- **session_*.log**: Raw terminal output with color codes (in `session_logs/`).
+- **session_*.txt**: Clean plain-text terminal output (in `session_logs/`).
+
+**Progress/ETA Notes:**
+
+- `ETA≤` shows the timeout-based upper bound for the current batch.
+- `ETA≈` is a dynamic estimate based on completed hosts.
 
 ---
 

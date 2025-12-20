@@ -90,6 +90,10 @@ RedAudit verifica actualizaciones al iniciar (modo interactivo). Para omitir: `-
 | `normal` | Top 1000 puertos, detección de versiones | whatweb, searchsploit |
 | `full` | Los 65535 puertos, scripts, detección de SO | whatweb, nikto, testssl.sh, nuclei (si está instalado y habilitado), searchsploit |
 
+**Comportamiento de timeout:** Los escaneos de host están limitados por el `--host-timeout` de nmap del modo elegido
+(full: 300s). RedAudit aplica un timeout duro y marca el host como sin respuesta si se supera, manteniendo el escaneo
+fluido en dispositivos IoT/embebidos.
+
 ### Deep Scan Adaptativo
 
 Cuando está habilitado (por defecto), RedAudit realiza escaneos adicionales en hosts donde los resultados iniciales son ambiguos:
@@ -239,7 +243,8 @@ Ruta de salida por defecto: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-
 | `run_manifest.json` | Si cifrado deshabilitado | Metadatos de sesión |
 | `playbooks/*.md` | Si cifrado deshabilitado | Guías de remediación |
 | `traffic_*.pcap` | Si se dispara deep scan y tcpdump disponible | Capturas de paquetes |
-| `session_logs/*` | Siempre | Logs de sesión (`.log` raw, `.txt` limpio) |
+| `session_logs/session_*.log` | Siempre | Logs de sesión (raw con ANSI) |
+| `session_logs/session_*.txt` | Siempre | Logs de sesión (texto limpio) |
 
 ### Comportamiento del Cifrado
 
@@ -312,7 +317,7 @@ done
 | Permission denied | Ejecutando sin sudo | Usar `sudo redaudit` |
 | nmap: command not found | Dependencia faltante | Ejecutar `sudo bash redaudit_install.sh` |
 | Decryption failed: Invalid token | Contraseña incorrecta o .salt corrupto | Verificar contraseña; asegurar que existe fichero .salt |
-| El escaneo parece congelado | Deep scan en host complejo | Monitorear salida heartbeat; reducir alcance con `--max-hosts` |
+| El escaneo parece congelado | Deep scan o host lento | Revisar `session_logs/` para ver la herramienta activa; reducir alcance con `--max-hosts` |
 | No se generan playbooks | Cifrado habilitado | Los playbooks requieren que `--encrypt` esté deshabilitado |
 
 Ver [TROUBLESHOOTING.es.md](TROUBLESHOOTING.es.md) para referencia completa de errores.

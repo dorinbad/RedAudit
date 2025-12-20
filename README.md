@@ -85,6 +85,7 @@ sudo redaudit
 | **Persistent Defaults** | User preferences stored in `~/.redaudit/config.json` |
 | **Interactive Webhooks** | Real-time alerts via Slack, Teams, or PagerDuty (wizard-configurable) |
 | **Session Logging** | Dual-format terminal output capture (`.log` raw + `.txt` clean) for audit trails |
+| **Timeout-Safe Scanning** | Host scans are bounded by hard timeouts; progress shows upper-bound ETA |
 | **IPv6 + Proxy Support** | Full dual-stack scanning with SOCKS5 pivoting |
 | **Rate Limiting** | Configurable inter-host delay with ±30% jitter for IDS evasion |
 | **Bilingual Interface** | Complete English/Spanish localization |

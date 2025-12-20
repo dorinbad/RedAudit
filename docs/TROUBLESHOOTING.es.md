@@ -70,6 +70,8 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 - **Duración**: Estos escaneos pueden legítimamente tomar **90–150 segundos** por host.
 - **Por qué**: Esencial para identificar cajas IoT, firewalls o servidores filtrados que ocultan su SO.
 - **Verificar**: Buscar el marcador `[deep]` en la salida CLI.
+- **Timeouts**: Los escaneos de host están limitados por `--host-timeout` de nmap y se abortan si se exceden. Si aún ves
+  pausas largas, revisa `session_logs/session_*.log` dentro del directorio de salida para ver la herramienta activa.
 
 ### 6b. Reposo del sistema / apagado de pantalla durante escaneos largos (v3.5+)
 

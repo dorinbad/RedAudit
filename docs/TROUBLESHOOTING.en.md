@@ -70,6 +70,8 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 - **Duration**: These scans can legitimately take **90–150 seconds** per host.
 - **Why**: Essential for identifying IoT boxes, firewalls, or filtered servers that hide their OS.
 - **Check**: Look for the `[deep]` marker in the CLI output.
+- **Timeouts**: Host scans are bounded by nmap `--host-timeout` and are aborted if exceeded. If you still see long stalls,
+  check `session_logs/session_*.log` under the output directory to identify the active tool.
 
 ### 6b. System sleep / screen blanking during long scans (v3.5+)
 

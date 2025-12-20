@@ -85,6 +85,7 @@ sudo redaudit
 | **Defaults Persistentes** | Preferencias de usuario guardadas en `~/.redaudit/config.json` |
 | **Webhooks Interactivos** | Alertas tiempo real via Slack, Teams o PagerDuty (configurables en wizard) |
 | **Logging de Sesión** | Captura de salida terminal en doble formato (`.log` raw + `.txt` limpio) |
+| **Escaneo con Timeout** | Escaneos de host con timeout duro; progreso con ETA límite |
 | **Soporte IPv6 + Proxy** | Escaneo dual-stack completo con pivoting SOCKS5 |
 | **Rate Limiting** | Retardo inter-host configurable con jitter ±30% para evasión IDS |
 | **Interfaz Bilingüe** | Localización completa Inglés/Español |
