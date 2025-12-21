@@ -40,6 +40,9 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 
 | Característica | Versión | Verificación |
 | :--- | :--- | :--- |
+| **Consistencia de Colores** | v3.8.4 | `redaudit/core/auditor.py`. Usa Rich console.print() cuando el progreso está activo para asegurar colores correctos. |
+| **Identidad del Auditor** | v3.8.3 | `redaudit/core/wizard.py`. Prompt del wizard para nombre del auditor, visible en reportes TXT/HTML. |
+| **Reportes HTML Bilingües** | v3.8.3 | `redaudit/core/reporter.py`. Cuando el idioma es ES, se genera `report_es.html` junto al HTML principal. |
 | **Navegación del Wizard** | v3.8.1 | `redaudit/core/wizard.py`. Opción "< Volver" en menús del wizard para navegación paso a paso. |
 | **Watermark HTML** | v3.8.2 | `redaudit/templates/report.html.j2`. Footer profesional con GPLv3, autor y enlace a GitHub. |
 | **Webhooks Interactivos** | v3.7.0 | `redaudit/core/wizard.py`. Configura Slack/Teams directamente en el wizard. |
