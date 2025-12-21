@@ -22,7 +22,6 @@ from redaudit.core.crypto import (
     ask_password_twice,
     derive_key_from_password,
     generate_random_password,
-    is_crypto_available,
 )
 from redaudit.utils.constants import (
     HEARTBEAT_FAIL_THRESHOLD,

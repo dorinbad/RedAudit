@@ -72,8 +72,9 @@ class AuditorScanMixin:
     interrupted: bool
 
     if TYPE_CHECKING:
+
         def _coerce_text(self, value: object) -> str:
-            ...
+            raise NotImplementedError
 
     # ---------- Dependencies ----------
 
