@@ -10,11 +10,15 @@
 
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/banner_en.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/images/banner_en.svg">
-  <img alt="RedAudit - Interactive Network Audit" src="docs/images/banner_en.svg" width="500">
-</picture>
+```
+ ____          _    _             _ _ _
+|  _ \ ___  __| |  / \  _   _  __| (_) |_
+| |_) / _ \/ _` | / _ \| | | |/ _` | | __|
+|  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
+|_| \_\___|__,_/_/   \_\__,_|\__,_|_|\__|
+```
+
+**INTERACTIVE NETWORK AUDIT**
 
 </div>
 
