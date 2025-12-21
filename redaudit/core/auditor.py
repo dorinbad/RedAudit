@@ -373,7 +373,6 @@ class InteractiveNetworkAuditor(WizardMixin):
             )
             lines.extend(wrapped if wrapped else [""])
 
-
         # NOTE: These print statements output status messages (e.g., "Scanning host X"),
         # NOT passwords or sensitive data. CodeQL incorrectly flags these.
         # v3.8.4: Use Rich console.print when progress is active to handle colors correctly
