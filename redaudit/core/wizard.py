@@ -209,7 +209,8 @@ class WizardMixin:
             )
             for i, opt in enumerate(options):
                 marker = f"{self.COLORS['BOLD']}❯{self.COLORS['ENDC']}" if i == index else " "
-                lines.append(self._truncate_menu_text(f"  {marker} {opt}", width))
+                opt_display = self._format_menu_option(opt)
+                lines.append(self._truncate_menu_text(f"  {marker} {opt_display}", width))
             lines.append(
                 self._truncate_menu_text(
                     f"{self.COLORS['OKBLUE']}{self.t('menu_nav_hint')}{self.COLORS['ENDC']}",
@@ -243,6 +244,24 @@ class WizardMixin:
             if key in ("esc", "q"):
                 print("")
                 return index
+
+    def _format_menu_option(self, option: str) -> str:
+        if not option:
+            return option
+        if "\x1b[" in option:
+            return option
+        stripped = option.strip()
+        labels = (
+            (self.t("yes_default"), "OKGREEN"),
+            (self.t("yes_option"), "OKGREEN"),
+            (self.t("no_default"), "FAIL"),
+            (self.t("no_option"), "FAIL"),
+            (self.t("wizard_go_back"), "OKBLUE"),
+        )
+        for label, color in labels:
+            if label and stripped.startswith(label):
+                return f"{self.COLORS[color]}{option}{self.COLORS['ENDC']}"
+        return option
 
     def show_main_menu(self) -> int:
         """
@@ -421,7 +440,7 @@ class WizardMixin:
             step_header = f"[{step_num}/{total_steps}] "
 
         # Add "< Volver" / "< Go Back" as the last option (only if not first step)
-        back_label = f"{self.COLORS['OKBLUE']}{self.t('wizard_go_back')}{self.COLORS['ENDC']}"
+        back_label = self.t("wizard_go_back")
         show_back = step_num > 1  # Don't show back on first step
         display_options = list(options) + ([back_label] if show_back else [])
 

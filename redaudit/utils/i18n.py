@@ -92,6 +92,7 @@ TRANSLATIONS = {
         "json_report": "JSON Report: {}",
         "txt_report": "TXT Report: {}",
         "html_report": "HTML Report: {}",
+        "html_report_es": "HTML Report (ES): {}",
         "playbooks_generated": "Remediation playbooks generated: {}",
         "summary": "SUMMARY",
         "save_err": "Error saving report: {}",
@@ -273,6 +274,7 @@ TRANSLATIONS = {
         "yes_default": "Yes (default)",
         "no_option": "No",
         "no_default": "No (default)",
+        "vuln_scan_opt": "Web vulnerability scan",
         "diff_enter_old_path": "Path to OLD report (JSON):",
         "diff_enter_new_path": "Path to NEW report (JSON):",
         # v3.2.2+: Simplified topology prompt
@@ -314,6 +316,7 @@ TRANSLATIONS = {
         "webhook_test_q": "Send a test alert to verify the webhook?",
         "webhook_test_success": "✓ Test webhook sent successfully",
         "webhook_test_failed": "⚠️  Test webhook failed: {}",
+        "auditor_name_q": "Auditor name (optional; e.g., Jane Doe)",
         # v3.7: Advanced Net Discovery wizard
         "net_discovery_advanced_q": "Configure advanced Net Discovery options?",
         "net_discovery_snmp_prompt": "SNMP community string (ENTER = public)",
@@ -405,6 +408,7 @@ TRANSLATIONS = {
         "json_report": "Reporte JSON: {}",
         "txt_report": "Reporte TXT: {}",
         "html_report": "Reporte HTML: {}",
+        "html_report_es": "Reporte HTML (ES): {}",
         "playbooks_generated": "Playbooks de remediación generados: {}",
         "summary": "RESUMEN",
         "save_err": "Error guardando reporte: {}",
@@ -588,6 +592,7 @@ TRANSLATIONS = {
         "yes_default": "Sí (por defecto)",
         "no_option": "No",
         "no_default": "No (por defecto)",
+        "vuln_scan_opt": "Escaneo de vulnerabilidades web",
         "diff_enter_old_path": "Ruta al reporte ANTERIOR (JSON):",
         "diff_enter_new_path": "Ruta al reporte NUEVO (JSON):",
         # v3.2.2+: Prompt de topología simplificado
@@ -629,6 +634,7 @@ TRANSLATIONS = {
         "webhook_test_q": "¿Enviar alerta de prueba para verificar el webhook?",
         "webhook_test_success": "✓ Webhook de prueba enviado correctamente",
         "webhook_test_failed": "⚠️  Webhook de prueba fallido: {}",
+        "auditor_name_q": "Nombre del auditor (opcional; ej. Juan Pérez)",
         # v3.7: Opciones avanzadas Net Discovery
         "net_discovery_advanced_q": "¿Configurar opciones avanzadas de Net Discovery?",
         "net_discovery_snmp_prompt": "Cadena de comunidad SNMP (ENTER = public)",

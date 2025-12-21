@@ -47,6 +47,7 @@ def _build_config_snapshot(config: Dict) -> Dict[str, Any]:
         "cve_lookup_enabled": config.get("cve_lookup_enabled"),
         "dry_run": config.get("dry_run"),
         "prevent_sleep": config.get("prevent_sleep"),
+        "auditor_name": config.get("auditor_name"),
     }
 
 
@@ -443,6 +444,9 @@ def generate_text_report(results: Dict, partial: bool = False) -> str:
     lines.append(f"NETWORK AUDIT REPORT v{VERSION}\n")
     lines.append(f"Date: {datetime.now()}\n")
     lines.append(f"Status: {status_txt}\n\n")
+    auditor_name = (results.get("config_snapshot") or {}).get("auditor_name")
+    if auditor_name:
+        lines.append(f"Auditor: {auditor_name}\n\n")
 
     summ = results.get("summary", {})
     lines.append(f"Networks:      {summ.get('networks', 0)}\n")
@@ -756,11 +760,28 @@ def save_results(
             try:
                 from redaudit.core.html_reporter import save_html_report
 
-                html_path = save_html_report(results, config, output_dir)
+                html_path = save_html_report(
+                    results,
+                    config,
+                    output_dir,
+                    filename="report.html",
+                    lang="en",
+                )
                 if html_path and print_fn and t_fn:
                     print_fn(t_fn("html_report", html_path), "OKGREEN")
                 elif not html_path and print_fn:
                     print_fn("HTML report generation failed (check log)", "WARNING")
+
+                if (config.get("lang") or "").lower() == "es":
+                    html_es_path = save_html_report(
+                        results,
+                        config,
+                        output_dir,
+                        filename="report_es.html",
+                        lang="es",
+                    )
+                    if html_es_path and print_fn and t_fn:
+                        print_fn(t_fn("html_report_es", html_es_path), "OKGREEN")
             except Exception as html_err:
                 if logger:
                     logger.warning("HTML report generation failed: %s", html_err)
