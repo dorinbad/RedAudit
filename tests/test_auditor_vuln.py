@@ -46,7 +46,11 @@ def test_merge_nuclei_findings_creates_hosts():
 def test_estimate_vuln_budget_s_full_mode():
     app = _make_app()
     app.config["scan_mode"] = "completo"
-    app.extra_tools = {"whatweb": "/bin/whatweb", "nikto": "/bin/nikto", "testssl.sh": "/bin/testssl"}
+    app.extra_tools = {
+        "whatweb": "/bin/whatweb",
+        "nikto": "/bin/nikto",
+        "testssl.sh": "/bin/testssl",
+    }
 
     host_info = {
         "ports": [
