@@ -8,13 +8,19 @@
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey?style=flat-square)
 ![CI/CD](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg?style=flat-square)
 
-```text
- ____          _    _             _ _ _
-|  _ \ ___  __| |  / \  _   _  __| (_) |_
-| |_) / _ \/ _` | / _ \| | | |/ _` | | __|
-|  _ <  __/ (_| |/ ___ \ |_| | (_| | | |_
-|_| \_\___|__,_/_/   \_\__,_|\__,_|_|\__|
+<div align="center">
+
 ```
+ ____           _      _             _  _  _
+|  _ \  ___  __| |    / \  _   _  __| |(_)| |_
+| |_) |/ _ \/ _` |   / _ \| | | |/ _` || || __|
+|  _ <|  __| (_| |  / ___ | |_| | (_| || || |_
+|_| \_\\___|\\__,_| /_/   \_\\__,_|\\__,_|_| \\__|
+```
+
+**Interactive Network Audit** · Kali Linux
+
+</div>
 
 ## What is RedAudit?
 
