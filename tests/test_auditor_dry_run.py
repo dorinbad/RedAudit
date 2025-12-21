@@ -22,7 +22,7 @@ class TestAuditorDryRun(unittest.TestCase):
         app.logger = Mock()
         app.config["dry_run"] = True
 
-        with patch("redaudit.core.auditor.nmap") as mock_nmap:
+        with patch("redaudit.core.auditor_scan.nmap") as mock_nmap:
             mock_nmap.PortScanner.return_value = Mock()
             hosts = app.scan_network_discovery("192.168.1.0/24")
 
@@ -36,7 +36,7 @@ class TestAuditorDryRun(unittest.TestCase):
         app.config["scan_mode"] = "normal"
         app.config["dry_run"] = True
 
-        with patch("redaudit.core.auditor.nmap") as mock_nmap:
+        with patch("redaudit.core.auditor_scan.nmap") as mock_nmap:
             mock_nmap.PortScanner.return_value = Mock()
             res = app.scan_host_ports("192.168.1.10")
 
