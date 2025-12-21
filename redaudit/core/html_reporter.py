@@ -126,6 +126,7 @@ def prepare_report_data(results: Dict, config: Dict) -> Dict:
         "scan_timestamp": results.get("timestamp", "-"),
         "target": ", ".join(config.get("target_networks", [])) or "-",
         "scan_mode": config.get("scan_mode", "-"),
+        "auditor_name": config.get("auditor_name") or "",
         "summary": summary,
         "host_count": len(hosts),
         "finding_count": len(finding_table),
@@ -156,7 +157,7 @@ def _extract_finding_title(vuln: Dict) -> str:
     return vuln.get("url", "Finding")[:60]
 
 
-def generate_html_report(results: Dict, config: Dict) -> str:
+def generate_html_report(results: Dict, config: Dict, *, lang: str = "en") -> str:
     """
     Generate HTML report string from scan results.
 
@@ -168,7 +169,8 @@ def generate_html_report(results: Dict, config: Dict) -> str:
         Rendered HTML string
     """
     env = get_template_env()
-    template = env.get_template("report.html.j2")
+    template_name = "report_es.html.j2" if lang == "es" else "report.html.j2"
+    template = env.get_template(template_name)
 
     data = prepare_report_data(results, config)
     return template.render(**data)
@@ -179,6 +181,8 @@ def save_html_report(
     config: Dict,
     output_dir: str,
     filename: str = "report.html",
+    *,
+    lang: str = "en",
 ) -> Optional[str]:
     """
     Generate and save HTML report to file.
@@ -193,7 +197,7 @@ def save_html_report(
         Path to saved file, or None on error
     """
     try:
-        html_content = generate_html_report(results, config)
+        html_content = generate_html_report(results, config, lang=lang)
 
         output_path = os.path.join(output_dir, filename)
         with open(output_path, "w", encoding="utf-8") as f:

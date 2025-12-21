@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedAudit Report - {{ target }}</title>
+    <title>Reporte RedAudit - {{ target }}</title>
     <style>
         :root {
             --bg-dark: #1a1d23;
@@ -88,9 +88,9 @@
     <div class="container">
         <header>
             <div>
-                <h1>🔴 RedAudit Report</h1>
+                <h1>🔴 Reporte RedAudit</h1>
                 <div class="meta">
-                    Target: <strong>{{ target }}</strong> | Mode: {{ scan_mode }} | Generated: {{ generated_at }}
+                    Objetivo: <strong>{{ target }}</strong> | Modo: {{ scan_mode }} | Generado: {{ generated_at }}
                     {% if auditor_name %}| Auditor: <strong>{{ auditor_name }}</strong>{% endif %}
                 </div>
             </div>
@@ -99,85 +99,85 @@
 
         <div class="cards">
             <div class="card">
-                <div class="card-title">Hosts Discovered</div>
+                <div class="card-title">Hosts descubiertos</div>
                 <div class="card-value">{{ summary.hosts_found or host_count }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Hosts Scanned</div>
+                <div class="card-title">Hosts escaneados</div>
                 <div class="card-value">{{ summary.hosts_scanned or host_count }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Total Findings</div>
+                <div class="card-title">Hallazgos totales</div>
                 <div class="card-value">{{ finding_count }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Deep Scans</div>
+                <div class="card-title">Escaneos profundos</div>
                 <div class="card-value">{{ smart_scan.deep_scan_executed or 0 }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Agentless Verified</div>
+                <div class="card-title">Verificación sin agente</div>
                 <div class="card-value">{{ pipeline.agentless_verify.completed or 0 }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Nuclei Findings</div>
+                <div class="card-title">Hallazgos Nuclei</div>
                 <div class="card-value">{{ pipeline.nuclei.findings or 0 }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Critical</div>
+                <div class="card-title">Críticos</div>
                 <div class="card-value severity-critical">{{ severity_counts.critical }}</div>
             </div>
             <div class="card">
-                <div class="card-title">High</div>
+                <div class="card-title">Altos</div>
                 <div class="card-value severity-high">{{ severity_counts.high }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Medium</div>
+                <div class="card-title">Medios</div>
                 <div class="card-value severity-medium">{{ severity_counts.medium }}</div>
             </div>
             <div class="card">
-                <div class="card-title">Low / Info</div>
+                <div class="card-title">Bajos / Info</div>
                 <div class="card-value">{{ severity_counts.low + severity_counts.info }}</div>
             </div>
         </div>
 
         <div class="charts">
             <div class="chart-container">
-                <div class="chart-title">Severity Distribution</div>
+                <div class="chart-title">Distribución de severidad</div>
                 <canvas id="severityChart"></canvas>
             </div>
             <div class="chart-container">
-                <div class="chart-title">Top 10 Ports</div>
+                <div class="chart-title">Top 10 puertos</div>
                 <canvas id="portsChart"></canvas>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">Pipeline Overview</div>
+            <div class="section-title">Resumen del pipeline</div>
             <div class="meta-grid">
                 <div class="meta-item">
-                    <h4>Host Scan</h4>
+                    <h4>Escaneo de hosts</h4>
                     <ul>
-                        <li>Targets <span>{{ pipeline.host_scan.targets or 0 }}</span></li>
-                        <li>Scanned <span>{{ pipeline.host_scan.scanned or 0 }}</span></li>
-                        <li>Threads <span>{{ pipeline.host_scan.threads or 0 }}</span></li>
-                        <li>Mode <span>{{ config_snapshot.scan_mode or scan_mode }}</span></li>
+                        <li>Objetivos <span>{{ pipeline.host_scan.targets or 0 }}</span></li>
+                        <li>Escaneados <span>{{ pipeline.host_scan.scanned or 0 }}</span></li>
+                        <li>Hilos <span>{{ pipeline.host_scan.threads or 0 }}</span></li>
+                        <li>Modo <span>{{ config_snapshot.scan_mode or scan_mode }}</span></li>
                     </ul>
                 </div>
                 <div class="meta-item">
-                    <h4>Net Discovery</h4>
+                    <h4>Descubrimiento de red</h4>
                     <ul>
-                        <li>Enabled <span>{{ 'Yes' if pipeline.net_discovery.enabled else 'No' }}</span></li>
-                        <li>Protocols <span>{{ (pipeline.net_discovery.protocols_used or [])|join(', ') }}</span></li>
-                        <li>ARP Hosts <span>{{ pipeline.net_discovery.counts.arp_hosts or 0 }}</span></li>
+                        <li>Activado <span>{{ 'Sí' if pipeline.net_discovery.enabled else 'No' }}</span></li>
+                        <li>Protocolos <span>{{ (pipeline.net_discovery.protocols_used or [])|join(', ') }}</span></li>
+                        <li>Hosts ARP <span>{{ pipeline.net_discovery.counts.arp_hosts or 0 }}</span></li>
                         <li>HyperScan TCP <span>{{ pipeline.net_discovery.counts.hyperscan_tcp_hosts or 0 }}</span></li>
-                        <li>Red Team <span>{{ 'On' if pipeline.net_discovery.redteam_enabled else 'Off' }}</span></li>
+                        <li>Red Team <span>{{ 'Sí' if pipeline.net_discovery.redteam_enabled else 'No' }}</span></li>
                     </ul>
                 </div>
                 <div class="meta-item">
-                    <h4>Agentless Verify</h4>
+                    <h4>Verificación sin agente</h4>
                     <ul>
-                        <li>Targets <span>{{ pipeline.agentless_verify.targets or 0 }}</span></li>
-                        <li>Completed <span>{{ pipeline.agentless_verify.completed or 0 }}</span></li>
+                        <li>Objetivos <span>{{ pipeline.agentless_verify.targets or 0 }}</span></li>
+                        <li>Completados <span>{{ pipeline.agentless_verify.completed or 0 }}</span></li>
                         <li>SMB <span>{{ pipeline.agentless_verify.signals.smb or 0 }}</span></li>
                         <li>RDP <span>{{ pipeline.agentless_verify.signals.rdp or 0 }}</span></li>
                         <li>HTTP <span>{{ pipeline.agentless_verify.signals.http or 0 }}</span></li>
@@ -186,27 +186,27 @@
                 <div class="meta-item">
                     <h4>Nuclei</h4>
                     <ul>
-                        <li>Targets <span>{{ pipeline.nuclei.targets or 0 }}</span></li>
-                        <li>Findings <span>{{ pipeline.nuclei.findings or 0 }}</span></li>
-                        <li>Status <span>{{ 'OK' if pipeline.nuclei.success else 'N/A' }}</span></li>
+                        <li>Objetivos <span>{{ pipeline.nuclei.targets or 0 }}</span></li>
+                        <li>Hallazgos <span>{{ pipeline.nuclei.findings or 0 }}</span></li>
+                        <li>Estado <span>{{ 'OK' if pipeline.nuclei.success else 'N/A' }}</span></li>
                     </ul>
                 </div>
                 <div class="meta-item">
-                    <h4>Smart Scan</h4>
+                    <h4>SmartScan</h4>
                     <ul>
                         <li>Hosts <span>{{ smart_scan.hosts or 0 }}</span></li>
-                        <li>Identity Avg <span>{{ smart_scan.identity_score_avg or 0 }}</span></li>
-                        <li>Deep Triggered <span>{{ smart_scan.deep_scan_triggered or 0 }}</span></li>
-                        <li>Deep Executed <span>{{ smart_scan.deep_scan_executed or 0 }}</span></li>
+                        <li>Prom. identidad <span>{{ smart_scan.identity_score_avg or 0 }}</span></li>
+                        <li>Deep activado <span>{{ smart_scan.deep_scan_triggered or 0 }}</span></li>
+                        <li>Deep ejecutado <span>{{ smart_scan.deep_scan_executed or 0 }}</span></li>
                     </ul>
                 </div>
                 <div class="meta-item">
-                    <h4>Vulnerabilities</h4>
+                    <h4>Vulnerabilidades</h4>
                     <ul>
                         <li>Total <span>{{ pipeline.vulnerability_scan.total or 0 }}</span></li>
-                        <li>Sources <span>{{ (pipeline.vulnerability_scan.sources or {})|length }}</span></li>
-                        <li>Critical <span>{{ severity_counts.critical }}</span></li>
-                        <li>High <span>{{ severity_counts.high }}</span></li>
+                        <li>Fuentes <span>{{ (pipeline.vulnerability_scan.sources or {})|length }}</span></li>
+                        <li>Críticos <span>{{ severity_counts.critical }}</span></li>
+                        <li>Altos <span>{{ severity_counts.high }}</span></li>
                     </ul>
                 </div>
             </div>
@@ -219,15 +219,15 @@
                     <tr>
                         <th class="sortable" data-col="0">IP</th>
                         <th class="sortable" data-col="1">Hostname</th>
-                        <th class="sortable" data-col="2">Status</th>
-                        <th class="sortable" data-col="3">Ports</th>
-                        <th class="sortable" data-col="4">Risk Score</th>
-                        <th class="sortable" data-col="5">Asset Type</th>
+                        <th class="sortable" data-col="2">Estado</th>
+                        <th class="sortable" data-col="3">Puertos</th>
+                        <th class="sortable" data-col="4">Riesgo</th>
+                        <th class="sortable" data-col="5">Tipo de activo</th>
                         <th class="sortable" data-col="6">OS</th>
                         <th>MAC</th>
-                        <th>Vendor</th>
+                        <th>Fabricante</th>
                         <th>Tags</th>
-                        <th>Agentless</th>
+                        <th>Sin agente</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -265,16 +265,16 @@
         </div>
 
         <div class="section">
-            <div class="section-title">Findings ({{ finding_count }})</div>
+            <div class="section-title">Hallazgos ({{ finding_count }})</div>
             <table id="findingsTable">
                 <thead>
                     <tr>
                         <th class="sortable" data-col="0">Host</th>
-                        <th class="sortable" data-col="1">Severity</th>
-                        <th class="sortable" data-col="2">Source</th>
-                        <th class="sortable" data-col="3">Category</th>
-                        <th class="sortable" data-col="4">Title</th>
-                        <th class="sortable" data-col="5">Port</th>
+                        <th class="sortable" data-col="1">Severidad</th>
+                        <th class="sortable" data-col="2">Fuente</th>
+                        <th class="sortable" data-col="3">Categoría</th>
+                        <th class="sortable" data-col="4">Título</th>
+                        <th class="sortable" data-col="5">Puerto</th>
                         <th>URL</th>
                         <th>CVE</th>
                     </tr>
@@ -298,7 +298,7 @@
 
         <footer>
             <div style="margin-bottom: 0.5rem;">
-                Generated by <strong>RedAudit</strong> v{{ version }} — {{ generated_at }}
+                Generado por <strong>RedAudit</strong> v{{ version }} — {{ generated_at }}
             </div>
             <div style="font-size: 0.75rem; opacity: 0.7;">
                 GPLv3 License | © 2025 RedAudit |
@@ -314,7 +314,7 @@
         new Chart(severityCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+                labels: ['Crítico', 'Alto', 'Medio', 'Bajo', 'Info'],
                 datasets: [{
                     data: [{{ severity_counts.critical }}, {{ severity_counts.high }}, {{ severity_counts.medium }}, {{ severity_counts.low }}, {{ severity_counts.info }}],
                     backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#3498db', '#7f8c8d'],
@@ -336,7 +336,7 @@
             data: {
                 labels: [{% for port, count in top_ports %}'{{ port }}'{% if not loop.last %}, {% endif %}{% endfor %}],
                 datasets: [{
-                    label: 'Host Count',
+                    label: 'Cantidad de hosts',
                     data: [{% for port, count in top_ports %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}],
                     backgroundColor: '#3498db',
                     borderRadius: 4

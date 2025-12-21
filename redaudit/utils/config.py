@@ -63,6 +63,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         # v3.8: Agentless verification (SMB/RDP/LDAP)
         "windows_verify_enabled": None,  # True/False
         "windows_verify_max_targets": None,  # int | None
+        "auditor_name": None,  # str | None
     },
 }
 

@@ -353,9 +353,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                 # Store last suppressed line so progress UIs can surface "what's happening"
                 # without flooding the terminal with logs.
                 try:
-                    condensed = (msg.splitlines()[0] if msg else "").strip()
-                    if condensed:
-                        self._set_ui_detail(condensed)
+                    if msg:
+                        self._set_ui_detail(msg, status_display)
                 except Exception:
                     pass
                 if self.logger:
@@ -430,12 +429,28 @@ class InteractiveNetworkAuditor(WizardMixin):
         # For other messages, just take first 60 chars
         return text[:60] + ("…" if len(text) > 60 else "")
 
-    def _set_ui_detail(self, text: str) -> None:
+    def _set_ui_detail(self, text: str, status_display: Optional[str] = None) -> None:
         condensed = self._condense_for_ui(text)
         if not condensed:
             return
+        if status_display:
+            condensed = self._format_ui_detail(condensed, status_display)
         with self._ui_detail_lock:
             self._ui_detail = condensed
+
+    def _format_ui_detail(self, text: str, status_display: str) -> str:
+        color_map = {
+            "INFO": "bright_blue",
+            "OK": "green",
+            "WARN": "yellow",
+            "WARNING": "yellow",
+            "FAIL": "red",
+            "ERROR": "red",
+        }
+        color = color_map.get(status_display)
+        if not color:
+            return text
+        return f"[{color}]{text}[/{color}]"
 
     @staticmethod
     def _coerce_text(value: object) -> str:
@@ -580,8 +595,15 @@ class InteractiveNetworkAuditor(WizardMixin):
         """
         if status_display in ("FAIL",):
             return True
-        if status_display in ("INFO", "OK"):
+        if status_display in ("INFO",):
             return False
+        if status_display in ("OK",):
+            text = (msg or "").lower()
+            ok_terms = (
+                "identidad profundo finalizado",
+                "deep identity scan finished",
+            )
+            return any(term in text for term in ok_terms)
         text = (msg or "").lower()
         if "⚠" in msg:
             return True
@@ -634,6 +656,7 @@ class InteractiveNetworkAuditor(WizardMixin):
         except TypeError:
             kwargs.pop("overflow", None)
             kwargs.pop("no_wrap", None)
+            kwargs.pop("markup", None)
             return TextColumn(*args, **kwargs)
 
     def _progress_columns(self, *, show_detail: bool, show_eta: bool, show_elapsed: bool):
@@ -659,7 +682,13 @@ class InteractiveNetworkAuditor(WizardMixin):
         # v3.8.1: Always show elapsed time for visibility
         columns.append(TimeElapsedColumn())
         if show_detail and width >= 70:
-            columns.append(self._safe_text_column("{task.fields[detail]}", overflow="ellipsis"))
+            columns.append(
+                self._safe_text_column(
+                    "{task.fields[detail]}",
+                    overflow="ellipsis",
+                    markup=True,
+                )
+            )
         # v3.8.2: Removed SpinnerColumn - caused display issues during long phases
         return [c for c in columns if c is not None]
 
@@ -2621,6 +2650,8 @@ class InteractiveNetworkAuditor(WizardMixin):
     def save_results(self, partial=False):
         """Save results to files."""
         self.current_phase = "saving"
+        if self.config.get("lang") is None:
+            self.config["lang"] = self.lang
         save_results(
             self.results,
             self.config,
@@ -2779,6 +2810,7 @@ class InteractiveNetworkAuditor(WizardMixin):
                     ),
                     windows_verify_enabled=self.config.get("windows_verify_enabled"),
                     windows_verify_max_targets=self.config.get("windows_verify_max_targets"),
+                    auditor_name=self.config.get("auditor_name"),
                     lang=self.lang,
                 )
                 self.print_status(
@@ -2955,6 +2987,8 @@ class InteractiveNetworkAuditor(WizardMixin):
                                             if step_total
                                             else 0
                                         )
+                                        if step_total and step_index >= step_total:
+                                            pct = min(pct, 99)
                                         # v3.8.1: Truncate label to 35 chars for clean display
                                         label_short = label[:35] + "…" if len(label) > 35 else label
                                         progress.update(
@@ -3345,6 +3379,7 @@ class InteractiveNetworkAuditor(WizardMixin):
 
         self.config["save_txt_report"] = defaults_for_run.get("generate_txt", True)
         self.config["save_html_report"] = defaults_for_run.get("generate_html", True)
+        self.config["auditor_name"] = defaults_for_run.get("auditor_name")
 
         # 7. UDP Configuration
         self.config["udp_mode"] = defaults_for_run.get("udp_mode", UDP_SCAN_MODE_QUICK)
@@ -3485,7 +3520,7 @@ class InteractiveNetworkAuditor(WizardMixin):
             # ═══════════════════════════════════════════════════════════════════
             elif step == 3:
                 vuln_options = [
-                    self.t("yes_option") + " — " + self.t("vuln_scan_q"),
+                    self.t("yes_option") + " — " + self.t("vuln_scan_opt"),
                     self.t("no_option"),
                 ]
                 default_idx = 0 if defaults_for_run.get("scan_vulnerabilities") is not False else 1
@@ -3557,6 +3592,26 @@ class InteractiveNetworkAuditor(WizardMixin):
             # ═══════════════════════════════════════════════════════════════════
             elif step == 5:
                 self.print_status(f"[{step}/{TOTAL_STEPS}] " + self.t("output_dir"), "INFO")
+
+                auditor_default = wizard_state.get(
+                    "auditor_name",
+                    (
+                        defaults_for_run.get("auditor_name")
+                        if isinstance(defaults_for_run, dict)
+                        else ""
+                    ),
+                )
+                auditor_default = auditor_default or ""
+                auditor_prompt = self.t("auditor_name_q")
+                auditor_name = input(
+                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {auditor_prompt} "
+                    f"[{auditor_default}]: "
+                ).strip()
+                if not auditor_name:
+                    auditor_name = auditor_default
+                auditor_name = auditor_name.strip()
+                self.config["auditor_name"] = auditor_name if auditor_name else None
+                wizard_state["auditor_name"] = self.config["auditor_name"] or ""
 
                 default_reports = get_default_reports_base_dir()
                 persisted_output = defaults_for_run.get("output_dir")
