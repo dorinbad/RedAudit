@@ -76,6 +76,7 @@ SEVERITY_KEYWORDS = {
 # Asset type to tags mapping
 ASSET_TYPE_TAGS = {
     "router": ["network", "infrastructure", "gateway"],
+    "switch": ["network", "infrastructure", "switch"],
     "workstation": ["endpoint", "user-device", "desktop"],
     "server": ["infrastructure", "backend"],
     "mobile": ["endpoint", "mobile", "user-device"],

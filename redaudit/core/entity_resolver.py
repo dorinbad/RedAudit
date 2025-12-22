@@ -162,8 +162,9 @@ def create_unified_asset(host_group: List[Dict]) -> Dict:
     if len(host_group) == 1:
         # Single host, convert to unified format
         host = host_group[0]
+        asset_name = _derive_asset_name(host) or f"Host-{host.get('ip', 'unknown')}"
         return {
-            "asset_name": host.get("hostname", "") or f"Host-{host.get('ip', 'unknown')}",
+            "asset_name": asset_name,
             "asset_type": guess_asset_type(host),
             "interfaces": [
                 {
@@ -190,7 +191,10 @@ def create_unified_asset(host_group: List[Dict]) -> Dict:
             break
 
     if not asset_name:
-        asset_name = f"MultiInterface-{primary_host.get('ip', 'unknown')}"
+        asset_name = (
+            _derive_asset_name(primary_host)
+            or f"MultiInterface-{primary_host.get('ip', 'unknown')}"
+        )
 
     # Collect interfaces
     interfaces = []
@@ -261,6 +265,10 @@ def guess_asset_type(host: Dict) -> str:
     ports = host.get("ports", [])
     deep = host.get("deep_scan", {})
     vendor = (deep.get("vendor") or "").lower()
+    device_hints = host.get("device_type_hints") or []
+    agentless = host.get("agentless_fingerprint") or {}
+    http_title = str(agentless.get("http_title") or "").lower()
+    http_server = str(agentless.get("http_server") or "").lower()
 
     # Check hostname patterns (specific devices first to avoid router suffix matches).
     if any(x in hostname for x in ["iphone", "ipad", "android"]):
@@ -275,6 +283,35 @@ def guess_asset_type(host: Dict) -> str:
         return "media"
     if any(x in hostname for x in ["fritz", "router", "gateway"]):
         return "router"
+
+    # Check device type hints (from discovery/agentless signals).
+    if isinstance(device_hints, list):
+        normalized_hints = {str(hint).lower() for hint in device_hints if hint}
+        if "router" in normalized_hints:
+            return "router"
+        if "printer" in normalized_hints:
+            return "printer"
+        if "mobile" in normalized_hints or "apple_device" in normalized_hints:
+            return "mobile"
+        if "smart_tv" in normalized_hints or "chromecast" in normalized_hints:
+            return "media"
+        if "iot_lighting" in normalized_hints:
+            return "iot"
+        if "hypervisor" in normalized_hints:
+            return "server"
+
+    # Check agentless HTTP hints when hostname is missing.
+    http_hint = f"{http_title} {http_server}".strip()
+    if http_hint:
+        if any(x in http_hint for x in ["router", "gateway", "fritz"]):
+            return "router"
+        if "switch" in http_hint:
+            return "switch"
+        if vendor and any(
+            x in vendor for x in ["zyxel", "netgear", "d-link", "tp-link", "ubiquiti"]
+        ):
+            if re.search(r"\b(gs|xgs|xs|sg)\d", http_hint):
+                return "switch"
 
     # Check vendor
     if any(x in vendor for x in ["apple", "microsoft"]):
@@ -294,6 +331,25 @@ def guess_asset_type(host: Dict) -> str:
         return "server"
 
     return "unknown"
+
+
+def _derive_asset_name(host: Dict) -> str:
+    """
+    Derive a human-friendly asset name from available identity hints.
+    """
+    hostname = str(host.get("hostname") or "").strip()
+    if hostname:
+        return hostname
+
+    agentless = host.get("agentless_fingerprint") or {}
+    http_title = str(agentless.get("http_title") or "").strip()
+    if http_title:
+        vendor = str((host.get("deep_scan") or {}).get("vendor") or "").strip()
+        if vendor and vendor.lower() not in http_title.lower():
+            return f"{vendor} {http_title}".strip()
+        return http_title
+
+    return ""
 
 
 def reconcile_assets(hosts: List[Dict], logger=None) -> List[Dict]:
