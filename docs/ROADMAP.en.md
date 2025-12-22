@@ -27,7 +27,6 @@ These features are approved but **not yet implemented** in the codebase.
 | Feature | Status | Description |
 | :--- | :--- | :--- |
 | **PyPI Distribution** | 🚧 Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
-| **Containerization** | 🚧 Deferred | Official Docker image. Deferred in favor of standard pip/venv installation stability. |
 | **Plugin Engine** | 🚧 Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
 
 ---
@@ -68,6 +67,7 @@ Features currently present using `redaudit --version` >= v3.6.0.
 | Feature | Version | Verification |
 | :--- | :--- | :--- |
 | **Single Version Source** | v3.5.4 | Version now resolves reliably across install modes: `importlib.metadata` when available, plus a packaged `redaudit/VERSION` fallback for script-based `/usr/local/lib/redaudit` installs. |
+| **Container Image** | v3.8.4 | `Dockerfile` + `.github/workflows/docker.yml` publish a GHCR image for reproducible runs. |
 | **Centralized CommandRunner** | v3.5.0 | `redaudit/core/command_runner.py` handles all subprocesses safely. |
 | **Timeout-Safe Host Scans** | v3.7.3 | `redaudit/core/auditor.py` enforces hard timeouts for nmap host scans, keeping progress responsive. |
 | **Persistent Config** | v3.1.1 | `~/.redaudit/config.json` stores user defaults. |

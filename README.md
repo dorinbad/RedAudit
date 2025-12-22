@@ -192,6 +192,21 @@ cd RedAudit
 sudo bash redaudit_install.sh
 ```
 
+### Docker (optional)
+
+Run the official container image via GHCR:
+
+```bash
+docker pull ghcr.io/dorinbadea/redaudit:latest
+
+# Example scan (host networking is recommended for local subnet discovery)
+docker run --rm --network host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN \
+  -v "$(pwd)/reports:/reports" \
+  ghcr.io/dorinbadea/redaudit:latest \
+  --target 192.168.1.0/24 --mode normal --yes --output /reports
+```
+
 ### Activating the Alias
 
 After installation, reload your shell configuration:

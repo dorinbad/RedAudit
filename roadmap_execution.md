@@ -7,10 +7,10 @@ la vision del producto; enfoca calidad, arquitectura y ecosistema.
 
 Objetivo: mejoras visibles, documentacion operativa y señales de calidad.
 
-- Agregar badge de coverage en README y README_ES.
-- Consolidar CONTRIBUTING en la raiz (apuntando a .github/).
-- Revisar y actualizar issue templates (bug/feature).
-- Corregir ResourceWarning si aparecen en tests.
+- [x] Agregar badge de coverage en README y README_ES.
+- [x] Consolidar CONTRIBUTING en la raiz (apuntando a .github/).
+- [x] Revisar y actualizar issue templates (bug/feature).
+- [ ] Corregir ResourceWarning si aparecen en tests (no se detectaron en la corrida actual).
 
 Criterio de salida:
 
@@ -38,9 +38,9 @@ Criterio de salida:
 
 Objetivo: elevar confianza con metricas y documentacion clara.
 
-- Subir cobertura real en redaudit/ > 90%.
-- Agregar SECURITY_AUDIT.md con alcance y riesgos conocidos.
-- Implementar rotacion de logs (RotatingFileHandler) con tests minimos.
+- [ ] Subir cobertura real en redaudit/ > 90% (actual: ~52.8%).
+- [x] Agregar SECURITY_AUDIT.md con alcance y riesgos conocidos.
+- [x] Implementar rotacion de logs (RotatingFileHandler) con tests minimos.
 
 Criterio de salida:
 
@@ -52,8 +52,8 @@ Criterio de salida:
 
 Objetivo: mejorar despliegue y extensibilidad.
 
-- Dockerfile oficial + workflow para build/push.
-- Evaluar sistema de plugins si hay casos reales.
+- [x] Dockerfile oficial + workflow para build/push.
+- [x] Evaluar sistema de plugins (sin casos urgentes; se mantiene diferido en ROADMAP).
 
 Criterio de salida:
 

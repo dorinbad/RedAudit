@@ -67,6 +67,20 @@ sudo apt install nmap whatweb nikto testssl tcpdump tshark exploitdb python3-nma
 sudo python3 -m redaudit --help
 ```
 
+### Docker (opcional)
+
+Ejecuta la imagen oficial en GHCR:
+
+```bash
+docker pull ghcr.io/dorinbadea/redaudit:latest
+
+docker run --rm --network host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN \
+  -v "$(pwd)/reports:/reports" \
+  ghcr.io/dorinbadea/redaudit:latest \
+  --target 192.168.1.0/24 --mode normal --yes --output /reports
+```
+
 ### Actualización
 
 RedAudit verifica actualizaciones al iniciar (modo interactivo). Para omitir: `--skip-update-check`.

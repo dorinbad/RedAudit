@@ -27,7 +27,6 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
 | **Distribución PyPI** | 🚧 Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
-| **Contenedorización** | 🚧 Aplazado | Imagen Docker oficial. Aplazado a favor de la estabilidad de instalación estándar pip/venv. |
 | **Motor de Plugins** | 🚧 Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
 
 ---
@@ -68,6 +67,7 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 | Característica | Versión | Verificación |
 | :--- | :--- | :--- |
 | **Versión Única** | v3.5.4 | La versión ahora se resuelve de forma fiable en todos los modos: `importlib.metadata` cuando existe, más un fallback `redaudit/VERSION` para instalaciones vía script en `/usr/local/lib/redaudit`. |
+| **Imagen de Contenedor** | v3.8.4 | `Dockerfile` + `.github/workflows/docker.yml` publican imagen en GHCR. |
 | **CommandRunner Central** | v3.5.0 | `redaudit/core/command_runner.py` maneja todos los subprocesos de forma segura. |
 | **Escaneos con Timeout** | v3.7.3 | `redaudit/core/auditor.py` aplica timeouts duros en nmap por host, manteniendo el progreso fluido. |
 | **Config Persistente** | v3.1.1 | `~/.redaudit/config.json` almacena defaults del usuario. |
