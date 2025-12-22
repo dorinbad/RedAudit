@@ -14,6 +14,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Corregido
 
 - **Build de Docker**: Se instalan herramientas de compilacion para que `netifaces` compile durante `pip install`.
+- **Identidad en hosts silenciosos**: El probe HTTP ahora usa fallback a H1/H2 cuando falta `<title>`, mejorando la deteccion de modelo en pantallas de login.
 
 ### Documentacion
 

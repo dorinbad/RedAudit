@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Docker build**: Install build tools in the image so `netifaces` compiles during `pip install`.
+- **Quiet-host identity**: HTTP title probe now falls back to H1/H2 headings when `<title>` is missing, improving model detection on login pages.
 
 ### Documentation
 
