@@ -52,9 +52,7 @@ def test_interactive_update_failed(monkeypatch):
         "check_for_updates",
         lambda **_kwargs: (True, "3.0.1", "", "", "", None),
     )
-    monkeypatch.setattr(
-        updater, "perform_git_update", lambda *_a, **_k: (False, "boom")
-    )
+    monkeypatch.setattr(updater, "perform_git_update", lambda *_a, **_k: (False, "boom"))
     messages = []
     result = updater.interactive_update_check(
         print_fn=lambda msg, *_a: messages.append(msg), ask_fn=lambda *_a, **_k: True
@@ -69,9 +67,7 @@ def test_interactive_update_success_exits(monkeypatch):
         "check_for_updates",
         lambda **_kwargs: (True, "3.0.1", "", "", "", None),
     )
-    monkeypatch.setattr(
-        updater, "perform_git_update", lambda *_a, **_k: (True, "ok")
-    )
+    monkeypatch.setattr(updater, "perform_git_update", lambda *_a, **_k: (True, "ok"))
     monkeypatch.setattr(updater, "_show_restart_terminal_notice", lambda **_k: None)
     monkeypatch.setattr(updater, "_pause_for_restart_terminal", lambda **_k: None)
 

@@ -22,9 +22,7 @@ class _DummyRunner:
 
 def test_get_tool_version_returns_none_when_missing(monkeypatch):
     monkeypatch.setattr(scanner_versions.shutil, "which", lambda _name: None)
-    version = scanner_versions._get_tool_version(
-        "nmap", scanner_versions.TOOL_CONFIGS["nmap"]
-    )
+    version = scanner_versions._get_tool_version("nmap", scanner_versions.TOOL_CONFIGS["nmap"])
     assert version is None
 
 
@@ -33,9 +31,7 @@ def test_get_tool_version_parses_version(monkeypatch):
     monkeypatch.setattr(scanner_versions.shutil, "which", lambda _name: "/usr/bin/nmap")
     monkeypatch.setattr(scanner_versions, "CommandRunner", lambda **_kwargs: runner)
 
-    version = scanner_versions._get_tool_version(
-        "nmap", scanner_versions.TOOL_CONFIGS["nmap"]
-    )
+    version = scanner_versions._get_tool_version("nmap", scanner_versions.TOOL_CONFIGS["nmap"])
 
     assert version == "7.93"
     assert runner.calls
@@ -46,9 +42,7 @@ def test_get_tool_version_returns_detected_on_no_match(monkeypatch):
     monkeypatch.setattr(scanner_versions.shutil, "which", lambda _name: "/usr/bin/nmap")
     monkeypatch.setattr(scanner_versions, "CommandRunner", lambda **_kwargs: runner)
 
-    version = scanner_versions._get_tool_version(
-        "nmap", scanner_versions.TOOL_CONFIGS["nmap"]
-    )
+    version = scanner_versions._get_tool_version("nmap", scanner_versions.TOOL_CONFIGS["nmap"])
 
     assert version == "detected"
 
@@ -61,17 +55,13 @@ def test_get_tool_version_returns_detected_on_exception(monkeypatch):
 
     monkeypatch.setattr(scanner_versions, "CommandRunner", _boom)
 
-    version = scanner_versions._get_tool_version(
-        "nmap", scanner_versions.TOOL_CONFIGS["nmap"]
-    )
+    version = scanner_versions._get_tool_version("nmap", scanner_versions.TOOL_CONFIGS["nmap"])
 
     assert version == "detected"
 
 
 def test_get_scanner_versions_uses_tool_config(monkeypatch):
-    configs = {
-        "nmap": {"names": ["nmap"], "version_args": ["--version"], "pattern": r"nmap"}
-    }
+    configs = {"nmap": {"names": ["nmap"], "version_args": ["--version"], "pattern": r"nmap"}}
     monkeypatch.setattr(scanner_versions, "TOOL_CONFIGS", configs)
 
     def _fake_get(tool_name, _config):

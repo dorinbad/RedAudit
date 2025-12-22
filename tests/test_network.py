@@ -121,9 +121,7 @@ class TestNetworkDetection(unittest.TestCase):
                     }
                 if iface == "wlan0":
                     return {
-                        _DummyNetifaces.AF_INET6: [
-                            {"addr": "2001:db8::1%wlan0", "netmask": "64"}
-                        ]
+                        _DummyNetifaces.AF_INET6: [{"addr": "2001:db8::1%wlan0", "netmask": "64"}]
                     }
                 return {}
 
@@ -146,9 +144,7 @@ class TestNetworkDetection(unittest.TestCase):
             @staticmethod
             def ifaddresses(_iface):
                 return {
-                    _DummyNetifaces.AF_INET: [
-                        {"addr": "10.0.0.5", "netmask": "255.255.255.0"}
-                    ],
+                    _DummyNetifaces.AF_INET: [{"addr": "10.0.0.5", "netmask": "255.255.255.0"}],
                     _DummyNetifaces.AF_INET6: [{"addr": "2001:db8::2", "netmask": "64"}],
                 }
 
@@ -210,9 +206,7 @@ class TestNetworkDetection(unittest.TestCase):
     def test_get_neighbor_mac_parses_output(self):
         output = "10.0.0.1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE"
         with patch("redaudit.core.network.CommandRunner") as mock_runner:
-            mock_runner.return_value.run.return_value = SimpleNamespace(
-                stdout=output, stderr=""
-            )
+            mock_runner.return_value.run.return_value = SimpleNamespace(stdout=output, stderr="")
             self.assertEqual(get_neighbor_mac("10.0.0.1"), "aa:bb:cc:dd:ee:ff")
 
     def test_get_neighbor_mac_returns_none_on_empty(self):

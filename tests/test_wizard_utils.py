@@ -85,9 +85,7 @@ def test_menu_width_fallbacks(monkeypatch):
     def _boom(*_args, **_kwargs):
         raise OSError("no tty")
 
-    monkeypatch.setattr(
-        "redaudit.core.wizard.shutil", SimpleNamespace(get_terminal_size=_boom)
-    )
+    monkeypatch.setattr("redaudit.core.wizard.shutil", SimpleNamespace(get_terminal_size=_boom))
     assert wiz._menu_width() == 79
 
 

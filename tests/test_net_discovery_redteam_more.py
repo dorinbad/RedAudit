@@ -184,9 +184,7 @@ def test_redteam_rpc_enum_nmap_raw(monkeypatch):
 
 def test_redteam_dns_zone_transfer_no_targets(monkeypatch):
     monkeypatch.setattr(net_discovery.shutil, "which", lambda _name: "/usr/bin/dig")
-    result = net_discovery._redteam_dns_zone_transfer(
-        {"dhcp_servers": []}, {"dig": True}
-    )
+    result = net_discovery._redteam_dns_zone_transfer({"dhcp_servers": []}, {"dig": True})
     assert result["status"] == "no_targets"
 
 

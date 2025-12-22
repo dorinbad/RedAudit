@@ -91,9 +91,7 @@ class TestJsonlExporter(unittest.TestCase):
 
     def test_extract_title_from_observations(self):
         vuln = {"parsed_observations": ["Missing HSTS on endpoint"]}
-        self.assertEqual(
-            _extract_title(vuln), "Missing HTTP Strict Transport Security Header"
-        )
+        self.assertEqual(_extract_title(vuln), "Missing HTTP Strict Transport Security Header")
 
         vuln = {"parsed_observations": ["Server banner reveals version"], "port": 80}
         self.assertEqual(_extract_title(vuln), "Server Version Disclosed in Banner")

@@ -86,7 +86,9 @@ def test_check_for_updates_available(monkeypatch):
             "published_at": "2025-01-01",
         },
     )
-    monkeypatch.setattr(updater, "fetch_changelog_snippet", lambda *_args, **_kwargs: ("Notes", "en"))
+    monkeypatch.setattr(
+        updater, "fetch_changelog_snippet", lambda *_args, **_kwargs: ("Notes", "en")
+    )
 
     update = updater.check_for_updates(logger=None, lang="en")
     assert update[0] is True

@@ -816,9 +816,7 @@ def http_identity_probe(
     host = _format_http_host(safe_ip)
     ports_to_check = ports or list(HTTP_IDENTITY_PORTS)
     for port in ports_to_check:
-        schemes = (
-            ("https", "http") if port in HTTP_IDENTITY_HTTPS_PORTS else ("http", "https")
-        )
+        schemes = ("https", "http") if port in HTTP_IDENTITY_HTTPS_PORTS else ("http", "https")
         for scheme in schemes:
             url = f"{scheme}://{host}:{port}/"
             headers = _fetch_http_headers(url, extra_tools, dry_run=dry_run, logger=logger)

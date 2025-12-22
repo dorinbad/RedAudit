@@ -21,7 +21,9 @@ def test_get_nuclei_version_parses_output():
 
     version_output = "Nuclei Engine Version: v3.2.1\n"
     with patch("redaudit.core.nuclei.shutil.which", return_value="/usr/bin/nuclei"):
-        with patch("redaudit.core.nuclei.CommandRunner", lambda *_a, **_k: _fake_runner(version_output)):
+        with patch(
+            "redaudit.core.nuclei.CommandRunner", lambda *_a, **_k: _fake_runner(version_output)
+        ):
             assert nuclei.get_nuclei_version() == "Nuclei Engine Version: v3.2.1"
 
 

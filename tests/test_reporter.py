@@ -112,9 +112,7 @@ class TestReporter(unittest.TestCase):
             "vulnerabilities": [
                 {
                     "host": "192.168.1.10",
-                    "vulnerabilities": [
-                        {"curl_headers": "Location: http://192.168.10.5/login"}
-                    ],
+                    "vulnerabilities": [{"curl_headers": "Location: http://192.168.10.5/login"}],
                 }
             ],
             "net_discovery": {
@@ -222,9 +220,7 @@ class TestReporter(unittest.TestCase):
             "vulnerabilities": [
                 {
                     "host": "192.168.1.10",
-                    "vulnerabilities": [
-                        {"curl_headers": "Location: http://192.168.10.5/login"}
-                    ],
+                    "vulnerabilities": [{"curl_headers": "Location: http://192.168.10.5/login"}],
                 }
             ],
         }

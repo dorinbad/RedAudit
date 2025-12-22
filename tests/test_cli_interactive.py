@@ -103,7 +103,9 @@ def test_cli_main_interactive_diff_reports(monkeypatch, tmp_path):
         "input",
         lambda *_a, **_k: "old.json" if "old" in _a[0] else "new.json",
     )
-    monkeypatch.setattr("redaudit.core.diff.generate_diff_report", lambda *_a, **_k: {"generated_at": "2025-01-01"})
+    monkeypatch.setattr(
+        "redaudit.core.diff.generate_diff_report", lambda *_a, **_k: {"generated_at": "2025-01-01"}
+    )
     monkeypatch.setattr("redaudit.core.diff.format_diff_text", lambda *_a, **_k: "diff text")
     monkeypatch.setattr("redaudit.core.diff.format_diff_markdown", lambda *_a, **_k: "diff md")
 
