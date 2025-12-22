@@ -25,6 +25,7 @@ except ImportError:
 
 from redaudit.core.crypto import (
     is_crypto_available,
+    decrypt_data,
     derive_key_from_password,
     encrypt_data,
     generate_random_password,
@@ -100,6 +101,36 @@ def test_encryption_without_crypto():
         crypto_module.Fernet = original_fernet
 
 
+def test_derive_key_requires_crypto():
+    import redaudit.core.crypto as crypto_module
+
+    original_kdf = crypto_module.PBKDF2HMAC
+    crypto_module.PBKDF2HMAC = None
+    try:
+        try:
+            derive_key_from_password("password")
+            assert False, "Expected RuntimeError when cryptography is unavailable"
+        except RuntimeError:
+            assert True
+    finally:
+        crypto_module.PBKDF2HMAC = original_kdf
+
+
+def test_decrypt_data_requires_crypto():
+    import redaudit.core.crypto as crypto_module
+
+    original_fernet = crypto_module.Fernet
+    crypto_module.Fernet = None
+    try:
+        try:
+            decrypt_data(b"data", b"key")
+            assert False, "Expected RuntimeError when cryptography is unavailable"
+        except RuntimeError:
+            assert True
+    finally:
+        crypto_module.Fernet = original_fernet
+
+
 def test_password_validation():
     """Test password validation in ask_password_twice."""
     if not CRYPTO_AVAILABLE:
@@ -134,6 +165,17 @@ def test_validate_password_strength_and_prompt(monkeypatch):
     assert "at least" in msg
 
     inputs = iter(["short", "StrongPass123", "StrongPass123"])
+    monkeypatch.setattr("getpass.getpass", lambda *_args, **_kwargs: next(inputs))
+    assert ask_password_twice(prompt="Password", lang="en") == "StrongPass123"
+
+
+def test_ask_password_twice_reprompts_on_mismatch(monkeypatch):
+    if not CRYPTO_AVAILABLE:
+        return
+
+    from redaudit.core.crypto import ask_password_twice
+
+    inputs = iter(["StrongPass123", "Mismatch123", "StrongPass123", "StrongPass123"])
     monkeypatch.setattr("getpass.getpass", lambda *_args, **_kwargs: next(inputs))
     assert ask_password_twice(prompt="Password", lang="en") == "StrongPass123"
 

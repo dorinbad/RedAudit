@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from redaudit.core.network import (
     detect_interface_type,
     detect_networks_fallback,
+    detect_networks_netifaces,
     detect_all_networks,
     find_interface_for_ip,
 )
@@ -97,6 +98,83 @@ class TestNetworkDetection(unittest.TestCase):
         nets = detect_networks_fallback()
 
         self.assertEqual(len(nets), 0)
+
+    def test_detect_networks_netifaces_ipv4_ipv6(self):
+        class _DummyNetifaces:
+            AF_INET = 2
+            AF_INET6 = 10
+
+            @staticmethod
+            def interfaces():
+                return ["eth0", "wlan0", "lo"]
+
+            @staticmethod
+            def ifaddresses(iface):
+                if iface == "eth0":
+                    return {
+                        _DummyNetifaces.AF_INET: [
+                            {"addr": "192.168.1.10", "netmask": "255.255.255.0"}
+                        ],
+                        _DummyNetifaces.AF_INET6: [{"addr": "fe80::1"}],
+                    }
+                if iface == "wlan0":
+                    return {
+                        _DummyNetifaces.AF_INET6: [
+                            {"addr": "2001:db8::1%wlan0", "netmask": "64"}
+                        ]
+                    }
+                return {}
+
+        with patch.dict(sys.modules, {"netifaces": _DummyNetifaces}):
+            nets = detect_networks_netifaces(include_ipv6=True)
+
+        self.assertEqual(len(nets), 2)
+        versions = {entry["ip_version"] for entry in nets}
+        self.assertEqual(versions, {4, 6})
+
+    def test_detect_networks_netifaces_ipv4_only(self):
+        class _DummyNetifaces:
+            AF_INET = 2
+            AF_INET6 = 10
+
+            @staticmethod
+            def interfaces():
+                return ["eth0"]
+
+            @staticmethod
+            def ifaddresses(_iface):
+                return {
+                    _DummyNetifaces.AF_INET: [
+                        {"addr": "10.0.0.5", "netmask": "255.255.255.0"}
+                    ],
+                    _DummyNetifaces.AF_INET6: [{"addr": "2001:db8::2", "netmask": "64"}],
+                }
+
+        with patch.dict(sys.modules, {"netifaces": _DummyNetifaces}):
+            nets = detect_networks_netifaces(include_ipv6=False)
+
+        self.assertEqual(len(nets), 1)
+        self.assertEqual(nets[0]["ip_version"], 4)
+
+    def test_detect_networks_netifaces_missing(self):
+        real_import = __import__
+
+        def _fake_import(name, *args, **kwargs):
+            if name == "netifaces":
+                raise ImportError("missing")
+            return real_import(name, *args, **kwargs)
+
+        messages = []
+
+        def _printer(msg, level=None):
+            messages.append((msg, level))
+
+        with patch("builtins.__import__", side_effect=_fake_import):
+            nets = detect_networks_netifaces(print_fn=_printer)
+
+        self.assertEqual(nets, [])
+        self.assertTrue(messages)
+        self.assertEqual(messages[0][1], "WARNING")
 
     def test_find_interface_for_ip_found(self):
         """Test finding interface for a known IP."""

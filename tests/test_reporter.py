@@ -95,6 +95,71 @@ class TestReporter(unittest.TestCase):
         self.assertEqual(summary["vulns_found"], 1)
         self.assertIn("duration", summary)
 
+    def test_generate_summary_detects_leaks_and_pipeline(self):
+        results = {
+            "hosts": [
+                {
+                    "ip": "192.168.1.10",
+                    "agentless_probe": {"smb": True, "ldap": True},
+                    "agentless_fingerprint": {"domain": "corp.local"},
+                }
+            ],
+            "vulnerabilities": [
+                {
+                    "host": "192.168.1.10",
+                    "vulnerabilities": [
+                        {"curl_headers": "Location: http://192.168.10.5/login"}
+                    ],
+                }
+            ],
+            "net_discovery": {
+                "enabled": True,
+                "protocols_used": ["dhcp"],
+                "errors": ["error"],
+                "dhcp_servers": ["192.168.1.1"],
+                "alive_hosts": ["192.168.1.10"],
+                "netbios_hosts": [],
+                "arp_hosts": ["192.168.1.10"],
+                "mdns_services": [],
+                "upnp_devices": [],
+                "candidate_vlans": [],
+                "hyperscan_tcp_hosts": {"192.168.1.10": {}},
+                "potential_backdoors": [],
+                "redteam": {
+                    "targets_considered": 2,
+                    "masscan": {"open_ports": [80]},
+                    "snmp": {"hosts": ["192.168.1.10"]},
+                    "smb": {"hosts": []},
+                    "rpc": {"hosts": []},
+                    "ldap": {"hosts": []},
+                    "kerberos": {"hosts": []},
+                    "vlan_enum": {"vlan_ids": []},
+                    "router_discovery": {"router_candidates": []},
+                    "ipv6_discovery": {"neighbors": []},
+                },
+            },
+        }
+        config = {
+            "target_networks": ["192.168.1.0/24"],
+            "threads": 1,
+            "scan_mode": "normal",
+            "windows_verify_enabled": True,
+        }
+
+        summary = generate_summary(
+            results, config, ["192.168.1.10"], results["hosts"], datetime.now()
+        )
+
+        self.assertTrue(results.get("hidden_networks"))
+        self.assertIn("192.168.10.0/24", results.get("leaked_networks_cidr", []))
+        self.assertEqual(summary.get("leaked_networks_detected"), 1)
+        self.assertEqual(summary.get("pivot_candidates"), 1)
+
+        pipeline = results.get("pipeline", {})
+        self.assertIn("redteam", pipeline.get("net_discovery", {}))
+        self.assertEqual(pipeline["agentless_verify"]["signals"]["smb"], 1)
+        self.assertIn("corp.local", pipeline["agentless_verify"]["domains"])
+
     def test_generate_text_report(self):
         """Test text report generation."""
         self.sample_results["summary"] = {
@@ -121,6 +186,51 @@ class TestReporter(unittest.TestCase):
         text = generate_text_report(self.sample_results, partial=True)
 
         self.assertIn("PARTIAL/INTERRUPTED", text)
+
+    def test_generate_text_report_includes_leaks_and_pipeline(self):
+        results = {
+            "config": {"target_networks": ["192.168.1.0/24"]},
+            "summary": {
+                "networks": 1,
+                "hosts_found": 1,
+                "hosts_scanned": 1,
+                "vulns_found": 0,
+            },
+            "pipeline": {
+                "net_discovery": {
+                    "enabled": True,
+                    "counts": {"arp_hosts": 1, "netbios_hosts": 0, "upnp_devices": 0},
+                },
+                "agentless_verify": {"completed": 1, "targets": 1},
+                "nuclei": {"findings": 2, "targets": 1},
+            },
+            "smart_scan_summary": {"deep_scan_executed": 1, "identity_score_avg": 75},
+            "hosts": [
+                {
+                    "ip": "192.168.1.10",
+                    "hostname": "",
+                    "status": "up",
+                    "total_ports_found": 0,
+                    "ports": [],
+                }
+            ],
+            "vulnerabilities": [
+                {
+                    "host": "192.168.1.10",
+                    "vulnerabilities": [
+                        {"curl_headers": "Location: http://192.168.10.5/login"}
+                    ],
+                }
+            ],
+        }
+
+        text = generate_text_report(results)
+
+        self.assertIn("POTENTIAL HIDDEN NETWORKS", text)
+        self.assertIn("Net Discovery: enabled", text)
+        self.assertIn("Agentless verify", text)
+        self.assertIn("Nuclei", text)
+        self.assertIn("SmartScan", text)
 
     def test_save_results_json(self):
         """Test JSON report saving."""
