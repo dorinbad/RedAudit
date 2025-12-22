@@ -56,7 +56,7 @@ Features currently present using `redaudit --version` >= v3.6.0.
 | :--- | :--- | :--- |
 | **Nuclei Integration** | v3.6.0 | Module `redaudit/core/nuclei.py`. Runs templates when Nuclei is installed and explicitly enabled (wizard or `--nuclei`). |
 | **Agentless Verification** | v3.7.3 | `redaudit/core/agentless_verify.py`. Optional SMB/RDP/LDAP/SSH/HTTP fingerprinting (wizard or `--agentless-verify`). |
-| **Quiet-Host HTTP Probe** | vNext | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner.py`. Short HTTP/HTTPS title+server probe on common ports for vendor-only hosts with zero open ports. |
+| **Quiet-Host HTTP Probe** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner.py`. Short HTTP/HTTPS title+server probe on common ports for vendor-only hosts with zero open ports. |
 | **Playbook Generation** | v3.4.0 | Module `redaudit/core/playbook_generator.py`. Creates MD remediation guides in `playbooks/`. |
 | **Red Team: Kerberos** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `kerbrute` for user enumeration if approved. |
 | **Red Team: SNMP/SMB** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `snmpwalk` and `enum4linux`. |

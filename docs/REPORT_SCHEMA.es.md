@@ -201,7 +201,7 @@ Campos adicionales a nivel de host:
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `os_detected` | string | (Opcional) Fingerprint de SO (best-effort; normalmente desde salida de deep scan) **(v3.1.4+)** |
-| `agentless_probe` | object | (Opcional) Salida raw de probes SMB/RDP/LDAP/SSH/HTTP **(vNext)** |
+| `agentless_probe` | object | (Opcional) Salida raw de probes SMB/RDP/LDAP/SSH/HTTP **(v3.8.5)** |
 | `agentless_fingerprint` | object | (Opcional) Hints normalizados de identidad (ver abajo) **(vNext)** |
 
 ```json

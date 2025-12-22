@@ -207,7 +207,7 @@ Additional host-level fields:
 | Field | Type | Description |
 |---|---|---|
 | `os_detected` | string | (Optional) OS fingerprint (best-effort, usually from deep scan output) **(v3.1.4+)** |
-| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
+| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(v3.8.5)** |
 | `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(vNext)** |
 
 ```json

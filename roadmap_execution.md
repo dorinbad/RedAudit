@@ -43,6 +43,7 @@ Objetivo: elevar confianza con metricas y documentacion clara.
 - [x] Implementar rotacion de logs (RotatingFileHandler) con tests minimos.
 - [x] Probe HTTP/HTTPS breve en hosts silenciosos con vendor para enriquecer modelo/activo.
 - [x] Ajustar heurística de `asset_type` para priorizar dispositivos (iphone/msi/etc.) sobre sufijos `fritz`.
+- [x] Usar `http_title` como identidad auxiliar para nombrar activos y clasificar switches cuando no hay hostname.
 
 Criterio de salida:
 
