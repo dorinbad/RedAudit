@@ -34,6 +34,7 @@ from redaudit.core.scanner import (
     extract_vendor_mac,
     finalize_host_status,
     get_nmap_arguments,
+    http_identity_probe,
     is_suspicious_service,
     is_web_service,
     output_has_identity,
@@ -1078,6 +1079,36 @@ class AuditorScanMixin:
                         host_record["os_detected"] = deep["os_detected"]
                     host_record["smart_scan"]["deep_scan_executed"] = True
 
+            if total_ports == 0 and self.config.get("deep_id_scan", True):
+                identity_source = host_record.get("deep_scan") or {}
+                has_identity_hint = bool(
+                    identity_source.get("vendor")
+                    or host_record.get("hostname")
+                    or host_record.get("device_type_hints")
+                )
+                if has_identity_hint and host_record.get("status") != STATUS_DOWN:
+                    http_probe = http_identity_probe(
+                        safe_ip,
+                        self.extra_tools,
+                        dry_run=bool(self.config.get("dry_run", False)),
+                        logger=self.logger,
+                    )
+                    if http_probe:
+                        agentless_fp = host_record.setdefault("agentless_fingerprint", {})
+                        for key in ("http_title", "http_server"):
+                            if http_probe.get(key) and not agentless_fp.get(key):
+                                agentless_fp[key] = http_probe[key]
+                        smart = host_record.get("smart_scan")
+                        if isinstance(smart, dict):
+                            signals = list(smart.get("signals") or [])
+                            if "http_probe" not in signals:
+                                signals.append("http_probe")
+                            smart["signals"] = signals
+                            try:
+                                smart["identity_score"] = int(smart.get("identity_score", 0)) + 1
+                            except Exception:
+                                smart["identity_score"] = smart.get("identity_score", 0)
+
             enrich_host_with_dns(host_record, self.extra_tools)
             enrich_host_with_whois(host_record, self.extra_tools)
 
@@ -1392,6 +1423,13 @@ class AuditorScanMixin:
             host = host_index[ip]
             host["agentless_probe"] = res
             agentless_fp = summarize_agentless_fingerprint(res)
+            existing_fp = host.get("agentless_fingerprint") or {}
+            if existing_fp:
+                merged = dict(existing_fp)
+                for key, value in (agentless_fp or {}).items():
+                    if value not in (None, ""):
+                        merged[key] = value
+                agentless_fp = merged
             host["agentless_fingerprint"] = agentless_fp
             smart = host.get("smart_scan")
             if isinstance(smart, dict) and isinstance(agentless_fp, dict) and agentless_fp:

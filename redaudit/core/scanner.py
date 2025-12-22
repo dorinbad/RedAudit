@@ -654,6 +654,188 @@ def http_enrichment(
     return data
 
 
+HTTP_IDENTITY_PORTS = (80, 443, 8080, 8443, 8000, 8888)
+HTTP_IDENTITY_HTTPS_PORTS = {443, 8443, 9443, 4443}
+
+
+def _format_http_host(host_ip: str) -> str:
+    return f"[{host_ip}]" if is_ipv6(host_ip) else host_ip
+
+
+def _extract_http_server(headers: str) -> str:
+    if not headers:
+        return ""
+    server = ""
+    for line in headers.splitlines():
+        if line.lower().startswith("server:"):
+            server = line.split(":", 1)[1].strip()
+    return server[:200] if server else ""
+
+
+def _extract_http_title(html: str) -> str:
+    if not html:
+        return ""
+    match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+    title = re.sub(r"\s+", " ", match.group(1)).strip()
+    return title[:200] if title else ""
+
+
+def _fetch_http_headers(
+    url: str, extra_tools: Dict, *, dry_run: Optional[bool] = None, logger=None
+) -> str:
+    if extra_tools.get("curl"):
+        args = [
+            extra_tools["curl"],
+            "-I",
+            "-L",
+            "--max-time",
+            "5",
+            "--connect-timeout",
+            "3",
+            "-sS",
+        ]
+        if url.startswith("https://"):
+            args.append("-k")
+        args.append(url)
+        try:
+            runner = _make_runner(logger=logger, dry_run=dry_run, timeout=6.0)
+            res = runner.run(
+                args,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=6.0,
+            )
+            return str(res.stdout or "")
+        except Exception:
+            return ""
+    if extra_tools.get("wget"):
+        args = [
+            extra_tools["wget"],
+            "--spider",
+            "-S",
+            "--timeout=5",
+            "--tries=1",
+        ]
+        if url.startswith("https://"):
+            args.append("--no-check-certificate")
+        args.append(url)
+        try:
+            runner = _make_runner(logger=logger, dry_run=dry_run, timeout=6.0)
+            res = runner.run(
+                args,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=6.0,
+            )
+            return str(res.stderr or "")
+        except Exception:
+            return ""
+    return ""
+
+
+def _fetch_http_body(
+    url: str, extra_tools: Dict, *, dry_run: Optional[bool] = None, logger=None
+) -> str:
+    if extra_tools.get("curl"):
+        args = [
+            extra_tools["curl"],
+            "-L",
+            "--max-time",
+            "6",
+            "--connect-timeout",
+            "3",
+            "-sS",
+            "--range",
+            "0-32767",
+        ]
+        if url.startswith("https://"):
+            args.append("-k")
+        args.append(url)
+        try:
+            runner = _make_runner(logger=logger, dry_run=dry_run, timeout=7.0)
+            res = runner.run(
+                args,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=7.0,
+            )
+            return str(res.stdout or "")
+        except Exception:
+            return ""
+    if extra_tools.get("wget"):
+        args = [
+            extra_tools["wget"],
+            "-qO-",
+            "--timeout=6",
+            "--tries=1",
+            "--max-redirect=2",
+        ]
+        if url.startswith("https://"):
+            args.append("--no-check-certificate")
+        args.append(url)
+        try:
+            runner = _make_runner(logger=logger, dry_run=dry_run, timeout=7.0)
+            res = runner.run(
+                args,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=7.0,
+            )
+            return str(res.stdout or "")
+        except Exception:
+            return ""
+    return ""
+
+
+def http_identity_probe(
+    host_ip: str,
+    extra_tools: Dict,
+    ports: Optional[List[int]] = None,
+    *,
+    dry_run: Optional[bool] = None,
+    logger=None,
+) -> Dict:
+    """
+    Best-effort HTTP probe for hosts with no visible web ports.
+
+    Returns:
+        Dict containing http_title/http_server when detected.
+    """
+    safe_ip = sanitize_ip(host_ip)
+    if not safe_ip or _is_dry_run(dry_run):
+        return {}
+    if not extra_tools.get("curl") and not extra_tools.get("wget"):
+        return {}
+
+    host = _format_http_host(safe_ip)
+    ports_to_check = ports or list(HTTP_IDENTITY_PORTS)
+    for port in ports_to_check:
+        schemes = (
+            ("https", "http") if port in HTTP_IDENTITY_HTTPS_PORTS else ("http", "https")
+        )
+        for scheme in schemes:
+            url = f"{scheme}://{host}:{port}/"
+            headers = _fetch_http_headers(url, extra_tools, dry_run=dry_run, logger=logger)
+            server = _extract_http_server(headers)
+            body = _fetch_http_body(url, extra_tools, dry_run=dry_run, logger=logger)
+            title = _extract_http_title(body[:40000])
+            if title or server:
+                result = {}
+                if title:
+                    result["http_title"] = title
+                if server:
+                    result["http_server"] = server
+                return result
+
+    return {}
+
+
 def tls_enrichment(
     host_ip: str,
     port: int,
