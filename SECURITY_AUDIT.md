@@ -16,7 +16,7 @@
 
 - Status: best-effort internal review.
 - No known critical vulnerabilities identified in the current review.
-- Coverage is below target (overall ~58.3% in this run); this limits confidence in edge cases.
+- Coverage is below target (overall ~60.3% in this run); this limits confidence in edge cases.
 
 ## Observed Controls
 
