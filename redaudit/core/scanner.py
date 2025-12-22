@@ -8,6 +8,7 @@ Network scanning, port enumeration, deep scan, and traffic capture functionality
 """
 
 import re
+import html as html_module
 import os
 import time
 import subprocess
@@ -672,14 +673,30 @@ def _extract_http_server(headers: str) -> str:
     return server[:200] if server else ""
 
 
+def _clean_http_identity_text(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = re.sub(r"<[^>]+>", " ", text)
+    cleaned = html_module.unescape(cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned[:200] if cleaned else ""
+
+
 def _extract_http_title(html: str) -> str:
     if not html:
         return ""
     match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-    if not match:
-        return ""
-    title = re.sub(r"\s+", " ", match.group(1)).strip()
-    return title[:200] if title else ""
+    if match:
+        title = _clean_http_identity_text(match.group(1))
+        if title:
+            return title
+    for tag in ("h1", "h2"):
+        match = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", html, re.IGNORECASE | re.DOTALL)
+        if match:
+            heading = _clean_http_identity_text(match.group(1))
+            if heading:
+                return heading
+    return ""
 
 
 def _fetch_http_headers(
