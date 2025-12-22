@@ -4,6 +4,7 @@ RedAudit - Tests for wizard UI helpers.
 """
 
 import os
+from types import SimpleNamespace
 
 from unittest.mock import patch
 
@@ -76,14 +77,17 @@ def test_strip_and_truncate_menu_text():
 def test_menu_width_fallbacks(monkeypatch):
     wiz = _DummyWizard()
     monkeypatch.setattr(
-        "shutil.get_terminal_size", lambda _fallback: os.terminal_size((1, 20))
+        "redaudit.core.wizard.shutil",
+        SimpleNamespace(get_terminal_size=lambda *args, **kwargs: os.terminal_size((1, 20))),
     )
     assert wiz._menu_width() == 1
 
-    def _boom(_fallback):
+    def _boom(*_args, **_kwargs):
         raise OSError("no tty")
 
-    monkeypatch.setattr("shutil.get_terminal_size", _boom)
+    monkeypatch.setattr(
+        "redaudit.core.wizard.shutil", SimpleNamespace(get_terminal_size=_boom)
+    )
     assert wiz._menu_width() == 79
 
 
