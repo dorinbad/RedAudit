@@ -67,6 +67,20 @@ sudo apt install nmap whatweb nikto testssl tcpdump tshark exploitdb python3-nma
 sudo python3 -m redaudit --help
 ```
 
+### Docker (opcional)
+
+Ejecuta la imagen oficial en GHCR:
+
+```bash
+docker pull ghcr.io/dorinbadea/redaudit:latest
+
+docker run --rm --network host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN \
+  -v "$(pwd)/reports:/reports" \
+  ghcr.io/dorinbadea/redaudit:latest \
+  --target 192.168.1.0/24 --mode normal --yes --output /reports
+```
+
 ### Actualización
 
 RedAudit verifica actualizaciones al iniciar (modo interactivo). Para omitir: `--skip-update-check`.
@@ -109,6 +123,7 @@ Cuando está habilitado (por defecto), RedAudit realiza escaneos adicionales en 
 1. Fase 1: TCP Agresivo (`-A -p- -sV -Pn`)
 2. Fase 2a: Escaneo UDP prioritario (17 puertos comunes: DNS, DHCP, SNMP, etc.)
 3. Fase 2b: UDP extendido (si `--udp-mode full` y la identidad sigue siendo poco clara)
+4. Hosts silenciosos con vendor detectado y cero puertos abiertos pueden recibir un probe HTTP/HTTPS breve en puertos comunes
 
 Deshabilitar con `--no-deep-scan`.
 

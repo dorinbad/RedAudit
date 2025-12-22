@@ -1,41 +1,37 @@
 ---
-name: Bug Report
-about: Report a bug or unexpected behavior
-title: '[BUG] '
-labels: bug
-assignees: ''
+name: Bug report
+about: Report a problem or regression in RedAudit
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
 ---
 
-## Bug Description
-<!-- A clear and concise description ofthe bug -->
+### Summary
+Describe the issue clearly and concisely.
 
-## Steps to Reproduce
-
+### Steps to reproduce
 1.
 2.
 3.
 
-## Expected Behavior
-<!-- What should happen -->
+### Expected behavior
+What did you expect to happen?
 
-## Actual Behavior
-<!-- What actually happened -->
+### Actual behavior
+What actually happened?
 
-## Environment
+### Environment
+- OS:
+- Python:
+- RedAudit version:
+- Install method (pip, source, installer):
+- Run mode (sudo?):
+- Target type (single host, CIDR, URL):
 
-- **OS**: [e.g., Kali Linux 2024.1, Ubuntu 22.04]
-- **Python Version**: [e.g., 3.11.2]
-- **RedAudit Version**: [e.g., 3.0.0]
-- **Installation Method**: [e.g., git clone, pip install]
-
-## Logs
-<!-- Attach sanitized logs from ~/.redaudit/logs/ (remove sensitive data!) -->
+### Logs or screenshots
 ```
-Paste logs here
+paste logs here
 ```
 
-## Screenshots
-<!-- If applicable, add screenshots -->
-
-## Additional Context
-<!-- Any other relevant information -->
+### Additional context
+Anything else that helps reproduce or diagnose the issue.

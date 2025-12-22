@@ -7,6 +7,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [3.8.5] - 2025-12-22 (Quiet-Host Identity)
+
+### Added
+
+- **Quiet-host HTTP probe**: Short HTTP/HTTPS title+server probe on common ports when a host has vendor hints but zero open ports, to improve model identification.
+
+### Fixed
+
+- **Asset classification**: Prefer device-specific hostname matches (e.g., `iphone`, `msi`) before router suffixes like `fritz` to reduce misclassification.
+- **Asset naming**: Use HTTP title hints to label assets without hostnames and classify switch models from vendor/title cues.
+
+### Documentation
+
+- Updated manuals and report schema to describe the HTTP probe hints.
+
 ## [3.8.4] - 2025-12-21 (Agentless Verification & Color Fix)
 
 ### Added

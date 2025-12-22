@@ -207,7 +207,7 @@ Additional host-level fields:
 | Field | Type | Description |
 |---|---|---|
 | `os_detected` | string | (Optional) OS fingerprint (best-effort, usually from deep scan output) **(v3.1.4+)** |
-| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(vNext)** |
+| `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(v3.8.5)** |
 | `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(vNext)** |
 
 ```json
@@ -253,8 +253,8 @@ Normalized hints derived from SMB/RDP/LDAP probes. All fields are optional.
 | `smb_signing_enabled` | boolean | SMB signing enabled (best-effort) |
 | `smb_signing_required` | boolean | SMB signing required (best-effort) |
 | `smbv1_detected` | boolean | SMBv1 presence detected |
-| `http_title` | string | HTTP title hint from agentless probe |
-| `http_server` | string | HTTP server header hint |
+| `http_title` | string | HTTP title hint from agentless or quick HTTP probe |
+| `http_server` | string | HTTP server header hint from agentless or quick HTTP probe |
 | `ssh_hostkeys` | array | SSH host key fingerprints (best-effort) |
 | `defaultNamingContext` | string | LDAP RootDSE default naming context |
 | `rootDomainNamingContext` | string | LDAP RootDSE root domain naming context |

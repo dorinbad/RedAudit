@@ -3,6 +3,7 @@
 Tests for RedAudit pre-scan module.
 """
 
+import asyncio
 import unittest
 import sys
 import os
@@ -10,7 +11,10 @@ import inspect  # Added for iscoroutinefunction check
 from unittest.mock import patch, AsyncMock
 
 from redaudit.core.prescan import (
+    check_port,
     parse_port_range,
+    prescan_host,
+    run_prescan,
     TOP_100_PORTS,
     TOP_1024_PORTS,
 )
@@ -101,6 +105,57 @@ class TestAsyncPrescan(unittest.TestCase):
         # Check that functions are coroutines
         self.assertTrue(inspect.iscoroutinefunction(prescan_host))
         self.assertTrue(inspect.iscoroutinefunction(check_port))
+
+
+class TestPrescanExecution(unittest.TestCase):
+    def test_check_port_success(self):
+        class _Writer:
+            def close(self):
+                pass
+
+            async def wait_closed(self):
+                return None
+
+        async def _open_connection(_ip, _port):
+            return object(), _Writer()
+
+        with patch("asyncio.open_connection", new=_open_connection):
+            result = asyncio.run(check_port("127.0.0.1", 22, timeout=0.01))
+        self.assertTrue(result)
+
+    def test_check_port_refused(self):
+        async def _open_connection(_ip, _port):
+            raise ConnectionRefusedError()
+
+        with patch("asyncio.open_connection", new=_open_connection):
+            result = asyncio.run(check_port("127.0.0.1", 22, timeout=0.01))
+        self.assertFalse(result)
+
+    def test_prescan_host_collects_ports_and_progress(self):
+        async def _fake_check_port(_ip, port, _timeout=0.5):
+            return port in {22, 80}
+
+        progress = []
+
+        def _progress(checked, total):
+            progress.append((checked, total))
+
+        with patch("redaudit.core.prescan.check_port", new=_fake_check_port):
+            result = asyncio.run(
+                prescan_host("127.0.0.1", [22, 23, 80], batch_size=2, progress_callback=_progress)
+            )
+
+        self.assertEqual(result, [22, 80])
+        self.assertEqual(progress, [(2, 3), (3, 3)])
+
+    def test_run_prescan_returns_sorted(self):
+        async def _fake_check_port(_ip, port, _timeout=0.5):
+            return port == 443
+
+        with patch("redaudit.core.prescan.check_port", new=_fake_check_port):
+            result = run_prescan("127.0.0.1", [443, 80], batch_size=1)
+
+        self.assertEqual(result, [443])
 
 
 if __name__ == "__main__":

@@ -71,6 +71,16 @@ class TestEntityResolver(unittest.TestCase):
         host = {"hostname": "iphone", "ports": []}
         self.assertEqual(guess_asset_type(host), "mobile")
 
+    def test_guess_asset_type_switch_from_http_title(self):
+        """Test switch detection from agentless HTTP title hints."""
+        host = {
+            "hostname": "",
+            "ports": [],
+            "deep_scan": {"vendor": "Zyxel Communications"},
+            "agentless_fingerprint": {"http_title": "GS1200-5"},
+        }
+        self.assertEqual(guess_asset_type(host), "switch")
+
     def test_create_unified_single_host(self):
         """Test unified asset creation for single host."""
         host = {
@@ -85,6 +95,20 @@ class TestEntityResolver(unittest.TestCase):
         self.assertEqual(len(result["interfaces"]), 1)
         self.assertEqual(result["interfaces"][0]["ip"], "192.168.1.10")
         self.assertEqual(len(result["consolidated_ports"]), 1)
+
+    def test_create_unified_single_host_uses_agentless_title(self):
+        """Test unified asset uses HTTP title when hostname is missing."""
+        host = {
+            "ip": "192.168.1.20",
+            "hostname": "",
+            "status": "up",
+            "ports": [],
+            "deep_scan": {"vendor": "Zyxel Communications"},
+            "agentless_fingerprint": {"http_title": "GS1200-5"},
+        }
+        result = create_unified_asset([host])
+
+        self.assertEqual(result["asset_name"], "Zyxel Communications GS1200-5")
 
     def test_create_unified_multi_interface(self):
         """Test unified asset creation for multi-interface host."""

@@ -1,33 +1,22 @@
 ---
-name: Feature Request
-about: Suggest a new feature or improvement
-title: '[FEATURE] '
-labels: enhancement
-assignees: ''
+name: Feature request
+about: Suggest an improvement or new capability for RedAudit
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
 ---
 
-## Feature Description
-<!-- Clear and concise description of the feature -->
+### Problem to solve
+What limitation or pain point are you hitting?
 
-## Problem Statement
-<!-- What problem does this solve? Why is it needed? -->
+### Proposed solution
+Describe the feature or change you would like to see.
 
-## Proposed Solution
-<!-- How should this work? Include examples if possible -->
+### Alternatives considered
+List any alternatives you considered.
 
-## Alternatives Considered
-<!-- What other approaches have you thought about? -->
+### Impact
+Who benefits, and how does it improve outcomes?
 
-## Use Cases
-<!-- Real-world scenarios where this would be useful -->
--
--
-
-## Additional Context
-<!-- Screenshots, mockups, links to similar implementations -->
-
-## Willing to Contribute?
-<!-- Are you willing to implement this feature? -->
-- [ ] Yes, I can help implement this
-- [ ] No, but I can help test it
-- [ ] No, just suggesting
+### Additional context
+Links, examples, or references that help clarify the request.

@@ -96,12 +96,12 @@ class TestIntegration(unittest.TestCase):
         long_cidr = "192.168.1." + "0/24" + "x" * 100
         self.assertGreater(len(long_cidr), MAX_CIDR_LENGTH)
 
-    @patch("redaudit.core.auditor.shutil.which")
+    @patch("redaudit.core.auditor_scan.shutil.which")
     def test_check_dependencies(self, mock_which):
         """Test dependency checking."""
         mock_which.return_value = "/usr/bin/nmap"
 
-        with patch("redaudit.core.auditor.importlib.import_module") as mock_import:
+        with patch("redaudit.core.auditor_scan.importlib.import_module") as mock_import:
             mock_import.return_value = MagicMock()
             result = self.app.check_dependencies()
             # Should return True if nmap is found

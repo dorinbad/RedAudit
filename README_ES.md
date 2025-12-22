@@ -7,6 +7,8 @@
 ![Licencia](https://img.shields.io/badge/licencia-GPLv3-green?style=flat-square)
 ![Plataforma](https://img.shields.io/badge/plataforma-linux-lightgrey?style=flat-square)
 ![CI/CD](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg?style=flat-square)
+[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dorinbadea/81671a8fffccee81ca270f14d094e5a1/raw/redaudit-tests.json)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/dorinbadea/RedAudit?style=flat-square)](https://codecov.io/gh/dorinbadea/RedAudit)
 
 <div align="center">
 
@@ -158,6 +160,7 @@ fallback cuando un host no responde.
 - Falta de MAC/vendor/hostname
 - Sin versión de servicio (score de identidad bajo)
 - Puertos filtrados o sin respuesta (fallback)
+- Hosts silenciosos con vendor detectado pueden recibir un probe HTTP/HTTPS breve en puertos comunes
 
 **Resultado**: Escaneos más rápidos que UDP siempre activo, manteniendo calidad de detección para IoT, servicios filtrados
 y equipos legacy.
@@ -190,6 +193,21 @@ cd RedAudit
 
 # 2. Ejecutar el instalador (gestiona dependencias y aliases)
 sudo bash redaudit_install.sh
+```
+
+### Docker (opcional)
+
+Ejecuta la imagen oficial en GHCR:
+
+```bash
+docker pull ghcr.io/dorinbadea/redaudit:latest
+
+# Ejemplo de escaneo (se recomienda host networking para descubrir la subred local)
+docker run --rm --network host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN \
+  -v "$(pwd)/reports:/reports" \
+  ghcr.io/dorinbadea/redaudit:latest \
+  --target 192.168.1.0/24 --mode normal --yes --output /reports
 ```
 
 ### Activar el Alias

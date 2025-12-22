@@ -52,12 +52,13 @@ class TestAuditorDeepScanHeuristics(unittest.TestCase):
         ip = "192.168.1.50"
         rec1 = {"stdout": "OS details: Linux 5.4 - 5.11\n", "stderr": "", "returncode": 0}
 
-        with patch("redaudit.core.auditor.start_background_capture", return_value=None):
-            with patch("redaudit.core.auditor.stop_background_capture", return_value=None):
-                with patch("redaudit.core.auditor.run_nmap_command", return_value=rec1):
-                    with patch("redaudit.core.auditor.output_has_identity", return_value=True):
+        with patch("redaudit.core.auditor_scan.start_background_capture", return_value=None):
+            with patch("redaudit.core.auditor_scan.stop_background_capture", return_value=None):
+                with patch("redaudit.core.auditor_scan.run_nmap_command", return_value=rec1):
+                    with patch("redaudit.core.auditor_scan.output_has_identity", return_value=True):
                         with patch(
-                            "redaudit.core.auditor.extract_vendor_mac", return_value=(None, None)
+                            "redaudit.core.auditor_scan.extract_vendor_mac",
+                            return_value=(None, None),
                         ):
                             deep = app.deep_scan_host(ip)
 
@@ -86,7 +87,7 @@ class TestAuditorDeepScanHeuristics(unittest.TestCase):
         )
         nm = _FakePortScanner(ip=ip, host=fake_host)
 
-        with patch("redaudit.core.auditor.nmap") as mock_nmap:
+        with patch("redaudit.core.auditor_scan.nmap") as mock_nmap:
             mock_nmap.PortScanner.return_value = nm
             app.deep_scan_host = Mock(return_value={"strategy": "mock", "commands": []})
 
@@ -121,7 +122,7 @@ class TestAuditorDeepScanHeuristics(unittest.TestCase):
         )
         nm = _FakePortScanner(ip=ip, host=fake_host)
 
-        with patch("redaudit.core.auditor.nmap") as mock_nmap:
+        with patch("redaudit.core.auditor_scan.nmap") as mock_nmap:
             mock_nmap.PortScanner.return_value = nm
             app.deep_scan_host = Mock(return_value={"strategy": "mock", "commands": []})
 
@@ -135,15 +136,19 @@ class TestAuditorDeepScanHeuristics(unittest.TestCase):
         app.config["udp_mode"] = "full"
         app.config["udp_top_ports"] = 222
 
-        with patch("redaudit.core.auditor.start_background_capture", return_value=None):
-            with patch("redaudit.core.auditor.stop_background_capture", return_value=None):
-                with patch("redaudit.core.auditor.output_has_identity", return_value=False):
+        with patch("redaudit.core.auditor_scan.start_background_capture", return_value=None):
+            with patch("redaudit.core.auditor_scan.stop_background_capture", return_value=None):
+                with patch("redaudit.core.auditor_scan.output_has_identity", return_value=False):
                     with patch(
-                        "redaudit.core.auditor.extract_vendor_mac", return_value=(None, None)
+                        "redaudit.core.auditor_scan.extract_vendor_mac", return_value=(None, None)
                     ):
-                        with patch("redaudit.core.auditor.run_udp_probe", return_value=[]):
-                            with patch("redaudit.core.auditor.get_neighbor_mac", return_value=None):
-                                with patch("redaudit.core.auditor.run_nmap_command") as mock_run:
+                        with patch("redaudit.core.auditor_scan.run_udp_probe", return_value=[]):
+                            with patch(
+                                "redaudit.core.auditor_scan.get_neighbor_mac", return_value=None
+                            ):
+                                with patch(
+                                    "redaudit.core.auditor_scan.run_nmap_command"
+                                ) as mock_run:
                                     mock_run.return_value = {
                                         "stdout": "",
                                         "stderr": "",

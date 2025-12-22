@@ -7,6 +7,23 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [3.8.5] - 2025-12-22 (Identidad de Hosts Silenciosos)
+
+### Añadido
+
+- **Probe HTTP en hosts silenciosos**: Probe HTTP/HTTPS breve en puertos comunes cuando el host tiene vendor pero cero puertos abiertos, para mejorar la identificación de modelo.
+
+### Corregido
+
+- **Clasificación de activos**: Se priorizan coincidencias específicas del hostname (p. ej. `iphone`, `msi`) antes de sufijos de router como `fritz` para evitar falsos positivos.
+- **Nombre de activos**: Se usan pistas de `http_title` para nombrar activos sin hostname y clasificar modelos de switch con vendor/título.
+
+### Documentación
+
+- Manuales y esquema de reportes actualizados para incluir las pistas del probe HTTP.
+
 ## [3.8.4] - 2025-12-21 (Verificación sin Agente y Corrección de Colores)
 
 ### Añadido
