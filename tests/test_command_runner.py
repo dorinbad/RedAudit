@@ -113,6 +113,48 @@ class TestCommandRunner(unittest.TestCase):
         self.assertEqual(kwargs["stdout"], subprocess.DEVNULL)
         self.assertEqual(kwargs["stderr"], subprocess.DEVNULL)
 
+    @patch("redaudit.core.command_runner.subprocess.run")
+    def test_file_not_found_returns_127(self, mock_run):
+        mock_run.side_effect = FileNotFoundError("missing binary")
+        runner = CommandRunner()
+        result = runner.run(["missing-binary"])
+        self.assertEqual(result.returncode, 127)
+        self.assertIn("missing binary", str(result.stderr))
+
+    @patch("redaudit.core.command_runner.subprocess.run")
+    def test_called_process_error_returns_result(self, mock_run):
+        exc = subprocess.CalledProcessError(2, ["cmd"], output="oops", stderr="bad")
+        mock_run.side_effect = exc
+        runner = CommandRunner(default_retries=0)
+        result = runner.run(["cmd"], check=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("oops", result.stdout)
+        self.assertIn("bad", result.stderr)
+
+    def test_check_output_requires_text(self):
+        runner = CommandRunner()
+        with self.assertRaises(ValueError):
+            runner.check_output(["echo", "hi"], text=False)
+
+    def test_validate_args_empty(self):
+        runner = CommandRunner()
+        with self.assertRaises(ValueError):
+            runner.run([])
+
+    def test_merge_env_ignores_non_str(self):
+        runner = CommandRunner()
+        merged = runner._merge_env({1: "bad", "OK": 2, "GOOD": "yes"})  # type: ignore[arg-type]
+        self.assertIn("GOOD", merged)
+        self.assertNotIn(1, merged)
+
+    def test_redact_known_flag_values(self):
+        runner = CommandRunner()
+        text = "--nvd-key SECRET --encrypt-password pass socks5://user:token@host"
+        redacted = runner._redact_known_flag_values(text)
+        self.assertNotIn("SECRET", redacted)
+        self.assertIn("***", redacted)
+        self.assertIn("--encrypt-password ***", redacted)
+
 
 if __name__ == "__main__":
     unittest.main()
