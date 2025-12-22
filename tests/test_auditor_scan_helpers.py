@@ -57,7 +57,7 @@ def test_scan_mode_host_timeout_s():
 
 
 def test_extract_nmap_xml():
-    raw = "noise<?xml version=\"1.0\"?><nmaprun>ok</nmaprun>tail"
+    raw = 'noise<?xml version="1.0"?><nmaprun>ok</nmaprun>tail'
     assert app_extract(raw) == "<nmaprun>ok</nmaprun>"
 
 
@@ -77,9 +77,7 @@ def test_parse_host_timeout_s():
 def test_lookup_topology_identity():
     app = InteractiveNetworkAuditor()
     app.results["topology"] = {
-        "interfaces": [
-            {"arp": {"hosts": [{"ip": "10.0.0.1", "mac": "aa", "vendor": "Unknown"}]}}
-        ]
+        "interfaces": [{"arp": {"hosts": [{"ip": "10.0.0.1", "mac": "aa", "vendor": "Unknown"}]}}]
     }
     mac, vendor = app._lookup_topology_identity("10.0.0.1")
     assert mac == "aa"
