@@ -16,6 +16,11 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from redaudit.core.reporter import (
+    _build_config_snapshot,
+    _summarize_agentless,
+    _summarize_net_discovery,
+    _summarize_smart_scan,
+    _summarize_vulnerabilities,
     generate_summary,
     generate_text_report,
     save_results,
@@ -231,6 +236,153 @@ class TestReporter(unittest.TestCase):
         self.assertIn("Agentless verify", text)
         self.assertIn("Nuclei", text)
         self.assertIn("SmartScan", text)
+
+    def test_build_config_snapshot_minimal(self):
+        config = {
+            "target_networks": ["10.0.0.0/24"],
+            "scan_mode": "full",
+            "scan_mode_cli": "fast",
+            "threads": 4,
+            "rate_limit": 0.5,
+            "udp_mode": "quick",
+            "udp_top_ports": 100,
+            "topology_enabled": True,
+            "net_discovery_enabled": True,
+            "net_discovery_redteam": True,
+            "windows_verify_enabled": True,
+            "scan_vulnerabilities": False,
+            "nuclei_enabled": True,
+            "dry_run": True,
+            "auditor_name": "tester",
+        }
+        snapshot = _build_config_snapshot(config)
+        self.assertEqual(snapshot["targets"], ["10.0.0.0/24"])
+        self.assertEqual(snapshot["scan_mode"], "full")
+        self.assertEqual(snapshot["scan_mode_cli"], "fast")
+        self.assertEqual(snapshot["threads"], 4)
+        self.assertEqual(snapshot["rate_limit_delay"], 0.5)
+        self.assertEqual(snapshot["udp_mode"], "quick")
+        self.assertEqual(snapshot["udp_top_ports"], 100)
+        self.assertTrue(snapshot["topology_enabled"])
+        self.assertTrue(snapshot["net_discovery_enabled"])
+        self.assertTrue(snapshot["net_discovery_redteam"])
+        self.assertTrue(snapshot["windows_verify_enabled"])
+        self.assertFalse(snapshot["scan_vulnerabilities"])
+        self.assertTrue(snapshot["nuclei_enabled"])
+        self.assertTrue(snapshot["dry_run"])
+        self.assertEqual(snapshot["auditor_name"], "tester")
+
+    def test_summarize_net_discovery_with_redteam(self):
+        summary = _summarize_net_discovery(
+            {
+                "enabled": True,
+                "protocols_used": ["dhcp"],
+                "errors": ["err1", "err2"],
+                "dhcp_servers": ["10.0.0.1"],
+                "alive_hosts": ["10.0.0.2", "10.0.0.3"],
+                "netbios_hosts": [],
+                "arp_hosts": ["10.0.0.2"],
+                "mdns_services": [{"ip": "10.0.0.2"}],
+                "upnp_devices": [],
+                "candidate_vlans": ["10.0.10.0/24"],
+                "hyperscan_tcp_hosts": {"10.0.0.2": [80]},
+                "potential_backdoors": [{"ip": "10.0.0.2", "port": 31337}],
+                "redteam": {
+                    "targets_considered": 3,
+                    "masscan": {"open_ports": [80, 443]},
+                    "snmp": {"hosts": ["10.0.0.2"]},
+                    "smb": {"hosts": []},
+                    "rpc": {"hosts": ["10.0.0.3"]},
+                    "ldap": {"hosts": []},
+                    "kerberos": {"hosts": ["10.0.0.4"]},
+                    "vlan_enum": {"vlan_ids": [10, 20]},
+                    "router_discovery": {"router_candidates": ["10.0.0.1"]},
+                    "ipv6_discovery": {"neighbors": ["::1"]},
+                },
+            }
+        )
+        self.assertTrue(summary["enabled"])
+        self.assertEqual(summary["counts"]["dhcp_servers"], 1)
+        self.assertEqual(summary["counts"]["alive_hosts"], 2)
+        self.assertEqual(summary["counts"]["mdns_services"], 1)
+        self.assertEqual(summary["counts"]["candidate_vlans"], 1)
+        self.assertEqual(summary["counts"]["hyperscan_tcp_hosts"], 1)
+        self.assertEqual(summary["counts"]["potential_backdoors"], 1)
+        self.assertEqual(summary["redteam"]["targets_considered"], 3)
+        self.assertEqual(summary["redteam"]["masscan_open_ports"], 2)
+        self.assertEqual(summary["redteam"]["snmp_hosts"], 1)
+        self.assertEqual(summary["redteam"]["rpc_hosts"], 1)
+        self.assertEqual(summary["redteam"]["kerberos_hosts"], 1)
+        self.assertEqual(summary["redteam"]["vlan_ids"], 2)
+        self.assertEqual(summary["redteam"]["router_candidates"], 1)
+        self.assertEqual(summary["redteam"]["ipv6_neighbors"], 1)
+
+    def test_summarize_agentless_signals(self):
+        hosts = [
+            {
+                "agentless_probe": {"smb": True, "ldap": True},
+                "agentless_fingerprint": {"domain": "corp.local"},
+            },
+            {
+                "agentless_probe": {"rdp": True, "ssh": True, "http": True},
+                "agentless_fingerprint": {"dns_domain_name": "example.local"},
+            },
+        ]
+        summary = _summarize_agentless(
+            hosts, {"targets": 2, "completed": 1}, {"windows_verify_enabled": True}
+        )
+        self.assertTrue(summary["enabled"])
+        self.assertEqual(summary["targets"], 2)
+        self.assertEqual(summary["completed"], 1)
+        self.assertEqual(summary["signals"]["smb"], 1)
+        self.assertEqual(summary["signals"]["ldap"], 1)
+        self.assertEqual(summary["signals"]["rdp"], 1)
+        self.assertEqual(summary["signals"]["ssh"], 1)
+        self.assertEqual(summary["signals"]["http"], 1)
+        self.assertIn("corp.local", summary["domains"])
+        self.assertIn("example.local", summary["domains"])
+
+    def test_summarize_smart_scan(self):
+        hosts = [
+            {
+                "smart_scan": {
+                    "identity_score": 5,
+                    "trigger_deep": True,
+                    "deep_scan_executed": False,
+                    "signals": ["hostname", "cpe"],
+                    "reasons": ["low_identity"],
+                }
+            },
+            {
+                "smart_scan": {
+                    "identity_score": 7,
+                    "trigger_deep": True,
+                    "deep_scan_executed": True,
+                    "signals": ["hostname"],
+                    "reasons": ["suspicious_service"],
+                }
+            },
+        ]
+        summary = _summarize_smart_scan(hosts)
+        self.assertEqual(summary["hosts"], 2)
+        self.assertEqual(summary["identity_score_avg"], 6.0)
+        self.assertEqual(summary["deep_scan_triggered"], 2)
+        self.assertEqual(summary["deep_scan_executed"], 1)
+        self.assertEqual(summary["signals"]["hostname"], 2)
+        self.assertEqual(summary["signals"]["cpe"], 1)
+        self.assertEqual(summary["reasons"]["low_identity"], 1)
+        self.assertEqual(summary["reasons"]["suspicious_service"], 1)
+
+    def test_summarize_vulnerabilities_sources(self):
+        entries = [
+            {"vulnerabilities": [{"source": "nmap"}, {"original_severity": {"tool": "nikto"}}]},
+            {"vulnerabilities": [{"source": ""}]},
+        ]
+        summary = _summarize_vulnerabilities(entries)
+        self.assertEqual(summary["total"], 3)
+        self.assertEqual(summary["sources"]["nmap"], 1)
+        self.assertEqual(summary["sources"]["nikto"], 1)
+        self.assertEqual(summary["sources"]["unknown"], 1)
 
     def test_save_results_json(self):
         """Test JSON report saving."""
