@@ -9,6 +9,8 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [3.8.5] - 2025-12-22 (Identidad de Hosts Silenciosos)
+
 ### Añadido
 
 - **Probe HTTP en hosts silenciosos**: Probe HTTP/HTTPS breve en puertos comunes cuando el host tiene vendor pero cero puertos abiertos, para mejorar la identificación de modelo.
@@ -16,6 +18,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Corregido
 
 - **Clasificación de activos**: Se priorizan coincidencias específicas del hostname (p. ej. `iphone`, `msi`) antes de sufijos de router como `fritz` para evitar falsos positivos.
+- **Nombre de activos**: Se usan pistas de `http_title` para nombrar activos sin hostname y clasificar modelos de switch con vendor/título.
 
 ### Documentación
 

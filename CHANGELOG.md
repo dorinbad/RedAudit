@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.8.5] - 2025-12-22 (Quiet-Host Identity)
+
 ### Added
 
 - **Quiet-host HTTP probe**: Short HTTP/HTTPS title+server probe on common ports when a host has vendor hints but zero open ports, to improve model identification.
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Asset classification**: Prefer device-specific hostname matches (e.g., `iphone`, `msi`) before router suffixes like `fritz` to reduce misclassification.
+- **Asset naming**: Use HTTP title hints to label assets without hostnames and classify switch models from vendor/title cues.
 
 ### Documentation
 
