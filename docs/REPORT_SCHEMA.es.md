@@ -247,8 +247,8 @@ Hints normalizados derivados de probes SMB/RDP/LDAP. Todos los campos son opcion
 | `smb_signing_enabled` | boolean | SMB signing habilitado (best-effort) |
 | `smb_signing_required` | boolean | SMB signing requerido (best-effort) |
 | `smbv1_detected` | boolean | Presencia de SMBv1 detectada |
-| `http_title` | string | Título HTTP desde el probe sin agente |
-| `http_server` | string | Header Server HTTP |
+| `http_title` | string | Título HTTP desde probe sin agente o probe HTTP rápido |
+| `http_server` | string | Header Server HTTP desde probe sin agente o probe HTTP rápido |
 | `ssh_hostkeys` | array | Fingerprints de host key SSH (best-effort) |
 | `defaultNamingContext` | string | LDAP RootDSE default naming context |
 | `rootDomainNamingContext` | string | LDAP RootDSE root domain naming context |

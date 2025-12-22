@@ -160,6 +160,7 @@ fallback cuando un host no responde.
 - Falta de MAC/vendor/hostname
 - Sin versión de servicio (score de identidad bajo)
 - Puertos filtrados o sin respuesta (fallback)
+- Hosts silenciosos con vendor detectado pueden recibir un probe HTTP/HTTPS breve en puertos comunes
 
 **Resultado**: Escaneos más rápidos que UDP siempre activo, manteniendo calidad de detección para IoT, servicios filtrados
 y equipos legacy.

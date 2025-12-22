@@ -7,6 +7,16 @@ Todos los cambios relevantes de este proyecto se documentarán en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Añadido
+
+- **Probe HTTP en hosts silenciosos**: Probe HTTP/HTTPS breve en puertos comunes cuando el host tiene vendor pero cero puertos abiertos, para mejorar la identificación de modelo.
+
+### Documentación
+
+- Manuales y esquema de reportes actualizados para incluir las pistas del probe HTTP.
+
 ## [3.8.4] - 2025-12-21 (Verificación sin Agente y Corrección de Colores)
 
 ### Añadido

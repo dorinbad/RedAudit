@@ -160,6 +160,7 @@ It only runs as a fallback when a host does not respond.
 - Missing MAC/vendor/hostname
 - No version info (low identity score)
 - Filtered or no-response ports (deep scan fallback)
+- Quiet hosts with vendor hints may get a short HTTP/HTTPS title probe on common ports
 
 **Result**: Faster scans than always-on UDP, while preserving identity for IoT, filtered services, and legacy devices.
 
