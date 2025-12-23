@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Quiet-host identity**: HTTP identity probe now inspects meta titles and common logo alt text when login pages lack a title/heading.
 - **Vuln source summary**: Pipeline vulnerability sources are inferred from tool-specific signals when explicit source is missing.
 - **Host status**: Hosts with open ports are now marked `up` even when MAC/vendor data is present.
-- **Asset type**: Chromecast/cast fingerprints map to `media`, Android OS hints map to `mobile`, and Vodafone HTTP titles map to `router`.
+- **Asset type**: Chromecast/cast fingerprints map to `media`, Android OS hints map to `mobile`, and topology default gateway is tagged as `router` for entity resolution.
 
 ### Documentation
 

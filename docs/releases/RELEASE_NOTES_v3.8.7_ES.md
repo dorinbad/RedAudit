@@ -6,7 +6,7 @@
 
 ## Resumen
 
-Este hotfix mejora la precisión de los reportes corrigiendo la atribución de fuentes de vulnerabilidades y la clasificación del estado de host. También mejora el probe HTTP en hosts silenciosos y refina el tipo de activo para dispositivos media, hosts Android y gateways Vodafone.
+Este hotfix mejora la precisión de los reportes corrigiendo la atribución de fuentes de vulnerabilidades y la clasificación del estado de host. También mejora el probe HTTP en hosts silenciosos y refina el tipo de activo para dispositivos media y hosts Android.
 
 ---
 
@@ -22,7 +22,7 @@ Hosts con puertos abiertos ahora se marcan como `up` aunque exista MAC/vendor.
 
 ### Detección de tipo de activo
 
-Fingerprints Chromecast/cast se clasifican como `media`, pistas de Android se asignan a `mobile`, y títulos HTTP de Vodafone se asignan a `router`.
+Fingerprints Chromecast/cast se clasifican como `media`, pistas de Android se asignan a `mobile`, y el gateway por defecto de topología se etiqueta como `router` para la resolución de entidades.
 
 ### Identidad HTTP en hosts silenciosos
 

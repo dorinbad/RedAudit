@@ -16,7 +16,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - **Identidad en hosts silenciosos**: El probe HTTP ahora inspecciona metatítulos y texto alt cuando el login no tiene título/encabezado.
 - **Resumen de fuentes**: Las fuentes de vulnerabilidades se infieren desde señales del tool cuando faltan en el hallazgo.
 - **Estado de host**: Hosts con puertos abiertos ahora se marcan como `up` aunque exista MAC/vendor.
-- **Tipo de activo**: Fingerprints Chromecast/cast se clasifican como `media`, pistas de Android como `mobile`, y títulos HTTP de Vodafone como `router`.
+- **Tipo de activo**: Fingerprints Chromecast/cast se clasifican como `media`, pistas de Android como `mobile`, y el gateway por defecto de topología se etiqueta como `router` para la resolución de entidades.
 
 ### Documentacion
 

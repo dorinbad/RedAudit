@@ -6,7 +6,7 @@
 
 ## Summary
 
-This hotfix improves report accuracy by fixing vulnerability source attribution and host status classification. It also enhances quiet-host HTTP identity probes and refines asset typing for media devices, Android-based hosts, and Vodafone gateways.
+This hotfix improves report accuracy by fixing vulnerability source attribution and host status classification. It also enhances quiet-host HTTP identity probes and refines asset typing for media devices and Android-based hosts.
 
 ---
 
@@ -22,7 +22,7 @@ Hosts with open ports are now marked `up` even when MAC/vendor data is present.
 
 ### Asset Type Detection
 
-Chromecast/cast fingerprints are classified as `media`, Android OS hints map to `mobile`, and Vodafone HTTP titles map to `router`.
+Chromecast/cast fingerprints are classified as `media`, Android OS hints map to `mobile`, and the topology default gateway is tagged as `router` for entity resolution.
 
 ### Quiet-Host HTTP Identity
 
