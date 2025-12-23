@@ -269,6 +269,13 @@ def guess_asset_type(host: Dict) -> str:
     agentless = host.get("agentless_fingerprint") or {}
     http_title = str(agentless.get("http_title") or "").lower()
     http_server = str(agentless.get("http_server") or "").lower()
+    os_detected = str(host.get("os_detected") or deep.get("os_detected") or "").lower()
+    port_services = []
+    for port in ports:
+        for key in ("service", "product", "extrainfo"):
+            value = str(port.get(key) or "").lower()
+            if value:
+                port_services.append(value)
 
     # Check hostname patterns (specific devices first to avoid router suffix matches).
     if any(x in hostname for x in ["iphone", "ipad", "android"]):
@@ -303,7 +310,7 @@ def guess_asset_type(host: Dict) -> str:
     # Check agentless HTTP hints when hostname is missing.
     http_hint = f"{http_title} {http_server}".strip()
     if http_hint:
-        if any(x in http_hint for x in ["router", "gateway", "fritz"]):
+        if any(x in http_hint for x in ["router", "gateway", "fritz", "vodafone"]):
             return "router"
         if "switch" in http_hint:
             return "switch"
@@ -312,6 +319,20 @@ def guess_asset_type(host: Dict) -> str:
         ):
             if re.search(r"\b(gs|xgs|xs|sg)\d", http_hint):
                 return "switch"
+
+    # Check service/product fingerprints for media devices.
+    if any(
+        token in svc
+        for svc in port_services
+        for token in ("chromecast", "castv2", "google cast", "dlna", "airplay")
+    ):
+        return "media"
+
+    # OS-based hints (best-effort).
+    if "android" in os_detected:
+        return "mobile"
+    if "ios" in os_detected or "iphone" in os_detected or "ipad" in os_detected:
+        return "mobile"
 
     # Check vendor
     if any(x in vendor for x in ["apple", "microsoft"]):

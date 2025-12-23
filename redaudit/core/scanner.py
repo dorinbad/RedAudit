@@ -691,12 +691,34 @@ def _extract_http_title(html: str) -> str:
         title = _clean_http_identity_text(match.group(1))
         if title:
             return title
+    meta_names = ("og:title", "og:site_name", "application-name", "application_name", "title")
+    for name in meta_names:
+        meta_match = re.search(
+            rf"<meta[^>]+(?:name|property)=[\"']{re.escape(name)}[\"'][^>]*>",
+            html,
+            re.IGNORECASE,
+        )
+        if meta_match:
+            content_match = re.search(
+                r"content\s*=\s*[\"']([^\"']+)",
+                meta_match.group(0),
+                re.IGNORECASE,
+            )
+            if content_match:
+                meta_title = _clean_http_identity_text(content_match.group(1))
+                if meta_title:
+                    return meta_title
     for tag in ("h1", "h2"):
         match = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", html, re.IGNORECASE | re.DOTALL)
         if match:
             heading = _clean_http_identity_text(match.group(1))
             if heading:
                 return heading
+    alt_match = re.search(r"<img[^>]+alt=[\"']([^\"']+)", html, re.IGNORECASE)
+    if alt_match:
+        alt_text = _clean_http_identity_text(alt_match.group(1))
+        if alt_text and alt_text.lower() not in {"logo", "logo svg"}:
+            return alt_text
     return ""
 
 
@@ -1372,9 +1394,9 @@ def finalize_host_status(host_record: Dict) -> str:
     if not deep_scan:
         return current_status
 
-    # Check for MAC/vendor (definite proof of host presence)
-    if deep_scan.get("mac_address") or deep_scan.get("vendor"):
-        return STATUS_FILTERED  # Host exists but filtered initial probes
+    # If ports were found, host is up regardless of MAC/vendor hints.
+    if host_record.get("ports") and len(host_record.get("ports", [])) > 0:
+        return STATUS_UP
 
     # Check command outputs for any response indicators
     commands = deep_scan.get("commands", [])
@@ -1393,9 +1415,9 @@ def finalize_host_status(host_record: Dict) -> str:
         if "OS details:" in stdout or "Running:" in stdout:
             return STATUS_FILTERED
 
-    # Check for ports found
-    if host_record.get("ports") and len(host_record.get("ports", [])) > 0:
-        return STATUS_UP
+    # Check for MAC/vendor (definite proof of host presence)
+    if deep_scan.get("mac_address") or deep_scan.get("vendor"):
+        return STATUS_FILTERED  # Host exists but filtered initial probes
 
     # No meaningful response at all
     if current_status in ("down", STATUS_DOWN):
