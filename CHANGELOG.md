@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.8.7] - 2025-12-23 (Reporting & Classification Fixes)
+
 ### Fixed
 
-- **Quiet-host identity**: HTTP identity probe now tries common login paths when root lacks a title/heading.
+- **Quiet-host identity**: HTTP identity probe now inspects meta titles and common logo alt text when login pages lack a title/heading.
+- **Vuln source summary**: Pipeline vulnerability sources are inferred from tool-specific signals when explicit source is missing.
+- **Host status**: Hosts with open ports are now marked `up` even when MAC/vendor data is present.
+- **Asset type**: Chromecast/cast fingerprints map to `media`, Android OS hints map to `mobile`, and Vodafone HTTP titles map to `router`.
+
+### Documentation
+
+- Refreshed system architecture diagrams (EN/ES) to reflect current pipeline modules.
+- Updated manuals (EN/ES) to clarify HTTP identity meta/title fallback for quiet hosts.
 
 ## [3.8.6] - 2025-12-22 (Docker Build Fix)
 
