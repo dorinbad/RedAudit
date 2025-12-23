@@ -80,3 +80,80 @@ def test_lookup_vendor_online_request_exception(monkeypatch):
     monkeypatch.setitem(sys.modules, "requests", _Requests())
     vendor = oui_lookup.lookup_vendor_online("aa:bb:cc:dd:ee:ff")
     assert vendor is None
+
+
+def test_lookup_vendor_online_empty_mac():
+    """Test line 51: return None for empty MAC."""
+    assert oui_lookup.lookup_vendor_online("") is None
+    assert oui_lookup.lookup_vendor_online(None) is None
+
+
+def test_lookup_vendor_online_cache_hit(monkeypatch):
+    """Test line 59: return cached result without making request."""
+    oui_lookup.clear_cache()
+    oui_lookup._VENDOR_CACHE["AABBCC"] = "Cached Vendor"
+
+    # Should not make any request
+    def _fail(*_args, **_kwargs):
+        raise AssertionError("Should not make request when cached")
+
+    monkeypatch.setattr(time, "time", _fail)
+
+    vendor = oui_lookup.lookup_vendor_online("aa:bb:cc:dd:ee:ff")
+    assert vendor == "Cached Vendor"
+
+
+def test_lookup_vendor_online_rate_limiting(monkeypatch):
+    """Test line 64: rate limiting with sleep."""
+
+    class _Response:
+        status_code = 200
+        text = "Vendor1"
+
+    oui_lookup.clear_cache()
+    oui_lookup._LAST_REQUEST_TIME = 1000.5  # Recent request
+
+    # Current time is 1000.8, so delta is 0.3s < 1.0s
+    times = iter([1000.8, 1000.8, 1001.0])  # time(), time() in sleep check, updated time()
+    sleep_called = []
+
+    monkeypatch.setattr(time, "time", lambda: next(times))
+    monkeypatch.setattr(time, "sleep", lambda x: sleep_called.append(x))
+
+    dummy_requests = types.SimpleNamespace(get=lambda *_args, **_kwargs: _Response())
+    monkeypatch.setitem(sys.modules, "requests", dummy_requests)
+
+    vendor = oui_lookup.lookup_vendor_online("11:22:33:44:55:66")
+
+    # Should have slept for 0.7 seconds (1.0 - 0.3)
+    assert len(sleep_called) == 1
+    assert abs(sleep_called[0] - 0.7) < 0.01
+
+
+def test_lookup_vendor_online_import_error(monkeypatch):
+    """Test line 89: handle missing requests library."""
+    oui_lookup.clear_cache()
+    oui_lookup._LAST_REQUEST_TIME = 0.0
+
+    monkeypatch.setattr(time, "time", lambda: 1000.0)
+
+    # Remove requests from sys.modules to trigger ImportError
+    if "requests" in sys.modules:
+        monkeypatch.delitem(sys.modules, "requests")
+
+    vendor = oui_lookup.lookup_vendor_online("aa:bb:cc:dd:ee:ff")
+    assert vendor is None
+
+
+def test_get_vendor_with_fallback_online_disabled():
+    """Test lines 115-118: online_fallback=False returns None."""
+    result = oui_lookup.get_vendor_with_fallback(
+        "aa:bb:cc:dd:ee:ff", local_vendor=None, online_fallback=False
+    )
+    assert result is None
+
+
+def test_get_vendor_with_fallback_empty_mac():
+    """Test line 118: empty MAC returns None even with online_fallback."""
+    result = oui_lookup.get_vendor_with_fallback("", local_vendor=None, online_fallback=True)
+    assert result is None
