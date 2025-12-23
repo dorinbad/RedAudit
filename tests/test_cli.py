@@ -3,6 +3,7 @@
 RedAudit - Tests for CLI helpers.
 """
 
+import os
 import sys
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -78,6 +79,7 @@ def _base_args(**overrides):
         "no_color": False,
         "skip_update_check": True,
         "defaults": "ask",
+        "proxy": None,
         "net_discovery": None,
         "redteam": False,
         "net_discovery_interface": None,
@@ -179,7 +181,8 @@ def test_configure_from_args_target_too_long():
     app = _DummyApp()
     args = _base_args(target="a" * (MAX_CIDR_LENGTH + 1))
     assert cli.configure_from_args(app, args) is False
-    assert "invalid_target_too_long" in app._statuses[-1]
+    assert any("invalid_target_too_long" in status for status in app._statuses)
+    assert app._statuses[-1] == "no_valid_targets"
 
 
 def test_configure_from_args_expands_output(monkeypatch):
@@ -196,6 +199,7 @@ def test_configure_from_args_sets_dry_run_env(monkeypatch):
     monkeypatch.delenv("REDAUDIT_DRY_RUN", raising=False)
     assert cli.configure_from_args(app, args) is True
     assert os.environ["REDAUDIT_DRY_RUN"] == "1"
+    os.environ.pop("REDAUDIT_DRY_RUN", None)
 
 
 def test_configure_from_args_sets_max_hosts_all():

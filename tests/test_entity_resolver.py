@@ -58,7 +58,7 @@ class TestEntityResolver(unittest.TestCase):
 
     def test_guess_asset_type_router(self):
         """Test router type detection."""
-        host = {"hostname": "fritz.box", "ports": []}
+        host = {"hostname": "router.local", "ports": []}
         self.assertEqual(guess_asset_type(host), "router")
 
     def test_guess_asset_type_workstation(self):
