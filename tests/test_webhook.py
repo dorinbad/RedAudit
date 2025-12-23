@@ -88,6 +88,66 @@ def test_send_webhook_success(monkeypatch):
     assert timeout == 5
 
 
+def test_send_webhook_requests_unavailable(monkeypatch):
+    monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", False)
+    monkeypatch.setattr(webhook, "requests", None)
+    assert webhook.send_webhook("https://example.com", {"a": 1}) is False
+
+
+def test_send_webhook_non_ok(monkeypatch):
+    class _Response:
+        ok = False
+        status_code = 400
+        reason = "Bad"
+        text = "bad request"
+
+    class _Requests:
+        class exceptions:
+            Timeout = type("Timeout", (Exception,), {})
+            RequestException = type("RequestException", (Exception,), {})
+
+        def post(self, *_args, **_kwargs):
+            return _Response()
+
+    dummy = _Requests()
+    monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(webhook, "requests", dummy)
+
+    assert webhook.send_webhook("https://example.com", {"a": 1}) is False
+
+
+def test_send_webhook_timeout(monkeypatch):
+    class _Requests:
+        class exceptions:
+            Timeout = type("Timeout", (Exception,), {})
+            RequestException = type("RequestException", (Exception,), {})
+
+        def post(self, *_args, **_kwargs):
+            raise _Requests.exceptions.Timeout()
+
+    dummy = _Requests()
+    monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(webhook, "requests", dummy)
+
+    assert webhook.send_webhook("https://example.com", {"a": 1}) is False
+
+
+def test_send_webhook_request_exception(monkeypatch):
+    class _Requests:
+        class exceptions:
+            Timeout = type("Timeout", (Exception,), {})
+            RequestException = type("RequestException", (Exception,), {})
+
+        def post(self, *_args, **_kwargs):
+            raise _Requests.exceptions.RequestException("boom")
+
+    dummy = _Requests()
+    monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(webhook, "requests", dummy)
+
+    assert webhook.send_webhook("https://example.com", {"a": 1}) is False
+
+
 def test_process_findings_for_alerts_counts_sent(monkeypatch):
     results = {
         "vulnerabilities": [

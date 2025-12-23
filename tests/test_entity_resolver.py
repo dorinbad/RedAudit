@@ -58,7 +58,7 @@ class TestEntityResolver(unittest.TestCase):
 
     def test_guess_asset_type_router(self):
         """Test router type detection."""
-        host = {"hostname": "fritz.box", "ports": []}
+        host = {"hostname": "router.local", "ports": []}
         self.assertEqual(guess_asset_type(host), "router")
 
     def test_guess_asset_type_workstation(self):
@@ -80,6 +80,32 @@ class TestEntityResolver(unittest.TestCase):
             "agentless_fingerprint": {"http_title": "GS1200-5"},
         }
         self.assertEqual(guess_asset_type(host), "switch")
+
+    def test_guess_asset_type_router_from_http_title_keywords(self):
+        """Test router detection from generic HTTP title keywords."""
+        host = {
+            "hostname": "",
+            "ports": [],
+            "agentless_fingerprint": {"http_title": "Home Gateway Login"},
+        }
+        self.assertEqual(guess_asset_type(host), "router")
+
+    def test_guess_asset_type_router_from_default_gateway_flag(self):
+        """Test router detection from default gateway flag."""
+        host = {"hostname": "", "ports": [], "is_default_gateway": True}
+        self.assertEqual(guess_asset_type(host), "router")
+
+    def test_guess_asset_type_media_from_cast(self):
+        """Test media device detection from cast service fingerprints."""
+        host = {
+            "hostname": "",
+            "ports": [
+                {"port": 8008, "service": "http", "product": "Google Chromecast httpd"},
+                {"port": 8009, "service": "castv2", "product": "Ninja Sphere Chromecast driver"},
+            ],
+            "deep_scan": {"os_detected": "Android 10 - 12 (Linux 4.14 - 4.19)"},
+        }
+        self.assertEqual(guess_asset_type(host), "media")
 
     def test_create_unified_single_host(self):
         """Test unified asset creation for single host."""

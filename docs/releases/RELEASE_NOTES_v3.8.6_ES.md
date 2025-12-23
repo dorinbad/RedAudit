@@ -6,7 +6,7 @@
 
 ## Resumen
 
-Este hotfix asegura que la imagen Docker se construya correctamente instalando las dependencias de compilación necesarias para `netifaces`. También alinea las notas de versión recientes con el formato bilingüe de versiones anteriores.
+Este hotfix asegura que la imagen Docker se construya correctamente instalando las dependencias de compilación necesarias para `netifaces`. También mejora la captura de identidad en hosts silenciosos desde UI web y alinea las notas de versión recientes con el formato bilingüe de versiones anteriores.
 
 ---
 
@@ -15,6 +15,10 @@ Este hotfix asegura que la imagen Docker se construya correctamente instalando l
 ### Build de Docker para netifaces
 
 La imagen Docker ahora instala dependencias de compilación para que `pip install` pueda compilar `netifaces` durante el build.
+
+### Titulos de identidad en hosts silenciosos
+
+El probe HTTP ahora usa fallback a H1/H2 cuando falta `<title>`, mejorando la deteccion de modelo en pantallas de login.
 
 ---
 

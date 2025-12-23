@@ -103,6 +103,59 @@ def test_http_identity_probe_extracts_title_and_server(monkeypatch):
     assert result["http_server"] == "ZyxelHTTP"
 
 
+def test_http_identity_probe_falls_back_to_heading(monkeypatch):
+    def _fake_make_runner(**_kwargs):
+        def _run(args, **_run_kwargs):
+            if "-I" in args:
+                return _result(stdout="HTTP/1.1 200 OK\n")
+            return _result(stdout="<html><h1>ZYXEL GS1200-5</h1></html>")
+
+        return SimpleNamespace(run=_run)
+
+    monkeypatch.setattr(scanner, "_make_runner", _fake_make_runner)
+
+    result = scanner.http_identity_probe("10.0.0.1", {"curl": "curl"}, ports=[80])
+    assert result["http_title"] == "ZYXEL GS1200-5"
+
+
+def test_http_identity_probe_falls_back_to_meta(monkeypatch):
+    def _fake_make_runner(**_kwargs):
+        def _run(args, **_run_kwargs):
+            if "-I" in args:
+                return _result(stdout="HTTP/1.1 200 OK\n")
+            return _result(
+                stdout=('<html><meta property="og:title" content="Gateway Model X"></html>')
+            )
+
+        return SimpleNamespace(run=_run)
+
+    monkeypatch.setattr(scanner, "_make_runner", _fake_make_runner)
+
+    result = scanner.http_identity_probe("10.0.0.1", {"curl": "curl"}, ports=[80])
+    assert result["http_title"] == "Gateway Model X"
+
+
+def test_http_identity_probe_tries_login_paths(monkeypatch):
+    seen = []
+
+    def _fake_fetch_headers(url, *_args, **_kwargs):
+        seen.append(("head", url))
+        return ""
+
+    def _fake_fetch_body(url, *_args, **_kwargs):
+        seen.append(("body", url))
+        if url.endswith("/login.html"):
+            return "<h1>Vodafone</h1>"
+        return ""
+
+    monkeypatch.setattr(scanner, "_fetch_http_headers", _fake_fetch_headers)
+    monkeypatch.setattr(scanner, "_fetch_http_body", _fake_fetch_body)
+
+    result = scanner.http_identity_probe("10.0.0.2", {"curl": "curl"}, ports=[80])
+    assert result["http_title"] == "Vodafone"
+    assert any(url.endswith("/login.html") for _, url in seen)
+
+
 def test_ssl_deep_analysis_parses_findings(monkeypatch):
     output = """
 TLS 1.0 offered
@@ -201,6 +254,15 @@ def test_banner_grab_and_finalize_status(monkeypatch):
         {
             "status": scanner.STATUS_DOWN,
             "deep_scan": {"commands": [{"stdout": "22/tcp open"}]},
+        }
+    )
+    assert status == scanner.STATUS_UP
+
+    status = scanner.finalize_host_status(
+        {
+            "status": scanner.STATUS_DOWN,
+            "ports": [{"port": 80, "protocol": "tcp"}],
+            "deep_scan": {"vendor": "Sagemcom Broadband SAS"},
         }
     )
     assert status == scanner.STATUS_UP

@@ -3,6 +3,7 @@
 RedAudit - Tests for CLI helpers.
 """
 
+import os
 import sys
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -10,6 +11,12 @@ from unittest.mock import patch
 import pytest
 
 from redaudit import cli
+from redaudit.utils.constants import (
+    DEFAULT_THREADS,
+    MAX_CIDR_LENGTH,
+    DEFAULT_UDP_MODE,
+    UDP_TOP_PORTS,
+)
 
 
 class _DummyApp:
@@ -72,6 +79,7 @@ def _base_args(**overrides):
         "no_color": False,
         "skip_update_check": True,
         "defaults": "ask",
+        "proxy": None,
         "net_discovery": None,
         "redteam": False,
         "net_discovery_interface": None,
@@ -138,6 +146,90 @@ def test_configure_from_args_rejects_agentless_verify_max_targets():
     assert cli.configure_from_args(app, args) is False
 
 
+def test_parse_arguments_handles_persisted_error(monkeypatch):
+    def _raise():
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("redaudit.utils.config.get_persistent_defaults", _raise)
+    with patch.object(sys, "argv", ["redaudit"]):
+        args = cli.parse_arguments()
+    assert args.threads == DEFAULT_THREADS
+
+
+def test_configure_from_args_sets_lang():
+    app = _DummyApp()
+    args = _base_args(lang="es")
+    assert cli.configure_from_args(app, args) is True
+    assert app.lang == "es"
+
+
+def test_configure_from_args_dependency_failure():
+    app = _DummyApp()
+    args = _base_args()
+    app.check_dependencies = lambda: False
+    assert cli.configure_from_args(app, args) is False
+
+
+def test_configure_from_args_legal_warning_rejects():
+    app = _DummyApp()
+    args = _base_args(yes=False)
+    app.show_legal_warning = lambda: False
+    assert cli.configure_from_args(app, args) is False
+
+
+def test_configure_from_args_target_too_long():
+    app = _DummyApp()
+    args = _base_args(target="a" * (MAX_CIDR_LENGTH + 1))
+    assert cli.configure_from_args(app, args) is False
+    assert any("invalid_target_too_long" in status for status in app._statuses)
+    assert app._statuses[-1] == "no_valid_targets"
+
+
+def test_configure_from_args_expands_output(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(output="~/Reports")
+    monkeypatch.setattr(cli, "expand_user_path", lambda _: "/tmp/reports")
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["output_dir"] == "/tmp/reports"
+
+
+def test_configure_from_args_sets_dry_run_env(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(dry_run=True)
+    monkeypatch.delenv("REDAUDIT_DRY_RUN", raising=False)
+    assert cli.configure_from_args(app, args) is True
+    assert os.environ["REDAUDIT_DRY_RUN"] == "1"
+    os.environ.pop("REDAUDIT_DRY_RUN", None)
+
+
+def test_configure_from_args_sets_max_hosts_all():
+    app = _DummyApp()
+    args = _base_args(max_hosts=None)
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["max_hosts_value"] == "all"
+
+
+def test_configure_from_args_filters_net_discovery_protocols():
+    app = _DummyApp()
+    args = _base_args(net_discovery="dhcp,foo,mdns")
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["net_discovery_protocols"] == ["dhcp", "mdns"]
+
+
+def test_configure_from_args_save_defaults_success(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(save_defaults=True)
+    called = {}
+
+    def _capture(**kwargs):
+        called.update(kwargs)
+
+    monkeypatch.setattr("redaudit.utils.config.update_persistent_defaults", _capture)
+    assert cli.configure_from_args(app, args) is True
+    assert "defaults_saved" in app._statuses[-1]
+    assert called["threads"] == app.config.get("threads")
+
+
 def test_configure_from_args_save_defaults_error(monkeypatch):
     app = _DummyApp()
     args = _base_args(save_defaults=True)
@@ -191,9 +283,67 @@ def test_main_diff_mode_generates_reports(tmp_path, monkeypatch):
     assert exc.value.code == 0
 
 
+def test_main_diff_mode_fails_on_empty_diff(monkeypatch):
+    args = _base_args(diff=("old", "new"))
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr("redaudit.core.diff.generate_diff_report", lambda *_args: None)
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 1
+
+
 def test_main_requires_root_for_scan(monkeypatch):
     monkeypatch.setattr(cli, "parse_arguments", lambda: _base_args(allow_non_root=False))
     monkeypatch.setattr(cli.os, "geteuid", lambda: 1)
     with pytest.raises(SystemExit) as exc:
         cli.main()
     assert exc.value.code == 1
+
+
+def test_main_proxy_invalid_exits(monkeypatch):
+    args = _base_args(proxy="socks5://example.com:1080", target=None)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 0)
+
+    class _Proxy:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def is_valid(self):
+            return False
+
+    monkeypatch.setattr("redaudit.core.proxy.ProxyManager", _Proxy)
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 1
+
+
+def test_main_defaults_ignore_resets_cli_values(monkeypatch):
+    args = _base_args(defaults="ignore", threads=9, rate_limit=3.0, udp_mode="full", udp_ports=200)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 0)
+    with patch.object(sys, "argv", ["redaudit"]):
+
+        def _configure(app, cfg):
+            assert cfg.threads == DEFAULT_THREADS
+            assert cfg.rate_limit == 0.0
+            assert cfg.udp_mode == DEFAULT_UDP_MODE
+            assert cfg.udp_ports == UDP_TOP_PORTS
+            return False
+
+        monkeypatch.setattr(cli, "configure_from_args", _configure)
+        with pytest.raises(SystemExit):
+            cli.main()
+
+
+def test_main_non_root_allow_non_root(monkeypatch):
+    args = _base_args(allow_non_root=True)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 1)
+
+    def _configure(_app, _args):
+        return False
+
+    monkeypatch.setattr(cli, "configure_from_args", _configure)
+    with pytest.raises(SystemExit):
+        cli.main()

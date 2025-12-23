@@ -8,6 +8,7 @@ Network scanning, port enumeration, deep scan, and traffic capture functionality
 """
 
 import re
+import html as html_module
 import os
 import time
 import subprocess
@@ -656,6 +657,7 @@ def http_enrichment(
 
 HTTP_IDENTITY_PORTS = (80, 443, 8080, 8443, 8000, 8888)
 HTTP_IDENTITY_HTTPS_PORTS = {443, 8443, 9443, 4443}
+HTTP_IDENTITY_PATHS = ("/", "/login", "/login.html", "/index.html")
 
 
 def _format_http_host(host_ip: str) -> str:
@@ -672,14 +674,52 @@ def _extract_http_server(headers: str) -> str:
     return server[:200] if server else ""
 
 
+def _clean_http_identity_text(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = re.sub(r"<[^>]+>", " ", text)
+    cleaned = html_module.unescape(cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned[:200] if cleaned else ""
+
+
 def _extract_http_title(html: str) -> str:
     if not html:
         return ""
     match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-    if not match:
-        return ""
-    title = re.sub(r"\s+", " ", match.group(1)).strip()
-    return title[:200] if title else ""
+    if match:
+        title = _clean_http_identity_text(match.group(1))
+        if title:
+            return title
+    meta_names = ("og:title", "og:site_name", "application-name", "application_name", "title")
+    for name in meta_names:
+        meta_match = re.search(
+            rf"<meta[^>]+(?:name|property)=[\"']{re.escape(name)}[\"'][^>]*>",
+            html,
+            re.IGNORECASE,
+        )
+        if meta_match:
+            content_match = re.search(
+                r"content\s*=\s*[\"']([^\"']+)",
+                meta_match.group(0),
+                re.IGNORECASE,
+            )
+            if content_match:
+                meta_title = _clean_http_identity_text(content_match.group(1))
+                if meta_title:
+                    return meta_title
+    for tag in ("h1", "h2"):
+        match = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", html, re.IGNORECASE | re.DOTALL)
+        if match:
+            heading = _clean_http_identity_text(match.group(1))
+            if heading:
+                return heading
+    alt_match = re.search(r"<img[^>]+alt=[\"']([^\"']+)", html, re.IGNORECASE)
+    if alt_match:
+        alt_text = _clean_http_identity_text(alt_match.group(1))
+        if alt_text and alt_text.lower() not in {"logo", "logo svg"}:
+            return alt_text
+    return ""
 
 
 def _fetch_http_headers(
@@ -818,11 +858,18 @@ def http_identity_probe(
     for port in ports_to_check:
         schemes = ("https", "http") if port in HTTP_IDENTITY_HTTPS_PORTS else ("http", "https")
         for scheme in schemes:
-            url = f"{scheme}://{host}:{port}/"
-            headers = _fetch_http_headers(url, extra_tools, dry_run=dry_run, logger=logger)
-            server = _extract_http_server(headers)
-            body = _fetch_http_body(url, extra_tools, dry_run=dry_run, logger=logger)
-            title = _extract_http_title(body[:40000])
+            server = ""
+            title = ""
+            for path in HTTP_IDENTITY_PATHS:
+                url = f"{scheme}://{host}:{port}{path}"
+                if not server:
+                    headers = _fetch_http_headers(url, extra_tools, dry_run=dry_run, logger=logger)
+                    server = _extract_http_server(headers)
+                if not title:
+                    body = _fetch_http_body(url, extra_tools, dry_run=dry_run, logger=logger)
+                    title = _extract_http_title(body[:40000])
+                if title and server:
+                    break
             if title or server:
                 result = {}
                 if title:
@@ -1345,9 +1392,9 @@ def finalize_host_status(host_record: Dict) -> str:
     if not deep_scan:
         return current_status
 
-    # Check for MAC/vendor (definite proof of host presence)
-    if deep_scan.get("mac_address") or deep_scan.get("vendor"):
-        return STATUS_FILTERED  # Host exists but filtered initial probes
+    # If ports were found, host is up regardless of MAC/vendor hints.
+    if host_record.get("ports") and len(host_record.get("ports", [])) > 0:
+        return STATUS_UP
 
     # Check command outputs for any response indicators
     commands = deep_scan.get("commands", [])
@@ -1366,9 +1413,9 @@ def finalize_host_status(host_record: Dict) -> str:
         if "OS details:" in stdout or "Running:" in stdout:
             return STATUS_FILTERED
 
-    # Check for ports found
-    if host_record.get("ports") and len(host_record.get("ports", [])) > 0:
-        return STATUS_UP
+    # Check for MAC/vendor (definite proof of host presence)
+    if deep_scan.get("mac_address") or deep_scan.get("vendor"):
+        return STATUS_FILTERED  # Host exists but filtered initial probes
 
     # No meaningful response at all
     if current_status in ("down", STATUS_DOWN):

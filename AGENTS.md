@@ -174,6 +174,15 @@ Always update i18n + tests in the same commit if the real flow changed.
   - `pre-commit run --all-files`
   - `pytest tests/ -v`
 
+## Scan Artifact Review (Quality Loop)
+
+When using real scan artifacts to refine heuristics or output:
+
+- Review HTML/TXT/JSONL for assets with vendor-only identity or `unknown` type.
+- If a host exposes a web UI, do a quick HTTP/HTTPS fetch (no creds) to capture titles/headers that can improve asset naming.
+- If new identity signals are added, update tests and docs in the same commit.
+- Keep `scan_results_private/` local-only and never commit it.
+
 ## Documentation Consistency Rules
 
 When changing behavior/UX, update the relevant docs in both EN/ES (flat docs structure):

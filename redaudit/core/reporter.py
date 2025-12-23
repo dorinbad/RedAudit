@@ -172,15 +172,28 @@ def _summarize_smart_scan(hosts: list) -> Dict[str, Any]:
     }
 
 
+def _infer_vuln_source(vuln: Dict[str, Any]) -> str:
+    source = vuln.get("source") or (vuln.get("original_severity") or {}).get("tool") or ""
+    if source:
+        return source
+    if vuln.get("template_id") or vuln.get("matched_at"):
+        return "nuclei"
+    if vuln.get("nikto_findings"):
+        return "nikto"
+    if vuln.get("testssl_analysis"):
+        return "testssl"
+    if vuln.get("whatweb"):
+        return "whatweb"
+    return "unknown"
+
+
 def _summarize_vulnerabilities(vuln_entries: list) -> Dict[str, Any]:
     total = 0
     sources: Dict[str, int] = {}
     for entry in vuln_entries or []:
         for vuln in entry.get("vulnerabilities", []) or []:
             total += 1
-            source = (
-                vuln.get("source") or (vuln.get("original_severity") or {}).get("tool") or "unknown"
-            )
+            source = _infer_vuln_source(vuln)
             sources[source] = sources.get(source, 0) + 1
     return {"total": total, "sources": sources}
 
@@ -258,6 +271,21 @@ def generate_summary(
     # v2.9: Entity Resolution - consolidate multi-interface hosts
     hosts = results.get("hosts", [])
     if hosts:
+        # Generic improvement: tag the default gateway as a router when topology is enabled.
+        gateway_ip = ((results.get("topology") or {}).get("default_gateway") or {}).get("ip")
+        if gateway_ip:
+            for host in hosts:
+                if host.get("ip") != gateway_ip:
+                    continue
+                host["is_default_gateway"] = True
+                hints = host.get("device_type_hints")
+                if not isinstance(hints, list):
+                    hints = []
+                normalized = {str(h).lower() for h in hints if h}
+                if "router" not in normalized:
+                    hints.append("router")
+                host["device_type_hints"] = hints
+
         unified = reconcile_assets(hosts)
         if unified:
             results["unified_assets"] = unified

@@ -6,7 +6,7 @@
 
 ## Summary
 
-This hotfix ensures the Docker image builds successfully by installing build tools required for `netifaces`. It also aligns recent release notes with the bilingual badge format used in earlier versions.
+This hotfix ensures the Docker image builds successfully by installing build tools required for `netifaces`. It also improves quiet-host identity capture from web UIs and aligns recent release notes with the bilingual badge format used in earlier versions.
 
 ---
 
@@ -15,6 +15,10 @@ This hotfix ensures the Docker image builds successfully by installing build too
 ### Docker Build for netifaces
 
 The Docker image now installs build dependencies so `pip install` can compile `netifaces` during the image build.
+
+### Quiet-Host Identity Titles
+
+The HTTP title probe now falls back to H1/H2 headings when `<title>` is missing, improving model detection on login pages.
 
 ---
 

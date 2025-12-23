@@ -62,3 +62,21 @@ def test_lookup_vendor_online_caches_miss(monkeypatch):
     assert vendor is None
     assert "AABBCC" in oui_lookup._VENDOR_CACHE
     assert oui_lookup._VENDOR_CACHE["AABBCC"] is None
+
+
+def test_lookup_vendor_online_short_mac(monkeypatch):
+    oui_lookup.clear_cache()
+    assert oui_lookup.lookup_vendor_online("aa:bb") is None
+
+
+def test_lookup_vendor_online_request_exception(monkeypatch):
+    class _Requests:
+        def get(self, *_args, **_kwargs):
+            raise RuntimeError("boom")
+
+    oui_lookup.clear_cache()
+    oui_lookup._LAST_REQUEST_TIME = 0.0
+
+    monkeypatch.setitem(sys.modules, "requests", _Requests())
+    vendor = oui_lookup.lookup_vendor_online("aa:bb:cc:dd:ee:ff")
+    assert vendor is None
