@@ -66,3 +66,57 @@ def test_ask_password_twice_spanish_mismatch(monkeypatch):
     monkeypatch.setattr("getpass.getpass", lambda *_args, **_kwargs: next(inputs))
 
     assert ask_password_twice(prompt="Clave", lang="es") == "StrongPass123"
+
+
+def test_validate_password_no_uppercase_en():
+    """Test line 133-134: missing uppercase (English)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("strongpass123", lang="en")
+    assert ok is False
+    assert "uppercase" in msg.lower()
+
+
+def test_validate_password_no_uppercase_es():
+    """Test line 135-136: missing uppercase (Spanish)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("strongpass123", lang="es")
+    assert ok is False
+    assert "mayúscula" in msg.lower()
+
+
+def test_validate_password_no_lowercase_en():
+    """Test line 139-140: missing lowercase (English)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("STRONGPASS123", lang="en")
+    assert ok is False
+    assert "lowercase" in msg.lower()
+
+
+def test_validate_password_no_lowercase_es():
+    """Test line 141-142: missing lowercase (Spanish)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("STRONGPASS123", lang="es")
+    assert ok is False
+    assert "minúscula" in msg.lower()
+
+
+def test_validate_password_no_digit_en():
+    """Test line 145-146: missing digit (English)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("StrongPassword", lang="en")
+    assert ok is False
+    assert "digit" in msg.lower()
+
+
+def test_validate_password_no_digit_es():
+    """Test line 147-148: missing digit (Spanish)."""
+    from redaudit.core.crypto import validate_password_strength
+
+    ok, msg = validate_password_strength("StrongPassword", lang="es")
+    assert ok is False
+    assert "número" in msg.lower()
