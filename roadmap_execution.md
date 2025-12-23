@@ -38,10 +38,17 @@ Criterio de salida:
 
 Objetivo: elevar confianza con metricas y documentacion clara.
 
-- [/] Subir cobertura real en redaudit/ > 90% (actual: **75.65%**, objetivo: 85%+ en progreso).
-  - [x] Completado: `crypto.py` (100%), `oui_lookup.py` (95.56%), y 6 módulos adicionales
-  - [x] Branch `feature/coverage-90` con 3 commits, +15 tests, +65 líneas cubiertas
-  - [ ] Restante: ~1,000 líneas para llegar a 85% (31 archivos identificados)
+- [/] Subir cobertura real en redaudit/ > 90% (actual: **76.05%**, objetivo: 85%+ en progreso).
+  - [x] **Sesión 1 (23-dic):** 75.49% → 75.76% (+0.27%, 8 módulos)
+    - crypto.py: 100% ✨, oui_lookup.py: 95.56%, +6 módulos a ~96%
+  - [x] **Sesión 2 (23-dic):** 75.76% → 75.98% (+0.22%)
+    - diff.py: 98.88% (casi perfecto)
+  - [x] **Sesión 3 (24-dic AM):** 75.98% → 76.05% (+0.07%)
+    - command_runner: 87.35%, +9 tests batch 2
+  - [x] Total: **+0.56%**, 10 módulos mejorados, 30 tests nuevos, 659 tests pasando
+  - [ ] **Próxima sesión:** Milestone 1 restante (entity_resolver, osquery, proxy, playbook, nuclei)
+  - [ ] Luego: Milestone 2 (topology, siem, verify_vuln, etc.) → 82%
+  - [ ] Final: Milestone 3 (reporter, scanner, wizard parcial) → 85%
   - [ ] Ver [walkthrough.md](file:///Users/dorin/.gemini/antigravity/brain/d7a69a12-cb77-4acc-9997-a9bf976aace9/walkthrough.md) para roadmap detallado
 - [x] Agregar SECURITY_AUDIT.md con alcance y riesgos conocidos.
 - [x] Implementar rotacion de logs (RotatingFileHandler) con tests minimos.
