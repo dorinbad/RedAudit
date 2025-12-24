@@ -1,111 +1,101 @@
-#!/usr/bin/env python3
-"""
-FILE-BY-FILE: paths.py to 98%
-Current: 75.4%, Missing: 46 lines
-Target: 98%
-All 4 functions: expand_user_path, get_default_reports_base_dir, ensure_dir, get_project_root
-"""
-
-from unittest.mock import patch
-from pathlib import Path
-import tempfile
 import os
+import pytest
+import pwd
+from unittest.mock import MagicMock, patch
+from redaudit.utils.paths import (
+    get_invoking_user,
+    get_reports_home_dir,
+    get_invoking_home_dir,
+    expand_user_path,
+    get_documents_dir,
+    get_default_reports_base_dir,
+    resolve_invoking_user_owner,
+    maybe_chown_to_invoking_user,
+    maybe_chown_tree_to_invoking_user,
+)
 
 
-def test_paths_expand_user_path_tilde():
-    """Test expand_user_path with tilde."""
-    from redaudit.utils.paths import expand_user_path
+def test_get_invoking_user():
+    with (
+        patch("redaudit.utils.paths._is_root", return_value=True),
+        patch.dict(os.environ, {"SUDO_USER": "testuser"}),
+    ):
+        assert get_invoking_user() == "testuser"
 
-    # Tilde expansion
-    expanded = expand_user_path("~/test/path")
-    assert "~" not in expanded
-    assert "/test/path" in expanded or "test" in expanded
-
-
-def test_paths_expand_user_path_absolute():
-    """Test expand_user_path with absolute path."""
-    from redaudit.utils.paths import expand_user_path
-
-    expanded = expand_user_path("/absolute/path")
-    assert expanded == "/absolute/path"
+    with patch("redaudit.utils.paths._is_root", return_value=False):
+        assert get_invoking_user() is None
 
 
-def test_paths_expand_user_path_relative():
-    """Test expand_user_path with relative path."""
-    from redaudit.utils.paths import expand_user_path
+def test_get_reports_home_dir():
+    with (
+        patch("redaudit.utils.paths.get_invoking_user", return_value="user1"),
+        patch("redaudit.utils.paths._resolve_home_dir_for_user", return_value="/home/user1"),
+    ):
+        assert get_reports_home_dir() == "/home/user1"
 
-    expanded = expand_user_path("relative/path")
-    assert "relative/path" in expanded
-
-
-def test_paths_get_default_reports_base_dir():
-    """Test get_default_reports_base_dir."""
-    from redaudit.utils.paths import get_default_reports_base_dir
-
-    base_dir = get_default_reports_base_dir()
-    assert base_dir
-    assert isinstance(base_dir, str)
-    assert "redaudit_reports" in base_dir.lower() or "reports" in base_dir.lower()
+    with (
+        patch("redaudit.utils.paths.get_invoking_user", return_value=None),
+        patch(
+            "redaudit.utils.paths._get_preferred_human_home_under_home", return_value="/home/kali"
+        ),
+    ):
+        assert get_reports_home_dir() == "/home/kali"
 
 
-def test_paths_get_default_reports_base_dir_env():
-    """Test get_default_reports_base_dir with env var."""
-    from redaudit.utils.paths import get_default_reports_base_dir
-
-    with patch.dict(os.environ, {"REDAUDIT_REPORTS_DIR": "/custom/reports"}):
-        base_dir = get_default_reports_base_dir()
-        # May or may not use env var
-        assert isinstance(base_dir, str)
+def test_get_invoking_home_dir():
+    with patch("redaudit.utils.paths.get_invoking_user", return_value=None):
+        assert get_invoking_home_dir() == os.path.expanduser("~")
 
 
-def test_paths_ensure_dir_creates():
-    """Test ensure_dir creates directory."""
-    from redaudit.utils.paths import ensure_dir
+def test_expand_user_path():
+    with (
+        patch("redaudit.utils.paths.get_invoking_user", return_value="user1"),
+        patch("redaudit.utils.paths.get_invoking_home_dir", return_value="/home/user1"),
+    ):
+        assert expand_user_path("~/test") == "/home/user1/test"
+        assert expand_user_path("~") == "/home/user1"
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        new_dir = Path(tmpdir) / "test" / "nested"
-        ensure_dir(str(new_dir))
-        assert new_dir.exists()
-
-
-def test_paths_ensure_dir_existing():
-    """Test ensure_dir with existing directory."""
-    from redaudit.utils.paths import ensure_dir
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        ensure_dir(tmpdir)
-        # Should not crash
+    assert expand_user_path("/abs") == "/abs"
+    assert expand_user_path(None) == "None"
 
 
-def test_paths_get_project_root():
-    """Test get_project_root."""
-    from redaudit.utils.paths import get_project_root
-
-    root = get_project_root()
-    assert root
-    assert isinstance(root, str)
-    # Should contain redaudit project files
-    assert Path(root).exists()
+def test_get_documents_dir():
+    with patch("os.path.isdir", return_value=True):
+        d = get_documents_dir("/tmp")
+        assert "Documents" in d or "Documentos" in d
 
 
-def test_paths_get_project_root_markers():
-    """Test get_project_root finds project markers."""
-    from redaudit.utils.paths import get_project_root
-
-    root = get_project_root()
-    root_path = Path(root)
-
-    # Should have at least one project marker
-    markers = ["setup.py", "pyproject.toml", ".git", "redaudit"]
-    has_marker = any((root_path / marker).exists() for marker in markers)
-    assert has_marker
+def test_get_default_reports_base_dir():
+    d = get_default_reports_base_dir()
+    assert "RedAuditReports" in d
 
 
-def test_paths_expand_user_path_none():
-    """Test expand_user_path with None."""
-    from redaudit.utils.paths import expand_user_path
+def test_resolve_invoking_user_owner():
+    with (
+        patch("redaudit.utils.paths._is_root", return_value=True),
+        patch.dict(os.environ, {"SUDO_UID": "1000", "SUDO_GID": "1000"}),
+    ):
+        assert resolve_invoking_user_owner() == (1000, 1000)
 
-    # Edge case - may handle None
-    result = expand_user_path(None)
-    # Should either return None or raise
-    assert result is None or result == "None" or isinstance(result, str)
+
+def test_maybe_chown(tmp_path):
+    f = tmp_path / "test.txt"
+    f.write_text("hi")
+    with (
+        patch("redaudit.utils.paths.resolve_invoking_user_owner", return_value=(1000, 1000)),
+        patch("os.chown") as mock_chown,
+    ):
+        maybe_chown_to_invoking_user(str(f))
+        mock_chown.assert_called_once()
+
+
+def test_maybe_chown_tree(tmp_path):
+    d = tmp_path / "dir"
+    d.mkdir()
+    (d / "file.txt").write_text("hi")
+    with (
+        patch("redaudit.utils.paths.resolve_invoking_user_owner", return_value=(1000, 1000)),
+        patch("os.chown") as mock_chown,
+    ):
+        maybe_chown_tree_to_invoking_user(str(d))
+        assert mock_chown.call_count >= 2
