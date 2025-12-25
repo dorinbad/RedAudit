@@ -1,14 +1,13 @@
 # RedAudit
 
-[![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](README.md)
+[![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](README.md)
 
-![Versión](https://img.shields.io/github/v/tag/dorinbadea/RedAudit?sort=semver&style=flat-square&label=version)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/versión-v3.8.7-blue?style=flat-square)
+![Python](https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/licencia-GPLv3-green?style=flat-square)
-![Plataforma](https://img.shields.io/badge/plataforma-linux-lightgrey?style=flat-square)
-![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg?style=flat-square&label=CI)
-[![Tests totales](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dorinbadea/81671a8fffccee81ca270f14d094e5a1/raw/redaudit-tests.json&style=flat-square)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/codecov/c/github/dorinbadea/RedAudit?style=flat-square)](https://codecov.io/gh/dorinbadea/RedAudit)
+![Plataforma](https://img.shields.io/badge/plataforma-linux-FCC624?style=flat-square&logo=linux&logoColor=black)
+[![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/dorinbadea/81671a8fffccee81ca270f14d094e5a1/raw/redaudit-tests.json&style=flat-square)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
+![Cobertura](https://img.shields.io/badge/cobertura-82%25-brightgreen?style=flat-square)
 
 <div align="center">
 
