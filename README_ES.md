@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](README.md)
 
-![Versión](https://img.shields.io/badge/versión-v3.8.8-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/versión-v3.8.9-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/licencia-GPLv3-green?style=flat-square)
 ![Plataforma](https://img.shields.io/badge/plataforma-linux-FCC624?style=flat-square&logo=linux&logoColor=black)
