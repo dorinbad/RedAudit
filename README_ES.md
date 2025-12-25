@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](README.md)
 
-![Versión](https://img.shields.io/badge/versión-v3.8.7-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/versión-v3.8.8-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/licencia-GPLv3-green?style=flat-square)
 ![Plataforma](https://img.shields.io/badge/plataforma-linux-FCC624?style=flat-square&logo=linux&logoColor=black)
@@ -54,7 +54,7 @@ sudo redaudit
 | **HyperScan** | Batch TCP async + broadcast UDP IoT + ARP agresivo para triage ultrarrápido |
 | **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas |
 | **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPNP) para detección de redes de invitados |
-| **Verificación sin agente** | Probing SMB/RDP/LDAP/SSH/HTTP opcional para fingerprinting sin credenciales |
+| **Verificación sin agente** | Probing SMB/RDP/LDAP/SSH/HTTP con fingerprinting de dispositivos (40+ patrones) |
 | **Modo Sigiloso** | Timing paranoid T1, mono-hilo, retardos 5s+ para evasión IDS empresarial |
 
 ### Inteligencia y Correlación

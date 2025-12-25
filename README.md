@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](README_ES.md)
 
-![Version](https://img.shields.io/badge/version-v3.8.7-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v3.8.8-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-GPLv3-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black)
@@ -54,7 +54,7 @@ sudo redaudit
 | **HyperScan** | Async batch TCP + UDP IoT broadcast + aggressive ARP for ultra-fast triage |
 | **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection |
 | **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPNP) for guest network detection |
-| **Agentless Verification** | Optional SMB/RDP/LDAP/SSH/HTTP probes to fingerprint devices without credentials |
+| **Agentless Verification** | Optional SMB/RDP/LDAP/SSH/HTTP probes with device fingerprinting (40+ vendor patterns) |
 | **Stealth Mode** | T1 paranoid timing, single-thread, 5s+ delays for enterprise IDS evasion |
 
 ### Intelligence & Correlation
