@@ -1,126 +1,206 @@
-# Guía de Uso con Docker
+# Docker: Ejecutar RedAudit en Windows o macOS
 
-RedAudit está disponible como imagen Docker para usuarios en **Windows**, **macOS**, o cualquier sistema donde la instalación nativa en Linux no sea práctica.
+## ¿Qué es Docker y Por Qué Usarlo?
+
+**Docker** es como una "caja virtual" que ejecuta aplicaciones de Linux en cualquier ordenador. Como RedAudit está diseñado para Linux, Docker te permite usarlo en **Windows** o **macOS** sin configuraciones complejas.
+
+**Beneficios:**
+
+- ✅ No necesitas instalar Linux
+- ✅ No hay dependencias que configurar
+- ✅ Funciona exactamente igual en todos lados
+- ✅ Fácil de actualizar (solo descargas una nueva imagen)
 
 ---
 
-## macOS
+# Guía para macOS
 
-### Paso 1: Instalar Docker Desktop
+## Paso 1: Instalar Docker Desktop
 
-1. Descarga [Docker Desktop para Mac](https://www.docker.com/products/docker-desktop/)
-   - Elige **Apple Silicon** (M1/M2/M3) o **Intel** según tu Mac
-2. Abre el archivo `.dmg` descargado
-3. Arrastra `Docker.app` a tu carpeta de Aplicaciones
-4. Abre Docker Desktop desde Aplicaciones
-5. Acepta la licencia y concede los permisos cuando te lo pida
-6. Espera a que el icono de la ballena en la barra de menú esté **verde** (esto significa que Docker está corriendo)
+1. **Ve a**: <https://www.docker.com/products/docker-desktop/>
+2. **Haz clic** en el botón **Download**
+   - Si tienes un Mac nuevo (M1, M2, M3, M4): elige **"Mac with Apple chip"**
+   - Si tienes un Mac Intel antiguo: elige **"Mac with Intel chip"**
+   - *¿No estás seguro? Haz clic en el menú Apple → "Acerca de este Mac" → mira si dice "Apple M1/M2/M3" o "Intel"*
+3. **Abre** el archivo `.dmg` descargado
+4. **Arrastra** el icono de Docker a tu carpeta de Aplicaciones
+5. **Abre** Docker desde tu carpeta de Aplicaciones
+6. **Haz clic en "Abrir"** cuando macOS pida permiso
+7. **Acepta** el acuerdo de licencia
+8. **Salta** o cierra los tutoriales/inicio de sesión (no necesitas cuenta)
+9. **Espera** hasta ver un **indicador verde** en la barra de menú superior (el icono de la ballena)
 
-### Paso 2: Abrir Terminal
+> 💡 **Consejo**: Docker puede pedir tu contraseña para instalar componentes. Esto es normal.
 
-Presiona `Cmd + Espacio`, escribe "Terminal" y ábrela.
+## Paso 2: Abrir Terminal
 
-### Paso 3: Descargar la Imagen de RedAudit
+1. Presiona **Cmd + Espacio** (abre Spotlight)
+2. Escribe **Terminal**
+3. Presiona **Enter**
+
+Se abrirá una ventana negra/blanca. Aquí es donde escribirás los comandos.
+
+## Paso 3: Descargar RedAudit
+
+Copia y pega este comando en Terminal, luego presiona **Enter**:
 
 ```bash
 docker pull ghcr.io/dorinbadea/redaudit:latest
 ```
 
-Verás barras de progreso de descarga. Esto descarga ~300-500MB.
+Verás el progreso de descarga. Esto descarga unos 500MB y tarda 1-5 minutos dependiendo de tu internet.
 
-### Paso 4: Crear una Carpeta para Reportes
+## Paso 4: Crear una Carpeta para Reportes
 
 ```bash
 mkdir -p ~/RedAudit-Reports
 ```
 
-### Paso 5: Ejecutar RedAudit
+Esto crea una carpeta en tu directorio personal donde se guardarán los reportes de escaneo.
 
-**Opción A - Wizard Interactivo (recomendado para primera vez):**
+## Paso 5: Ejecutar RedAudit (Wizard Interactivo)
+
+Esta es la **manera recomendada** para usuarios nuevos:
 
 ```bash
 docker run -it --rm -v ~/RedAudit-Reports:/reports ghcr.io/dorinbadea/redaudit:latest
 ```
 
-El wizard te guiará para seleccionar idioma, red objetivo, modo de escaneo, etc.
+**Qué hace este comando:**
 
-**Opción B - Escaneo Directo (reemplaza con tu red):**
+- `docker run` - inicia un contenedor
+- `-it` - lo hace interactivo (puedes escribir)
+- `--rm` - limpia todo cuando terminas
+- `-v ~/RedAudit-Reports:/reports` - guarda reportes en tu carpeta
+- La última parte es la imagen de RedAudit
 
-```bash
-docker run --rm -v ~/RedAudit-Reports:/reports \
-  ghcr.io/dorinbadea/redaudit:latest \
-  --target 192.168.1.0/24 --mode quick --yes --output /reports
-```
+**El wizard te guiará a través de:**
 
-> 💡 **Tip**: Para saber tu IP, ejecuta: `ipconfig getifaddr en0`
+1. Seleccionar tu idioma (Inglés/Español)
+2. Introducir la red objetivo (ej., `192.168.1.0/24`)
+3. Elegir modo de escaneo (quick/normal/deep)
+4. Opciones adicionales
 
-### Paso 6: Ver los Resultados
+> 💡 **Encontrar tu red**: Ejecuta `ipconfig getifaddr en0` para ver tu IP. Si es `192.168.1.50`, tu red probablemente es `192.168.1.0/24`.
+
+## Paso 6: Ver Reportes
+
+Cuando el escaneo termine, abre el reporte HTML:
 
 ```bash
 open ~/RedAudit-Reports/report.html
 ```
 
-Esto abre el reporte HTML en tu navegador predeterminado.
+Esto abre un reporte bonito e interactivo en tu navegador web.
 
 ---
 
-## Windows
+# Guía para Windows
 
-### Paso 1: Instalar Docker Desktop
+## Paso 1: Instalar Docker Desktop
 
-1. Descarga [Docker Desktop para Windows](https://www.docker.com/products/docker-desktop/)
-2. Ejecuta el instalador y sigue las instrucciones
-3. **Reinicia Windows** cuando te lo pida
-4. Abre Docker Desktop desde el menú Inicio
-5. Espera a que el icono de la ballena en la bandeja del sistema esté **verde**
+1. **Ve a**: <https://www.docker.com/products/docker-desktop/>
+2. **Haz clic** en "Download for Windows"
+3. **Ejecuta** el instalador descargado (`Docker Desktop Installer.exe`)
+4. **Sigue** las instrucciones de instalación (mantén la configuración por defecto)
+5. **Reinicia** tu ordenador cuando te lo pida
+6. **Abre** Docker Desktop desde el menú Inicio
+7. **Salta** el tutorial y la creación de cuenta (no es necesario)
+8. **Espera** hasta ver un **indicador verde** en la bandeja del sistema (abajo a la derecha, icono de ballena)
 
-### Paso 2: Abrir PowerShell
+> ⚠️ **Usuarios de Windows 10/11 Home**: Docker puede pedirte que instales WSL2. Sigue las instrucciones para instalarlo - es necesario.
 
-Presiona `Win + X` y selecciona "Windows PowerShell" o "Terminal".
+## Paso 2: Abrir PowerShell
 
-### Paso 3: Descargar la Imagen de RedAudit
+1. Presiona **Win + X**
+2. Haz clic en **"Windows PowerShell"** o **"Terminal"**
+
+Se abrirá una ventana azul/negra.
+
+## Paso 3: Descargar RedAudit
+
+Copia y pega este comando, luego presiona **Enter**:
 
 ```powershell
 docker pull ghcr.io/dorinbadea/redaudit:latest
 ```
 
-### Paso 4: Crear una Carpeta para Reportes
+Espera a que la descarga se complete (1-5 minutos).
+
+## Paso 4: Crear una Carpeta para Reportes
 
 ```powershell
 mkdir C:\RedAudit-Reports
 ```
 
-### Paso 5: Ejecutar RedAudit
+## Paso 5: Ejecutar RedAudit (Wizard Interactivo)
 
-**Opción A - Wizard Interactivo:**
+Esta es la **manera recomendada** para usuarios nuevos:
 
 ```powershell
 docker run -it --rm -v C:\RedAudit-Reports:/reports ghcr.io/dorinbadea/redaudit:latest
 ```
 
-**Opción B - Escaneo Directo:**
+**El wizard te guiará a través de todo:**
 
-```powershell
-docker run --rm -v C:\RedAudit-Reports:/reports ghcr.io/dorinbadea/redaudit:latest --target 192.168.1.0/24 --mode quick --yes --output /reports
-```
+1. Seleccionar idioma
+2. Introducir red objetivo
+3. Elegir modo de escaneo
+4. ¡Empezar a escanear!
 
-> 💡 **Tip**: Para saber tu IP, ejecuta: `ipconfig` y busca "Dirección IPv4"
+> 💡 **Encontrar tu red**: Ejecuta `ipconfig` y busca "Dirección IPv4". Si es `192.168.1.50`, tu red es `192.168.1.0/24`.
 
-### Paso 6: Ver los Resultados
+## Paso 6: Ver Reportes
 
-Abre el Explorador de Archivos y navega a `C:\RedAudit-Reports`. Haz doble clic en `report.html`.
+1. Abre el **Explorador de Archivos**
+2. Navega a `C:\RedAudit-Reports`
+3. Haz doble clic en `report.html`
 
 ---
 
-## Linux
+# Referencia Rápida
 
-Los usuarios de Linux pueden usar host networking para visibilidad completa de la red local:
+## Comandos Más Comunes
+
+| Qué quieres hacer | Comando |
+|-------------------|---------|
+| **Iniciar wizard** (recomendado) | `docker run -it --rm -v ~/RedAudit-Reports:/reports ghcr.io/dorinbadea/redaudit:latest` |
+| Actualizar a última versión | `docker pull ghcr.io/dorinbadea/redaudit:latest` |
+| Mostrar ayuda | `docker run --rm ghcr.io/dorinbadea/redaudit:latest --help` |
+| Ver versión | `docker run --rm ghcr.io/dorinbadea/redaudit:latest --version` |
+
+## Solución de Problemas
+
+### "Cannot connect to Docker daemon"
+
+Docker Desktop no está corriendo. Abre Docker Desktop y espera al indicador verde.
+
+### "No matching manifest for linux/arm64"
+
+Tienes una imagen antigua. Ejecuta:
 
 ```bash
-# Descargar
 docker pull ghcr.io/dorinbadea/redaudit:latest
+```
 
-# Ejecutar con host networking (recomendado)
+### Los escaneos no encuentran hosts
+
+En Windows/macOS, Docker corre en un entorno virtual y puede no ver todos los dispositivos de la red local. Intenta escanear IPs específicas en lugar de rangos.
+
+---
+
+# Usuarios de Linux
+
+Si estás en Linux, ¡no necesitas Docker! Instala RedAudit nativamente:
+
+```bash
+git clone https://github.com/dorinbadea/RedAudit.git
+cd RedAudit && sudo bash redaudit_install.sh
+```
+
+Si aún así quieres Docker en Linux (para aislamiento):
+
+```bash
 docker run --rm --network host \
   --cap-add=NET_RAW --cap-add=NET_ADMIN \
   -v $(pwd)/reports:/reports \
@@ -128,25 +208,4 @@ docker run --rm --network host \
   --target 192.168.1.0/24 --mode normal --yes --output /reports
 ```
 
----
-
-## Limitaciones por Plataforma
-
-| Plataforma | `--network host` | Visibilidad de Red Local |
-|------------|------------------|--------------------------|
-| Linux      | ✅ Soportado      | Visibilidad completa     |
-| macOS      | ❌ No soportado   | Especifica targets manualmente |
-| Windows    | ❌ No soportado   | Especifica targets manualmente |
-
-> **Nota**: En Windows y macOS, Docker corre dentro de una máquina virtual. La auto-detección del wizard mostrará las interfaces del contenedor, no la red de tu host. Siempre especifica las IPs objetivo explícitamente.
-
----
-
-## Referencia Rápida
-
-| Acción | Comando |
-|--------|---------|
-| Mostrar ayuda | `docker run --rm ghcr.io/dorinbadea/redaudit:latest --help` |
-| Mostrar versión | `docker run --rm ghcr.io/dorinbadea/redaudit:latest --version` |
-| Wizard interactivo | `docker run -it --rm -v ~/reports:/reports ghcr.io/dorinbadea/redaudit:latest` |
-| Escaneo rápido | `docker run --rm -v ~/reports:/reports ghcr.io/dorinbadea/redaudit:latest --target IP --mode quick --yes --output /reports` |
+La opción `--network host` da visibilidad completa de la red (solo funciona en Linux).
