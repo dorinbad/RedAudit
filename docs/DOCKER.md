@@ -8,30 +8,48 @@ RedAudit is a Linux tool, but you can run it on **Windows** or **macOS** using D
 
 # 🚀 Quick Start (Recommended)
 
-Download our helper script and run it. It handles everything automatically.
+Our helper scripts handle everything automatically: detecting your network, pulling the latest image, and running the scan.
 
 ## macOS
+
+### First time (download the script)
 
 ```bash
 curl -O https://raw.githubusercontent.com/dorinbadea/RedAudit/main/scripts/redaudit-docker.sh
 chmod +x redaudit-docker.sh
+```
+
+### Every time you want to scan
+
+```bash
 ./redaudit-docker.sh
 ```
 
+> 💡 The script **automatically downloads the latest RedAudit image** before each scan. You don't need to update manually.
+
 ## Windows (PowerShell)
+
+### First time (download the script)
 
 ```powershell
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/main/scripts/redaudit-docker.ps1" -OutFile "redaudit-docker.ps1"
+```
+
+### Every time you want to scan
+
+```powershell
 .\redaudit-docker.ps1
 ```
 
-The scripts will:
+> 💡 The script **automatically downloads the latest RedAudit image** before each scan. You don't need to update manually.
+
+## What the scripts do
 
 - ✅ Check that Docker is running
 - ✅ Detect your network automatically
-- ✅ Download RedAudit
+- ✅ Download/update RedAudit to latest version
 - ✅ Run the scan
-- ✅ Open the report
+- ✅ Open the report when finished
 
 ---
 

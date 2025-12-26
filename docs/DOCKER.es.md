@@ -8,30 +8,48 @@ RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o 
 
 # 🚀 Inicio Rápido (Recomendado)
 
-Descarga nuestro script de ayuda y ejecútalo. Maneja todo automáticamente.
+Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, descargar la última imagen, y ejecutar el escaneo.
 
 ## macOS
+
+### Primera vez (descargar el script)
 
 ```bash
 curl -O https://raw.githubusercontent.com/dorinbadea/RedAudit/main/scripts/redaudit-docker.sh
 chmod +x redaudit-docker.sh
+```
+
+### Cada vez que quieras escanear
+
+```bash
 ./redaudit-docker.sh
 ```
 
+> 💡 El script **descarga automáticamente la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
+
 ## Windows (PowerShell)
+
+### Primera vez (descargar el script)
 
 ```powershell
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/main/scripts/redaudit-docker.ps1" -OutFile "redaudit-docker.ps1"
+```
+
+### Cada vez que quieras escanear
+
+```powershell
 .\redaudit-docker.ps1
 ```
 
-Los scripts:
+> 💡 El script **descarga automáticamente la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
 
-- ✅ Verifican que Docker esté corriendo
-- ✅ Detectan tu red automáticamente
-- ✅ Descargan RedAudit
-- ✅ Ejecutan el escaneo
-- ✅ Abren el reporte
+## Qué hacen los scripts
+
+- ✅ Verificar que Docker esté corriendo
+- ✅ Detectar tu red automáticamente
+- ✅ Descargar/actualizar RedAudit a la última versión
+- ✅ Ejecutar el escaneo
+- ✅ Abrir el reporte cuando termine
 
 ---
 
