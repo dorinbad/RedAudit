@@ -16,22 +16,50 @@ param(
     [string]$Output = ""
 )
 
-$Host.UI.RawUI.WindowTitle = "RedAudit Docker Scanner"
+# Detect if terminal supports ANSI colors
+# PowerShell ISE does NOT support ANSI escape codes
+$SupportsANSI = $true
+if ($Host.Name -eq "Windows PowerShell ISE Host") {
+    $SupportsANSI = $false
+    Write-Host ""
+    Write-Host "NOTA: PowerShell ISE no soporta colores ANSI." -ForegroundColor Yellow
+    Write-Host "      Los colores seran deshabilitados automaticamente." -ForegroundColor Yellow
+    Write-Host "      Para mejor experiencia, usa Windows Terminal." -ForegroundColor Yellow
+    Write-Host ""
+}
+
+# Also check for older PowerShell without VT support
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    $SupportsANSI = $false
+}
+
+# Try to enable VT processing on Windows 10+
+if ($SupportsANSI) {
+    try {
+        $Host.UI.RawUI.WindowTitle = "RedAudit Docker Scanner"
+    } catch {}
+}
 
 Write-Host ""
-Write-Host "╔═══════════════════════════════════════════════════╗" -ForegroundColor Blue
-Write-Host "║          RedAudit Docker Scanner                  ║" -ForegroundColor Blue
-Write-Host "╚═══════════════════════════════════════════════════╝" -ForegroundColor Blue
+Write-Host "=======================================================" -ForegroundColor Blue
+Write-Host "          RedAudit Docker Scanner                      " -ForegroundColor Blue
+Write-Host "=======================================================" -ForegroundColor Blue
 Write-Host ""
 
 # Check if Docker is running
 try {
     docker info 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { throw }
-    Write-Host "✓ Docker is running" -ForegroundColor Green
+    Write-Host "[OK] Docker esta corriendo" -ForegroundColor Green
 } catch {
-    Write-Host "✗ Error: Docker is not running" -ForegroundColor Red
-    Write-Host "  Please start Docker Desktop and try again."
+    Write-Host "[ERROR] Docker no esta corriendo" -ForegroundColor Red
+    Write-Host "        Por favor, abre Docker Desktop y espera a que este listo."
+    Write-Host ""
+    Write-Host "        1. Abre Docker Desktop desde el menu Inicio"
+    Write-Host "        2. Espera a que el icono de la ballena este verde"
+    Write-Host "        3. Ejecuta este script de nuevo"
+    Write-Host ""
+    Read-Host "Presiona Enter para salir"
     exit 1
 }
 
@@ -53,19 +81,19 @@ $networkInfo = Get-LocalNetwork
 
 if (-not $Target) {
     if ($networkInfo) {
-        Write-Host "✓ Detected your IP: $($networkInfo.IP)" -ForegroundColor Green
-        Write-Host "✓ Target network: $($networkInfo.Network)" -ForegroundColor Cyan
+        Write-Host "[OK] Tu IP detectada: $($networkInfo.IP)" -ForegroundColor Green
+        Write-Host "[OK] Red objetivo: $($networkInfo.Network)" -ForegroundColor Cyan
         Write-Host ""
 
-        $confirm = Read-Host "Use this network? [Y/n]"
+        $confirm = Read-Host "Usar esta red? [S/n]"
         if ($confirm -match '^[Nn]') {
-            $Target = Read-Host "Enter target network"
+            $Target = Read-Host "Introduce la red objetivo (ej: 192.168.1.0/24)"
         } else {
             $Target = $networkInfo.Network
         }
     } else {
-        Write-Host "⚠ Could not auto-detect your network." -ForegroundColor Yellow
-        $Target = Read-Host "Enter target network (e.g., 192.168.1.0/24)"
+        Write-Host "[!] No se pudo detectar tu red automaticamente." -ForegroundColor Yellow
+        $Target = Read-Host "Introduce la red objetivo (ej: 192.168.1.0/24)"
     }
 }
 
@@ -74,12 +102,12 @@ $ReportsDir = "C:\RedAudit-Reports"
 if (-not (Test-Path $ReportsDir)) {
     New-Item -ItemType Directory -Path $ReportsDir | Out-Null
 }
-Write-Host "✓ Reports will be saved to: $ReportsDir" -ForegroundColor Green
+Write-Host "[OK] Los reportes se guardaran en: $ReportsDir" -ForegroundColor Green
 Write-Host ""
 
 # Pull latest image
-Write-Host "→ Checking for updates..." -ForegroundColor Blue
-docker pull ghcr.io/dorinbadea/redaudit:latest 2>&1 | Out-Null
+Write-Host "[...] Descargando/Actualizando RedAudit..." -ForegroundColor Blue
+docker pull ghcr.io/dorinbadea/redaudit:latest
 
 # Build docker arguments
 $dockerArgs = @(
@@ -99,26 +127,32 @@ if ($Yes) {
     $dockerArgs += "--yes"
 }
 
+# IMPORTANT: Add --no-color if terminal doesn't support ANSI
+if (-not $SupportsANSI) {
+    $dockerArgs += "--no-color"
+    Write-Host "[INFO] Modo sin colores activado (terminal no compatible)" -ForegroundColor Yellow
+}
+
 # Run RedAudit
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host "Starting RedAudit scan on $Target" -ForegroundColor Green
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "=======================================================" -ForegroundColor Green
+Write-Host "Iniciando escaneo RedAudit en $Target" -ForegroundColor Green
+Write-Host "=======================================================" -ForegroundColor Green
 Write-Host ""
 
 & docker $dockerArgs
 
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Green
-Write-Host "Scan complete! Reports saved to:" -ForegroundColor Green
+Write-Host "=======================================================" -ForegroundColor Green
+Write-Host "Escaneo completado! Reportes guardados en:" -ForegroundColor Green
 Write-Host "$ReportsDir" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "=======================================================" -ForegroundColor Green
 
 # Open report
 $reportPath = Join-Path $ReportsDir "report.html"
 if (Test-Path $reportPath) {
     Write-Host ""
-    $openReport = Read-Host "Open HTML report in browser? [Y/n]"
+    $openReport = Read-Host "Abrir el reporte HTML en el navegador? [S/n]"
     if ($openReport -notmatch '^[Nn]') {
         Start-Process $reportPath
     }

@@ -369,3 +369,32 @@ sudo usermod -aG docker $USER
 ```
 
 Luego cierra sesión y vuelve a entrar.
+
+## Texto ilegible / caracteres raros en Windows
+
+Si ves texto como `[1m[95m` o `[0m[91m` en lugar de colores, tu terminal no soporta códigos de escape ANSI.
+
+**Soluciones:**
+
+1. **Usa nuestro script de ayuda** - Detecta y corrige esto automáticamente:
+
+   ```powershell
+   Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/main/scripts/redaudit-docker.ps1" -OutFile "redaudit-docker.ps1"
+   .\redaudit-docker.ps1
+   ```
+
+2. **Usa Windows Terminal** (recomendado) - Descárgalo gratis desde Microsoft Store
+
+3. **Añade --no-color** a tu comando:
+
+   ```powershell
+   docker run -it --rm -v C:\RedAudit-Reports:/reports ghcr.io/dorinbadea/redaudit:latest --target TU_RED --no-color --output /reports
+   ```
+
+| Terminal | Colores ANSI |
+|----------|--------------|
+| Windows Terminal | ✅ Sí |
+| PowerShell 7+ | ✅ Sí |
+| PowerShell 5 (negro) | ⚠️ Parcial |
+| PowerShell ISE (azul) | ❌ No |
+| CMD | ⚠️ Parcial |
