@@ -62,7 +62,7 @@ sudo redaudit
 |:---|:---|
 | **Correlación CVE** | NVD API 2.0 con matching CPE 2.3 y caché de 7 días |
 | **Búsqueda de Exploits** | Consultas automáticas a ExploitDB (`searchsploit`) para servicios detectados |
-| **Escaneo de Templates** | Templates community de Nuclei para detección de vulnerabilidades HTTP/HTTPS |
+| **Escaneo de Templates** | Templates Nuclei con detección de falsos positivos (mapeo server header vs vendor) |
 | **Filtro Smart-Check** | Reducción de falsos positivos en 3 capas (Content-Type, tamaño, magic bytes) |
 | **Detección de Fugas de Subred** | Identifica redes ocultas via análisis de redirects/headers HTTP |
 
@@ -243,9 +243,18 @@ sudo redaudit
 
 El wizard te guiará:
 
+El wizard ofrece 4 perfiles de auditoría:
+
+- **Express**: Descubrimiento rápido (solo hosts, sin escaneo de puertos)
+- **Estándar**: Auditoría balanceada (top 1000 puertos + chequeos de vulnerabilidades)
+- **Exhaustivo**: Máxima cobertura (los 65535 puertos + UDP 500 + Red Team + correlación CVE)
+- **Custom**: Wizard completo de 8 pasos para control granular
+
+Después de seleccionar un perfil, configurarás:
+
 1. **Selección de Objetivo**: Elige una subred local o introduce CIDR manual
-2. **Modo de Escaneo**: Selecciona RÁPIDO, NORMAL o COMPLETO
-3. **Opciones**: Configura hilos, rate limiting, cifrado
+2. **Modo de Temporización**: Selecciona Stealth (T1), Normal (T4), o Agresivo (T5)
+3. **Opciones**: Configura hilos, rate limiting, cifrado (varía según perfil)
 4. **Autorización**: Confirma que tienes permiso para escanear
 
 ### Modo No Interactivo / Automatización
@@ -293,6 +302,16 @@ Consulta `redaudit --help` o [USAGE.md](docs/USAGE.es.md) para la lista completa
 ---
 
 ## Configuración
+
+### Modos de Temporización
+
+RedAudit aplica plantillas de temporización nmap según tu selección:
+
+| Modo | Plantilla Nmap | Threads | Delay | Caso de Uso |
+|:---|:---|:---|:---|:---|
+| **Stealth** | `-T1` | 4 | 300ms | Evasión IDS, redes ruidosas, dispositivos legacy |
+| **Normal** | `-T4` | 16 | 0ms | Auditorías estándar (default, velocidad/ruido balanceado) |
+| **Agresivo** | `-T5` | 32 | 0ms | Escaneos urgentes, redes confiables |
 
 ### Comportamiento de Escaneo
 
@@ -361,7 +380,6 @@ redaudit/
 │   ├── wizard.py           # UI interactiva (WizardMixin)
 │   ├── scanner.py          # Lógica de escaneo Nmap + IPv6
 │   ├── network.py          # Detección de interfaces/red
-│   ├── prescan.py          # Descubrimiento rápido asyncio
 │   ├── hyperscan.py        # Descubrimiento paralelo ultrarrápido
 │   ├── net_discovery.py    # Descubrimiento L2/broadcast mejorado
 │   ├── topology.py         # Descubrimiento de topología de red
