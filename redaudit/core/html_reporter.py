@@ -146,6 +146,15 @@ def prepare_report_data(results: Dict, config: Dict) -> Dict:
         "default_gateway": topology.get("default_gateway", {}).get("ip", "-"),
         "interfaces": len(topology.get("interfaces", [])),
         "routes": len(topology.get("routes", [])),
+        # v3.9.0: Include route details for explicit display
+        "routes_list": [
+            {
+                "dst": r.get("dst", "-"),
+                "via": r.get("via", "-"),
+                "dev": r.get("dev", "-"),
+            }
+            for r in topology.get("routes", [])
+        ],
     }
 
     # Extract playbooks from results

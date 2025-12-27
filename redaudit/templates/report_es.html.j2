@@ -255,6 +255,22 @@
                         <li>Gateway predeterminado <span>{{ topology_summary.default_gateway }}</span></li>
                         <li>Interfaces <span>{{ topology_summary.interfaces }}</span></li>
                         <li>Rutas <span>{{ topology_summary.routes }}</span></li>
+                        {% if topology_summary.routes_list %}
+                        <li style="margin-top: 0.5rem;">
+                            <details>
+                                <summary style="cursor: pointer; color: var(--panel-bg); font-weight: 500;">📍 Ver detalles de rutas</summary>
+                                <ul style="margin-top: 0.5rem; font-size: 0.85rem;">
+                                {% for route in topology_summary.routes_list %}
+                                    <li style="margin: 0.25rem 0;">
+                                        <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">
+                                            {{ route.dst }}{% if route.via != '-' %} → {{ route.via }}{% endif %} ({{ route.dev }})
+                                        </code>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            </details>
+                        </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
