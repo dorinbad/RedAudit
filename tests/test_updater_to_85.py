@@ -441,7 +441,8 @@ def test_fetch_changelog_snippet_success():
 
 def test_fetch_changelog_snippet_failure():
     """Test fetching changelog on failure."""
-    with patch("requests.get", side_effect=Exception("Network error")):
+    # Patch urlopen in the module where it's imported (uses urllib.request, not requests)
+    with patch("redaudit.core.updater.urlopen", side_effect=Exception("Network error")):
         result = fetch_changelog_snippet("3.9.0", logger=MagicMock())
         assert result is None
 
