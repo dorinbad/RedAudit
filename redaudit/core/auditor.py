@@ -967,6 +967,8 @@ class InteractiveNetworkAuditor(
         # v3.9.0: Loop for profile selection with back navigation from timing
         profile_choice = None
         timing_delay = 0.0
+        timing_nmap_template = "T4"  # Default
+        timing_threads_boost = False  # Aggressive mode boosts threads
 
         while profile_choice is None:
             profile_options = [
@@ -988,7 +990,20 @@ class InteractiveNetworkAuditor(
                 timing_choice = self.ask_choice(self.t("timing_q"), timing_options, default=1)
                 if timing_choice == 3:  # Go back
                     continue  # Re-show profile selector
-                timing_delay = {0: 2.0, 1: 0.0, 2: 0.0}.get(timing_choice, 0.0)
+
+                # v3.9.0: Real timing differences
+                if timing_choice == 0:  # Stealth
+                    timing_delay = 2.0
+                    timing_nmap_template = "T1"  # Paranoid
+                    timing_threads_boost = False
+                elif timing_choice == 1:  # Normal
+                    timing_delay = 0.0
+                    timing_nmap_template = "T4"  # Aggressive (nmap default for speed)
+                    timing_threads_boost = False
+                elif timing_choice == 2:  # Aggressive
+                    timing_delay = 0.0
+                    timing_nmap_template = "T5"  # Insane
+                    timing_threads_boost = True  # Will use MAX_THREADS
 
             profile_choice = profile_idx
 
@@ -1025,7 +1040,11 @@ class InteractiveNetworkAuditor(
             self.config["save_txt_report"] = True
             self.config["save_html_report"] = True
             self.config["output_dir"] = get_default_reports_base_dir()
-            self.rate_limit_delay = timing_delay  # Already asked above
+            # v3.9.0: Apply timing settings
+            self.config["nmap_timing"] = timing_nmap_template
+            if timing_threads_boost:
+                self.config["threads"] = MAX_THREADS
+            self.rate_limit_delay = timing_delay
             return
 
         # PROFILE 2: Exhaustive - Maximum discovery (auto-configures everything)
@@ -1035,8 +1054,15 @@ class InteractiveNetworkAuditor(
             # Core scan settings - maximum
             self.config["scan_mode"] = "completo"
             self.config["max_hosts_value"] = "all"
-            self.config["threads"] = MAX_THREADS
+            # v3.9.0: Threads depend on timing choice
+            # Stealth = reduced threads for IDS evasion, otherwise MAX
+            if timing_nmap_template == "T1":  # Stealth
+                self.config["threads"] = 2  # Very slow, IDS evasion
+            else:
+                self.config["threads"] = MAX_THREADS
             self.config["deep_id_scan"] = True
+            # v3.9.0: Apply nmap timing template
+            self.config["nmap_timing"] = timing_nmap_template
 
             # UDP - full scan
             self.config["udp_mode"] = UDP_SCAN_MODE_FULL

@@ -88,7 +88,9 @@ def test_configure_scan_interactive_exhaustive_profile(monkeypatch, tmp_path):
     app._configure_scan_interactive({})
 
     assert app.config["scan_mode"] == "completo"
-    assert app.config["threads"] == 16  # MAX_THREADS
+    # v3.9.0: Stealth timing uses reduced threads for IDS evasion
+    assert app.config["threads"] == 2  # Stealth mode
+    assert app.config["nmap_timing"] == "T1"  # Paranoid
     assert app.config["scan_vulnerabilities"] is True
     assert app.config["topology_enabled"] is True
     assert app.config["net_discovery_enabled"] is True
