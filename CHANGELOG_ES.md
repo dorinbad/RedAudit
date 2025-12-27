@@ -17,7 +17,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - **Express** — Escaneo rápido de descubrimiento, mínimas preguntas
   - **Estándar** — Escaneo equilibrado con análisis de vulnerabilidades
   - **Exhaustivo** — Máximo descubrimiento, auto-configura todo:
-    - Modo: `completo`, Hilos: `MAX`, UDP: `full (200 puertos)`
+    - Modo: `completo`, Hilos: `MAX`, UDP: `full (500 puertos)`
     - Vulnerabilidades + Nuclei + Topología + Net Discovery + Red Team + Windows Verify
     - Correlación CVE de NVD habilitada si la API key está configurada
   - **Custom** — Wizard completo de 8 pasos para control total

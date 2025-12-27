@@ -39,10 +39,14 @@ Features currently present using `redaudit --version` >= v3.6.0.
 
 | Feature | Version | Verification |
 | :--- | :--- | :--- |
+| **Wizard Profile Selector** | v3.9.0 | `redaudit/core/auditor.py`. Express/Standard/Exhaustive auto-config presets + Custom wizard mode. |
+| **Real Timing Modes** | v3.9.0 | `redaudit/core/scanner.py`. Timing modes now correctly apply nmap `-T1`/`-T4`/`-T5` templates with delay/thread adjustments. |
+| **Enhanced HTML Reports** | v3.9.0 | `redaudit/templates/report*.html.j2`. Expandable findings with observations, smart scan analysis, playbooks grid, PCAP evidence, topology details. |
+| **Nuclei False Positive Detection** | v3.9.0 | `redaudit/core/verify_vuln.py`. Server header vs vendor CPE mapping to flag suspected FPs (`suspected_false_positive` field). |
 | **Status Color Consistency** | v3.8.4 | `redaudit/core/auditor.py`. Uses Rich console.print() when progress is active to ensure colors display correctly. |
 | **Auditor Identity** | v3.8.3 | `redaudit/core/wizard.py`. Wizard prompt for auditor name, surfaced in TXT/HTML reports. |
 | **Bilingual HTML Reports** | v3.8.3 | `redaudit/core/reporter.py`. When language is ES, `report_es.html` is generated alongside the default HTML report. |
-| **Wizard Navigation** | v3.8.1 | `redaudit/core/wizard.py`. "< Go Back" option in wizard menus for step-by-step navigation. |
+| **Wizard Navigation** | v3.8.1 | `redaudit/core/wizard.py`. "<Go Back" option in wizard menus for step-by-step navigation. |
 | **HTML Report Watermark** | v3.8.2 | `redaudit/templates/report.html.j2`. Professional footer with GPLv3, author, and GitHub link. |
 | **Interactive Webhooks** | v3.7.0 | `redaudit/core/wizard.py`. Configure Slack/Teams directly in wizard. |
 | **Advanced Net Discovery Wizard** | v3.7.0 | `redaudit/core/wizard.py`. Configure SNMP/DNS/Targets interactively. |

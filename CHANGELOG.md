@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Express** — Fast discovery scan, minimal questions
   - **Standard** — Balanced scan with vulnerability analysis
   - **Exhaustive** — Maximum discovery, auto-configures everything:
-    - Mode: `completo`, Threads: `MAX`, UDP: `full (200 ports)`
+    - Mode: `completo`, Threads: `MAX`, UDP: `full (500 ports)`
     - Vulnerabilities + Nuclei + Topology + Net Discovery + Red Team + Windows Verify
     - NVD CVE correlation enabled if API key is configured
   - **Custom** — Full 8-step wizard for complete control
