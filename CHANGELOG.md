@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.9.0] - 2025-12-26 (Profile Selector & Enhanced Reports)
+## [3.9.0] - 2025-12-27 (Profile Selector & Enhanced Reports)
 
 ### Added
 
@@ -22,10 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - NVD CVE correlation enabled if API key is configured
   - **Custom** — Full 8-step wizard for complete control
 
-- **Timing/Paranoia Selector** (Standard & Exhaustive profiles):
-  - **Stealth** — 2 second delay between scans (IDS evasion)
-  - **Normal** — No delay, balanced speed
-  - **Aggressive** — Maximum parallelism for lab environments
+- **Wizard Navigation**: "< Go Back" option from timing selector returns to profile selection.
+
+- **Real Timing Differences**: Timing modes now have actual effect on nmap:
+  - **Stealth** — nmap `-T1` (paranoid) + 2s delay + 2 threads (IDS evasion)
+  - **Normal** — nmap `-T4` (aggressive) + no delay + default threads
+  - **Aggressive** — nmap `-T5` (insane) + no delay + MAX threads
 
 - **NVD API Key Reminder**: Wizard shows a reminder with link to get API key when CVE correlation is skipped.
 
@@ -37,10 +39,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Topology Summary**: Default gateway, interfaces count, routes count
   - Both English and Spanish templates updated
 
+- **Session Log Filtering**: Smarter noise reduction preserves status messages while filtering spinner updates.
+
+### Fixed
+
+- **nmap timing not applied**: `nmap_timing` config was not passed to `get_nmap_arguments()`, so Stealth/Normal/Aggressive had no effect on actual nmap execution.
+- **Playbooks not in HTML report**: Playbooks were generated AFTER HTML report, resulting in empty playbooks section. Now generated before HTML.
+
 ### Changed
 
 - Default profile selection is "Standard" (index 1)
 - Express profile skips timing question (always fast)
+- `save_playbooks()` now returns `(count, playbook_data)` tuple for HTML integration
+
+### Removed
+
+- **prescan.py**: Dead code module superseded by `hyperscan.py` which includes TCP/UDP/ARP/IoT discovery.
 
 ## [3.8.9] - 2025-12-25 (Device Fingerprinting Export Fix)
 

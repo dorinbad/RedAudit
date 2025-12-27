@@ -9,7 +9,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [3.9.0] - 2025-12-26 (Selector de Perfiles y Reportes Mejorados)
+## [3.9.0] - 2025-12-27 (Selector de Perfiles y Reportes Mejorados)
 
 ### Añadido
 
@@ -22,10 +22,12 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
     - Correlación CVE de NVD habilitada si la API key está configurada
   - **Custom** — Wizard completo de 8 pasos para control total
 
-- **Selector de Timing/Paranoia** (perfiles Estándar y Exhaustivo):
-  - **Sigiloso** — 2 segundos de delay entre escaneos (evasión IDS)
-  - **Normal** — Sin delay, velocidad equilibrada
-  - **Agresivo** — Máximo paralelismo para entornos de laboratorio
+- **Navegación del Wizard**: Opción "< Volver" desde el selector de timing regresa a la selección de perfil.
+
+- **Diferencias Reales de Timing**: Los modos de timing ahora tienen efecto real en nmap:
+  - **Sigiloso** — nmap `-T1` (paranoid) + 2s delay + 2 hilos (evasión IDS)
+  - **Normal** — nmap `-T4` (aggressive) + sin delay + hilos por defecto
+  - **Agresivo** — nmap `-T5` (insane) + sin delay + MAX hilos
 
 - **Recordatorio de API Key NVD**: El wizard muestra un recordatorio con enlace para obtener la API key cuando se omite correlación CVE.
 
@@ -37,10 +39,22 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - **Resumen de Topología**: Gateway por defecto, conteo de interfaces, conteo de rutas
   - Plantillas EN y ES actualizadas
 
+- **Filtrado de Logs de Sesión**: Reducción de ruido más inteligente que preserva mensajes de estado mientras filtra actualizaciones de spinner.
+
+### Corregido
+
+- **Timing de nmap no aplicado**: La configuración `nmap_timing` no se pasaba a `get_nmap_arguments()`, por lo que Sigiloso/Normal/Agresivo no tenía efecto en la ejecución real de nmap.
+- **Playbooks no aparecían en reporte HTML**: Los playbooks se generaban DESPUÉS del reporte HTML, resultando en una sección vacía. Ahora se generan antes.
+
 ### Cambiado
 
 - Selección de perfil por defecto es "Estándar" (índice 1)
 - El perfil Express omite la pregunta de timing (siempre rápido)
+- `save_playbooks()` ahora devuelve tupla `(count, playbook_data)` para integración en HTML
+
+### Eliminado
+
+- **prescan.py**: Módulo de código muerto superado por `hyperscan.py` que incluye descubrimiento TCP/UDP/ARP/IoT.
 
 ## [3.8.9] - 2025-12-25 (Corrección exportación Fingerprinting)
 
