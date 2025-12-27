@@ -63,6 +63,9 @@ def test_configure_scan_interactive_standard_profile(monkeypatch, tmp_path):
     choice_iter = iter([1, 1])
     monkeypatch.setattr(app, "ask_choice", lambda *_a, **_k: next(choice_iter))
     monkeypatch.setattr("redaudit.core.auditor.get_default_reports_base_dir", lambda: str(tmp_path))
+    # v3.9.0: Mock input() for auditor_name and output_dir prompts
+    input_iter = iter(["", ""])  # Accept defaults for both
+    monkeypatch.setattr("builtins.input", lambda *_a, **_k: next(input_iter))
 
     app._configure_scan_interactive({})
 
@@ -84,6 +87,9 @@ def test_configure_scan_interactive_exhaustive_profile(monkeypatch, tmp_path):
     monkeypatch.setattr("redaudit.core.auditor.get_default_reports_base_dir", lambda: str(tmp_path))
     # Mock NVD not configured
     monkeypatch.setattr("redaudit.utils.config.is_nvd_api_key_configured", lambda: False)
+    # v3.9.0: Mock input() for auditor_name and output_dir prompts
+    input_iter = iter(["", ""])  # Accept defaults for both
+    monkeypatch.setattr("builtins.input", lambda *_a, **_k: next(input_iter))
 
     app._configure_scan_interactive({})
 
