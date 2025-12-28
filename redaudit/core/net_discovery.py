@@ -44,10 +44,17 @@ def _run_cmd(
         backoff_base_s=0.0,
         redact_env_keys={"NVD_API_KEY", "GITHUB_TOKEN"},
     )
-    res = runner.run(args, timeout=float(timeout_s), capture_output=True, check=False, text=True)
-    stdout = res.stdout if isinstance(res.stdout, str) else ""
-    stderr = res.stderr if isinstance(res.stderr, str) else ""
-    return int(res.returncode), stdout, stderr
+    try:
+        res = runner.run(
+            args, timeout=float(timeout_s), capture_output=True, check=False, text=True
+        )
+        stdout = res.stdout if isinstance(res.stdout, str) else ""
+        stderr = res.stderr if isinstance(res.stderr, str) else ""
+        return int(res.returncode), stdout, stderr
+    except Exception as e:
+        if logger:
+            logger.error(f"Command execution failed: {e}")
+        return -1, "", str(e)
 
 
 def _check_tools() -> Dict[str, bool]:
@@ -1284,10 +1291,19 @@ def _parse_smb_nmap(output: str) -> Dict[str, Any]:
             parsed[key] = m.group(1).strip()[:200]
 
     shares: List[str] = []
+    # Match "Sharename: ..." (legacy/other) OR "\\IP\Share:" (standard nmap)
     for m in re.finditer(r"\bSharename:\s*([^\s]+)", text, re.IGNORECASE):
         share = m.group(1).strip()
         if share and share not in shares:
             shares.append(share)
+
+    # Standard nmap smb-enum-shares: |  \\1.2.3.4\IPC$:
+    if not shares:
+        for m in re.finditer(r"\\\\(?:\d{1,3}(?:\.\d{1,3}){3}|[^\\]+)\\([^\s:]+):", text):
+            share = m.group(1).strip()
+            if share and share not in shares:
+                shares.append(share)
+
     if shares:
         parsed["shares"] = shares[:20]
 
@@ -2060,6 +2076,13 @@ def _parse_ip6_neighbors(text: str) -> List[Dict[str, Any]]:
                 entry["mac"] = parts[parts.index("lladdr") + 1].lower()
             except Exception:
                 pass
+        else:
+            # Fallback for ndp (macOS) or other formats: find MAC-like string
+            for part in parts:
+                if re.match(r"^([0-9a-fA-F]{1,2}:){5}[0-9a-fA-F]{1,2}$", part):
+                    entry["mac"] = part.lower()
+                    break
+
         if "dev" in parts:
             try:
                 entry["dev"] = parts[parts.index("dev") + 1]
