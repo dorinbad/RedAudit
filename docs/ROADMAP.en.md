@@ -16,7 +16,9 @@ These features are approved but **not yet implemented** in the codebase.
 
 ### Security & Integrations (Priority: High)
 
-*(No high priority items currently pending)*
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **VPN Interface Detection** | 📋 Planned | Heuristic to detect VPN gateway interfaces: same MAC as gateway + different IP + 0 open ports → tag `vpn-interface` instead of generic `router`. |
 
 ### Red Team Extensions (Priority: Medium)
 

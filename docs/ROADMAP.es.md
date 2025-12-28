@@ -16,7 +16,9 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 ### Seguridad e Integraciones (Prioridad: Alta)
 
-*(No hay ítems de prioridad alta pendientes actualmente)*
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Detección Interfaces VPN** | 📋 Planificado | Heurística para detectar interfaces VPN: mismo MAC que gateway + IP diferente + 0 puertos abiertos → tag `vpn-interface` en vez de `router` genérico. |
 
 ### Extensiones Red Team (Prioridad: Media)
 
