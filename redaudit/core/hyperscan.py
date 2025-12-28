@@ -19,6 +19,7 @@ from datetime import datetime
 
 from redaudit.core.command_runner import CommandRunner
 from redaudit.utils.dry_run import is_dry_run
+from redaudit.core.udp_probe import UDP_PROBE_PAYLOADS
 
 
 _REDAUDIT_REDACT_ENV_KEYS = {"NVD_API_KEY", "GITHUB_TOKEN"}
@@ -99,7 +100,7 @@ UDP_DISCOVERY_PORTS = {
 }
 
 # Priority UDP ports for quick scan
-UDP_PRIORITY_PORTS = [53, 67, 123, 137, 161, 500, 514, 1900, 5353, 38899]
+UDP_PRIORITY_PORTS = [53, 67, 123, 137, 161, 500, 514, 1900, 5353, 38899, 1982, 6666, 6667, 5683]
 
 # ARP scanning defaults
 DEFAULT_ARP_RETRIES = 3
@@ -301,15 +302,7 @@ async def hyperscan_udp_sweep(
     for ip in targets:
         for port in ports:
             # Use protocol-specific payload if available
-            payload = b"\x00"
-            if port == 53:  # DNS
-                payload = b"\x00\x00\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07version\x04bind\x00\x00\x10\x00\x03"
-            elif port == 123:  # NTP
-                payload = b"\x1b" + b"\x00" * 47
-            elif port == 161:  # SNMP
-                payload = b"\x30\x26\x02\x01\x01\x04\x06public\xa0\x19\x02\x04\x00\x00\x00\x00\x02\x01\x00\x02\x01\x00\x30\x0b\x30\x09\x06\x05\x2b\x06\x01\x02\x01\x05\x00"
-            elif port == 137:  # NetBIOS
-                payload = b"\x80\x94\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x20CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x00\x00\x21\x00\x01"
+            payload = UDP_PROBE_PAYLOADS.get(port, b"\x00")
 
             tasks.append(_udp_probe(semaphore, ip, port, timeout, payload))
 

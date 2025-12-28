@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import socket
 from typing import Any, Dict, Iterable, List, Optional
+import json
 
 
 def _build_dns_query() -> bytes:
@@ -35,9 +36,48 @@ def _build_dns_query() -> bytes:
     )
 
 
+def _build_wiz_payload() -> bytes:
+    """Discovery payload for WiZ smart bulbs (UDP 38899)."""
+    return json.dumps(
+        {
+            "method": "registration",
+            "params": {"phoneMac": "000000000000", "register": False, "phoneIp": "1.2.3.4"},
+        }
+    ).encode()
+
+
+def _build_coap_payload() -> bytes:
+    """CoAP GET /.well-known/core (UDP 5683)."""
+    # Header: Ver=1, T=0(CON), TKL=0, Code=1(GET), MsgID=0x1234
+    # Option: Uri-Path (11) = ".well-known" (len 11), "core" (len 4)
+    # This is a basic confirmable GET request to discover resources
+    return (
+        b"\x40\x01\x12\x34"  # Header
+        b"\xbb.well-known"  # Option: Uri-Path
+        b"\x04core"  # Option: Uri-Path
+    )
+
+
+def _build_yeelight_payload() -> bytes:
+    """Yeelight discovery payload (UDP 1982/55443)."""
+    return b'{"id":1,"method":"get_prop","params":["power"]}\r\n'
+
+
+def _build_tuya_payload() -> bytes:
+    """Tuya discovery payload v3.1/v3.3 (UDP 6666/6667)."""
+    # Generic discovery broadcast
+    return b"\x00\x00\x55\xaa\x00\x00\x00\x00\x00\x00\x00\x0a\x00\x00\x00\x0c"
+
+
 UDP_PROBE_PAYLOADS: Dict[int, bytes] = {
     53: _build_dns_query(),  # DNS
-    123: b"\x1b" + (b"\x00" * 47),  # NTP client request
+    123: b"\x1b" + (b"\x00" * 47),  # NTP client
+    5683: _build_coap_payload(),  # CoAP (IKEA, Shelly, Matter)
+    1982: _build_yeelight_payload(),  # Yeelight
+    6666: _build_tuya_payload(),  # Tuya
+    6667: _build_tuya_payload(),  # Tuya
+    38899: _build_wiz_payload(),  # WiZ
+    55443: _build_yeelight_payload(),  # Yeelight (Alt)
 }
 
 
