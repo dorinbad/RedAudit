@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.9.5] - 2025-12-28 (NVD Sanitization Hotfix)
+
+### Fixed
+
+- **NVD Product Names**: Relaxed regex sanitization in CVE lookup to preserve dots in product names (e.g., `node.js` is no longer stripped to `nodejs`), fixing CPE generation for many frameworks.
+
 ## [3.9.4] - 2025-12-28 (Net Discovery Parsing Hotfix)
 
 ### Fixed

@@ -140,9 +140,9 @@ def build_cpe_query(product: str, version: str, vendor: str = "*") -> str:
         CPE 2.3 formatted string
     """
     # Sanitize inputs
-    product = re.sub(r"[^a-zA-Z0-9_\-]", "", product.lower())[:50]
+    product = re.sub(r"[^a-zA-Z0-9_\-.]", "", product.lower())[:50]
     version = re.sub(r"[^a-zA-Z0-9_\-.]", "", version)[:20]
-    vendor = re.sub(r"[^a-zA-Z0-9_\-]", "", vendor.lower())[:50] if vendor != "*" else "*"
+    vendor = re.sub(r"[^a-zA-Z0-9_\-.]", "", vendor.lower())[:50] if vendor != "*" else "*"
 
     # CPE 2.3 format: cpe:2.3:part:vendor:product:version:...
     # Part 'a' = application
