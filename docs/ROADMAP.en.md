@@ -39,6 +39,7 @@ Features currently present using `redaudit --version` >= v3.6.0.
 
 | Feature | Version | Verification |
 | :--- | :--- | :--- |
+| **IoT Signature Pack** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Protocol-specific UDP payloads for WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter devices. |
 | **Wizard Profile Selector** | v3.9.0 | `redaudit/core/auditor.py`. Express/Standard/Exhaustive auto-config presets + Custom wizard mode. |
 | **Real Timing Modes** | v3.9.0 | `redaudit/core/scanner.py`. Timing modes now correctly apply nmap `-T1`/`-T4`/`-T5` templates with delay/thread adjustments. |
 | **Enhanced HTML Reports** | v3.9.0 | `redaudit/templates/report*.html.j2`. Expandable findings with observations, smart scan analysis, playbooks grid, PCAP evidence, topology details. |

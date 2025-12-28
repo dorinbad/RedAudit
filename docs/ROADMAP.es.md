@@ -39,6 +39,7 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 
 | Característica | Versión | Verificación |
 | :--- | :--- | :--- |
+| **Pack de Firmas IoT** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Payloads UDP específicos para WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter. |
 | **Selector de Perfil del Wizard** | v3.9.0 | `redaudit/core/auditor.py`. Express/Estándar/Exhaustivo presets + modo Custom. |
 | **Modos de Temporización Reales** | v3.9.0 | `redaudit/core/scanner.py`. Aplica correctamente nmap `-T1`/`-T4`/`-T5` con delay/threads. |
 | **Reportes HTML Mejorados** | v3.9.0 | `redaudit/templates/report*.html.j2`. Hallazgos expandibles, análisis smart scan, playbooks, evidencia. |

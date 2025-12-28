@@ -77,7 +77,7 @@ sudo redaudit -t 172.16.0.0/16 \
   --allow-non-root
 ```
 
-**Notes:** `allow-non-root` skips OS fingerprinting and PCAP.
+**Notes:** `allow-non-root` skips OS fingerprinting and PCAP. v3.9.5+ includes IoT Signature Pack for detecting WiZ, Yeelight, Tuya, and CoAP/Matter devices.
 
 ### Red Team (Internal Recon)
 

@@ -9,7 +9,16 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-## [3.9.5] - 2025-12-28 (Hotfix Sanitización NVD)
+## [3.9.5] - 2025-12-28 (Pack de Firmas IoT + Hotfix NVD)
+
+### Añadido
+
+- **Pack de Firmas IoT**: Payloads UDP específicos por protocolo para detección de dispositivos smart home:
+  - **Bombillas WiZ** (puerto 38899): Payload JSON método registration
+  - **Yeelight** (puertos 1982, 55443): Payload comando discovery
+  - **Tuya/SmartLife** (puertos 6666, 6667): Sondas específicas de protocolo
+  - **CoAP/Matter** (puerto 5683): Payload GET .well-known/core
+- **Fallback de Hostname por DNS Reverso**: Los reportes HTML ahora muestran hostnames de dispositivos IoT desde DNS reverso cuando el hostname estándar está vacío
 
 ### Fixed
 

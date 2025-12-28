@@ -9,7 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.9.5] - 2025-12-28 (NVD Sanitization Hotfix)
+## [3.9.5] - 2025-12-28 (IoT Signature Pack + NVD Hotfix)
+
+### Added
+
+- **IoT Signature Pack**: Protocol-specific UDP payloads for smart home device detection:
+  - **WiZ bulbs** (port 38899): JSON registration method payload
+  - **Yeelight** (ports 1982, 55443): Discovery command payload
+  - **Tuya/SmartLife** (ports 6666, 6667): Protocol-aware probes
+  - **CoAP/Matter** (port 5683): GET .well-known/core payload
+- **Reverse DNS Hostname Fallback**: HTML reports now show IoT device hostnames from DNS reverse lookup when standard hostname is empty
 
 ### Fixed
 

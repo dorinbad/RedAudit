@@ -15,6 +15,15 @@ from typing import Dict, Optional
 from redaudit.utils.constants import SECURE_FILE_MODE, VERSION
 
 
+def _get_reverse_dns(host: Dict) -> str:
+    """Extract first reverse DNS entry for hostname fallback."""
+    dns = host.get("dns", {})
+    reverse = dns.get("reverse", [])
+    if reverse and isinstance(reverse, list) and reverse[0]:
+        return reverse[0].rstrip(".")
+    return ""
+
+
 def get_template_env():
     """
     Get Jinja2 environment configured for RedAudit templates.
@@ -92,7 +101,7 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
         host_table.append(
             {
                 "ip": host.get("ip", ""),
-                "hostname": host.get("hostname", "-"),
+                "hostname": host.get("hostname") or _get_reverse_dns(host) or "-",
                 "status": host.get("status", "up"),
                 "ports_count": len(host.get("ports", [])),
                 "risk_score": host.get("risk_score", 0),

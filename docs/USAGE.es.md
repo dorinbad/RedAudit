@@ -77,7 +77,7 @@ sudo redaudit -t 172.16.0.0/16 \
   --allow-non-root
 ```
 
-**Notas:** `allow-non-root` salta fingerprinting de SO y captura PCAP.
+**Notas:** `allow-non-root` salta fingerprinting de SO y captura PCAP. v3.9.5+ incluye Pack de Firmas IoT para detectar dispositivos WiZ, Yeelight, Tuya y CoAP/Matter.
 
 ### Red Team (Reconocimiento Interno)
 
