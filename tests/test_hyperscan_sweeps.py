@@ -30,7 +30,7 @@ def test_hyperscan_udp_sweep_collects_results(monkeypatch):
     assert by_port[123]["protocol"] == "ntp"
     assert by_port[999]["protocol"] == "unknown"
     assert by_port[53]["response_preview"] == "6f6b"
-    assert captured[53].startswith(b"\x00\x00")
+    assert captured[53].startswith(b"\x12\x34")  # DNS query TX ID
     assert captured[123].startswith(b"\x1b")
     assert captured[999] == b"\x00"
 
