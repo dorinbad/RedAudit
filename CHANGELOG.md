@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.9.4] - 2025-12-28 (Net Discovery Parsing Hotfix)
+
+### Fixed
+
+- **DHCP domain hints**: Domain Name/Domain Search parsing now tolerates Nmap prefixes (`|`, `|_`, indentation) so internal domains are captured reliably.
+- **NetBIOS names**: Nmap nbstat parsing now trims trailing punctuation to avoid inventory noise (e.g., `SERVER01,`).
+
 ## [3.9.3] - 2025-12-27 (Reporting Consolidation Hotfix)
 
 ### Fixed
