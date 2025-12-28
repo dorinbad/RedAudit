@@ -11,11 +11,22 @@ from redaudit.core import updater
 
 
 def test_version_parsing_and_compare():
-    assert updater.parse_version("1.2.3") == (1, 2, 3)
-    assert updater.parse_version("bad") == (0, 0, 0)
+    # Now returns 4-tuple: (major, minor, patch, suffix)
+    assert updater.parse_version("1.2.3") == (1, 2, 3, "")
+    assert updater.parse_version("1.2.3a") == (1, 2, 3, "a")
+    assert updater.parse_version("1.2.3b") == (1, 2, 3, "b")
+    assert updater.parse_version("bad") == (0, 0, 0, "")
+
+    # Basic version comparison
     assert updater.compare_versions("1.0.0", "1.0.1") == -1
     assert updater.compare_versions("2.0.0", "1.9.9") == 1
     assert updater.compare_versions("1.2.3", "1.2.3") == 0
+
+    # Letter suffix comparison (3.9.5a > 3.9.5)
+    assert updater.compare_versions("3.9.5", "3.9.5a") == -1  # 3.9.5 < 3.9.5a
+    assert updater.compare_versions("3.9.5a", "3.9.5") == 1  # 3.9.5a > 3.9.5
+    assert updater.compare_versions("3.9.5a", "3.9.5a") == 0
+    assert updater.compare_versions("3.9.5a", "3.9.5b") == -1  # a < b
 
 
 def test_release_dates_and_type():

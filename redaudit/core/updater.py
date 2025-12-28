@@ -38,20 +38,23 @@ API_TIMEOUT = 10  # seconds
 DOWNLOAD_TIMEOUT = 30  # seconds
 
 
-def parse_version(version_str: str) -> Tuple[int, int, int]:
+def parse_version(version_str: str) -> Tuple[int, int, int, str]:
     """
     Parse semantic version string into tuple.
 
     Args:
-        version_str: Version string like "2.8.0"
+        version_str: Version string like "2.8.0" or "3.9.5a"
 
     Returns:
-        Tuple of (major, minor, patch)
+        Tuple of (major, minor, patch, suffix)
+        suffix is empty string for base versions, or the letter suffix (e.g., "a", "b")
     """
-    match = re.match(r"(\d+)\.(\d+)\.(\d+)", version_str.strip())
+    # Match versions like 3.9.5 or 3.9.5a or 3.9.5b
+    match = re.match(r"(\d+)\.(\d+)\.(\d+)([a-z]?)", version_str.strip().lower())
     if match:
-        return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
-    return (0, 0, 0)
+        suffix = match.group(4) or ""  # Empty string if no suffix
+        return (int(match.group(1)), int(match.group(2)), int(match.group(3)), suffix)
+    return (0, 0, 0, "")
 
 
 def compare_versions(current: str, remote: str) -> int:
@@ -66,14 +69,33 @@ def compare_versions(current: str, remote: str) -> int:
         -1 if current < remote (update available)
          0 if current == remote
          1 if current > remote (ahead of remote)
+
+    Note:
+        Versions with letter suffixes are considered newer than base versions:
+        3.9.5a > 3.9.5, 3.9.5b > 3.9.5a
     """
     cur = parse_version(current)
     rem = parse_version(remote)
 
-    if cur < rem:
+    # Compare major.minor.patch first
+    cur_base = cur[:3]
+    rem_base = rem[:3]
+
+    if cur_base < rem_base:
         return -1
-    elif cur > rem:
+    elif cur_base > rem_base:
         return 1
+
+    # Same base version, compare suffixes
+    # Empty suffix < "a" < "b" < "c" etc.
+    cur_suffix = cur[3]
+    rem_suffix = rem[3]
+
+    if cur_suffix < rem_suffix:
+        return -1
+    elif cur_suffix > rem_suffix:
+        return 1
+
     return 0
 
 
