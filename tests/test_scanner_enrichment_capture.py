@@ -6,9 +6,12 @@ Coverage for scanner enrichment and capture helpers.
 from __future__ import annotations
 
 import os
+import subprocess
 from types import SimpleNamespace
 
 from redaudit.core import scanner
+from redaudit.core.scanner import traffic as scanner_traffic
+from redaudit.core.scanner import enrichment as scanner_enrichment
 
 
 def test_capture_traffic_snippet_with_tshark(monkeypatch, tmp_path):
@@ -16,7 +19,7 @@ def test_capture_traffic_snippet_with_tshark(monkeypatch, tmp_path):
         def run(self, *_args, **_kwargs):
             return SimpleNamespace(timed_out=False, stdout="summary", stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_traffic, "_make_runner", lambda **_k: _Runner())
 
     info = scanner.capture_traffic_snippet(
         host_ip="192.168.1.10",
@@ -42,7 +45,7 @@ def test_enrich_host_with_dns_and_whois(monkeypatch):
                 return SimpleNamespace(stdout="OrgName: Example\n", stderr="")
             return SimpleNamespace(stdout="", stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_enrichment, "_make_runner", lambda **_k: _Runner())
 
     host = {"ip": "8.8.8.8"}
     tools = {"dig": "dig", "whois": "whois"}
@@ -65,7 +68,7 @@ def test_http_tls_enrichment(monkeypatch):
                 return SimpleNamespace(stdout="Protocol : TLSv1.2", stderr="")
             return SimpleNamespace(stdout="", stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_enrichment, "_make_runner", lambda **_k: _Runner())
 
     http = scanner.http_enrichment(
         "https://example.com",
@@ -96,7 +99,7 @@ def test_exploit_lookup_parses_output(monkeypatch):
             )
             return SimpleNamespace(returncode=0, stdout=output, stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_enrichment, "_make_runner", lambda **_k: _Runner())
 
     exploits = scanner.exploit_lookup("Apache", "2.4.49", {"searchsploit": "searchsploit"})
 
@@ -115,7 +118,7 @@ def test_ssl_deep_analysis_detects_findings(monkeypatch):
             )
             return SimpleNamespace(timed_out=False, stdout=output, stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_enrichment, "_make_runner", lambda **_k: _Runner())
 
     result = scanner.ssl_deep_analysis(
         "192.168.1.10",
@@ -142,8 +145,12 @@ def test_start_and_stop_background_capture(monkeypatch, tmp_path):
         def run(self, *_args, **_kwargs):
             return SimpleNamespace(timed_out=False, stdout="summary", stderr="")
 
-    monkeypatch.setattr(scanner.subprocess, "Popen", lambda *_a, **_k: _Proc())
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(
+        scanner_traffic,
+        "subprocess",
+        SimpleNamespace(Popen=lambda *_a, **_k: _Proc(), DEVNULL=subprocess.DEVNULL),
+    )
+    monkeypatch.setattr(scanner_traffic, "_make_runner", lambda **_k: _Runner())
 
     capture = scanner.start_background_capture(
         host_ip="192.168.1.10",
@@ -180,15 +187,17 @@ def test_banner_grab_fallback_parses_output(monkeypatch):
             )
             return SimpleNamespace(timed_out=False, stdout=output, stderr="")
 
-    monkeypatch.setattr(scanner, "_make_runner", lambda **_k: _Runner())
+    monkeypatch.setattr(scanner_enrichment, "_make_runner", lambda **_k: _Runner())
 
     result = scanner.banner_grab_fallback("192.168.1.10", [80])
 
-    assert result[80]["banner"] == "Apache"
-    assert "ssl-cert" in result[80]["ssl_cert"].lower()
+    assert result[80].get("banner") == "Apache"
+    assert "ssl-cert" in result[80].get("ssl_cert", "").lower()
 
 
 def test_finalize_host_status_from_deep_scan():
+    from redaudit.utils.constants import STATUS_FILTERED
+
     status = scanner.finalize_host_status(
         {
             "status": "down",
@@ -196,4 +205,4 @@ def test_finalize_host_status_from_deep_scan():
         }
     )
 
-    assert status == scanner.STATUS_FILTERED
+    assert status == STATUS_FILTERED

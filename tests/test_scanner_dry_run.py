@@ -14,8 +14,8 @@ from redaudit.core.scanner import start_background_capture, stop_background_capt
 
 
 class TestScannerDryRun(unittest.TestCase):
-    @patch("redaudit.core.scanner.subprocess.Popen")
-    @patch("redaudit.core.scanner.os.makedirs")
+    @patch("redaudit.core.scanner.traffic.subprocess.Popen")
+    @patch("redaudit.core.scanner.traffic.os.makedirs")
     def test_start_background_capture_skips_in_dry_run(self, mock_makedirs, mock_popen):
         with patch.dict(os.environ, {"REDAUDIT_DRY_RUN": "1"}):
             res = start_background_capture(
@@ -28,7 +28,7 @@ class TestScannerDryRun(unittest.TestCase):
         mock_popen.assert_not_called()
         mock_makedirs.assert_not_called()
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.traffic._make_runner")
     def test_stop_background_capture_skips_tshark_in_dry_run(self, mock_make_runner):
         proc = MagicMock()
         capture_info = {"process": proc, "pcap_file_abs": "/tmp/traffic.pcap", "iface": "eth0"}
@@ -36,8 +36,8 @@ class TestScannerDryRun(unittest.TestCase):
 
         with (
             patch.dict(os.environ, {"REDAUDIT_DRY_RUN": "1"}),
-            patch("redaudit.core.scanner.os.path.exists", return_value=True),
-            patch("redaudit.core.scanner.os.chmod"),
+            patch("redaudit.core.scanner.traffic.os.path.exists", return_value=True),
+            patch("redaudit.core.scanner.traffic.os.chmod"),
         ):
             result = stop_background_capture(capture_info, extra_tools)
 
