@@ -134,7 +134,7 @@ class TestScannerCoverage(unittest.TestCase):
         rec5 = {"stdout": "Nothing useful here"}
         self.assertFalse(output_has_identity([rec5]))
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.nmap._make_runner")
     def test_run_nmap_command(self, mock_make_runner):
         mock_runner = MagicMock()
         mock_res = MagicMock()
@@ -158,8 +158,8 @@ class TestScannerCoverage(unittest.TestCase):
 
     # ---------- Traffic Capture ----------
 
-    @patch("redaudit.core.scanner._make_runner")
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic._make_runner")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_capture_traffic_snippet(self, mock_ip, mock_make_runner):
         # Setup specific IP/Network match
         mock_ip.ip_address.return_value = "IP_OBJ"
@@ -183,8 +183,8 @@ class TestScannerCoverage(unittest.TestCase):
         self.assertEqual(info["iface"], "eth0")
         self.assertIn("pcap_file", info)
 
-    @patch("redaudit.core.scanner.subprocess.Popen")
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic.subprocess.Popen")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_start_stop_background_capture(self, mock_ip, mock_popen):
         # Setup interface discovery
         net_obj = MagicMock()
@@ -227,8 +227,8 @@ class TestScannerCoverage(unittest.TestCase):
 
     # ---------- Enrichment & Search ----------
 
-    @patch("redaudit.core.scanner._make_runner")
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
+    @patch("redaudit.core.scanner.enrichment.ipaddress")
     def test_enrich_host_with_dns_whois(self, mock_ip, mock_make_runner):
         # Mock public IP for whois
         mock_ip.ip_address.return_value = MagicMock(is_private=False)
@@ -254,7 +254,7 @@ class TestScannerCoverage(unittest.TestCase):
         enrich_host_with_whois(record, tools)
         self.assertIn("whois_summary", record["dns"])
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_http_enrichment_probe(self, mock_make_runner):
         from redaudit.core.scanner import http_enrichment, http_identity_probe
 
@@ -274,8 +274,8 @@ class TestScannerCoverage(unittest.TestCase):
         self.assertIn("curl_headers", res)
         # Verify wget fallback logic if we called it (mock depends on order)
 
-    @patch("redaudit.core.scanner._fetch_http_headers")
-    @patch("redaudit.core.scanner._fetch_http_body")
+    @patch("redaudit.core.scanner.enrichment._fetch_http_headers")
+    @patch("redaudit.core.scanner.enrichment._fetch_http_body")
     def test_http_identity_probe_logic(self, mock_body, mock_headers):
         from redaudit.core.scanner import http_identity_probe
 
@@ -288,7 +288,7 @@ class TestScannerCoverage(unittest.TestCase):
         self.assertEqual(res.get("http_server"), "Apache/2.4")
         self.assertEqual(res.get("http_title"), "Admin Panel")
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_exploit_lookup(self, mock_make_runner):
         from redaudit.core.scanner import exploit_lookup
 
@@ -310,7 +310,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         self.assertEqual(len(exploits), 2)
         self.assertIn("Apache 2.4 - RCE", exploits[0])
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_ssl_deep_analysis(self, mock_make_runner):
         from redaudit.core.scanner import ssl_deep_analysis
 
@@ -337,7 +337,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
 
     # ---------- HTTP Fetchers ----------
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_fetch_http_functions(self, mock_make_runner):
         from redaudit.core.scanner import _fetch_http_headers, _fetch_http_body
 
@@ -366,7 +366,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
 
     # ---------- TLS & Banner Grab ----------
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_tls_enrichment(self, mock_make_runner):
         from redaudit.core.scanner import tls_enrichment
 
@@ -379,7 +379,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         self.assertIn("tls_info", data)
         self.assertIn("Certificate Info", data["tls_info"])
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_banner_grab_fallback(self, mock_make_runner):
         from redaudit.core.scanner import banner_grab_fallback
         import textwrap
@@ -411,9 +411,9 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
 
     # ---------- Tshark Integration ----------
 
-    @patch("redaudit.core.scanner.subprocess.Popen")
-    @patch("redaudit.core.scanner.os.path.exists")
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.traffic.subprocess.Popen")
+    @patch("redaudit.core.scanner.traffic.os.path.exists")
+    @patch("redaudit.core.scanner.traffic._make_runner")
     def test_stop_capture_tshark(self, mock_make_runner, mock_exists, mock_popen):
         # Setup active capture
         proc = MagicMock()
@@ -488,17 +488,20 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         html6 = '<img src="img.png" alt="Alt Title">'
         self.assertEqual(_extract_http_title(html6), "Alt Title")
 
-    @patch("redaudit.core.scanner._make_runner")
-    def test_scanner_exceptions(self, mock_make_runner):
+    @patch("redaudit.core.scanner.traffic._make_runner")
+    @patch("redaudit.core.scanner.nmap._make_runner")
+    def test_scanner_exceptions(self, mock_make_runner_nmap, mock_make_runner_traffic):
         from redaudit.core.scanner import run_nmap_command, capture_traffic_snippet
 
         # Mock generic exception in run_nmap_command (e.g. permission error during Popen)
         # Note: run_nmap_command catches nothing, it lets exception bubble up typically,
         # checking coverage miss lines 416 (timeout branch)
 
+        # Configure both mocks to behave the same
         mock_runner = MagicMock()
         mock_runner.run.return_value = MagicMock(timed_out=True, returncode=0, stdout="", stderr="")
-        mock_make_runner.return_value = mock_runner
+        mock_make_runner_nmap.return_value = mock_runner
+        mock_make_runner_traffic.return_value = mock_runner
 
         deep_obj = {}
         res = run_nmap_command(["cmd"], 1, "1.1.1.1", deep_obj)
@@ -510,7 +513,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         tools = {"tcpdump": "tcpdump"}
 
         # Mock network match
-        with patch("redaudit.core.scanner.ipaddress") as mock_ip:
+        with patch("redaudit.core.scanner.traffic.ipaddress") as mock_ip:
             mock_ip.ip_address.return_value = "IP"
             mock_ip.ip_network.return_value = MagicMock()
             mock_ip.ip_network.return_value.__contains__.return_value = True
@@ -547,8 +550,8 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         self.assertEqual(exploit_lookup("svc", "1.0", empty_tools), [])
         self.assertIsNone(ssl_deep_analysis("1.1.1.1", 443, empty_tools))
 
-    @patch("redaudit.core.scanner._make_runner")
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic._make_runner")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_capture_snippet_tshark(self, mock_ip, mock_make_runner):
         from redaudit.core.scanner import capture_traffic_snippet
 
@@ -598,7 +601,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         self.assertIsNone(stop_background_capture({}, tools))
         self.assertIsNone(stop_background_capture(None, tools))
 
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_start_background_capture_no_iface(self, mock_ip):
         from redaudit.core.scanner import start_background_capture
 
@@ -649,7 +652,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         ports = list(range(1, 30))
         # Mock run_nmap_command internally called by banner_grab?? No, it calls _make_runner directly.
         # We need to mock _make_runner to avoid real nmap call
-        with patch("redaudit.core.scanner._make_runner") as mock_runner_fac:
+        with patch("redaudit.core.scanner.enrichment._make_runner") as mock_runner_fac:
             mock_runner = MagicMock()
             mock_runner.run.return_value = MagicMock(stdout="", timed_out=False)
             mock_runner_fac.return_value = mock_runner
@@ -667,8 +670,9 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
 
     # ---------- Comprehensive Exceptions ----------
 
-    @patch("redaudit.core.scanner._make_runner")
-    def test_comprehensive_exceptions(self, mock_loader):
+    @patch("redaudit.core.scanner.traffic._make_runner")  # For start/stop capture
+    @patch("redaudit.core.scanner.enrichment._make_runner")  # For exploit/banner
+    def test_comprehensive_exceptions(self, mock_loader_enrich, mock_loader_traffic):
         from redaudit.core.scanner import (
             exploit_lookup,
             banner_grab_fallback,
@@ -679,7 +683,9 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         # Exploit Lookup Timeout
         mock_runner = MagicMock()
         mock_runner.run.return_value = MagicMock(timed_out=True)
-        mock_loader.return_value = mock_runner
+        # Mock for both injected mocks
+        mock_loader_enrich.return_value = mock_runner
+        mock_loader_traffic.return_value = mock_runner
 
         self.assertEqual(exploit_lookup("svc", "1.0", {"searchsploit": "yes"}), [])
 
@@ -697,8 +703,8 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         mock_runner.run.side_effect = Exception("Nmap died")
         self.assertEqual(banner_grab_fallback("1.1.1.1", [80], {}, timeout=1), {})
 
-    @patch("redaudit.core.scanner.subprocess.Popen")
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic.subprocess.Popen")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_background_capture_exceptions(self, mock_ip, mock_popen):
         from redaudit.core.scanner import start_background_capture, stop_background_capture
 
@@ -729,7 +735,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
 
     # ---------- Final Edge Cases ----------
 
-    @patch("redaudit.core.scanner._make_runner")
+    @patch("redaudit.core.scanner.enrichment._make_runner")
     def test_ssl_analysis_clean(self, mock_make_runner):
         from redaudit.core.scanner import ssl_deep_analysis
 
@@ -746,7 +752,7 @@ Apache < 2.2 - Overflow               | linux/remote/5678.c
         # But verify output parsing didn't find "VULNERABLE" or "Weak cipher"
         self.assertIn("No major issues detected", res.get("summary", ""))
 
-    @patch("redaudit.core.scanner.ipaddress")
+    @patch("redaudit.core.scanner.traffic.ipaddress")
     def test_capture_network_parsing_error(self, mock_ip):
         from redaudit.core.scanner import capture_traffic_snippet
 
