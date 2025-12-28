@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](README_ES.md)
 
-![Version](https://img.shields.io/badge/v3.9.5-blue?style=flat-square)
+![Version](https://img.shields.io/badge/v3.9.6-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -54,6 +54,7 @@ sudo redaudit
 | **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for hidden network detection |
 | **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPNP) for guest network detection |
 | **Agentless Verification** | Optional SMB/RDP/LDAP/SSH/HTTP probes with device fingerprinting (vendor/service patterns) |
+| **VPN Interface Detection** | Classifies VPN gateways via same-MAC-as-gateway heuristic, VPN ports (500/4500/1194/51820), and hostname patterns |
 | **Stealth Mode** | T1 paranoid timing, single-thread, 5s+ delays for enterprise IDS evasion |
 
 ### Intelligence & Correlation

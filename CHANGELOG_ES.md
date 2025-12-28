@@ -9,7 +9,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
-### Añadido
+## [3.9.6] - 2025-12-28 (Detección VPN)
 
 - **Detección de Interfaces VPN**: Nueva heurística para clasificar interfaces de gateway VPN:
   - Misma MAC que gateway + IP diferente = IP virtual VPN
