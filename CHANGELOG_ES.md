@@ -9,6 +9,13 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [3.9.4] - 2025-12-28 (Hotfix de parseo en Net Discovery)
+
+### Fixed
+
+- **Pistas de dominio DHCP**: El parseo de Domain Name/Domain Search ahora tolera prefijos de Nmap (`|`, `|_`, indentacion) y captura dominios internos de forma fiable.
+- **Nombres NetBIOS**: El parseo de nbstat en Nmap ahora recorta puntuacion final para evitar ruido en inventario (ej: `SERVER01,`).
+
 ## [3.9.3] - 2025-12-27 (Hotfix de consolidacion de reportes)
 
 ### Fixed
