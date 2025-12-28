@@ -19,9 +19,11 @@ def test_updater_parse_version():
     """Test version parsing."""
     from redaudit.core.updater import parse_version
 
-    assert parse_version("2.8.0") == (2, 8, 0)
-    assert parse_version("3.1.4") == (3, 1, 4)
-    assert parse_version("1.0.0") == (1, 0, 0)
+    # Now returns 4-tuple: (major, minor, patch, suffix)
+    assert parse_version("2.8.0") == (2, 8, 0, "")
+    assert parse_version("3.1.4") == (3, 1, 4, "")
+    assert parse_version("1.0.0") == (1, 0, 0, "")
+    assert parse_version("3.9.5a") == (3, 9, 5, "a")
 
 
 def test_updater_compare_versions():
