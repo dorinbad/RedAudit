@@ -22,6 +22,10 @@ This hotfix focuses on **reducing false positives** and **aligning vulnerability
 
 - `findings.jsonl` now includes `descriptive_title` for better downstream display.
 
+### Dynamic OS Banner
+
+- CLI banner now reflects the detected OS name with a safe `LINUX` fallback.
+
 ---
 
 **Full Changelog**: [CHANGELOG.md](../../CHANGELOG.md)

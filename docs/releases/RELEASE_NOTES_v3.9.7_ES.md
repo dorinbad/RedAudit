@@ -22,6 +22,10 @@ Este hotfix se centra en **reducir falsos positivos** y **alinear conteos** entr
 
 - `findings.jsonl` ahora incluye `descriptive_title` para mejor visualización downstream.
 
+### Banner dinámico de SO
+
+- El banner del CLI refleja el SO detectado con fallback seguro a `LINUX`.
+
 ---
 
 **Changelog Completo**: [CHANGELOG_ES.md](../../CHANGELOG_ES.md)
