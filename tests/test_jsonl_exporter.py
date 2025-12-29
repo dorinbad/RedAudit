@@ -88,6 +88,7 @@ class TestJsonlExporter(unittest.TestCase):
                 summary = json.load(f)
             self.assertEqual(summary.get("session_id"), "session-123")
             self.assertEqual(summary.get("redaudit_version"), "3.5.0")
+            self.assertEqual(summary.get("total_findings_raw"), summary.get("total_findings"))
 
     def test_extract_title_from_observations(self):
         vuln = {"parsed_observations": ["Missing HSTS on endpoint"]}

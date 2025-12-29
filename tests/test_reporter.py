@@ -100,6 +100,26 @@ class TestReporter(unittest.TestCase):
         self.assertEqual(summary["vulns_found"], 1)
         self.assertIn("duration", summary)
 
+    def test_generate_summary_tracks_raw_and_consolidated(self):
+        results = {
+            "hosts": [{"ip": "192.168.1.10"}],
+            "vulnerabilities": [
+                {
+                    "host": "192.168.1.10",
+                    "vulnerabilities": [
+                        {"descriptive_title": "Duplicate Finding", "url": "http://192.168.1.10"},
+                        {"descriptive_title": "Duplicate Finding", "url": "http://192.168.1.10"},
+                    ],
+                }
+            ],
+        }
+        config = {"target_networks": ["192.168.1.0/24"], "threads": 1, "scan_mode": "normal"}
+
+        summary = generate_summary(results, config, ["192.168.1.10"], results["hosts"], datetime.now())
+
+        self.assertEqual(summary["vulns_found_raw"], 2)
+        self.assertEqual(summary["vulns_found"], 1)
+
     def test_generate_summary_tags_default_gateway(self):
         results = {
             "hosts": [{"ip": "192.168.1.1", "hostname": "", "ports": []}],
