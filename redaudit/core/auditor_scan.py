@@ -980,6 +980,8 @@ class AuditorScanMixin:
                         "asus",
                         "linksys",
                         "tp-link",
+                        "sercomm",
+                        "sagemcom",
                     )
                 ):
                     device_type_hints.append("router")
