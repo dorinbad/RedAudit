@@ -365,7 +365,9 @@ class AuditorScanMixin:
                 vendor = None
 
         if mac or vendor:
-            deep_meta = host_record.setdefault("deep_scan", {"strategy": "net_discovery", "commands": []})
+            deep_meta = host_record.setdefault(
+                "deep_scan", {"strategy": "net_discovery", "commands": []}
+            )
             if mac and not deep_meta.get("mac_address"):
                 deep_meta["mac_address"] = mac
             if vendor and not deep_meta.get("vendor"):
