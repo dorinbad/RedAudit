@@ -326,15 +326,27 @@ def guess_asset_type(host: Dict) -> str:
         return "mobile"
     if any(x in hostname_base for x in ["macbook", "imac", "laptop", "desktop", "workstation"]):
         return "workstation"
+    if re.search(r"\bpc\b", hostname_base):
+        return "workstation"
+    if any(
+        x in hostname_base
+        for x in (
+            "printer",
+            "laserjet",
+            "officejet",
+            "deskjet",
+            "pixma",
+            "imageclass",
+            "canon",
+            "epson",
+        )
+    ):
+        return "printer"
     if any(
         x in hostname_base
         for x in ("msi", "lenovo", "thinkpad", "dell", "hp", "hewlett", "asus", "acer")
     ):
         return "workstation"
-    if re.search(r"\bpc\b", hostname_base):
-        return "workstation"
-    if any(x in hostname_base for x in ["printer", "canon", "epson"]):
-        return "printer"
     if any(x in hostname_base for x in ["tv", "chromecast", "roku", "firetv", "shield"]):
         return "media"
     if any(x in hostname_base for x in ["router", "gateway", "modem", "ont", "cpe", "firewall"]):
