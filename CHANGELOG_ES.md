@@ -9,6 +9,14 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [3.9.7] - 2025-12-29 (Hotfix de calidad de auditoría)
+
+### Corregido
+
+- **Falsos positivos de Nuclei**: Los sospechosos se filtran antes de consolidar hallazgos, con conteo expuesto en el resumen de Nuclei.
+- **Conteo de vulns web**: Summary/manifest ahora exponen conteo raw vs consolidado para evitar desajustes entre CLI y reportes.
+- **Títulos JSONL**: Añadido `descriptive_title` en findings.jsonl para mejor visualización downstream.
+
 ## [3.9.6] - 2025-12-28 (Detección VPN)
 
 - **Detección de Interfaces VPN**: Nueva heurística para clasificar interfaces de gateway VPN:
