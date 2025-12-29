@@ -777,13 +777,44 @@ class InteractiveNetworkAuditor(
                             )
 
                         findings = nuclei_result.get("findings") or []
+                        suspected = []
+                        if findings:
+                            try:
+                                from redaudit.core.verify_vuln import filter_nuclei_false_positives
+
+                                host_agentless = {}
+                                for host in self.results.get("hosts", []) or []:
+                                    ip = host.get("ip")
+                                    agentless = host.get("agentless_fingerprint") or {}
+                                    if ip and agentless:
+                                        host_agentless[ip] = agentless
+                                findings, suspected = filter_nuclei_false_positives(
+                                    findings, host_agentless, self.logger
+                                )
+                            except Exception as filter_err:
+                                if self.logger:
+                                    self.logger.warning(
+                                        "Nuclei FP filter skipped: %s", filter_err, exc_info=True
+                                    )
                         nuclei_summary = {
                             "enabled": True,
                             "targets": len(nuclei_targets),
                             "findings": len(findings),
+                            "findings_total": len(nuclei_result.get("findings") or []),
+                            "findings_suspected": len(suspected),
                             "success": bool(nuclei_result.get("success")),
                             "error": nuclei_result.get("error"),
                         }
+                        if suspected:
+                            nuclei_summary["suspected"] = [
+                                {
+                                    "template_id": f.get("template_id"),
+                                    "matched_at": f.get("matched_at"),
+                                    "fp_reason": f.get("fp_reason"),
+                                }
+                                for f in suspected[:25]
+                                if isinstance(f, dict)
+                            ]
                         raw_file = nuclei_result.get("raw_output_file")
                         if raw_file and isinstance(raw_file, str):
                             try:
@@ -797,6 +828,10 @@ class InteractiveNetworkAuditor(
                         merged = self._merge_nuclei_findings(findings)
                         if merged > 0:
                             self.print_status(self.t("nuclei_findings", merged), "OK")
+                            if suspected:
+                                self.print_status(
+                                    self.t("nuclei_suspected", len(suspected)), "WARNING"
+                                )
                         else:
                             self.print_status(self.t("nuclei_no_findings"), "INFO")
                 except Exception as e:

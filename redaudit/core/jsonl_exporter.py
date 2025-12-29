@@ -65,6 +65,7 @@ def export_findings_jsonl(results: Dict, output_path: str) -> int:
                 ):
                     if candidate and candidate not in sources:
                         sources.append(candidate)
+                descriptive_title = vuln.get("descriptive_title") or _extract_title(vuln)
                 finding = {
                     "finding_id": vuln.get("finding_id", ""),
                     "asset_id": asset_id,
@@ -79,6 +80,7 @@ def export_findings_jsonl(results: Dict, output_path: str) -> int:
                     "normalized_severity": vuln.get("normalized_severity", 0.0),
                     "category": vuln.get("category", "surface"),
                     "title": _extract_title(vuln),
+                    "descriptive_title": descriptive_title,
                     "source": source,
                     "sources": sources,
                     "template_id": vuln.get("template_id", ""),
@@ -226,6 +228,9 @@ def export_summary_json(results: Dict, output_path: str) -> Dict:
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
     total_findings = sum(severity_counts.values())
+    raw_total_findings = (results.get("summary", {}) or {}).get("vulns_found_raw")
+    if raw_total_findings is None:
+        raw_total_findings = total_findings
 
     config_snapshot = results.get("config_snapshot", {}) or {}
     scanner_meta = results.get("scanner", {}) or {}
@@ -255,6 +260,7 @@ def export_summary_json(results: Dict, output_path: str) -> Dict:
         "scan_duration": results.get("summary", {}).get("duration", ""),
         "total_assets": len(results.get("hosts", [])),
         "total_findings": total_findings,
+        "total_findings_raw": raw_total_findings,
         "severity_breakdown": severity_counts,
         "severity_counts": severity_counts,
         "category_breakdown": category_counts,
