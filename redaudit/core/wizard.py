@@ -12,6 +12,7 @@ Contains interactive UI methods: prompts, menus, input utilities.
 import os
 import sys
 import ipaddress
+import platform
 import re
 import shutil
 from typing import Dict, List
@@ -47,7 +48,7 @@ class WizardMixin:
 
     def print_banner(self) -> None:
         """Print the RedAudit banner."""
-        subtitle = self.t("banner_subtitle")
+        subtitle = self.t("banner_subtitle", self._detect_os_banner_label())
         banner = f"""
 {self.COLORS['FAIL']}
  ____          _    {self.COLORS['BOLD']}{self.COLORS['HEADER']}_             _ _ _{self.COLORS['ENDC']}{self.COLORS['FAIL']}
@@ -61,6 +62,45 @@ class WizardMixin:
 {self.COLORS['OKBLUE']}══════════════════════════════════════════════════════{self.COLORS['ENDC']}
 """
         print(banner)
+
+    def _detect_os_banner_label(self) -> str:
+        os_release = "/etc/os-release"
+        label = ""
+        data: Dict[str, str] = {}
+        try:
+            if os.path.exists(os_release):
+                with open(os_release, "r", encoding="utf-8", errors="ignore") as handle:
+                    for line in handle:
+                        line = line.strip()
+                        if not line or "=" not in line:
+                            continue
+                        key, value = line.split("=", 1)
+                        data[key.strip()] = value.strip().strip('"').strip("'")
+        except Exception:
+            data = {}
+
+        label = data.get("NAME") or data.get("PRETTY_NAME") or data.get("ID") or ""
+        if not label:
+            system = platform.system().strip()
+            if system == "Darwin":
+                label = "macOS"
+            else:
+                label = system or "Linux"
+
+        label = label.replace("GNU/Linux", "Linux")
+        label = re.sub(r"[^A-Za-z0-9 _/+-]", "", label)
+        label = re.sub(r"\s+", " ", label).strip().upper()
+        if not label:
+            label = "LINUX"
+        if len(label) > 22:
+            parts = label.split()
+            if len(parts) >= 2:
+                label = " ".join(parts[:2])
+            elif parts:
+                label = parts[0]
+        if len(label) > 22:
+            label = label[:22].rstrip()
+        return label or "LINUX"
 
     # ---------- Menu utilities ----------
 

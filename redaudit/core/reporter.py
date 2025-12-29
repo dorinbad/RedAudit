@@ -221,7 +221,7 @@ def generate_summary(
         Summary dictionary
     """
     duration = datetime.now() - scan_start_time if scan_start_time is not None else None
-    total_vulns = sum(
+    raw_vulns = sum(
         len(v.get("vulnerabilities", [])) for v in results.get("vulnerabilities", []) if v
     )
 
@@ -230,7 +230,8 @@ def generate_summary(
         "networks": len(config.get("target_networks", [])),
         "hosts_found": len(unique_hosts),
         "hosts_scanned": len(scanned_results),
-        "vulns_found": total_vulns,
+        "vulns_found": raw_vulns,
+        "vulns_found_raw": raw_vulns,
         "duration": str(duration).split(".")[0] if duration else None,
     }
 
@@ -239,6 +240,7 @@ def generate_summary(
     # Attach sanitized config snapshot + pipeline + smart scan summary for reporting.
     results["config_snapshot"] = _build_config_snapshot(config)
     results["smart_scan_summary"] = _summarize_smart_scan(results.get("hosts", []))
+    raw_vuln_summary = _summarize_vulnerabilities(results.get("vulnerabilities", []))
     results["pipeline"] = {
         "topology": results.get("topology") or {},
         "net_discovery": _summarize_net_discovery(results.get("net_discovery") or {}),
@@ -251,7 +253,7 @@ def generate_summary(
             results.get("hosts", []), results.get("agentless_verify") or {}, config
         ),
         "nuclei": results.get("nuclei") or {},
-        "vulnerability_scan": _summarize_vulnerabilities(results.get("vulnerabilities", [])),
+        "vulnerability_scan": raw_vuln_summary,
     }
 
     # v3.1+: Updated SIEM-compatible fields
@@ -328,6 +330,18 @@ def generate_summary(
     # v2.9: SIEM Enhancement - ECS compliance, severity scoring, tags, risk scores
     enriched = enrich_report_for_siem(results, config)
     results.update(enriched)
+    consolidated_vulns = 0
+    try:
+        consolidated_vulns = _summarize_vulnerabilities(results.get("vulnerabilities", [])).get(
+            "total", 0
+        )
+    except Exception:
+        consolidated_vulns = raw_vulns
+    summary["vulns_found"] = consolidated_vulns
+    summary["vulns_found_raw"] = raw_vulns
+    if results.get("pipeline", {}).get("vulnerability_scan") is not None:
+        results["pipeline"]["vulnerability_scan"]["total_raw"] = raw_vulns
+        results["pipeline"]["vulnerability_scan"]["total"] = consolidated_vulns
 
     return summary
 
@@ -939,6 +953,7 @@ def _write_output_manifest(
     scanner_versions = results.get("scanner_versions", {}) or {}
     redaudit_version = results.get("version") or scanner_versions.get("redaudit", "")
 
+    raw_findings = (results.get("summary", {}) or {}).get("vulns_found_raw")
     manifest: Dict[str, Any] = {
         "schema_version": results.get("schema_version", ""),
         "generated_at": results.get("generated_at", datetime.now().isoformat()),
@@ -957,6 +972,8 @@ def _write_output_manifest(
         },
         "artifacts": [],
     }
+    if raw_findings is not None:
+        manifest["counts"]["findings_raw"] = raw_findings
 
     artifacts = []
     try:
@@ -1035,7 +1052,12 @@ def show_results_summary(results: Dict, t_fn, colors: Dict, output_dir: str) -> 
     print(t_fn("nets", s.get("networks")))
     print(t_fn("hosts_up", s.get("hosts_found")))
     print(t_fn("hosts_full", s.get("hosts_scanned")))
-    print(t_fn("vulns_web", s.get("vulns_found")))
+    raw_vulns = s.get("vulns_found_raw")
+    total_vulns = s.get("vulns_found")
+    if raw_vulns is not None and raw_vulns != total_vulns:
+        print(t_fn("vulns_web_detail", total_vulns, raw_vulns))
+    else:
+        print(t_fn("vulns_web", total_vulns))
     print(t_fn("duration", s.get("duration")))
     pcap_count = 0
     for h in results.get("hosts", []) or []:

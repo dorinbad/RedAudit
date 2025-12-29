@@ -16,6 +16,7 @@ from redaudit.core.verify_vuln import (
     is_sensitive_file,
     is_false_positive_by_content_type,
     is_false_positive_by_size,
+    check_nuclei_false_positive,
     verify_content_type,
     verify_nikto_finding,
     filter_nikto_false_positives,
@@ -81,6 +82,15 @@ class TestVerifyVuln(unittest.TestCase):
         """Test that larger archive sizes are NOT flagged as FP."""
         result = is_false_positive_by_size(".tar", 50000)  # 50KB
         self.assertFalse(result)
+
+    def test_nuclei_false_positive_router_vendor(self):
+        finding = {
+            "template-id": "CVE-2022-26143",
+            "response": "HTTP/1.1 200 OK\\r\\nServer: FRITZ!OS Guest information Server\\r\\n\\r\\n{}",
+        }
+        is_fp, reason = check_nuclei_false_positive(finding, {"device_vendor": "AVM"})
+        self.assertTrue(is_fp)
+        self.assertIn("fp_vendor_detected", reason)
 
     @patch("redaudit.core.verify_vuln.verify_content_type")
     def test_verify_finding_filtered(self, mock_verify):

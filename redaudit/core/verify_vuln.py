@@ -475,6 +475,10 @@ def check_nuclei_false_positive(
 
     # Extract server/product info from response
     response = finding.get("response", "")
+    if not response:
+        raw = finding.get("raw")
+        if isinstance(raw, dict):
+            response = raw.get("response", "") or ""
     server_header = ""
     for line in response.split("\r\n"):
         if line.lower().startswith("server:"):
@@ -541,6 +545,19 @@ def filter_nuclei_false_positives(
     for finding in findings:
         host_ip = finding.get("ip", "") or finding.get("host", "")
         agentless_data = host_agentless.get(host_ip, {})
+        if not agentless_data and isinstance(host_ip, str) and host_ip:
+            trimmed = host_ip
+            if "://" in trimmed:
+                try:
+                    from urllib.parse import urlparse
+
+                    parsed = urlparse(trimmed)
+                    trimmed = parsed.hostname or trimmed
+                except Exception:
+                    pass
+            if trimmed.count(":") == 1:
+                trimmed = trimmed.split(":", 1)[0]
+            agentless_data = host_agentless.get(trimmed, {})
 
         is_fp, reason = check_nuclei_false_positive(finding, agentless_data, logger)
 

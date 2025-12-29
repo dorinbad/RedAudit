@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.9.7] - 2025-12-29 (Audit Quality Hotfix)
+
+### Fixed
+
+- **Nuclei false positives**: Suspected FPs are filtered before merging into findings, with counts exposed in the nuclei summary.
+- **Web vuln counts**: Summary/manifest now expose raw vs consolidated counts to prevent CLI vs report mismatches.
+- **JSONL findings titles**: Added `descriptive_title` to findings.jsonl for richer downstream display.
+
+### Improved
+
+- **Dynamic OS banner**: CLI banner now reflects the detected OS name with a safe `LINUX` fallback.
+
 ## [3.9.6] - 2025-12-28 (VPN Interface Detection)
 
 - **VPN Interface Detection**: New heuristic to classify VPN gateway interfaces:

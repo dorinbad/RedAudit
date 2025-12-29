@@ -88,6 +88,7 @@ def test_export_findings_jsonl_basic():
             finding = json.loads(line)
             assert finding["finding_id"] == "f1"
             assert finding["severity"] == "high"
+            assert finding["descriptive_title"] == "XSS"
 
         os.unlink(f.name)
 
