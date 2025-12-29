@@ -336,6 +336,8 @@ def guess_asset_type(host: Dict) -> str:
             return "media"
         if "iot_lighting" in normalized_hints:
             return "iot"
+        if "iot" in normalized_hints:
+            return "iot"
         if "hypervisor" in normalized_hints:
             return "server"
 
@@ -382,7 +384,7 @@ def guess_asset_type(host: Dict) -> str:
     # Check vendor
     if any(x in vendor for x in ["apple", "microsoft"]):
         return "workstation"
-    if any(x in vendor for x in ["wiz", "philips", "tp-link"]):
+    if any(x in vendor for x in ["wiz", "philips", "tp-link", "tuya"]):
         return "iot"
     if any(x in vendor for x in ["amazon", "google"]):
         return "smart_device"
