@@ -69,6 +69,7 @@ Compact, flattened summary for dashboards and automation (generated only when re
 | `scan_duration` | `string` | Scan duration (HH:MM:SS) |
 | `total_assets` | `integer` | Total assets discovered |
 | `total_findings` | `integer` | Total findings count |
+| `total_findings_raw` | `integer` | Raw findings count before consolidation |
 | `severity_breakdown` | `object` | Findings by severity (critical/high/medium/low/info) |
 | `severity_counts` | `object` | Alias of `severity_breakdown` |
 | `category_breakdown` | `object` | Findings by category (surface/vuln/...) |
@@ -101,6 +102,9 @@ Appears only when Nuclei scanning is enabled and available.
 | `enabled` | boolean | True when Nuclei was executed (best-effort) |
 | `targets` | integer | HTTP/HTTPS targets sent to Nuclei |
 | `findings` | integer | Nuclei findings parsed |
+| `findings_total` | integer | Total Nuclei findings before false-positive filtering |
+| `findings_suspected` | integer | Nuclei findings flagged as suspected false positives |
+| `suspected` | array | (Optional) Minimal list of suspected findings (template_id/matched_at/fp_reason) |
 | `success` | boolean | If Nuclei generated output file |
 | `output_file` | string | Relative path to output file (best-effort) |
 | `error` | string | Error if Nuclei failed (best-effort) |
@@ -135,7 +139,18 @@ Compact roll-up for dashboards.
 | `net_discovery` | object | DHCP/ARP/NetBIOS/UPNP counts + redteam |
 | `agentless_verify` | object | Targets + completed + counts per protocol |
 | `nuclei` | object | Nuclei summary |
-| `vulnerability_scan` | object | Total findings + sources |
+| `vulnerability_scan` | object | Total findings + sources (+ raw count) |
+
+### findings.jsonl (Selected Fields)
+
+Flat, one-finding-per-line export for SIEM ingestion.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `title` | string | Short, human-readable title (fallback-safe) |
+| `descriptive_title` | string | Enriched title derived from observations (best-effort) |
+| `severity` | string | Severity label (critical/high/medium/low/info) |
+| `source` | string | Primary source tool (nikto/testssl/nuclei/etc.) |
 
 ### Smart Scan Summary (v3.7+)
 

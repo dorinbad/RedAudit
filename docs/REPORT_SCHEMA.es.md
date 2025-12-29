@@ -69,6 +69,7 @@ Resumen compacto para dashboards y automatización (se genera solo cuando el cif
 | `scan_duration` | `string` | Duración del escaneo (HH:MM:SS) |
 | `total_assets` | `integer` | Total de activos descubiertos |
 | `total_findings` | `integer` | Total de hallazgos |
+| `total_findings_raw` | `integer` | Total de hallazgos antes de consolidar |
 | `severity_breakdown` | `object` | Hallazgos por severidad (critical/high/medium/low/info) |
 | `severity_counts` | `object` | Alias de `severity_breakdown` |
 | `category_breakdown` | `object` | Hallazgos por categoría (surface/vuln/...) |
@@ -99,6 +100,9 @@ Este bloque solo aparece si la verificación sin agente está habilitada.
 | `enabled` | boolean | True cuando Nuclei se ejecutó (best-effort) |
 | `targets` | integer | Targets HTTP/HTTPS enviados a Nuclei |
 | `findings` | integer | Hallazgos Nuclei parseados |
+| `findings_total` | integer | Hallazgos Nuclei totales antes de filtrar falsos positivos |
+| `findings_suspected` | integer | Hallazgos Nuclei marcados como falsos positivos sospechados |
+| `suspected` | array | (Opcional) Lista mínima de sospechosos (template_id/matched_at/fp_reason) |
 | `success` | boolean | Si Nuclei generó archivo de salida |
 | `output_file` | string | Ruta relativa al archivo de salida (best-effort) |
 | `error` | string | Error si Nuclei falló (best-effort) |
@@ -129,7 +133,18 @@ Este bloque solo aparece si la verificación sin agente está habilitada.
 | `net_discovery` | object | Conteos DHCP/ARP/NetBIOS/UPNP + redteam |
 | `agentless_verify` | object | Targets + completados + conteos por protocolo |
 | `nuclei` | object | Resumen Nuclei |
-| `vulnerability_scan` | object | Total de hallazgos + fuentes |
+| `vulnerability_scan` | object | Total de hallazgos + fuentes (+ conteo raw) |
+
+### findings.jsonl (Campos Seleccionados)
+
+Exportación plana, un hallazgo por línea para SIEM.
+
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `title` | string | Título corto y legible (con fallback) |
+| `descriptive_title` | string | Título enriquecido derivado de observaciones (best-effort) |
+| `severity` | string | Severidad (critical/high/medium/low/info) |
+| `source` | string | Herramienta principal (nikto/testssl/nuclei/etc.) |
 
 ### Resumen SmartScan (v3.7+)
 
