@@ -24,13 +24,12 @@ def test_cli_max_hosts_arg():
                 assert mock_app.config["max_hosts_value"] == 5
 
 
-def test_cli_diff_chmod_exception():
+def test_cli_diff_chmod_exception(tmp_path, monkeypatch):
     """Test chmod exception in diff mode (lines 657-658, 669-670)."""
+    monkeypatch.chdir(tmp_path)
     # Create dummy files to compare
-    with open("old.json", "w") as f:
-        f.write("{}")
-    with open("new.json", "w") as f:
-        f.write("{}")
+    (tmp_path / "old.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "new.json").write_text("{}", encoding="utf-8")
 
     mock_diff = {
         "generated_at": "2025-01-01",
@@ -54,11 +53,6 @@ def test_cli_diff_chmod_exception():
                 with pytest.raises(SystemExit) as e:
                     main()
                 assert e.value.code == 0
-
-    if os.path.exists("old.json"):
-        os.remove("old.json")
-    if os.path.exists("new.json"):
-        os.remove("new.json")
 
 
 def test_cli_proxy_failure():
