@@ -32,3 +32,5 @@ RedAudit_*/
 
 # Agent workflows (private)
 .agent/
+diff_report_*.html
+diff_report_*.md
