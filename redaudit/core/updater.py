@@ -310,7 +310,7 @@ def _extract_release_items(notes: str) -> Dict[str, Any]:
             return True
         if "view in spanish" in low or "ver en ingles" in low:
             return True
-        if re.fullmatch(r"https?://\\S+", item.strip()):
+        if re.fullmatch(r"https?://\S+", item.strip()):
             return True
         return False
 

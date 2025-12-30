@@ -126,8 +126,11 @@ async def _tcp_connect(
     async with semaphore:
         try:
             _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
-            writer.close()
-            await writer.wait_closed()
+            try:
+                writer.close()
+                await asyncio.wait_for(writer.wait_closed(), timeout=0.5)
+            except Exception:
+                pass
             return (ip, port)
         except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
             return None
@@ -256,11 +259,11 @@ async def _udp_probe(
 
             try:
                 data = await asyncio.wait_for(loop.sock_recv(sock, 1024), timeout=timeout)
-                sock.close()
                 return (ip, port, data)
             except asyncio.TimeoutError:
-                sock.close()
                 return None
+            finally:
+                sock.close()
         except Exception:
             return None
 
