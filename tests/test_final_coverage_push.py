@@ -286,8 +286,9 @@ def test_perform_git_update_home_swap_fail(MockCR, mock_popen, mock_which):
                                     "os.rename",
                                     side_effect=[None, None, None, Exception("HOME_SWAP_FAIL")],
                                 ):
-                                    with patch("os.chmod"), patch(
-                                        "redaudit.core.updater._inject_default_lang"
+                                    with (
+                                        patch("os.chmod"),
+                                        patch("redaudit.core.updater._inject_default_lang"),
                                     ):
                                         success, msg = perform_git_update(
                                             "/repo", t_fn=lambda k, *args: k
