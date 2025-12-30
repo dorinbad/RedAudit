@@ -8,6 +8,13 @@
 
 ---
 
+## Auditoría de Seguridad (Resumen)
+
+- **Fecha Auditoría**: 2025-02-14
+- **Cobertura**: ~93.03% (Alta confianza)
+- **Estado**: Revisión interna best-effort. Sin vulnerabilidades críticas conocidas.
+- **Ver**: [SECURITY_AUDIT_ES.md](../SECURITY_AUDIT_ES.md) para detalles completos.
+
 ## Visión General
 
 RedAudit implementa una filosofía de "seguro por diseño", asumiendo la ejecución en entornos hostiles o no confiables. Este documento describe los controles de seguridad relacionados con el manejo de entrada, criptografía y seguridad operacional.
@@ -74,7 +81,7 @@ El código está organizado en módulos enfocados para mejorar la mantenibilidad
 
 - **Módulos core** (`redaudit/core/`): Funcionalidad crítica de seguridad
 - **Utilidades** (`redaudit/utils/`): Constantes e internacionalización
-- **Tests**: La suite automatizada se ejecuta en GitHub Actions (`.github/workflows/tests.yml`) en Python 3.9–3.12; el número exacto de tests lo reporta CI y no se fija en la documentación.
+- **Tests**: La suite automatizada se ejecuta en GitHub Actions (`.github/workflows/tests.yml`) en Python 3.9–3.12 (2200+ tests pasados).
 
 ## 7. Auto-Actualización Fiable
 

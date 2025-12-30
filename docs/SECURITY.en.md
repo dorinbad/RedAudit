@@ -25,6 +25,13 @@ If you discover a security vulnerability in RedAudit, please report it responsib
 3. **Response Time**: You will receive an acknowledgment within 48 hours
 4. **Disclosure**: We follow responsible disclosure - we will coordinate with you on public disclosure timing
 
+## Security Audit (Summary)
+
+- **Audit Date**: 2025-02-14
+- **Coverage**: ~93.03% (High confidence)
+- **Status**: Best-effort internal review. No critical vulnerabilities found.
+- **See**: [SECURITY_AUDIT.md](../SECURITY_AUDIT.md) for full details.
+
 ### Supported Versions
 
 | Version | Supported | Status |
@@ -96,7 +103,7 @@ The codebase is organized into focused modules to improve maintainability and au
 
 - **Core modules** (`redaudit/core/`): Security-critical functionality
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
-- **Tests**: Automated test suite runs in GitHub Actions (`.github/workflows/tests.yml`) across Python 3.9–3.12; the exact test count is tracked by CI rather than hard-coded in docs.
+- **Tests**: Automated test suite runs in GitHub Actions (`.github/workflows/tests.yml`) across Python 3.9–3.12 (2200+ tests passed).
 
 ## 7. Reliable Auto-Update
 

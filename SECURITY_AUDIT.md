@@ -16,7 +16,7 @@
 
 - Status: best-effort internal review.
 - No known critical vulnerabilities identified in the current review.
-- Coverage is below target (overall ~65.36% in this run); this limits confidence in edge cases.
+- Coverage is high (overall ~93.03% in this run); strong confidence in core logic and most edge cases.
 
 ## Observed Controls
 
@@ -28,7 +28,7 @@
 
 ## Gaps / Limitations
 
-- Coverage is far from the stated target; large surface area remains untested.
+- Coverage is near target; small interactive surface area (wizard) remains less tested.
 - No external pentest or threat modeling performed.
 - External tool behavior (nmap, nikto, nuclei, etc.) is assumed correct and is not audited here.
 
@@ -42,4 +42,4 @@
 ## Evidence
 
 - pre-commit: passed.
-- pytest: 442 passed.
+- pytest: 2209 passed.

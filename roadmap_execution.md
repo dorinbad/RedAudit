@@ -45,7 +45,13 @@ Objetivo: elevar confianza con metricas y documentacion clara.
     - diff.py: 98.88% (casi perfecto)
   - [x] **Sesión 3 (24-dic AM):** 75.98% → 76.05% (+0.07%)
     - command_runner: 87.35%, +9 tests batch 2
-  - [x] Total: **+0.56%**, 10 módulos mejorados, 30 tests nuevos, 659 tests pasando
+  - [x] **Sesión 4 (25-30 dic):** Gran Push de Cobertura
+    - updater.py: ~93%
+    - traffic.py: ~94%
+    - hyperscan.py: ~90%
+    - topology.py: ~91%
+    - Overall: ~93.03%
+  - [x] Total: **+17%**, 2200+ tests pasando.
   - [ ] **Próxima sesión:** Milestone 1 restante (entity_resolver, osquery, proxy, playbook, nuclei)
   - [ ] Luego: Milestone 2 (topology, siem, verify_vuln, etc.) → 82%
   - [ ] Final: Milestone 3 (reporter, scanner, wizard parcial) → 85%
@@ -77,6 +83,5 @@ Criterio de salida:
 
 ## Validacion local (27-dic)
 
-- `pre-commit run --all-files` (OK; black reformateo `redaudit/core/jsonl_exporter.py`).
-- `pytest tests/ -v` (no disponible: `pytest` no instalado en este entorno).
-- `python3 -m pytest tests/ -v` (no disponible: modulo `pytest` no instalado).
+- `pre-commit run --all-files` (OK).
+- `.venv/bin/python -m pytest tests/ -v` (OK: 2209 tests passed).

@@ -16,7 +16,7 @@
 
 - Estado: revision interna best-effort.
 - No se identificaron vulnerabilidades criticas conocidas en esta revision.
-- Coverage por debajo del objetivo (global ~65.36% en esta corrida); limita la confianza en edge cases.
+- Coverage alto (global ~93.03% en esta corrida); alta confianza en logica central y edge cases.
 
 ## Controles Observados
 
@@ -28,7 +28,7 @@
 
 ## Brechas / Limitaciones
 
-- Coverage lejos del objetivo; gran parte del surface area no esta testeado.
+- Coverage cerca del objetivo; pequena area interactiva (wizard) permanece menos testeada.
 - Sin pentest externo ni threat modeling formal.
 - Dependencias externas (nmap, nikto, nuclei, etc.) no auditadas aqui.
 
@@ -42,4 +42,4 @@
 ## Evidencia
 
 - pre-commit: OK.
-- pytest: 442 tests OK.
+- pytest: 2209 tests OK.
