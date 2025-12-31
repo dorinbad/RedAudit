@@ -133,6 +133,7 @@ Una frustración común en auditorías son los "Falsos Positivos" (herramientas 
 - **Descubrimiento (Async):** La transmisión de paquetes UDP (para IoT/Descubrimiento de Servicios) es intensiva en E/S. Usamos `asyncio` en `HyperScan` para lanzar miles de paquetes pequeños instantáneamente sin crear miles de hilos del sistema operativo.
 
 **Ubicación en código:**
+
 - Threading: `scan_hosts_concurrent()` en `auditor_scan.py`
 - Async: Módulos de `hyperscan.py`
 
@@ -276,7 +277,7 @@ Estas son las ubicaciones de código más útiles pedagógicamente. Úsalas para
 | Ejecución paralela | `core/auditor.py` | `scan_hosts_concurrent()` con `ThreadPoolExecutor` |
 | UI de progreso + ETA | `core/auditor.py` | `_progress_columns()` y `scan_hosts_concurrent()` |
 | Escaneos con timeout | `core/auditor.py` | `_run_nmap_xml_scan()` |
-| Sondeo async de puertos | `core/prescan.py` | `check_port()` usando `asyncio` |
+| Descubrimiento async | `core/hyperscan.py` | Descubrimiento TCP/UDP/ARP asíncrono usando `asyncio` |
 | Mapeo schema ECS | `core/siem.py` | `build_ecs_event()` |
 | Cifrado | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
 | Generación de playbooks | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |

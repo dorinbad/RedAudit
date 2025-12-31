@@ -15,7 +15,7 @@ Ejecuta estos comandos para comenzar de inmediato.
 
 ### Asistente Interactivo (Recomendado para primera vez)
 
-Navegación paso a paso con opción "< Volver" (v3.8.1+). La configuración de webhooks y opciones de descubrimiento está disponible en el wizard; las exportaciones SIEM se generan automáticamente cuando el cifrado está desactivado.
+Navegación paso a paso con opción "< Volver" (v3.8.1+). La configuración de webhooks y opciones de descubrimiento está disponible en el asistente; las exportaciones SIEM se generan automáticamente cuando el cifrado está desactivado.
 
 ```bash
 sudo redaudit
@@ -179,7 +179,7 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | `--use-defaults` | Cargar argumentos desde config.json automáticamente |
 | `--ignore-defaults` | Forzar valores de fábrica |
 | `--no-color` | Deshabilitar salida a color |
-| `--skip-update-check` | Saltar chequeo de actualizaciones al inicio |
+| `--skip-update-check` | Saltar comprobación de actualizaciones al inicio |
 | `--lang` | Idioma de interfaz/informe (en/es) |
 
 ---

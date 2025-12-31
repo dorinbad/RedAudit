@@ -21,7 +21,7 @@ RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o 
 
 ## 🚀 Inicio Rápido (Recomendado)
 
-Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, hacer pull de la última imagen y ejecutar el escaneo.
+Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, descargar la última imagen y ejecutar el escaneo.
 
 ## macOS
 
@@ -151,7 +151,7 @@ docker run -it --rm \
   --lang es
 ```
 
-*Nota: El wizard mostrará la red interna de Docker (172.17.x.x). Debes introducir manualmente tu red real.*
+*Nota: El asistente mostrará la red interna de Docker (172.17.x.x). Debes introducir manualmente tu red real.*
 
 ## macOS - 7. Ver Reportes
 

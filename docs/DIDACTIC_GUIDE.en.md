@@ -133,6 +133,7 @@ Why use different scaling models?
 - **Discovery (Async):** Broadcasting UDP packets (for IoT/Service discovery) is IO-bound. We use `asyncio` in `HyperScan` to blast thousands of tiny packets instantly without creating thousands of OS threads.
 
 **Where in code:**
+
 - Threading: `scan_hosts_concurrent()` in `auditor_scan.py`
 - Async: `hyperscan.py` modules
 
@@ -276,7 +277,7 @@ These are the most pedagogically useful code locations. Use them for advanced st
 | Parallel execution | `core/auditor.py` | `scan_hosts_concurrent()` with `ThreadPoolExecutor` |
 | Progress UI + ETA | `core/auditor.py` | `_progress_columns()` and `scan_hosts_concurrent()` |
 | Timeout-safe host scans | `core/auditor.py` | `_run_nmap_xml_scan()` |
-| Async port probing | `core/prescan.py` | `check_port()` using `asyncio` |
+| Async discovery | `core/hyperscan.py` | Async TCP/UDP/ARP discovery using `asyncio` |
 | ECS schema mapping | `core/siem.py` | `build_ecs_event()` |
 | Encryption | `core/crypto.py` | `encrypt_file()`, `derive_key_from_password()` |
 | Playbook generation | `core/playbook_generator.py` | `generate_playbook()`, `save_playbooks()` |

@@ -90,7 +90,7 @@ sudo redaudit
 | **Session Logging** | Dual-format terminal output capture (`.log` raw + `.txt` clean) for audit trails |
 | **Timeout-Safe Scanning** | Host scans are bounded by hard timeouts; progress shows upper-bound ETA |
 | **IPv6 + Proxy Support** | Full dual-stack scanning with SOCKS5 pivoting |
-| **Rate Limiting** | Configurable inter-host delay with ±30% jitter for IDS evasion |
+| **Rate Limiting** | Configurable inter-host delay with ±30% jitter to reduce predictability |
 | **Bilingual Interface** | Complete English/Spanish localization |
 | **Auto-Update** | Atomic staged updates with automatic rollback on failure |
 
@@ -102,7 +102,7 @@ sudo redaudit
 
 RedAudit operates as an orchestration layer, managing concurrent execution threads for network interaction and data processing. It implements a multi-stage architecture:
 
-1. **Hyperscan**: Async UDP/TCP discovery.
+1. **HyperScan**: Async UDP/TCP discovery.
 2. **Adaptive Deep Scan**: Targeted enumeration based on host identity.
 3. **Entity Resolution**: Consolidating multi-interface devices into single assets.
 4. **Smart Filtering**: Reducing noise via context-aware verification (`verify_vuln.py`).
@@ -300,7 +300,7 @@ redaudit --diff ~/reports/monday.json ~/reports/friday.json
 | `--cve-lookup` | CVE correlation via NVD API |
 | `--diff OLD NEW` | Differential analysis between scans |
 | `--html-report` | Generate interactive HTML dashboard |
-| `--stealth` | Enable paranoid timing for IDS evasion |
+| `--stealth` | Enable paranoid timing for IDS-sensitive environments |
 | `-y, --yes` | Skip confirmations (automation mode) |
 
 See `redaudit --help` or [USAGE.md](docs/USAGE.en.md) for the complete option list.
@@ -326,7 +326,7 @@ RedAudit applies nmap timing templates based on your selection:
 | `--threads N` | Parallel host scanning | 6 for balanced, 2-4 for stealth |
 | `--rate-limit N` | Inter-host delay (seconds) | 1-5s for production environments |
 | `--udp-ports N` | Top UDP ports in full mode | 100 (default), range 50-500 |
-| `--stealth` | Paranoid mode | Use when IDS evasion is critical |
+| `--stealth` | Paranoid mode | Use in IDS-sensitive environments |
 
 ### Output & Encryption
 
@@ -437,7 +437,7 @@ redaudit/
 | **Fernet** | Symmetric encryption (AES-128-CBC + HMAC-SHA256) |
 | **PBKDF2** | Password-based key derivation (480k iterations) |
 | **Thread Pool** | Concurrent workers for parallel host scanning |
-| **Rate Limiting** | Inter-host delay with ±30% jitter for IDS evasion |
+| **Rate Limiting** | Inter-host delay with ±30% jitter to reduce predictability |
 | **Heartbeat** | Background thread that warns after ~60s of silence (fail threshold ~300s) |
 
 ### Troubleshooting
