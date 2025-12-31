@@ -82,6 +82,9 @@ check_cmd whois
 check_cmd dig
 check_cmd searchsploit
 check_cmd testssl.sh
+if ! command -v testssl.sh &>/dev/null; then
+    echo "   -> Required for TLS deep checks (full mode). Run: sudo bash redaudit_install.sh"
+fi
 check_cmd proxychains4
 
 echo
