@@ -2,10 +2,11 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](CHANGELOG.md)
 
-Todos los cambios relevantes de este proyecto se documentarán en este archivo.
+Todos los cambios relevantes se documentan en este archivo.
 
-El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
@@ -321,7 +322,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - **Webhooks Interactivos**: El wizard ahora solicita URL de webhook Slack/Teams/PagerDuty con alerta de prueba opcional.
 - **Net Discovery Avanzado en Wizard**: Cadena SNMP, zona DNS y máximo de objetivos ahora configurables en el wizard.
-- **Pipeline SIEM Nativo**: Incluye `siem/filebeat.yml`, `siem/logstash.conf` y 3 reglas Sigma para integración ELK/Splunk.
+- **Pipeline SIEM Nativo**: Incluye `siem/filebeat.yml`, `siem/logstash.conf` y 3 reglas Sigma para integración ELK y otros SIEM.
 - **Verificación Osquery**: Nuevo módulo `redaudit/core/osquery.py` para validación de configuración de hosts post-scan via SSH.
 - **Logging de Sesión**: Salida de terminal capturada automáticamente a carpeta `session_logs/` (`.log` raw + `.txt` limpio).
 - **Spinner de Progreso Nuclei**: Spinner animado Rich con tiempo transcurrido durante escaneos de templates Nuclei.
@@ -857,7 +858,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - **Mejoras SIEM profesionales**: Integración SIEM enterprise
   - Nuevo módulo: `redaudit/core/siem.py`
-  - Cumplimiento ECS v8.11 para Elastic
+  - Campos alineados con ECS v8.11 para Elastic
   - Puntuación de severidad (critical/high/medium/low/info)
   - Risk scores (0-100) por host
   - Tags auto-generadas para categorización
@@ -1012,7 +1013,7 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   - Hasta 500 checks concurrentes con batching configurable
   - Parsing de rangos: `1-1024`, `22,80,443`, o combinado `1-100,443,8080-8090`
 
-- **Salida compatible con SIEM (A5)**: Reportes JSON mejorados para Splunk/Elastic
+- **Salida compatible con SIEM (A5)**: Reportes JSON mejorados para Elastic y otros SIEM
   - Nuevos campos: `schema_version`, `event_type`, `session_id`, `timestamp_end`
   - Metadatos del escáner: nombre, versión, modo
   - Array `targets` para escaneos multi-red

@@ -2,13 +2,13 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](ROADMAP.en.md)
 
-**Audiencia:** Colaboradores, Stakeholders
-**Alcance:** Funcionalidades planeadas, propuestas autorizadas, historial.
-**Fuente de verdad:** Estado del código en repositorio e historial Git
+**Audiencia:** Colaboradores, responsables
+**Alcance:** Funcionalidades planificadas, capacidades verificadas y conceptos descartados.
+**Fuente de verdad:** Estado del código en el repositorio y el historial Git
 
 ---
 
-Este documento detalla el roadmap técnico, verifica las capacidades ya implementadas y documenta los enfoques descartados para RedAudit.
+Este documento describe el roadmap técnico, verifica las capacidades ya implementadas y registra los enfoques descartados para RedAudit.
 
 ## 1. Roadmap Activo (Próximas Funcionalidades)
 
@@ -33,7 +33,7 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 ## 2. Capacidades Implementadas (Verificado)
 
-Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
+Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con rutas de verificación en el código.
 
 ### UX e Integraciones (v3.7.0+)
 
@@ -42,7 +42,7 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 | **Detección Interfaces VPN** | v3.9.6 | `redaudit/core/entity_resolver.py`. Clasifica gateways VPN via heurística same-MAC, puertos VPN (500/4500/1194/51820), y patrones de hostname. |
 | **Pack de Firmas IoT** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Payloads UDP específicos para WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter. |
 | **Selector de Perfil del Wizard** | v3.9.0 | `redaudit/core/auditor.py`. Express/Estándar/Exhaustivo presets + modo Custom. |
-| **Modos de Temporización Reales** | v3.9.0 | `redaudit/core/scanner.py`. Aplica correctamente nmap `-T1`/`-T4`/`-T5` con delay/threads. |
+| **Modos de Temporización Reales** | v3.9.0 | `redaudit/core/scanner/nmap.py`, `redaudit/core/auditor_scan.py`. Aplica nmap `-T1`/`-T4`/`-T5` con ajustes de delay/threads. |
 | **Reportes HTML Mejorados** | v3.9.0 | `redaudit/templates/report*.html.j2`. Hallazgos expandibles, análisis smart scan, playbooks, evidencia. |
 | **Detección FPs Nuclei** | v3.9.0 | `redaudit/core/verify_vuln.py`. Mapeo server header vs CPE para marcar FPs. |
 | **Consistencia de Colores** | v3.8.4 | `redaudit/core/auditor.py`. Usa Rich console.print() cuando el progreso está activo para asegurar colores correctos. |
@@ -54,7 +54,7 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 | **Wizard: Net Discovery Avanzado** | v3.7.0 | `redaudit/core/wizard.py`. Configura SNMP/DNS/Targets interactivamente. |
 | **Pipeline SIEM Nativo** | v3.7.0 | `siem/`. Configs para Filebeat/Logstash + reglas Sigma. |
 | **Logging de Sesión** | v3.7.0 | `redaudit/utils/session_log.py`. Captura salida de terminal a `.log` y `.txt`. |
-| **Progreso estable (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/net_discovery.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Reduce flickering y muestra ETA. |
+| **Progreso estable (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/hyperscan.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Reduce flickering y muestra ETA. |
 
 ### Escaneo Avanzado y Automatización
 
@@ -62,11 +62,11 @@ Funcionalidades presentes actualmente en `redaudit --version` >= v3.6.0.
 | :--- | :--- | :--- |
 | **Integración Nuclei** | v3.6.0 | Módulo `redaudit/core/nuclei.py`. Ejecuta templates cuando Nuclei está instalado y se habilita explícitamente (wizard o `--nuclei`). |
 | **Verificación sin agente** | v3.7.3 | `redaudit/core/agentless_verify.py`. Fingerprinting SMB/RDP/LDAP/SSH/HTTP opcional (wizard o `--agentless-verify`). |
-| **Probe HTTP en hosts silenciosos** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner.py`. Probe HTTP/HTTPS breve en puertos comunes para hosts con vendor y cero puertos abiertos. |
+| **Probe HTTP en hosts silenciosos** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner/enrichment.py`. Probe HTTP/HTTPS breve en puertos comunes para hosts con vendor y cero puertos abiertos. |
 | **Generación Playbooks** | v3.4.0 | Módulo `redaudit/core/playbook_generator.py`. Crea guías de remediación MD en `playbooks/`. |
 | **Red Team: Kerberos** | v3.2.0 | Módulo `redaudit/core/net_discovery.py`. Usa `kerbrute` para enumeración si está autorizado. |
 | **Red Team: SNMP/SMB** | v3.2.0 | Módulo `redaudit/core/net_discovery.py`. Usa `snmpwalk` y `enum4linux`. |
-| **Preparación SIEM** | v3.1.0 | Módulo `redaudit/core/siem.py`. Genera JSON/JSONL compatible con ECS v8.11. |
+| **Preparación SIEM** | v3.1.0 | Módulo `redaudit/core/siem.py`. Genera JSON/JSONL compatibles con SIEM y campos alineados con ECS. |
 | **Análisis Diferencial** | v3.3.0 | Módulo `redaudit/core/diff.py`. Diff visual HTML entre dos escaneos. |
 
 ### Core y Estabilidad
@@ -99,7 +99,7 @@ Ideas consideradas pero rechazadas para mantener el foco del proyecto.
 ## 4. Contribuir
 
 1. Revisa [Issues](https://github.com/dorinbadea/RedAudit/issues).
-2. Lee [CONTRIBUTING.md](../.github/CONTRIBUTING.md).
+2. Lee [CONTRIBUTING.md](../CONTRIBUTING.md).
 3. Abre una Discusión antes de iniciar grandes funcionalidades.
 
 [Volver al Índice de Documentación](INDEX.md)

@@ -1,8 +1,8 @@
-# Guia de contribucion
+# Guía de contribución
 
-La guia canonica vive en `.github/CONTRIBUTING_ES.md`.
+Esta es la guía canónica de contribución del repositorio. La versión en inglés está en `CONTRIBUTING.md`.
 
-Si estas leyendo esto desde la raiz del repositorio, usa:
+Si estás leyendo esto desde la raíz del repositorio, usa:
 
-- `.github/CONTRIBUTING_ES.md`
-- `.github/CONTRIBUTING.md` (English)
+- `CONTRIBUTING_ES.md` (Español)
+- `CONTRIBUTING.md` (English)

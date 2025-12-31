@@ -90,8 +90,11 @@ Este bloque solo aparece si la verificación sin agente está habilitada.
 
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
+| `enabled` | boolean | Indica si la verificación sin agente estaba habilitada |
 | `targets` | integer | Número de objetivos elegibles seleccionados |
 | `completed` | integer | Número de verificaciones completadas |
+| `signals` | object | Conteos por protocolo (smb/rdp/ldap/ssh/http) |
+| `domains` | array | Pistas de dominios detectadas (best-effort) |
 
 ### Objeto Resumen Nuclei (Opcional) (v3.7+)
 
@@ -113,17 +116,25 @@ Este bloque solo aparece si la verificación sin agente está habilitada.
 | :--- | :--- | :--- |
 | `targets` | array | Redes objetivo |
 | `scan_mode` | string | Modo de escaneo |
+| `scan_mode_cli` | string | Modo CLI (best-effort) |
 | `threads` | integer | Concurrencia usada |
+| `rate_limit_delay` | number | Retardo entre hosts (segundos) |
 | `udp_mode` | string | Modo UDP |
 | `udp_top_ports` | integer | Cobertura UDP |
 | `topology_enabled` | boolean | Topología habilitada |
+| `topology_only` | boolean | Modo solo topología |
 | `net_discovery_enabled` | boolean | Net Discovery habilitado |
 | `net_discovery_redteam` | boolean | Red Team habilitado |
+| `net_discovery_active_l2` | boolean | Checks L2 activos habilitados |
+| `net_discovery_kerberos_userenum` | boolean | Userenum Kerberos habilitado |
 | `windows_verify_enabled` | boolean | Verificación sin agente |
+| `windows_verify_max_targets` | integer | Máx. objetivos para verificación sin agente |
 | `scan_vulnerabilities` | boolean | Vuln web habilitado |
 | `nuclei_enabled` | boolean | Nuclei habilitado |
 | `cve_lookup_enabled` | boolean | Enriquecimiento NVD |
 | `dry_run` | boolean | Modo dry-run |
+| `prevent_sleep` | boolean | Inhibición de suspensión habilitada |
+| `auditor_name` | string | Nombre de auditor (si aplica) |
 
 ### Resumen del Pipeline (v3.7+)
 
@@ -243,7 +254,7 @@ Campos adicionales a nivel de host:
 | :--- | :--- | :--- |
 | `os_detected` | string | (Opcional) Fingerprint de SO (best-effort; normalmente desde salida de deep scan) **(v3.1.4+)** |
 | `agentless_probe` | object | (Opcional) Salida raw de probes SMB/RDP/LDAP/SSH/HTTP **(v3.8.5)** |
-| `agentless_fingerprint` | object | (Opcional) Hints normalizados de identidad (ver abajo) **(vNext)** |
+| `agentless_fingerprint` | object | (Opcional) Hints normalizados de identidad (ver abajo) **(v3.8.5+)** |
 
 ```json
 {
@@ -275,7 +286,7 @@ Campos adicionales a nivel de host:
 }
 ```
 
-### Objeto Fingerprint sin agente (Opcional) (vNext)
+### Objeto Fingerprint sin agente (Opcional) (v3.8.5+)
 
 Hints normalizados derivados de probes SMB/RDP/LDAP. Todos los campos son opcionales.
 
@@ -413,7 +424,7 @@ Lista de hallazgos de vulnerabilidades web. Cada entrada contiene:
 | `vulnerabilities[].findings` | array | Lista de strings de vulnerabilidades |
 | `vulnerabilities[].whatweb` | string | (Opcional) Salida de WhatWeb |
 | `vulnerabilities[].nikto_findings` | array | (Opcional) Hallazgos de Nikto (si modo FULL) |
-| `vulnerabilities[].testssl_analysis` | object | (Opcional) Resultados de TestSSL.sh |
+| `vulnerabilities[].testssl_analysis` | object | Resultados de TestSSL.sh para HTTPS en modo full (requiere `testssl.sh`) |
 | `vulnerabilities[].severity` | string | Severidad: critical/high/medium/low/info |
 | `vulnerabilities[].severity_score` | integer | Severidad numérica (0-100) |
 | `vulnerabilities[].finding_id` | string | Hash determinístico para deduplicación **(v3.1)** |

@@ -66,8 +66,11 @@ if [[ "$LANG_OPT" == "2" ]]; then
     MSG_USAGE="-> Ejecuta 'redaudit' para iniciar."
     MSG_ALIAS_ADDED="[INFO] Alias 'redaudit' añadido en"
     MSG_ALIAS_EXISTS="[INFO] Alias 'redaudit' ya existe en"
-    MSG_PKGS="[OPTIONAL] Opcional: instalar utilidades recomendadas:"
+    MSG_PKGS="[RECOMENDADO] Instalar toolchain principal (nmap, nuclei, whatweb, nikto, tcpdump, etc.):"
+    MSG_TESTSSL_NOTE="Incluye instalación de testssl.sh desde GitHub (requerido para análisis TLS profundo)."
     MSG_ASK="¿Instalar ahora? [S/n]: "
+    MSG_TESTSSL_SKIP="[WARN] testssl.sh no instalado. Los análisis TLS profundos no estarán disponibles."
+    MSG_TESTSSL_HINT="Ejecuta de nuevo el instalador y acepta el toolchain principal para habilitarlo."
     MSG_APT_ERR="[ERROR] Error con apt."
 else
     LANG_CODE="en"
@@ -76,8 +79,11 @@ else
     MSG_USAGE="-> Run 'redaudit' to start."
     MSG_ALIAS_ADDED="ℹ️ Alias 'redaudit' added to"
     MSG_ALIAS_EXISTS="ℹ️ Alias 'redaudit' already exists in"
-    MSG_PKGS="📦 Optional: install recommended utilities:"
+    MSG_PKGS="📦 Recommended: install the core toolchain (nmap, nuclei, whatweb, nikto, tcpdump, etc.):"
+    MSG_TESTSSL_NOTE="Includes testssl.sh install from GitHub (required for TLS deep checks)."
     MSG_ASK="Install now? [Y/n]: "
+    MSG_TESTSSL_SKIP="[WARN] testssl.sh not installed. TLS deep checks will be unavailable."
+    MSG_TESTSSL_HINT="Re-run the installer and accept the core toolchain to enable it."
     MSG_APT_ERR="❌ apt error."
 fi
 
@@ -92,6 +98,7 @@ EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-n
 echo ""
 echo "$MSG_PKGS"
 echo "   $EXTRA_PKGS"
+echo "   $MSG_TESTSSL_NOTE"
 
 if $AUTO_YES; then
     INSTALL="y"
@@ -108,39 +115,45 @@ fi
 
 if $INSTALL; then
     apt update && apt install -y $EXTRA_PKGS || { echo "$MSG_APT_ERR"; exit 1; }
-fi
+    # -------------------------------------------
+    # 2b) Install testssl.sh from GitHub
+    # -------------------------------------------
 
-# -------------------------------------------
-# 2b) Install testssl.sh from GitHub
-# -------------------------------------------
+    TESTSSL_REPO="https://github.com/drwetter/testssl.sh.git"
+    TESTSSL_VERSION="${TESTSSL_VERSION:-v3.2}"
 
-TESTSSL_REPO="https://github.com/drwetter/testssl.sh.git"
-TESTSSL_VERSION="${TESTSSL_VERSION:-v3.2}"
-
-if [[ ! -f "/usr/local/bin/testssl.sh" ]]; then
-    echo "[INFO] Installing testssl.sh ($TESTSSL_VERSION) from GitHub..."
-    if command -v git &> /dev/null; then
-        rm -rf /opt/testssl.sh 2>/dev/null
-        # Try version tag first, fallback to latest if it fails
-        if git clone --depth 1 --branch "$TESTSSL_VERSION" "$TESTSSL_REPO" /opt/testssl.sh 2>/dev/null; then
-            echo "[OK] Cloned testssl.sh $TESTSSL_VERSION"
-        elif git clone --depth 1 "$TESTSSL_REPO" /opt/testssl.sh 2>/dev/null; then
-            echo "[OK] Cloned testssl.sh (latest)"
-        else
-            echo "[WARN] git clone failed; skipping testssl.sh installation"
+    if [[ ! -f "/usr/local/bin/testssl.sh" ]]; then
+        echo "[INFO] Installing testssl.sh ($TESTSSL_VERSION) from GitHub..."
+        if command -v git &> /dev/null; then
             rm -rf /opt/testssl.sh 2>/dev/null
-        fi
-        # Create symlink if clone succeeded
-        if [[ -f "/opt/testssl.sh/testssl.sh" ]]; then
-            ln -sf /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
-            chmod +x /opt/testssl.sh/testssl.sh
-            echo "[OK] testssl.sh installed at /usr/local/bin/testssl.sh"
+            # Try version tag first, fallback to latest if it fails
+            if git clone --depth 1 --branch "$TESTSSL_VERSION" "$TESTSSL_REPO" /opt/testssl.sh 2>/dev/null; then
+                echo "[OK] Cloned testssl.sh $TESTSSL_VERSION"
+            elif git clone --depth 1 "$TESTSSL_REPO" /opt/testssl.sh 2>/dev/null; then
+                echo "[OK] Cloned testssl.sh (latest)"
+            else
+                echo "[WARN] git clone failed; skipping testssl.sh installation"
+                rm -rf /opt/testssl.sh 2>/dev/null
+            fi
+            # Create symlink if clone succeeded
+            if [[ -f "/opt/testssl.sh/testssl.sh" ]]; then
+                ln -sf /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
+                chmod +x /opt/testssl.sh/testssl.sh
+                echo "[OK] testssl.sh installed at /usr/local/bin/testssl.sh"
+            fi
+        else
+            echo "[WARN] git not found, skipping testssl.sh installation"
         fi
     else
-        echo "[WARN] git not found, skipping testssl.sh installation"
+        echo "[OK] testssl.sh already installed"
     fi
 else
-    echo "[OK] testssl.sh already installed"
+    if [[ -f "/usr/local/bin/testssl.sh" || -f "/opt/testssl.sh/testssl.sh" || -f "/usr/bin/testssl.sh" ]]; then
+        echo "[OK] testssl.sh already installed"
+    else
+        echo "$MSG_TESTSSL_SKIP"
+        echo "$MSG_TESTSSL_HINT"
+    fi
 fi
 
 

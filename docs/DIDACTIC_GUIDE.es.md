@@ -82,26 +82,26 @@ Escanear cada host con UDP completo (-p- -sU) tomaría horas. RedAudit usa **heu
 | No se extrajo MAC/vendor | Identidad del host desconocida |
 | >8 puertos abiertos | Host complejo, vale la pena enumeración completa |
 
-**Ubicación en código:** Condiciones en [`scan_host_ports()`](../redaudit/core/auditor.py)
+**Ubicación en código:** Condiciones en [`scan_host_ports()`](../redaudit/core/auditor_scan.py)
 
 ---
 
 ---
 
-### Concepto 4: Reportes Estructurados (Schema ECS)
+### Concepto 4: Reportes Estructurados (Alineados a ECS)
 
 **Qué explicar:**
 La salida de texto crudo es legible para humanos pero hostil para máquinas. JSON estructurado permite:
 
-- Ingesta en SIEM (Elasticsearch, Splunk)
+- Ingesta en SIEM (Elastic Stack y otros SIEM)
 - Alertas automatizadas
 - Análisis de tendencias en el tiempo
 
-**RedAudit usa ECS v8.11** (Elastic Common Schema):
+RedAudit enriquece el informe principal con campos alineados a ECS:
 
-- `host.ip`, `host.mac`, `host.os.name`
-- `vulnerability.severity`, `vulnerability.category`
-- `event.type: redaudit.scan.complete`
+- `ecs.version` y `event.*` en la raíz del reporte (metadatos del escaneo)
+- `hosts[].ecs_host` con campos de identidad (ip/hostname/mac/vendor)
+- Exportaciones JSONL planas para SIEM (mapeadas vía las configs incluidas)
 
 **Ubicación en código:** [`siem.py`](../redaudit/core/siem.py) define los mapeos ECS.
 

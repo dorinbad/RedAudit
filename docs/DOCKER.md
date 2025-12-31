@@ -2,7 +2,7 @@
 
 RedAudit is a Linux tool, but you can run it on **Windows** or **macOS** using Docker.
 
-> ⚠️ **Important Limitation**: Docker on Windows/macOS **cannot accurately discover hosts** on your network. It runs in a virtual machine that cannot see your real network at Layer 2. See [Limitations](#limitations-on-windowsmacos) below.
+> ⚠️ **Important Limitation**: Docker on Windows/macOS **cannot perform reliable L2 discovery** on your network. It runs inside a virtual machine that cannot see your real network at Layer 2. See [Limitations](#limitations-on-windowsmacos) below.
 
 ## When to Use Docker
 
@@ -10,7 +10,7 @@ RedAudit is a Linux tool, but you can run it on **Windows** or **macOS** using D
 | :--- | :--- | :--- |
 | **Scan specific known servers** | ✅ Works | ✅ Works |
 | **Demo/testing with known IPs** | ✅ Works | ✅ Works |
-| **Discover all devices on network** | ❌ False positives | ✅ Works |
+| **Discover all devices on network** | ❌ Incomplete | ✅ Works |
 | **Professional network audit** | ❌ Limited | ✅ Full capability |
 | **ARP/Layer 2 scanning** | ❌ Not possible | ✅ Works |
 | **VPN Detection (MAC/GW)** | ❌ Limited/Inaccurate | ✅ Works |
@@ -38,7 +38,7 @@ chmod +x redaudit-docker.sh
 ./redaudit-docker.sh
 ```
 
-> 💡 The script **automatically downloads the latest RedAudit image** before each scan. You don't need to update manually.
+> 💡 The script **automatically pulls the latest RedAudit image** before each scan. You don't need to update manually.
 
 ## Windows (PowerShell)
 
@@ -60,9 +60,9 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 
 - ✅ Check that Docker is running
 - ✅ Detect your network automatically
-- ✅ Download/update RedAudit to latest version
+- ✅ Pull the latest RedAudit image (best-effort)
 - ✅ Run the scan
-- ✅ Open the report when finished
+- ✅ Offer to open the report when finished
 
 ---
 

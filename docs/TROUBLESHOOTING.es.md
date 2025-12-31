@@ -3,8 +3,8 @@
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](TROUBLESHOOTING.en.md)
 
 **Audiencia:** Todos los usuarios
-**Alcance:** Errores comunes, códigos de salida, problemas de dependencias.
-**Fuente de verdad:** `redaudit/utils/constants.py` (Códigos de Salida)
+**Alcance:** Errores comunes y problemas de dependencias.
+**Fuente de verdad:** `redaudit/core/auditor.py`, `redaudit/core/auditor_scan.py`
 
 ---
 
@@ -13,7 +13,7 @@
 ### 1. `Permission denied` / "Se requieren privilegios de root"
 
 **Síntoma**: El script termina inmediatamente con un error de privilegios.
-**Causa**: La aplicación requiere acceso a sockets raw para `nmap` (escaneos SYN/detección de SO) y `tcpdump`.
+**Causa**: La aplicación requiere acceso a sockets raw para algunos escaneos de Nmap, detección de SO, escaneo UDP y `tcpdump`.
 **Resolución**:
 
 - Siempre ejecutar con `sudo`.
@@ -60,7 +60,7 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 **Resolución**:
 
 - Asegurar sensibilidad correcta de mayúsculas/minúsculas.
-- Verificar integridad del archivo (tamaño >0). No abortar inmediatamente; los escaneos profundos en hosts filtrados pueden tomar tiempo.
+- Verificar integridad del archivo (tamaño >0) y que exista el `.salt` junto al `.enc`.
 
 ### 6. "Los escaneos parecen colgarse" / Progreso lento
 
@@ -176,6 +176,17 @@ sudo apt update && sudo apt install nbtscan netdiscover fping avahi-utils snmp l
 
 ```bash
 sudo apt update && sudo apt install nuclei
+```
+
+### 12c. testssl.sh no encontrado / checks TLS profundos omitidos (v3.6.1+)
+
+**Síntoma**: Los checks TLS profundos se omiten o no aparece salida de TestSSL en los hallazgos.
+**Causa**: `testssl.sh` no está instalado o no está en la ruta esperada.
+**Solución**:
+
+```bash
+# Instala el toolchain principal (incluye testssl.sh)
+sudo bash redaudit_install.sh
 ```
 
 ### 13. Net Discovery: "Permission denied" / Fallos L2 (v3.2)

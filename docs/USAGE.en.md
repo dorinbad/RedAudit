@@ -15,7 +15,7 @@ Run these commands to get started immediately.
 
 ### Interactive Wizard (Best for first time)
 
-New in v3.8: Step-by-step navigation with "< Go Back" option. Configures Webhooks, SIEM, and Advanced Network Discovery interactively.
+Step-by-step navigation with a "< Go Back" option (v3.8.1+). Webhook configuration and network discovery options are available in the wizard; SIEM exports are generated automatically when encryption is off.
 
 ```bash
 sudo redaudit
@@ -41,7 +41,7 @@ sudo redaudit -t 192.168.56.101 \
   --no-prevent-sleep
 ```
 
-**Artifacts:** JSON, HTML, PCAP (if deep scan triggers), Playbooks.
+**Artifacts:** JSON/TXT, optional HTML, PCAP (deep scan + tcpdump), playbooks (when findings match categories and encryption is off).
 
 ### Authorized Pentest (Stealth/Corporate)
 
@@ -51,11 +51,10 @@ Focus on low noise, reliable artifacts, and encryption for chain of custody.
 sudo redaudit -t 10.20.0.0/24 \
   --stealth \
   --encrypt \
-  --encrypt-password "ClientProject2025!" \
-  --html-report
+  --encrypt-password "ClientProject2025!"
 ```
 
-**Notes:** `stealth` enforces T1 timing and 5s delay. Encryption disables HTML/JSONL.
+**Notes:** `stealth` enforces T1 timing and 5s delay. Encryption disables HTML/JSONL/playbooks/manifest.
 
 ### Blue Team / NetOps (Discovery)
 
@@ -69,7 +68,7 @@ sudo redaudit -t 172.16.0.0/16 \
   --allow-non-root
 ```
 
-**Notes:** `allow-non-root` skips OS fingerprinting and PCAP. v3.9.5+ includes IoT Signature Pack for detecting WiZ, Yeelight, Tuya, and CoAP/Matter devices.
+**Notes:** `allow-non-root` runs in limited mode; OS detection, UDP scans, and tcpdump captures may fail.
 
 ### Red Team (Internal Recon)
 
@@ -114,7 +113,7 @@ Grouped by operational function. Verified against the current codebase.
 | Flag | Description |
 | :--- | :--- |
 | `-t, --target CIDR` | IP, range, or CIDR (comma-separated supported) |
-| `-m, --mode` | `fast` (ping), `normal` (top 1000), `full` (65k + scripts) |
+| `-m, --mode` | `fast` (host discovery), `normal` (top 100), `full` (all ports + scripts/OS detection) |
 | `-j, --threads N` | Parallel hosts 1-16 (Default: 6) |
 | `--rate-limit S` | Delay between hosts in seconds (applies jitter) |
 | `--stealth` | Force T1 timing, 1 thread, 5s delay |
@@ -147,9 +146,9 @@ Grouped by operational function. Verified against the current codebase.
 | Flag | Description |
 | :--- | :--- |
 | `-o, --output DIR` | Custom output directory |
-| `--lang` | Report language (en/es) |
+| `--lang` | Interface/report language (en/es) |
 | `--html-report` | Generate interactive dashboard (HTML) |
-| `--webhook URL` | Send findings to Slack/Teams/Discord |
+| `--webhook URL` | Send webhook alerts (JSON) for high/critical findings |
 | `--nuclei` | Enable Nuclei template scanning (requires `nuclei`; runs in full mode only) |
 | `--no-nuclei` | Disable Nuclei template scanning (overrides persisted defaults) |
 | `--no-vuln-scan` | Skip Nikto/Web vulnerability scanning |
@@ -161,13 +160,13 @@ Grouped by operational function. Verified against the current codebase.
 | :--- | :--- |
 | `-e, --encrypt` | Encrypt all sensitive artifacts (AES-128) |
 | `--allow-non-root` | Run without sudo (limited capability) |
-| `--searchsploit` | (Enabled by default in normal/full) |
 
 ### Configuration
 
 | Flag | Description |
 | :--- | :--- |
 | `--save-defaults` | Save current CLI args to `~/.redaudit/config.json` |
+| `--defaults {ask,use,ignore}` | Control how persisted defaults are applied |
 | `--use-defaults` | Load args from config.json automatically |
 | `--ignore-defaults` | Force factory defaults |
 | `--no-color` | Disable colored output |
@@ -178,7 +177,7 @@ Grouped by operational function. Verified against the current codebase.
 ## 4. Output & Paths
 
 **Default Path:**
-`~/Documents/RedAuditReports/RedAudit_<TIMESTAMP>/`
+`<Documents>/RedAuditReports/RedAudit_<TIMESTAMP>/` (uses the invoking user's Documents directory; `Documents`/`Documentos` depending on the system)
 
 To change the default permanently:
 
@@ -192,6 +191,8 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.txt**: Human readable summary.
 - **.html**: Dashboard (requires `--html-report`, disabled by `--encrypt`).
 - **.jsonl**: Streaming events for SIEM (disabled by `--encrypt`).
+- **playbooks/*.md**: Remediation guides (disabled by `--encrypt`).
+- **run_manifest.json**: Output manifest (disabled by `--encrypt`).
 - **.pcap**: Packet captures (only if Deep Scan + tcpdump + Root).
 - **session_*.log**: Raw terminal output with color codes (in `session_logs/`).
 - **session_*.txt**: Clean plain-text terminal output (in `session_logs/`).
@@ -208,14 +209,18 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 **`Permission denied` (socket error)**
 RedAudit needs root for:
 
-- SYN Scan (`-sS`) output processing
-- OS Fingerprinting (`-O`)
-- PCAP generation
-**Fix:** Run with `sudo` or use `--allow-non-root`.
+- OS detection and some Nmap scan types
+- UDP scanning and raw socket probes
+- PCAP generation via `tcpdump`
+**Fix:** Run with `sudo` or use `--allow-non-root` (limited mode).
 
 **`nmap: command not found`**
 Dependencies missing from PATH.
 **Fix:** Run `sudo bash redaudit_install.sh` or check `/usr/local/lib/redaudit`.
+
+**`testssl.sh not found`**
+TLS deep checks are skipped in full mode.
+**Fix:** Run `sudo bash redaudit_install.sh` to install the core toolchain.
 
 **`Decryption failed`**
 Missing `.salt` file or wrong password.

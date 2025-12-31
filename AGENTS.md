@@ -1,13 +1,13 @@
 # RedAudit: Engineering Workflow (Agent Prompt)
 
-This file is a reusable "initial context" for contributors working on RedAudit. The goal is a clean timeline, consistent docs, reliable releases, and zero surprises in CI.
+This file is reusable "initial context" for contributors working on RedAudit. The goal is a clean timeline, consistent docs, reliable releases, and no surprises in CI.
 
 ## Non-Negotiables
 
-- Work on a branch (`feature/*`, `hotfix/*`, `docs/*`). Avoid committing directly to `main`.
-- Never merge/push to `main` without explicit approval from the repo owner.
+- Work on a branch (`feature/*`, `hotfix/*`, `docs/*`); do not commit directly to `main`.
+- Never merge or push to `main` without explicit approval from the repo owner.
 - Fix root causes, keep changes minimal, avoid unrelated refactors.
-- Keep `git status` clean before handing off.
+- Hand off with clean `git status`.
 - Keep code/docs/tests consistent (no version drift, no "docs say X but CLI does Y").
 - Do not retag/rewrite published tags/releases. If something was released, publish a new version.
 - Do not commit private data. `scan_results_private/` must never be pushed.

@@ -15,13 +15,13 @@ Ejecuta estos comandos para comenzar de inmediato.
 
 ### Asistente Interactivo (Recomendado para primera vez)
 
-Nuevo en v3.8: Navegación paso a paso con opción "< Volver". Configura Webhooks, SIEM y Descubrimiento Avanzado interactivamente.
+Navegación paso a paso con opción "< Volver" (v3.8.1+). La configuración de webhooks y opciones de descubrimiento está disponible en el wizard; las exportaciones SIEM se generan automáticamente cuando el cifrado está desactivado.
 
 ```bash
 sudo redaudit
 ```
 
-### One-liner básico (Normal)
+### Inventario rápido (LAN)
 
 ```bash
 sudo redaudit -t 192.168.1.0/24 -m fast --yes
@@ -59,7 +59,7 @@ sudo redaudit -t 192.168.56.101 \
   --no-prevent-sleep
 ```
 
-**Artefactos:** JSON, HTML, PCAP (si deep scan se activa), Playbooks.
+**Artefactos:** JSON/TXT, HTML opcional, PCAP (deep scan + tcpdump), playbooks (si hay categorías compatibles y sin cifrado).
 
 ### Escaneo Sigiloso (Modo Red Team)
 
@@ -69,11 +69,10 @@ Enfoque en bajo ruido, artefactos fiables y cifrado para cadena de custodia.
 sudo redaudit -t 10.20.0.0/24 \
   --stealth \
   --encrypt \
-  --encrypt-password "ProyectoCliente2025!" \
-  --html-report
+  --encrypt-password "ProyectoCliente2025!"
 ```
 
-**Notas:** `stealth` fuerza timing T1 y retardo de 5s. El cifrado deshabilita HTML/JSONL.
+**Notas:** `stealth` fuerza timing T1 y retardo de 5s. El cifrado deshabilita HTML/JSONL/playbooks/manifest.
 
 ### Blue Team / NetOps (Descubrimiento)
 
@@ -87,7 +86,7 @@ sudo redaudit -t 172.16.0.0/16 \
   --allow-non-root
 ```
 
-**Notas:** `allow-non-root` salta fingerprinting de SO y captura PCAP. v3.9.5+ incluye Pack de Firmas IoT para detectar dispositivos WiZ, Yeelight, Tuya y CoAP/Matter.
+**Notas:** `allow-non-root` ejecuta en modo limitado; la detección de SO, los escaneos UDP y la captura con tcpdump pueden fallar.
 
 ### Red Team (Reconocimiento Interno)
 
@@ -124,12 +123,11 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | Flag | Descripción |
 | :--- | :--- |
 | `-t, --target CIDR` | IP, rango o CIDR (soporta lista separada por comas) |
-| `-m, --mode` | `fast` (ping), `normal` (top 1000), `full` (65k + scripts) |
+| `-m, --mode` | `fast` (descubrimiento de hosts), `normal` (top 100), `full` (todos los puertos + scripts/detección de SO) |
 | `-j, --threads N` | Hosts paralelos 1-16 (Defecto: 6) |
 | `--rate-limit S` | Retardo entre hosts en segundos (aplica jitter) |
 | `--stealth` | Fuerza timing T1, 1 hilo, 5s retardo |
 | `--dry-run` | Muestra comandos sin ejecutarlos |
-| `--threads` | Nivel de concurrencia |
 
 ### Conectividad y Proxy
 
@@ -137,7 +135,6 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | :--- | :--- |
 | `--proxy URL` | Proxy SOCKS5 (socks5://host:port) |
 | `--ipv6` | Activa modo escaneo solo IPv6 |
-| `--mode` | Modo de escaneo (rapido/normal/completo) |
 | `--no-prevent-sleep` | No inhibir suspensión del sistema |
 
 ### Descubrimiento Avanzado
@@ -158,12 +155,10 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | Flag | Descripción |
 | :--- | :--- |
 | `-o, --output DIR` | Directorio de salida personalizado |
-| `--output` | Ruta del directorio de salida |
 | `--html-report` | Generar dashboard interactivo (HTML) |
-| `--webhook URL` | Enviar hallazgos a Slack/Teams/Discord |
+| `--webhook URL` | Enviar alertas webhook (JSON) para hallazgos high/critical |
 | `--nuclei` | Habilitar escaneo de templates con Nuclei (requiere `nuclei`; solo en modo full) |
 | `--no-nuclei` | Deshabilitar Nuclei (sobrescribe defaults persistentes) |
-| `--udp-mode` | Estrategia escaneo UDP (quick/full) |
 | `--no-vuln-scan` | Omitir escaneo de vulnerabilidades Web/Nikto |
 | `--cve-lookup` | Correlar servicios con datos CVE NVD |
 
@@ -173,7 +168,6 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | :--- | :--- |
 | `-e, --encrypt` | Cifrar todos los artefactos sensibles (AES-128) |
 | `--allow-non-root` | Ejecutar sin sudo (capacidad limitada) |
-| `--searchsploit` | (Habilitado por defecto en normal/full) |
 | `--yes` | Auto-confirmar todos los prompts |
 
 ### Configuración
@@ -181,18 +175,19 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | Flag | Descripción |
 | :--- | :--- |
 | `--save-defaults` | Guardar argumentos CLI actuales en `~/.redaudit/config.json` |
+| `--defaults {ask,use,ignore}` | Controlar cómo se aplican los defaults persistentes |
 | `--use-defaults` | Cargar argumentos desde config.json automáticamente |
 | `--ignore-defaults` | Forzar valores de fábrica |
 | `--no-color` | Deshabilitar salida a color |
 | `--skip-update-check` | Saltar chequeo de actualizaciones al inicio |
-| `--lang` | Idioma del reporte (en/es) |
+| `--lang` | Idioma de interfaz/informe (en/es) |
 
 ---
 
 ## 4. Salida y Rutas
 
 **Ruta por Defecto:**
-`~/Documents/RedAuditReports/RedAudit_<TIMESTAMP>/`
+`<Documentos>/RedAuditReports/RedAudit_<TIMESTAMP>/` (usa la carpeta Documentos del usuario invocante)
 
 Para cambiar la ruta por defecto permanentemente:
 
@@ -206,6 +201,8 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.txt**: Resumen legible por humanos.
 - **.html**: Dashboard (requiere `--html-report`, deshabilitado por `--encrypt`).
 - **.jsonl**: Eventos streaming para SIEM (deshabilitado por `--encrypt`).
+- **playbooks/*.md**: Guías de remediación (deshabilitado por `--encrypt`).
+- **run_manifest.json**: Manifiesto de salida (deshabilitado por `--encrypt`).
 - **.pcap**: Capturas de paquetes (solo si Deep Scan + tcpdump + Root).
 - **session_*.log**: Salida de terminal raw con códigos de color (en `session_logs/`).
 - **session_*.txt**: Salida de terminal en texto plano limpio (en `session_logs/`).
@@ -222,14 +219,18 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 **`Permission denied` (socket error)**
 RedAudit necesita root para:
 
-- Procesamiento de salida SYN Scan (`-sS`)
-- Fingerprinting de SO (`-O`)
-- Generación de PCAP
-**Solución:** Ejecutar con `sudo` o usar `--allow-non-root`.
+- Detección de SO y algunos tipos de escaneo Nmap
+- Escaneo UDP y sondas con raw sockets
+- Generación de PCAP con `tcpdump`
+**Solución:** Ejecutar con `sudo` o usar `--allow-non-root` (modo limitado).
 
 **`nmap: command not found`**
 Dependencias faltantes en el PATH.
 **Solución:** Ejecutar `sudo bash redaudit_install.sh` o revisar `/usr/local/lib/redaudit`.
+
+**`testssl.sh not found`**
+Los checks TLS profundos se omiten en modo full.
+**Solución:** Ejecutar `sudo bash redaudit_install.sh` para instalar el toolchain principal.
 
 **`Decryption failed`**
 Falta el archivo `.salt` o contraseña incorrecta.

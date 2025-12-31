@@ -1,6 +1,6 @@
 <!--
-NOTE: This file is for contributor best practices (agentes humanos o no humanos) when working on this repository.
-Keep it aligned with the repo’s root `AGENTS.md` and CI/pre-commit requirements.
+NOTE: This file is for contributor best practices (agentes humanos o no humanos) when working in this repository.
+Keep it aligned with the repo root `AGENTS.md` and CI/pre-commit requirements.
 -->
 
 # Agent Instructions (RedAudit)

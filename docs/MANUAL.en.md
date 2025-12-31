@@ -33,10 +33,10 @@ RedAudit is an **automated network auditing framework** for Linux (Debian-family
 | :--- | :--- |
 | **OS** | Kali Linux, Debian 11+, Ubuntu 20.04+, Parrot OS |
 | **Python** | 3.9+ |
-| **Privileges** | `sudo` / root required for: raw sockets (nmap OS detection), packet capture (tcpdump), ARP scanning |
-| **Dependencies** | Installed via `redaudit_install.sh`: nmap, whatweb, nikto, testssl.sh, searchsploit, tcpdump, tshark |
+| **Privileges** | `sudo` / root required for: OS detection, UDP scans, packet capture (tcpdump), ARP/L2 discovery |
+| **Dependencies** | The installer provides the recommended toolchain (nmap, whatweb, nikto, nuclei, searchsploit, tcpdump, tshark, and others) and installs `testssl.sh` from GitHub |
 
-**Limited mode:** `--allow-non-root` enables reduced functionality without root (some scans will fail silently).
+**Limited mode:** `--allow-non-root` enables reduced functionality without root (OS detection, UDP, and tcpdump features may fail).
 
 ---
 
@@ -63,9 +63,11 @@ The installer:
 ```bash
 git clone https://github.com/dorinbadea/RedAudit.git
 cd RedAudit
-sudo apt install nmap whatweb nikto testssl tcpdump tshark exploitdb python3-nmap python3-cryptography
+sudo apt install nmap whatweb nikto tcpdump tshark exploitdb python3-nmap python3-cryptography
 sudo python3 -m redaudit --help
 ```
+
+TLS deep checks require `testssl.sh`. The installer installs it from GitHub as part of the core toolchain.
 
 ### Docker (optional)
 
@@ -96,35 +98,35 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 **Use case:** Quick network discovery for asset inventory.
 
 - **Mode**: `fast` (host discovery only, no port scanning)
-- **Features disabled**: Vulnerability scans, Nuclei, Topology, Net Discovery
+- **Features disabled**: Vulnerability scans, Nuclei, CVE correlation, agentless verification
+- **Discovery enabled**: Topology + Network Discovery
 - **Timing**: Fast
 - **Questions**: Minimal (auditor name, output dir)
 - **Best for**: Initial reconnaissance, counting live hosts
 - **Detection heuristics**:
-  - **Asset type guessing**: Automatic identification of `printer`, `ipp`, `media`, `iot`, `voip`, `vpn` (v3.9.6+), and `camera`.
+  - **Asset type guessing**: Hints from hostname/vendor/agentless signals (e.g., router, switch, printer, media, IoT, VPN).
   - **VPN Heuristics**: Detection based on gateway MAC-IP mismatch, VPN ports (500, 4500, 1194, 51820), and hostname patterns (`tunnel`, `ipsec`, etc.).
-- **PCAP Evidence**: Initial reconnaissance, counting live hosts
 
 ### Standard
 
 **Use case:** Balanced vulnerability assessment.
 
-- **Mode**: `normal` (top 1000 ports + version detection)
-- **Features**: whatweb, searchsploit, optional topology
-- **Timing**: Normal
-- **Questions**: Standard wizard flow (7 steps)
+- **Mode**: `normal` (nmap `-F` / top 100 ports + version detection)
+- **Features**: web vuln scanning enabled (whatweb; nikto/testssl only in full), searchsploit if available, topology + network discovery enabled
+- **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
+- **Questions**: Profile selection + timing + auditor/output prompts
 - **Best for**: Most security audits
 
 ### Exhaustive
 
 **Use case**: Maximum discovery and correlation for comprehensive assessments.
 
-- **Mode**: `completo` (all 65535 ports + OS detection + scripts)
-- **Threads**: MAX (32)
-- **UDP**: top 500 ports
-- **Features enabled**: Vulnerabilities, Nuclei, Topology, Net Discovery, Red Team, Agentless Verification
+- **Mode**: `completo` (all 65535 ports + scripts/OS detection)
+- **Threads**: MAX (16) or reduced in Stealth preset (2)
+- **UDP**: top 500 ports for deep scan (only when triggered)
+- **Features enabled**: Vulnerabilities, Topology, Net Discovery, Red Team, Agentless Verification; Nuclei if installed
 - **CVE Correlation**: Enabled if NVD API key is configured
-- **Timing**: Aggressive
+- **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
 - **Questions**: Only auditor name and output dir (all else auto-configured)
 - **Best for**: Penetration testing, compliance audits, pre-production validation
 
@@ -132,8 +134,8 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 
 **Use case:** Full control over all configuration options.
 
-- **Behavior**: Standard 8-step wizard
-- **Questions**: Target, mode, timing, UDP, features, CVE, output
+- **Behavior**: Full 8-step wizard with back navigation
+- **Questions**: Scan mode, threads/rate, vulnerability scan, CVE lookup, output/auditor, UDP/topology, net discovery/red team, agentless verification + webhook
 - **Best for**: Tailored scans with specific requirements
 
 ---
@@ -152,8 +154,8 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 | Mode | nmap Behavior | Additional Tools |
 | :--- | :--- | :--- |
 | `fast` | `-sn` (host discovery only) | None |
-| `normal` | Top 1000 ports, version detection | whatweb, searchsploit |
-| `full` | All 65535 ports, scripts, OS detection | whatweb, nikto, testssl.sh, nuclei (if installed and enabled), searchsploit |
+| `normal` | Top 100 ports (`-F`), version detection | whatweb, searchsploit (if available) |
+| `full` | All 65535 ports, scripts, OS detection | whatweb, nikto, testssl.sh, nuclei (installed and explicitly enabled), searchsploit |
 
 **Timeout behavior:** Host scans are bounded by the nmap `--host-timeout` for the selected mode (full: 300s). RedAudit
 enforces a hard timeout and marks the host as no-response if it is exceeded, keeping scans responsive on IoT/embedded
@@ -173,12 +175,13 @@ When enabled (default), RedAudit performs additional scanning on hosts where ini
 **Behavior:**
 
 1. Phase 1: Aggressive TCP (`-A -p- -sV -Pn`)
-2. Phase 2a: Priority UDP scan (17 common ports including VPN ports 500/4500)
-3. Phase 2b: Extended UDP (including WireGuard 51820 and OpenVPN 1194)
-4. Phase 3: VPN Classification via hostname patterns (`vpn`, `ipsec`, `wireguard`, `tunnel`)
-5. Quiet hosts with vendor hints and zero open ports may get a short HTTP/HTTPS probe on common paths
+2. Phase 2a: Priority UDP probe (17 common ports including 500/4500)
+3. Phase 2b: UDP top-ports (`--udp-ports`) when mode is `full` and identity is still weak
+4. Quiet hosts with vendor hints and zero open ports may get a short HTTP/HTTPS probe on common paths
 
 Disable with `--no-deep-scan`.
+
+VPN classification is handled by asset typing heuristics (gateway MAC/IP, VPN ports, hostname patterns) after scanning.
 
 ### Agentless Verification (Optional)
 
@@ -213,9 +216,10 @@ Flags verified against `redaudit --help` (v3.9.9):
 | `-j, --threads 1-16` | Concurrent host workers (default: 6) |
 | `--rate-limit SECONDS` | Delay between hosts (±30% jitter applied) |
 | `--max-hosts N` | Limit hosts to scan |
-| `--prescan` | Enable async TCP pre-scan before nmap |
-| `--prescan-ports RANGE` | Ports for pre-scan (default: 1-1024) |
-| `--prescan-timeout SECONDS` | Pre-scan timeout (default: 0.5) |
+| `--no-deep-scan` | Disable adaptive deep scan |
+| `--prescan` | Reserved flag (currently stored in config; no pre-scan executed) |
+| `--prescan-ports RANGE` | Reserved (default: 1-1024) |
+| `--prescan-timeout SECONDS` | Reserved (default: 0.5) |
 | `--stealth` | T1 timing, 1 thread, 5s delay (IDS evasion) |
 
 ### UDP Scanning
@@ -223,7 +227,7 @@ Flags verified against `redaudit --help` (v3.9.9):
 | Flag | Description |
 | :--- | :--- |
 | `--udp-mode {quick,full}` | quick = priority ports only; full = top N ports |
-| `--udp-ports N` | Number of ports for full mode (default: 100) |
+| `--udp-ports N` | Number of top ports for full mode (50-500, default: 100) |
 
 ### Topology & Discovery
 
@@ -237,6 +241,10 @@ Flags verified against `redaudit --help` (v3.9.9):
 | `--redteam` | Include Red Team techniques (SNMP, SMB, LDAP, Kerberos) |
 | `--redteam-max-targets N` | Max targets for redteam checks (default: 50) |
 | `--redteam-active-l2` | Enable noisier L2 checks (bettercap/scapy) |
+| `--snmp-community COMMUNITY` | SNMP community for SNMP walking (default: public) |
+| `--dns-zone ZONE` | DNS zone hint for AXFR attempts (optional) |
+| `--kerberos-realm REALM` | Kerberos realm hint (optional) |
+| `--kerberos-userlist PATH` | Userlist for Kerberos user enumeration (optional; requires kerbrute) |
 
 ### Security
 
@@ -289,6 +297,7 @@ Flags verified against `redaudit --help` (v3.9.9):
 | `--lang {en,es}` | Interface language |
 | `--no-color` | Disable colored output |
 | `--save-defaults` | Save current settings to ~/.redaudit/config.json |
+| `--defaults {ask,use,ignore}` | Control how persisted defaults are applied |
 | `--use-defaults` | Use saved defaults without prompting |
 | `--ignore-defaults` | Ignore saved defaults |
 | `--skip-update-check` | Skip update check at startup |
@@ -306,7 +315,7 @@ Default output path: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/`
 | `redaudit_*.json` | Always | Complete structured results |
 | `redaudit_*.txt` | Unless `--no-txt-report` | Human-readable summary |
 | `report.html` | If `--html-report` | Interactive dashboard |
-| `findings.jsonl` | If encryption disabled | SIEM-ready events (ECS v8.11) |
+| `findings.jsonl` | If encryption disabled | SIEM-ready JSONL events (ECS-aligned via configs) |
 | `assets.jsonl` | If encryption disabled | Asset inventory |
 | `summary.json` | If encryption disabled | Dashboard metrics |
 | `run_manifest.json` | If encryption disabled | Session metadata |
@@ -337,7 +346,7 @@ python3 redaudit_decrypt.py /path/to/report.json.enc
 
 - Algorithm: AES-128-CBC (Fernet specification)
 - Key derivation: PBKDF2-HMAC-SHA256 with random salt
-- Password policy: Minimum 12 characters enforced
+- Password policy: Interactive prompts enforce 12+ characters with complexity requirements; `--encrypt-password` is not validated
 
 ### Privilege Model
 
@@ -357,9 +366,10 @@ python3 redaudit_decrypt.py /path/to/report.json.enc
 
 ### SIEM Ingestion
 
-See [SIEM_INTEGRATION.en.md](SIEM_INTEGRATION.en.md) for full setup guides (Elastic Stack / Splunk).
+See [SIEM_INTEGRATION.en.md](SIEM_INTEGRATION.en.md) for full setup guides (Elastic Stack and other SIEMs).
 
-When encryption is disabled, `findings.jsonl` provides ECS v8.11 compliant events:
+When encryption is disabled, `findings.jsonl` provides SIEM-friendly JSONL events (ECS-aligned fields via the bundled configs).
+The Splunk HEC example below is optional and requires external Splunk configuration.
 
 ```bash
 # Elasticsearch bulk ingest
@@ -375,7 +385,7 @@ done
 
 ### Webhook Alerts
 
-`--webhook URL` sends HTTP POST for each high/critical finding. Compatible with Slack, Teams, Discord incoming webhooks.
+`--webhook URL` sends HTTP POST for each high/critical finding. Compatible with endpoints that accept JSON payloads (e.g., Slack, Teams, PagerDuty).
 
 ---
 

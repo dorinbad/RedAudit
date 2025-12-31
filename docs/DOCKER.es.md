@@ -2,7 +2,7 @@
 
 RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o **macOS** usando Docker.
 
-> ⚠️ **Limitación Importante**: Docker en Windows/macOS **no puede descubrir hosts con precisión** en tu red. Corre en una máquina virtual que no puede ver tu red real a Nivel 2. Ver [Limitaciones](#limitaciones-en-windowsmacos) más abajo.
+> ⚠️ **Limitación Importante**: Docker en Windows/macOS **no permite descubrimiento L2 fiable** en tu red. Corre en una máquina virtual que no puede ver tu red real a nivel 2. Ver [Limitaciones](#limitaciones-en-windowsmacos) más abajo.
 
 ## Cuándo Usar Docker
 
@@ -10,7 +10,7 @@ RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o 
 | :--- | :--- | :--- |
 | **Escanear servidores conocidos** | ✅ Funciona | ✅ Funciona |
 | **Demo/pruebas con IPs conocidas** | ✅ Funciona | ✅ Funciona |
-| **Descubrir todos los dispositivos** | ❌ Falsos positivos | ✅ Funciona |
+| **Descubrir todos los dispositivos** | ❌ Incompleto | ✅ Funciona |
 | **Auditoría profesional de red** | ❌ Limitado | ✅ Capacidad completa |
 | **Escaneo ARP/Nivel 2** | ❌ No es posible | ✅ Funciona |
 | **Detección VPN (MAC/GW)** | ❌ Limitada/Imprecisa | ✅ Funciona |
@@ -21,7 +21,7 @@ RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o 
 
 ## 🚀 Inicio Rápido (Recomendado)
 
-Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, descargar la última imagen, y ejecutar el escaneo.
+Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, hacer pull de la última imagen y ejecutar el escaneo.
 
 ## macOS
 
@@ -38,7 +38,7 @@ chmod +x redaudit-docker.sh
 ./redaudit-docker.sh
 ```
 
-> 💡 El script **descarga automáticamente la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
+> 💡 El script **hace pull de la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
 
 ## Windows (PowerShell)
 
@@ -60,9 +60,9 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 
 - ✅ Verificar que Docker esté corriendo
 - ✅ Detectar tu red automáticamente
-- ✅ Descargar/actualizar RedAudit a la última versión
+- ✅ Hacer pull de la última imagen
 - ✅ Ejecutar el escaneo
-- ✅ Abrir el reporte cuando termine
+- ✅ Ofrecer abrir el reporte cuando termine
 
 ---
 

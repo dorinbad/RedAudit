@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "GPL-3.0-or-later"}
 authors = [
-    {name = "Dorin Badea", email = "contact@dorinbadea.com"}
+    {name = "Dorin Badea", email = "dorinidtech@gmail.com"}
 ]
 keywords = [
     "security",
