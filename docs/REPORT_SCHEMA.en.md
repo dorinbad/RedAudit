@@ -84,14 +84,17 @@ Compact, flattened summary for dashboards and automation (generated only when re
 | `smart_scan_summary` | `object` | SmartScan summary |
 | `redaudit_version` | `string` | RedAudit version |
 
-### Agentless Verification Object (Optional) (vNext)
+### Agentless Verification Object (Optional) (v3.8.5+)
 
 This field appears only if agentless verification was enabled.
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
+| `enabled` | boolean | Whether agentless verification was enabled |
 | `targets` | integer | Number of eligible targets selected for verification |
 | `completed` | integer | Number of verification attempts completed |
+| `signals` | object | Counts by protocol (smb/rdp/ldap/ssh/http) |
+| `domains` | array | Discovered domain hints (best-effort) |
 
 ### Nuclei Summary Object (Optional) (v3.7+)
 
@@ -117,17 +120,25 @@ Sanitized run configuration, stored for reproducibility.
 | :--- | :--- | :--- |
 | `targets` | array | Target networks |
 | `scan_mode` | string | Scan mode |
+| `scan_mode_cli` | string | CLI scan mode string (best-effort) |
 | `threads` | integer | Concurrency used |
+| `rate_limit_delay` | number | Delay between hosts (seconds) |
 | `udp_mode` | string | UDP strategy |
 | `udp_top_ports` | integer | UDP coverage |
 | `topology_enabled` | boolean | Topology enabled |
+| `topology_only` | boolean | Topology-only mode |
 | `net_discovery_enabled` | boolean | Net Discovery enabled |
 | `net_discovery_redteam` | boolean | Red Team enabled |
+| `net_discovery_active_l2` | boolean | Active L2 checks enabled |
+| `net_discovery_kerberos_userenum` | boolean | Kerberos user enumeration enabled |
 | `windows_verify_enabled` | boolean | Agentless verify |
+| `windows_verify_max_targets` | integer | Max targets for agentless verification |
 | `scan_vulnerabilities` | boolean | Web vuln enabled |
 | `nuclei_enabled` | boolean | Nuclei enabled |
 | `cve_lookup_enabled` | boolean | NVD enrichment |
 | `dry_run` | boolean | Dry-run mode |
+| `prevent_sleep` | boolean | Sleep inhibition enabled |
+| `auditor_name` | string | Auditor name (if provided) |
 
 ### Pipeline Summary (v3.7+)
 
@@ -249,7 +260,7 @@ Additional host-level fields:
 | :--- | :--- | :--- |
 | `os_detected` | string | (Optional) OS fingerprint (best-effort, usually from deep scan output) **(v3.1.4+)** |
 | `agentless_probe` | object | (Optional) Raw agentless probe outputs (SMB/RDP/LDAP/SSH/HTTP) **(v3.8.5)** |
-| `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(vNext)** |
+| `agentless_fingerprint` | object | (Optional) Normalized identity hints (see below) **(v3.8.5+)** |
 
 ```json
 {
@@ -280,7 +291,7 @@ Additional host-level fields:
 }
 ```
 
-### Agentless Fingerprint Object (Optional) (vNext)
+### Agentless Fingerprint Object (Optional) (v3.8.5+)
 
 Normalized hints derived from SMB/RDP/LDAP probes. All fields are optional.
 
@@ -418,7 +429,7 @@ List of web vulnerability findings. Each entry contains:
 | `vulnerabilities[].findings` | array | List of vulnerability strings |
 | `vulnerabilities[].whatweb` | string | (Optional) WhatWeb output |
 | `vulnerabilities[].nikto_findings` | array | (Optional) Nikto findings (if FULL mode) |
-| `vulnerabilities[].testssl_analysis` | object | (Optional) TestSSL.sh results (if FULL mode and HTTPS) |
+| `vulnerabilities[].testssl_analysis` | object | TestSSL.sh results for HTTPS targets in full mode (requires `testssl.sh`) |
 | `vulnerabilities[].severity` | string | Severity enum: critical/high/medium/low/info |
 | `vulnerabilities[].severity_score` | integer | Numeric severity (0-100) |
 | `vulnerabilities[].finding_id` | string | Deterministic hash for deduplication **(v3.1)** |
@@ -488,7 +499,7 @@ List of detected network interfaces.
 
 ## New Features (v3.0.0)
 
-### SIEM Enhancement (ECS Compliance)
+### SIEM Enhancement (ECS Alignment)
 
 ```json
 {
@@ -508,7 +519,7 @@ List of detected network interfaces.
 | `risk_score` | integer | Risk score (0-100) based on ports, services, exploits |
 | `tags` | array | Auto-generated tags (web, database, iot, admin, etc.) |
 | `observable_hash` | string | SHA256 hash for SIEM deduplication |
-| `ecs_host` | object | ECS-compliant host object with `ip`, `mac`, `name` |
+| `ecs_host` | object | ECS-aligned host object with `ip`, `mac`, `name` |
 
 ### Unified Assets Array (Entity Resolution)
 

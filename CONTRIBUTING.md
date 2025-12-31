@@ -1,8 +1,8 @@
 # Contributing Guidelines
 
-The canonical contributing guide lives in `.github/CONTRIBUTING.md`.
+This is the canonical contributing guide for the repository. A Spanish version is available at `CONTRIBUTING_ES.md`.
 
-If you are reading this from the repository root, please use:
+If you are reading this from the repository root, use:
 
-- `.github/CONTRIBUTING.md`
-- `.github/CONTRIBUTING_ES.md` (Espanol)
+- `CONTRIBUTING.md` (English)
+- `CONTRIBUTING_ES.md` (Español)

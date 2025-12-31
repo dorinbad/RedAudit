@@ -4,7 +4,7 @@
 
 **Audiencia:** Compliance, SecOps
 **Alcance:** Modelo de privilegios, especificaciones de cifrado, validación de inputs.
-**Fuente de verdad:** `redaudit/core/crypto.py`, `redaudit/utils/validators.py`
+**Fuente de verdad:** `redaudit/core/crypto.py`, `redaudit/core/scanner/utils.py`, `redaudit/core/command_runner.py`
 
 ---
 
@@ -18,6 +18,8 @@
 ## Visión General
 
 RedAudit implementa una filosofía de "seguro por diseño", asumiendo la ejecución en entornos hostiles o no confiables. Este documento describe los controles de seguridad relacionados con el manejo de entrada, criptografía y seguridad operacional.
+
+No reportes vulnerabilidades de seguridad mediante issues públicas. Envía los detalles a `dorinidtech@gmail.com` e incluye descripción, pasos de reproducción, impacto y, si existe, propuesta de fix. Recibirás acuse en 48h y coordinaremos la divulgación responsable.
 
 ## Versiones soportadas
 
@@ -40,7 +42,7 @@ Todas las entradas externas—rangos objetivo, nombres de host, nombres de inter
 - **Validación de Nombres de Host**: Allowlisting con regex (`^[a-zA-Z0-9\.\-]+$`) asegura solo caracteres alfanuméricos, puntos y guiones.
 - **Límites de Longitud**: Todas las entradas se truncan a `MAX_INPUT_LENGTH` (1024 caracteres) para prevenir ataques basados en buffer.
 - **Prevención de Inyección de Comandos**: Los comandos externos se ejecutan mediante `CommandRunner` usando listas de argumentos (nunca se usa expansión de shell).
-- **Ubicación del Módulo**: `redaudit/core/scanner.py` (`sanitize_ip`, `sanitize_hostname`)
+- **Ubicación del Módulo**: `redaudit/core/scanner/utils.py` (`sanitize_ip`, `sanitize_hostname`)
 
 ## 2. Implementación Criptográfica
 
@@ -49,6 +51,7 @@ El cifrado de reportes se gestiona mediante la librería `cryptography` para ase
 - **Primitiva**: AES-128-CBC (especificación Fernet).
 - **Gestión de Claves**: Las claves se derivan de contraseñas proporcionadas por el usuario usando PBKDF2HMAC-SHA256 con 480,000 iteraciones y un salt aleatorio por sesión.
 - **Integridad**: Fernet incluye una firma HMAC para prevenir la manipulación del texto cifrado.
+- **Política de contraseña**: El prompt interactivo exige 12+ caracteres con complejidad; `--encrypt-password` no se valida.
 - **Ubicación del Módulo**: `redaudit/core/crypto.py`
 
 ## 3. Seguridad Operacional (OpSec)
@@ -56,22 +59,21 @@ El cifrado de reportes se gestiona mediante la librería `cryptography` para ase
 - **Permisos de Artefactos**: RedAudit aplica `0o600` (lectura/escritura solo para el propietario) a los artefactos generados (reportes, HTML/playbooks, vistas JSONL/JSON, evidencia externalizada) para reducir filtraciones a otros usuarios del sistema.
 - **Seguridad en Modo Cifrado**: Si el cifrado de reportes está activado, RedAudit evita generar artefactos adicionales en texto plano (HTML/JSONL/playbooks/resumen/manifiestos y evidencia externalizada) junto a reportes `.enc`.
 - **Rate-Limiting con Jitter**: Limitación de velocidad configurable con varianza aleatoria ±30% para evadir IDS basados en umbrales y análisis de comportamiento.
-- **Discreción Pre-scan**: Descubrimiento de puertos basado en asyncio minimiza las invocaciones de nmap, reduciendo la huella de red.
+- **Descubrimiento HyperScan**: Descubrimiento TCP/UDP/ARP asíncrono puede reducir invocaciones de nmap cuando está habilitado (net discovery).
 - **Heartbeat**: Monitoreo en segundo plano asegura la integridad del proceso sin requerir acceso interactivo a la shell.
-- **Ubicación del Módulo**: `redaudit/core/reporter.py` (permisos), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/prescan.py` (descubrimiento rápido)
+- **Ubicación del Módulo**: `redaudit/core/reporter.py` (permisos), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (descubrimiento asíncrono)
 
 ## 4. Pista de Auditoría
 
 Todas las operaciones se registran en `~/.redaudit/logs/` con políticas de rotación (máx 10MB, 5 backups). Los logs contienen marcas de tiempo de ejecución, identificadores de hilos e invocaciones de comandos raw para rendición de cuentas.
 
-**Seguridad de Captura de Sesión (v3.7+)**: El directorio `session_logs/` contiene la salida raw de terminal (`session_*.log`) que puede incluir datos sensibles mostrados durante el escaneo. Estos archivos están protegidos con permisos `0o600`.
+**Seguridad de Captura de Sesión (v3.7+)**: El directorio `session_logs/` contiene la salida raw de terminal (`session_*.log`) que puede incluir datos sensibles mostrados durante el escaneo. Los permisos dependen del directorio de salida y del umask del usuario; trata estos logs como artefactos sensibles.
 
 ## 5. Seguridad CI/CD
 
 Controles de seguridad automatizados integrados en el pipeline de desarrollo:
 
 - **Bandit**: Linting de seguridad estático para código Python en cada push/PR
-- **Dependabot**: Escaneos semanales de dependencias vulnerables (pip, GitHub Actions)
 - **CodeQL**: Análisis estático de vulnerabilidades de seguridad en cada push/PR
 - **Testing Multi-versión**: Compatibilidad verificada en Python 3.9-3.12
 
@@ -81,7 +83,7 @@ El código está organizado en módulos enfocados para mejorar la mantenibilidad
 
 - **Módulos core** (`redaudit/core/`): Funcionalidad crítica de seguridad
 - **Utilidades** (`redaudit/utils/`): Constantes e internacionalización
-- **Tests**: La suite automatizada se ejecuta en GitHub Actions (`.github/workflows/tests.yml`) en Python 3.9–3.12 (2200+ tests pasados).
+- **Tests**: La suite automatizada se ejecuta en GitHub Actions (`.github/workflows/tests.yml`) en Python 3.9–3.12.
 
 ## 7. Auto-Actualización Fiable
 
@@ -106,7 +108,7 @@ RedAudit soporta almacenar claves API de NVD para correlación CVE:
 
 - **Archivo de Configuración**: `~/.redaudit/config.json` con permisos `0600`
 - **Variable de Entorno**: `NVD_API_KEY` (nunca se registra en logs)
-- **Prioridad**: Flag CLI → Variable de entorno → Archivo de configuración
+- **Prioridad**: El flag CLI sobrescribe; si no, archivo de configuración o `NVD_API_KEY`
 - **Sin texto plano en logs**: Las claves API nunca se escriben en archivos de log
 - **Escrituras atómicas**: Las actualizaciones de configuración usan archivo temporal + renombrar para seguridad ante fallos
 
@@ -152,7 +154,7 @@ RedAudit v3.2 introduce capacidades de **Reconocimiento Activo** (`--redteam`, `
 
 ### Reportes HTML (`--html-report`)
 
-- **Seguro Offline/Air-gap**: Los reportes HTML generados son totalmente autocontenidos. Todo el CSS (Bootstrap) y lógica JS (Chart.js) está embebido directamente en el archivo. No se realizan peticiones externas al abrir el reporte, haciéndolo seguro para estaciones de análisis aisladas (air-gapped).
+- **Offline/Air-gap**: El reporte embebe el CSS, pero las gráficas cargan Chart.js desde un CDN. En entornos aislados el HTML abre; las gráficas pueden no renderizar sin esa dependencia.
 - **Sin Rastreo Remoto**: No se incluyen analíticas ni píxeles de seguimiento.
 
 ### Alertas Webhook (`--webhook`)

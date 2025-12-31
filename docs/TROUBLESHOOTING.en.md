@@ -4,7 +4,7 @@
 
 **Audience:** All Users
 **Scope:** Common errors, exit codes, dependency issues.
-**Source of Truth:** `redaudit/utils/constants.py` (Exit Codes)
+**Source of Truth:** `redaudit/core/auditor.py`, `redaudit/core/auditor_scan.py`
 
 ---
 
@@ -13,7 +13,7 @@
 ### 1. `Permission denied` / "Root privileges required"
 
 **Symptom**: The script exits immediately with a privilege error.
-**Cause**: The application requires raw socket access for `nmap` (SYN scans/OS detection) and `tcpdump`.
+**Cause**: The application requires raw socket access for some Nmap scan types, OS detection, UDP scans, and `tcpdump`.
 **Resolution**:
 
 - Always execute with `sudo`.
@@ -60,7 +60,7 @@ sudo apt install python3-nmap python3-cryptography python3-netifaces
 **Resolution**:
 
 - Ensure correct case sensitivity.
-- Verify file integrity (check file size > 0). Do not abort immediately; deep scans on filtered hosts can take time.
+- Verify file integrity (check file size > 0) and ensure the `.salt` file is present alongside the `.enc` file.
 
 ### 6. "Scans seem to hang" / Slow progress
 
@@ -176,6 +176,17 @@ sudo apt update && sudo apt install nbtscan netdiscover fping avahi-utils snmp l
 
 ```bash
 sudo apt update && sudo apt install nuclei
+```
+
+### 12c. testssl.sh not found / TLS deep checks skipped (v3.6.1+)
+
+**Symptom**: TLS deep checks are skipped or you never see TestSSL output in findings.
+**Cause**: `testssl.sh` is not installed or not in the expected path.
+**Resolution**:
+
+```bash
+# Install the core toolchain (includes testssl.sh)
+sudo bash redaudit_install.sh
 ```
 
 ### 13. Net Discovery: "Permission denied" / L2 failures (v3.2)

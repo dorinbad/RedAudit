@@ -2,10 +2,11 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](CHANGELOG_ES.md)
 
-All notable changes to this project will be documented in this file.
+All notable changes are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
@@ -320,7 +321,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Interactive Webhooks**: Wizard now prompts for Slack/Teams/PagerDuty webhook URL with optional test alert.
 - **Advanced Net Discovery Wizard**: SNMP community string, DNS zone, and max targets now configurable via wizard.
-- **Native SIEM Pipeline**: Bundled `siem/filebeat.yml`, `siem/logstash.conf`, and 3 Sigma rules for ELK/Splunk integration.
+- **Native SIEM Pipeline**: Bundled `siem/filebeat.yml`, `siem/logstash.conf`, and 3 Sigma rules for ELK and other SIEMs.
 - **Osquery Verification**: New `redaudit/core/osquery.py` module for post-scan host config validation via SSH.
 - **Session Logging**: Terminal output automatically captured to `session_logs/` folder (raw `.log` + clean `.txt`).
 - **Nuclei Progress Spinner**: Animated Rich spinner with elapsed time during Nuclei template scans.
@@ -859,7 +860,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **SIEM Professional Enhancement**: Enterprise SIEM integration
   - New module: `redaudit/core/siem.py`
-  - ECS v8.11 compliance for Elastic integration
+  - ECS v8.11-aligned fields for Elastic integration
   - Severity scoring (critical/high/medium/low/info)
   - Risk scores (0-100) per host
   - Auto-generated tags for categorization
@@ -1014,7 +1015,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Up to 500 concurrent port checks with configurable batching
   - Port range parsing: `1-1024`, `22,80,443`, or combined `1-100,443,8080-8090`
 
-- **SIEM-Compatible Output (A5)**: Enhanced JSON reports for Splunk/Elastic integration
+- **SIEM-Compatible Output (A5)**: Enhanced JSON reports for Elastic and other SIEMs
   - New fields: `schema_version`, `event_type`, `session_id`, `timestamp_end`
   - Scanner metadata: name, version, mode
   - Targets array for multi-network scans

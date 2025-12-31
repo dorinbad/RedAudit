@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](SIEM_INTEGRATION.en.md)
 
-RedAudit produce exportaciones JSONL conformes a ECS v8.11 que se integran directamente con Elastic Stack, Splunk y otras plataformas SIEM.
+RedAudit produce exportaciones JSONL orientadas a SIEM y proporciona configuraciones de Filebeat/Logstash para ingestión alineada con ECS en Elastic Stack y otras plataformas.
 
 ## Inicio Rápido (Elastic Stack)
 
@@ -47,27 +47,33 @@ sigma convert -t qradar siem/sigma/*.yml
 
 ## Esquema JSONL de RedAudit
 
+Las exportaciones JSONL se generan solo cuando el cifrado de reportes está desactivado.
+
 ### findings.jsonl
 
 Cada línea contiene un hallazgo de vulnerabilidad:
 
 ```json
 {
-  "@timestamp": "2025-12-18T12:00:00Z",
-  "event": {
-    "module": "redaudit",
-    "category": "vulnerability"
-  },
-  "host": {
-    "ip": "192.168.1.100",
-    "name": "webserver"
-  },
-  "vulnerability": {
-    "id": "CVE-2021-44228",
-    "severity": "critical",
-    "score": 10.0,
-    "description": "Log4Shell RCE"
-  }
+  "finding_id": "b6c5c8b5...",
+  "asset_id": "7f3a2d1c...",
+  "asset_ip": "192.168.1.100",
+  "asset_hostname": "webserver",
+  "port": 443,
+  "url": "https://192.168.1.100/",
+  "severity": "high",
+  "normalized_severity": 8.2,
+  "category": "vuln",
+  "title": "Cifrado TLS débil",
+  "descriptive_title": "Se detectó una suite TLS débil",
+  "source": "testssl",
+  "cve_ids": ["CVE-2021-12345"],
+  "timestamp": "2025-12-18T12:00:00Z",
+  "scan_mode": "normal",
+  "session_id": "9db9b6b1-2c4c-4b2a-8d42-0b0a6f0b0a3f",
+  "schema_version": "3.9.9",
+  "scanner": "RedAudit",
+  "scanner_version": "3.9.9"
 }
 ```
 
@@ -77,20 +83,25 @@ Cada línea contiene un host/servicio descubierto:
 
 ```json
 {
-  "@timestamp": "2025-12-18T12:00:00Z",
-  "event": {
-    "module": "redaudit",
-    "category": "host"
-  },
-  "host": {
-    "ip": "192.168.1.100",
-    "mac": "00:11:22:33:44:55",
-    "vendor": "Dell Inc."
-  },
-  "service": {
-    "name": "ssh",
-    "version": "OpenSSH 8.9p1"
-  }
+  "asset_id": "7f3a2d1c...",
+  "ip": "192.168.1.100",
+  "hostname": "webserver",
+  "status": "up",
+  "risk_score": 72,
+  "asset_type": "server",
+  "os_detected": "Linux 5.x",
+  "total_ports": 6,
+  "web_ports": 2,
+  "finding_count": 3,
+  "tags": ["web", "linux"],
+  "mac": "00:11:22:33:44:55",
+  "vendor": "Dell Inc.",
+  "timestamp": "2025-12-18T12:00:00Z",
+  "scan_mode": "normal",
+  "session_id": "9db9b6b1-2c4c-4b2a-8d42-0b0a6f0b0a3f",
+  "schema_version": "3.9.9",
+  "scanner": "RedAudit",
+  "scanner_version": "3.9.9"
 }
 ```
 
@@ -104,14 +115,14 @@ Cada línea contiene un host/servicio descubierto:
 
 ## Integración con Splunk
 
-Para Splunk, usa el HTTP Event Collector (HEC):
+Para Splunk, usa el HTTP Event Collector (HEC) o tu canal de ingestión habitual. RedAudit no incluye configuraciones específicas de Splunk.
 
 1. Crea un token HEC en Splunk
-2. Configura Filebeat con `output.logstash` deshabilitado y `output.http` habilitado
-3. Apunta a tu endpoint HEC de Splunk
+2. Configura tu agente de envío para enviar eventos JSONL a HEC
+3. Mapea los campos de RedAudit a tus índices/sourcetypes
 
 ## Resolución de Problemas
 
 - **¿No hay datos en Elasticsearch?** Revisa los logs de Filebeat: `journalctl -u filebeat -f`
 - **¿Errores de parseo?** Verifica que los archivos JSONL son válidos: `jq . < findings.jsonl`
-- **¿Faltan campos?** Verifica la compatibilidad de versión ECS
+- **¿Faltan campos?** Verifica las transformaciones de Filebeat/Logstash y el mapeo ECS

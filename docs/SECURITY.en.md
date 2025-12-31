@@ -4,7 +4,7 @@
 
 **Audience:** Compliance, SecOps
 **Scope:** Privilege model, encryption specs, input validation.
-**Source of Truth:** `redaudit/core/crypto.py`, `redaudit/utils/validators.py`
+**Source of Truth:** `redaudit/core/crypto.py`, `redaudit/core/scanner/utils.py`, `redaudit/core/command_runner.py`
 
 ---
 
@@ -16,7 +16,7 @@
 
 If you discover a security vulnerability in RedAudit, please report it responsibly:
 
-1. **Email**: Send details to `security@dorinbadea.com`
+1. **Email**: Send details to `dorinidtech@gmail.com`
 2. **Include**:
    - Description of the vulnerability
    - Steps to reproduce
@@ -61,7 +61,7 @@ All external inputs—target ranges, hostnames, interface names—are treated as
 - **Hostname Validation**: Regex allowlisting (`^[a-zA-Z0-9\.\-]+$`) ensures only alphanumeric characters, dots, and hyphens.
 - **Length Limits**: All inputs are truncated to `MAX_INPUT_LENGTH` (1024 chars) to prevent buffer-based attacks.
 - **Command Injection Prevention**: External commands are executed via `CommandRunner` using argument lists (shell expansion is never used).
-- **Module Location**: `redaudit/core/scanner.py` (`sanitize_ip`, `sanitize_hostname`)
+- **Module Location**: `redaudit/core/scanner/utils.py` (`sanitize_ip`, `sanitize_hostname`)
 
 ## 2. Cryptographic Implementation
 
@@ -70,7 +70,7 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 - **Primitive**: AES-128-CBC (Fernet specification).
 - **Key Management**: Keys are derived from user-supplied passwords using PBKDF2HMAC-SHA256 with 480,000 iterations and a per-session random salt.
 - **Integrity**: Fernet includes a HMAC signature to prevent ciphertext tampering.
-- **Password Policy**: Minimum 12 characters with complexity requirements (uppercase, lowercase, digit).
+- **Password Policy**: Interactive prompts enforce 12+ characters with complexity requirements (uppercase, lowercase, digit). `--encrypt-password` is not validated.
 - **Module Location**: `redaudit/core/crypto.py`
 
 ## 3. Operational Security (OpSec)
@@ -78,22 +78,21 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 - **Artifact Permissions**: RedAudit enforces `0o600` (read/write by owner only) on generated artifacts (reports, HTML/playbooks, JSONL export views, externalized evidence) to reduce leakage to other users on the same system.
 - **Encrypted Mode Safety**: When report encryption is enabled, RedAudit avoids generating additional plaintext artifacts (HTML/JSONL/playbooks/summary/manifests and externalized evidence) alongside `.enc` reports.
 - **Jitter Rate-Limiting**: Configurable rate limiting with ±30% random variance to evade threshold-based IDS and behavioral analysis.
-- **Pre-scan Discretion**: Asyncio-based port discovery minimizes nmap invocations, reducing overall network footprint.
+- **HyperScan Discovery**: Async TCP/UDP/ARP discovery can reduce nmap invocations when enabled (net discovery).
 - **Heartbeat**: Background monitoring ensures process integrity without requiring interactive shell access.
-- **Module Location**: `redaudit/core/reporter.py` (file permissions), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/prescan.py` (fast discovery)
+- **Module Location**: `redaudit/core/reporter.py` (file permissions), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (async discovery)
 
 ## 4. Audit Trail
 
 All operations are logged to `~/.redaudit/logs/` with rotation policies (max 10MB, 5 backups). Logs contain execution timestamps, thread identifiers, and raw command invocations for accountability.
 
-**Session Capture Security (v3.7+)**: The `session_logs/` directory contains raw terminal output (`session_*.log`) which may include sensitive data displayed during the scan. These files are protected with `0o600` permissions.
+**Session Capture Security (v3.7+)**: The `session_logs/` directory contains raw terminal output (`session_*.log`) which may include sensitive data displayed during the scan. Permissions follow the output directory and user umask; treat these logs as sensitive artifacts.
 
 ## 5. CI/CD Security
 
 Automated security controls are integrated into the development pipeline:
 
 - **Bandit**: Static security linting for Python code on every push/PR
-- **Dependabot**: Weekly scans for vulnerable dependencies (pip, GitHub Actions)
 - **CodeQL**: Static analysis for security vulnerabilities on every push/PR
 - **Multi-version Testing**: Compatibility verified across Python 3.9-3.12
 
@@ -103,7 +102,7 @@ The codebase is organized into focused modules to improve maintainability and au
 
 - **Core modules** (`redaudit/core/`): Security-critical functionality
 - **Utilities** (`redaudit/utils/`): Constants and internationalization
-- **Tests**: Automated test suite runs in GitHub Actions (`.github/workflows/tests.yml`) across Python 3.9–3.12 (2200+ tests passed).
+- **Tests**: Automated test suite runs in GitHub Actions (`.github/workflows/tests.yml`) across Python 3.9–3.12.
 
 ## 7. Reliable Auto-Update
 
@@ -128,7 +127,7 @@ RedAudit supports storing NVD API keys for CVE correlation:
 
 - **Config File**: `~/.redaudit/config.json` with `0600` permissions
 - **Environment Variable**: `NVD_API_KEY` (never logged)
-- **Priority**: CLI flag → Environment → Config file
+- **Priority**: CLI flag overrides; otherwise config file or `NVD_API_KEY` env var
 - **No plaintext in logs**: API keys are never written to log files
 - **Atomic writes**: Config updates use temp file + rename for crash safety
 
@@ -178,7 +177,7 @@ RedAudit v3.2 introduces **Active Reconnaissance** capabilities (`--redteam`, `-
 
 ### HTML Reports (`--html-report`)
 
-- **Offline/Air-gap Safe**: The generated HTML reports are fully self-contained. All CSS (Bootstrap) and JS (Chart.js) logic is embedded directly into the file. No external requests are made when opening the report, making it safe for air-gapped analysis stations.
+- **Offline/Air-gap**: The report embeds its CSS, but charts load Chart.js from a CDN. In air-gapped environments, the report still opens; charts may not render without that dependency.
 - **No Remote Tracking**: No analytics or tracking pixels are included.
 
 ### Webhook Alerts (`--webhook`)

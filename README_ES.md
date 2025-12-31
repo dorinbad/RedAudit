@@ -12,15 +12,15 @@
 
 ## ¿Qué es RedAudit?
 
-RedAudit es un **framework de auditoría de red inteligente y basado en evidencia**, diseñado para automatizar el ciclo de vida completo de una evaluación de seguridad.
+RedAudit es un **framework de auditoría de red automatizada** para evaluaciones autorizadas. Coordina descubrimiento, resolución de identidad y comprobaciones de vulnerabilidades con escalado basado en evidencias, y consolida resultados en informes estructurados (JSON, TXT, HTML y exportaciones JSONL).
 
-A diferencia de los wrappers tradicionales que simplemente ejecutan herramientas en paralelo, RedAudit actúa como un **motor de decisión en ciberseguridad**: descubre activos, identifica su naturaleza (IoT vs Servidor vs Workstation) y escala adaptativamente los escaneos basándose en hallazgos en tiempo real—nunca disparando paquetes indiscriminadamente.
+En lugar de ejecutar todas las herramientas contra todos los hosts, RedAudit escala solo cuando la identidad es débil o las señales son ambiguas, reduciendo ruido sin perder cobertura en entornos complejos.
 
-Orquesta estándares de la industria (`nmap`, `nuclei`, `nikto`) en un flujo de trabajo cohesivo, filtrando el ruido via **tecnología Smart-Check** para entregar reportes limpios y listos para auditoría (JSON/SIEM/HTML) en los que los profesionales pueden confiar.
+Orquesta herramientas estándar (`nmap`, `nikto`, `nuclei` cuando está disponible) y aplica verificación **Smart-Check** para reducir falsos positivos antes de reportar.
 
-**Casos de uso**: Hardening defensivo, scoping para pentesting, seguimiento de cambios entre evaluaciones.
+**Casos de uso**: Hardening defensivo, acotación de pentests, seguimiento de cambios entre evaluaciones.
 
-**Diferenciador clave**: Escalación por identidad (TCP → UDP Profundo) combinada con **Filtrado Inteligente** que verifica proactivamente hallazgos (ej: magic bytes, chequeos de banner) para eliminar falsos positivos antes de reportar.
+**Diferenciador clave**: Escalado por identidad (TCP → sondas UDP) combinado con **Smart-Check** (Content-Type, tamaño, magic bytes y señales de cabeceras/vendor) para reducir falsos positivos.
 
 ---
 
@@ -49,13 +49,13 @@ sudo redaudit
 
 | Capacidad | Descripción |
 | :--- | :--- |
-| **Deep Scan Adaptativo** | Escalación en 3 fases (TCP → UDP Prioritario → UDP Extendido) solo cuando la identidad es débil o el host no responde |
-| **HyperScan** | Batch TCP async + broadcast UDP IoT + ARP agresivo para triage ultrarrápido |
-| **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para detección de redes ocultas |
-| **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPNP) para detección de redes de invitados |
-| **Verificación sin agente** | Probing SMB/RDP/LDAP/SSH/HTTP con fingerprinting de dispositivos (patrones de vendor/servicio) |
-| **Detección Interfaces VPN** | Clasifica gateways VPN via heurística same-MAC, puertos VPN (500/4500/1194/51820), y patrones hostname |
-| **Modo Sigiloso** | Timing paranoid T1, mono-hilo, retardos 5s+ para evasión IDS empresarial |
+| **Deep Scan Adaptativo** | Escalación en 3 fases (TCP → sonda UDP prioritaria → UDP top-ports) cuando la identidad es débil o ambigua |
+| **HyperScan** | Barrido TCP asíncrono + sondas UDP de descubrimiento (incluye broadcast cuando procede) + ARP agresivo |
+| **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para contexto de red |
+| **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPnP/ARP/FPING) para visibilidad L2 |
+| **Verificación sin agente** | Sondas SMB/RDP/LDAP/SSH/HTTP para pistas de identidad |
+| **Detección Interfaces VPN** | Clasifica endpoints VPN por heurísticas de MAC/IP de gateway, puertos VPN y patrones de hostname |
+| **Modo Sigiloso** | Timing T1, 1 hilo, retardos 5s+ para entornos sensibles a IDS (`--stealth`) |
 
 ### Inteligencia y Correlación
 
@@ -63,15 +63,15 @@ sudo redaudit
 | :--- | :--- |
 | **Correlación CVE** | NVD API 2.0 con matching CPE 2.3 y caché de 7 días |
 | **Búsqueda de Exploits** | Consultas automáticas a ExploitDB (`searchsploit`) para servicios detectados |
-| **Escaneo de Templates** | Templates Nuclei con detección de falsos positivos (mapeo server header vs vendor) |
+| **Escaneo de Templates** | Templates Nuclei con comprobaciones best-effort de falsos positivos (cabeceras/vendor/título) |
 | **Filtro Smart-Check** | Reducción de falsos positivos en 3 capas (Content-Type, tamaño, magic bytes) |
-| **Detección de Fugas de Subred** | Identifica redes ocultas via análisis de redirects/headers HTTP |
+| **Detección de Fugas de Subred** | Identifica redes ocultas vía análisis de redirects/cabeceras HTTP |
 
 ### Reportes e Integración
 
 | Capacidad | Descripción |
 | :--- | :--- |
-| **Salida Multi-Formato** | JSON, TXT, dashboard HTML, JSONL (compatible ECS v8.11) |
+| **Salida Multi-Formato** | JSON, TXT, dashboard HTML y exportaciones JSONL para SIEM |
 | **Playbooks de Remediación** | Guías Markdown auto-generadas por host/categoría |
 | **Análisis Diferencial** | Compara reportes JSON para rastrear cambios en la red |
 | **Exportaciones SIEM-Ready** | JSONL con scoring de riesgo y hash de observables para deduplicación |
@@ -82,7 +82,7 @@ sudo redaudit
 | Capacidad | Descripción |
 | :--- | :--- |
 | **Defaults Persistentes** | Preferencias de usuario guardadas en `~/.redaudit/config.json` |
-| **Webhooks Interactivos** | Alertas tiempo real via Slack, Teams o PagerDuty (configurables en wizard) |
+| **Webhooks Interactivos** | Alertas por webhook para hallazgos high/critical (wizard o CLI) |
 | **Logging de Sesión** | Captura de salida terminal en doble formato (`.log` raw + `.txt` limpio) |
 | **Escaneo con Timeout** | Escaneos de host con timeout duro; progreso con ETA límite |
 | **Soporte IPv6 + Proxy** | Escaneo dual-stack completo con pivoting SOCKS5 |
@@ -247,20 +247,18 @@ Lanza sin argumentos para setup guiado:
 sudo redaudit
 ```
 
-El wizard te guiará:
+El wizard te guía por la selección de objetivo y el perfil de auditoría. Ofrece 4 perfiles:
 
-El wizard ofrece 4 perfiles de auditoría:
+- **Express**: Descubrimiento rápido (solo hosts). Topología + descubrimiento de red activados; escaneo de vulnerabilidades desactivado.
+- **Estándar**: Auditoría equilibrada (nmap `-F`/top 100 puertos + comprobaciones web). El preset de temporización se elige al inicio.
+- **Exhaustivo**: Escaneo completo con más profundidad. UDP top-ports (500) se activa en hosts ambiguos; Red Team y verificación sin agente activadas. La correlación CVE solo se habilita si ya hay API key NVD configurada.
+- **Custom**: Wizard completo de 8 pasos con navegación atrás para control granular.
 
-- **Express**: Descubrimiento rápido (solo hosts, sin escaneo de puertos)
-- **Estándar**: Auditoría balanceada (top 1000 puertos + chequeos de vulnerabilidades)
-- **Exhaustivo**: Máxima cobertura (los 65535 puertos + UDP 500 + Red Team + correlación CVE)
-- **Custom**: Wizard completo de 8 pasos para control granular
+El wizard cubre:
 
-Después de seleccionar un perfil, configurarás:
-
-1. **Selección de Objetivo**: Elige una subred local o introduce CIDR manual
-2. **Modo de Temporización**: Selecciona Stealth (T1), Normal (T4), o Agresivo (T5)
-3. **Opciones**: Configura hilos, rate limiting, cifrado (varía según perfil)
+1. **Selección de objetivo**: Elige una subred local o introduce CIDR manual
+2. **Preset de temporización**: Stealth (T1), Normal (T4) o Agresivo (T5) en Estándar/Exhaustivo
+3. **Opciones**: Hilos, rate limiting, UDP/topología/descubrimiento, verificación sin agente (según perfil)
 4. **Autorización**: Confirma que tienes permiso para escanear
 
 ### Modo No Interactivo / Automatización
@@ -303,7 +301,7 @@ redaudit --diff ~/reports/lunes.json ~/reports/viernes.json
 | `--stealth` | Activar timing paranoid para evasión IDS |
 | `-y, --yes` | Omitir confirmaciones (modo automatización) |
 
-Consulta `redaudit --help` o [USAGE.md](docs/USAGE.es.md) para la lista completa de más de 40 opciones.
+Consulta `redaudit --help` o [USAGE.md](docs/USAGE.es.md) para la lista completa de opciones.
 
 ---
 
@@ -315,9 +313,9 @@ RedAudit aplica plantillas de temporización nmap según tu selección:
 
 | Modo | Plantilla Nmap | Threads | Delay | Caso de Uso |
 | :--- | :--- | :--- | :--- | :--- |
-| **Stealth** | `-T1` | 4 | 300ms | Evasión IDS, redes ruidosas, dispositivos legacy |
-| **Normal** | `-T4` | 16 | 0ms | Auditorías estándar (default, velocidad/ruido balanceado) |
-| **Agresivo** | `-T5` | 32 | 0ms | Escaneos urgentes, redes confiables |
+| **Stealth** | `-T1` | 1 (forzado por `--stealth`) | 5s+ | Redes sensibles a IDS |
+| **Normal** | `-T4` | 6 (defecto; configurable) | 0s | Auditorías estándar (equilibrio velocidad/ruido) |
+| **Agresivo** | `-T5` | 16 (preset del wizard; configurable) | 0s | Escaneos urgentes en redes confiables |
 
 ### Comportamiento de Escaneo
 
@@ -325,12 +323,12 @@ RedAudit aplica plantillas de temporización nmap según tu selección:
 | :--- | :--- | :--- |
 | `--threads N` | Escaneo paralelo de hosts | 6 para equilibrado, 2-4 para sigilo |
 | `--rate-limit N` | Retardo inter-host (segundos) | 1-5s para entornos de producción |
-| `--udp-ports N` | Puertos UDP en modo full | 100 (defecto), hasta 500 para exhaustivo |
+| `--udp-ports N` | Top UDP en modo full | 100 (defecto), rango 50-500 |
 | `--stealth` | Modo paranoid | Usar cuando evasión IDS es crítica |
 
 ### Salida y Cifrado
 
-Los reportes se guardan en `~/Documents/RedAuditReports` (defecto) con timestamps.
+Los reportes se guardan bajo la carpeta Documentos del usuario invocante (p. ej., `~/Documents/RedAuditReports` o `~/Documentos/RedAuditReports`) con timestamps.
 
 **Cifrado** (cuando se usa `-e, --encrypt`):
 
@@ -338,6 +336,10 @@ Los reportes se guardan en `~/Documents/RedAuditReports` (defecto) con timestamp
 2. Tu contraseña deriva una clave de 32 bytes via PBKDF2-HMAC-SHA256 (480k iteraciones)
 3. Los archivos se cifran usando Fernet (AES-128-CBC)
 4. Un archivo `.salt` se guarda junto a los reportes cifrados
+
+Cuando el cifrado está activo, se omiten artefactos en claro (HTML/JSONL/playbooks/manifest).
+
+Si ejecutas `--encrypt` en modo no interactivo sin `--encrypt-password`, se genera y muestra una contraseña aleatoria una sola vez.
 
 **Descifrado**:
 
@@ -355,6 +357,7 @@ redaudit --target 192.168.1.0/24 --threads 8 --rate-limit 1 --save-defaults --ye
 ```
 
 Los defaults se almacenan en `~/.redaudit/config.json`.
+Usa `--defaults {ask,use,ignore}` (o `--use-defaults`/`--ignore-defaults`) para controlar su aplicación en ejecuciones no interactivas.
 
 ---
 
@@ -369,7 +372,7 @@ RedAudit orquesta estas herramientas:
 | **Escáner Templates** | `nuclei` | Escáner de templates opcional (habilitar en wizard o con `--nuclei`) |
 | **Inteligencia Exploits** | `searchsploit` | Búsqueda ExploitDB para servicios detectados |
 | **Inteligencia CVE** | NVD API | Correlación CVE para versiones de servicios |
-| **Análisis SSL/TLS** | `testssl.sh` | Escaneo profundo de vulnerabilidades SSL/TLS |
+| **Análisis SSL/TLS** | `testssl.sh` | Escaneo profundo de vulnerabilidades SSL/TLS (requerido para checks TLS profundos; lo instala el instalador) |
 | **Captura de Tráfico** | `tcpdump`, `tshark` | Captura de paquetes para análisis de protocolos |
 | **DNS/Whois** | `dig`, `whois` | DNS inverso y consulta de propiedad |
 | **Topología** | `arp-scan`, `ip route` | Descubrimiento L2, detección VLAN, mapeo gateway |
@@ -384,7 +387,7 @@ redaudit/
 ├── core/                   # Funcionalidad principal
 │   ├── auditor.py          # Orquestador principal
 │   ├── wizard.py           # UI interactiva (WizardMixin)
-│   ├── scanner.py          # Lógica de escaneo Nmap + IPv6
+│   ├── scanner/            # Lógica de escaneo Nmap + helpers IPv6
 │   ├── network.py          # Detección de interfaces/red
 │   ├── hyperscan.py        # Descubrimiento paralelo ultrarrápido
 │   ├── net_discovery.py    # Descubrimiento L2/broadcast mejorado
@@ -400,7 +403,7 @@ redaudit/
 │   ├── reporter.py         # Salida JSON/TXT/HTML/JSONL
 │   ├── html_reporter.py    # Renderizado de reportes HTML
 │   ├── jsonl_exporter.py   # Exportación JSONL para SIEM
-│   ├── siem.py             # Integración SIEM (ECS v8.11)
+│   ├── siem.py             # Integración SIEM (alineación ECS)
 │   ├── diff.py             # Análisis diferencial
 │   ├── crypto.py           # Cifrado/descifrado AES-128
 │   ├── command_runner.py   # Ejecución segura comandos externos
@@ -425,7 +428,7 @@ redaudit/
 | **HyperScan** | Módulo de descubrimiento async ultrarrápido (batch TCP, UDP IoT, ARP agresivo) |
 | **Smart-Check** | Filtro de falsos positivos en 3 capas (Content-Type, tamaño, magic bytes) |
 | **Entity Resolution** | Consolidación de dispositivos multi-interfaz en activos unificados |
-| **ECS** | Elastic Common Schema v8.11 para compatibilidad SIEM |
+| **ECS** | Elastic Common Schema (ECS) para compatibilidad SIEM |
 | **Finding ID** | Hash SHA256 determinístico para correlación entre escaneos |
 | **CPE** | Common Platform Enumeration v2.3 para matching NVD |
 | **JSONL** | Formato JSON Lines para ingesta streaming SIEM |
@@ -433,7 +436,7 @@ redaudit/
 | **PBKDF2** | Derivación de clave basada en contraseña (480k iteraciones) |
 | **Thread Pool** | Workers concurrentes para escaneo paralelo de hosts |
 | **Rate Limiting** | Retardo inter-host con jitter ±30% para evasión IDS |
-| **Heartbeat** | Hilo de fondo que advierte si el escaneo está silencioso >300s |
+| **Heartbeat** | Hilo de fondo que avisa tras ~60s de silencio (umbral de fallo ~300s) |
 
 ### Solución de Problemas
 
@@ -458,7 +461,7 @@ Consulta [CHANGELOG_ES.md](CHANGELOG_ES.md) para el historial completo de versio
 
 ## Contribución
 
-¡Agradecemos las contribuciones! Consulta [CONTRIBUTING_ES.md](.github/CONTRIBUTING_ES.md) para más detalles.
+¡Agradecemos las contribuciones! Consulta [CONTRIBUTING_ES.md](CONTRIBUTING_ES.md) para más detalles.
 
 ## Licencia
 
