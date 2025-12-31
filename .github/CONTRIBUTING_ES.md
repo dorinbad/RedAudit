@@ -107,7 +107,7 @@ El código está organizado como un paquete Python:
 
 - **Cobertura**: Las nuevas features deben incluir tests
 - **Validación Local**: Ejecuta `pytest tests/` antes de enviar PRs
-- **Script de Verificación**: Ejecuta `bash redaudit_verify.sh` para chequeos de entorno
+- **Script de Verificación**: Ejecuta `bash redaudit_verify.sh` para comprobaciones de entorno
 - **CI/CD**: GitHub Actions ejecuta tests automáticamente en PRs (Python 3.9-3.12)
 
 ---
@@ -150,7 +150,7 @@ chore: actualizar dependencias
 ### 4. Proceso de Revisión
 
 - Todos los PRs requieren al menos una revisión
-- CI/CD debe pasar (tests, linting, chequeos de seguridad)
+- CI/CD debe pasar (tests, linting, comprobaciones de seguridad)
 - Responder al feedback de revisores prontamente
 - Hacer squash de commits antes del merge (si se solicita)
 

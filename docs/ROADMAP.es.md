@@ -46,12 +46,12 @@ Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con r
 | **Reportes HTML Mejorados** | v3.9.0 | `redaudit/templates/report*.html.j2`. Hallazgos expandibles, análisis smart scan, playbooks, evidencia. |
 | **Detección FPs Nuclei** | v3.9.0 | `redaudit/core/verify_vuln.py`. Mapeo server header vs CPE para marcar FPs. |
 | **Consistencia de Colores** | v3.8.4 | `redaudit/core/auditor.py`. Usa Rich console.print() cuando el progreso está activo para asegurar colores correctos. |
-| **Identidad del Auditor** | v3.8.3 | `redaudit/core/wizard.py`. Prompt del wizard para nombre del auditor, visible en reportes TXT/HTML. |
+| **Identidad del Auditor** | v3.8.3 | `redaudit/core/wizard.py`. Prompt del asistente para nombre del auditor, visible en reportes TXT/HTML. |
 | **Reportes HTML Bilingües** | v3.8.3 | `redaudit/core/reporter.py`. Cuando el idioma es ES, se genera `report_es.html` junto al HTML principal. |
-| **Navegación del Wizard** | v3.8.1 | `redaudit/core/wizard.py`. Opción "< Volver" en menús del wizard para navegación paso a paso. |
+| **Navegación del Asistente** | v3.8.1 | `redaudit/core/wizard.py`. Opción "< Volver" en menús del asistente para navegación paso a paso. |
 | **Watermark HTML** | v3.8.2 | `redaudit/templates/report.html.j2`. Footer profesional con GPLv3, autor y enlace a GitHub. |
-| **Webhooks Interactivos** | v3.7.0 | `redaudit/core/wizard.py`. Configura Slack/Teams directamente en el wizard. |
-| **Wizard: Net Discovery Avanzado** | v3.7.0 | `redaudit/core/wizard.py`. Configura SNMP/DNS/Targets interactivamente. |
+| **Webhooks Interactivos** | v3.7.0 | `redaudit/core/wizard.py`. Configura Slack/Teams directamente en el asistente. |
+| **Asistente: Net Discovery Avanzado** | v3.7.0 | `redaudit/core/wizard.py`. Configura SNMP/DNS/Targets interactivamente. |
 | **Pipeline SIEM Nativo** | v3.7.0 | `siem/`. Configs para Filebeat/Logstash + reglas Sigma. |
 | **Logging de Sesión** | v3.7.0 | `redaudit/utils/session_log.py`. Captura salida de terminal a `.log` y `.txt`. |
 | **Progreso estable (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/hyperscan.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Reduce flickering y muestra ETA. |
@@ -60,8 +60,8 @@ Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con r
 
 | Característica | Versión | Verificación |
 | :--- | :--- | :--- |
-| **Integración Nuclei** | v3.6.0 | Módulo `redaudit/core/nuclei.py`. Ejecuta templates cuando Nuclei está instalado y se habilita explícitamente (wizard o `--nuclei`). |
-| **Verificación sin agente** | v3.7.3 | `redaudit/core/agentless_verify.py`. Fingerprinting SMB/RDP/LDAP/SSH/HTTP opcional (wizard o `--agentless-verify`). |
+| **Integración Nuclei** | v3.6.0 | Módulo `redaudit/core/nuclei.py`. Ejecuta templates cuando Nuclei está instalado y se habilita explícitamente (asistente o `--nuclei`). |
+| **Verificación sin agente** | v3.7.3 | `redaudit/core/agentless_verify.py`. Fingerprinting SMB/RDP/LDAP/SSH/HTTP opcional (asistente o `--agentless-verify`). |
 | **Probe HTTP en hosts silenciosos** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner/enrichment.py`. Probe HTTP/HTTPS breve en puertos comunes para hosts con vendor y cero puertos abiertos. |
 | **Generación Playbooks** | v3.4.0 | Módulo `redaudit/core/playbook_generator.py`. Crea guías de remediación MD en `playbooks/`. |
 | **Red Team: Kerberos** | v3.2.0 | Módulo `redaudit/core/net_discovery.py`. Usa `kerbrute` para enumeración si está autorizado. |

@@ -91,7 +91,7 @@ RedAudit verifica actualizaciones al iniciar (modo interactivo). Para omitir: `-
 
 ## 4. Selector de Perfil del Wizard (v3.9.0+)
 
-Al ejecutar `sudo redaudit` en modo interactivo, el wizard pregunta qué perfil de escaneo usar. Los perfiles preconfigurados son:
+Al ejecutar `sudo redaudit` en modo interactivo, el asistente pregunta qué perfil de escaneo usar. Los perfiles preconfigurados son:
 
 ### Express
 
@@ -186,7 +186,7 @@ Cuando está habilitado, RedAudit ejecuta scripts ligeros de Nmap sobre hosts co
 identidad (pistas de SO, dominio, títulos/cabeceras y fingerprints básicos). No usa credenciales y es opt-in para mantener el ruido
 controlado.
 
-- Activar desde el wizard o con `--agentless-verify`.
+- Activar desde el asistente o con `--agentless-verify`.
 - Limitar alcance con `--agentless-verify-max-targets` (defecto: 20).
 
 ---

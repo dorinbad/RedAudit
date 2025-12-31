@@ -35,7 +35,7 @@ cd RedAudit && sudo bash redaudit_install.sh
 sudo redaudit --target 192.168.1.0/24 --mode normal --yes
 ```
 
-Para modo interactivo (wizard guiado), simplemente ejecuta:
+Para modo interactivo (asistente guiado), simplemente ejecuta:
 
 ```bash
 sudo redaudit
@@ -82,7 +82,7 @@ sudo redaudit
 | Capacidad | Descripción |
 | :--- | :--- |
 | **Defaults Persistentes** | Preferencias de usuario guardadas en `~/.redaudit/config.json` |
-| **Webhooks Interactivos** | Alertas por webhook para hallazgos high/critical (wizard o CLI) |
+| **Webhooks Interactivos** | Alertas por webhook para hallazgos high/critical (asistente o CLI) |
 | **Logging de Sesión** | Captura de salida terminal en doble formato (`.log` raw + `.txt` limpio) |
 | **Escaneo con Timeout** | Escaneos de host con timeout duro; progreso con ETA límite |
 | **Soporte IPv6 + Proxy** | Escaneo dual-stack completo con pivoting SOCKS5 |
@@ -98,7 +98,7 @@ sudo redaudit
 
 RedAudit opera como una capa de orquestación, gestionando hilos de ejecución concurrentes para la interacción de red y el procesamiento de datos. Implementa una arquitectura multifase:
 
-1. **Hyperscan**: Descubrimiento async UDP/TCP.
+1. **HyperScan**: Descubrimiento async UDP/TCP.
 2. **Deep Scan Adaptativo**: Enumeración dirigida basada en la identidad del host.
 3. **Resolución de Entidad**: Consolidación de dispositivos multi-interfaz en activos únicos.
 4. **Filtrado Inteligente**: Reducción de ruido via verificación consciente del contexto (`verify_vuln.py`).
@@ -247,14 +247,14 @@ Lanza sin argumentos para setup guiado:
 sudo redaudit
 ```
 
-El wizard te guía por la selección de objetivo y el perfil de auditoría. Ofrece 4 perfiles:
+El asistente te guía por la selección de objetivo y el perfil de auditoría. Ofrece 4 perfiles:
 
 - **Express**: Descubrimiento rápido (solo hosts). Topología + descubrimiento de red activados; escaneo de vulnerabilidades desactivado.
 - **Estándar**: Auditoría equilibrada (nmap `-F`/top 100 puertos + comprobaciones web). El preset de temporización se elige al inicio.
 - **Exhaustivo**: Escaneo completo con más profundidad. UDP top-ports (500) se activa en hosts ambiguos; Red Team y verificación sin agente activadas. La correlación CVE solo se habilita si ya hay API key NVD configurada.
 - **Custom**: Wizard completo de 8 pasos con navegación atrás para control granular.
 
-El wizard cubre:
+El asistente cubre:
 
 1. **Selección de objetivo**: Elige una subred local o introduce CIDR manual
 2. **Preset de temporización**: Stealth (T1), Normal (T4) o Agresivo (T5) en Estándar/Exhaustivo
@@ -315,7 +315,7 @@ RedAudit aplica plantillas de temporización nmap según tu selección:
 | :--- | :--- | :--- | :--- | :--- |
 | **Stealth** | `-T1` | 1 (forzado por `--stealth`) | 5s+ | Redes sensibles a IDS |
 | **Normal** | `-T4` | 6 (defecto; configurable) | 0s | Auditorías estándar (equilibrio velocidad/ruido) |
-| **Agresivo** | `-T5` | 16 (preset del wizard; configurable) | 0s | Escaneos urgentes en redes confiables |
+| **Agresivo** | `-T5` | 16 (preset del asistente; configurable) | 0s | Escaneos urgentes en redes confiables |
 
 ### Comportamiento de Escaneo
 
@@ -369,7 +369,7 @@ RedAudit orquesta estas herramientas:
 | :--- | :--- | :--- |
 | **Escáner Core** | `nmap`, `python3-nmap` | Escaneo TCP/UDP, detección de servicios/versión, fingerprinting SO |
 | **Reconocimiento Web** | `whatweb`, `curl`, `wget`, `nikto` | Cabeceras HTTP, tecnologías, vulnerabilidades |
-| **Escáner Templates** | `nuclei` | Escáner de templates opcional (habilitar en wizard o con `--nuclei`) |
+| **Escáner Templates** | `nuclei` | Escáner de templates opcional (habilitar en asistente o con `--nuclei`) |
 | **Inteligencia Exploits** | `searchsploit` | Búsqueda ExploitDB para servicios detectados |
 | **Inteligencia CVE** | NVD API | Correlación CVE para versiones de servicios |
 | **Análisis SSL/TLS** | `testssl.sh` | Escaneo profundo de vulnerabilidades SSL/TLS (requerido para checks TLS profundos; lo instala el instalador) |

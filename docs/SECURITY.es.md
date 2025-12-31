@@ -19,7 +19,20 @@
 
 RedAudit implementa una filosofía de "seguro por diseño", asumiendo la ejecución en entornos hostiles o no confiables. Este documento describe los controles de seguridad relacionados con el manejo de entrada, criptografía y seguridad operacional.
 
-No reportes vulnerabilidades de seguridad mediante issues públicas. Envía los detalles a `dorinidtech@gmail.com` e incluye descripción, pasos de reproducción, impacto y, si existe, propuesta de fix. Recibirás acuse en 48h y coordinaremos la divulgación responsable.
+### Notificación de vulnerabilidades
+
+**Por favor, no divulgues vulnerabilidades de seguridad mediante issues públicas de GitHub.**
+
+Si descubres una vulnerabilidad de seguridad en RedAudit, notifícala de forma responsable:
+
+1. **Email**: Envía los detalles a `dorinidtech@gmail.com`
+2. **Incluye**:
+   - Descripción de la vulnerabilidad
+   - Pasos para reproducirla
+   - Impacto potencial
+   - Propuesta de corrección (si está disponible)
+3. **Tiempo de respuesta**: Normalmente confirmamos la recepción en 48 horas laborables
+4. **Divulgación**: Seguimos divulgación responsable - coordinaremos contigo el momento de divulgación pública
 
 ## Versiones soportadas
 
@@ -29,8 +42,8 @@ No reportes vulnerabilidades de seguridad mediante issues públicas. Envía los 
 | 3.8.x | Sí | Soportada |
 | 3.7.x | Sí | Soportada |
 | 3.6.x | Sí | Soportada |
-| 3.5.x | Solo fixes de seguridad | Mantenimiento |
-| 3.4.x | Solo fixes de seguridad | EOL: Junio 2026 |
+| 3.5.x | Solo correcciones de seguridad | Mantenimiento |
+| 3.4.x | Solo correcciones de seguridad | EOL: Junio 2026 |
 | < 3.4 | No | EOL |
 
 ## 1. Sanitización de Entrada
@@ -58,7 +71,7 @@ El cifrado de reportes se gestiona mediante la librería `cryptography` para ase
 
 - **Permisos de Artefactos**: RedAudit aplica `0o600` (lectura/escritura solo para el propietario) a los artefactos generados (reportes, HTML/playbooks, vistas JSONL/JSON, evidencia externalizada) para reducir filtraciones a otros usuarios del sistema.
 - **Seguridad en Modo Cifrado**: Si el cifrado de reportes está activado, RedAudit evita generar artefactos adicionales en texto plano (HTML/JSONL/playbooks/resumen/manifiestos y evidencia externalizada) junto a reportes `.enc`.
-- **Rate-Limiting con Jitter**: Limitación de velocidad configurable con varianza aleatoria ±30% para evadir IDS basados en umbrales y análisis de comportamiento.
+- **Rate-Limiting con Jitter**: Limitación de velocidad configurable con varianza aleatoria ±30% para reducir predictibilidad en entornos sensibles a IDS.
 - **Descubrimiento HyperScan**: Descubrimiento TCP/UDP/ARP asíncrono puede reducir invocaciones de nmap cuando está habilitado (net discovery).
 - **Heartbeat**: Monitoreo en segundo plano asegura la integridad del proceso sin requerir acceso interactivo a la shell.
 - **Ubicación del Módulo**: `redaudit/core/reporter.py` (permisos), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (descubrimiento asíncrono)
