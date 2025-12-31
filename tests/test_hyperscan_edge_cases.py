@@ -130,10 +130,24 @@ def test_detect_potential_backdoors_sev():
 
 def test_hyperscan_with_progress_fallback():
     """Test hyperscan_with_progress rich missing fallback (lines 1109, 1111)."""
-    with patch("builtins.__import__", side_effect=ImportError("No rich")):
+    # Mock the rich.progress import to raise ImportError
+    import sys
+
+    # Temporarily remove rich from sys.modules cache to force re-import attempt
+    orig_rich = sys.modules.get("rich.progress")
+    sys.modules["rich.progress"] = None  # This will cause ImportError during import
+
+    try:
+        # Now when hyperscan_with_progress tries `from rich.progress import ...` it will fail
         with patch("redaudit.core.hyperscan.hyperscan_full_discovery", return_value={"ok": True}):
             res = hyperscan_with_progress(["1.1.1.0/24"])
             assert res["ok"] is True
+    finally:
+        # Restore original
+        if orig_rich is not None:
+            sys.modules["rich.progress"] = orig_rich
+        elif "rich.progress" in sys.modules:
+            del sys.modules["rich.progress"]
 
 
 def test_hyperscan_with_nmap_enrichment_missing():

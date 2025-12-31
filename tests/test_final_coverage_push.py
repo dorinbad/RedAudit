@@ -89,8 +89,9 @@ def test_i18n_whitespace_env():
     with patch.dict(os.environ, {"LC_ALL": "   ", "LC_MESSAGES": "", "LANG": ""}):
         # Priority 2 loop, _map will return None for "   "
         # Then system locale fallback
-        with patch("locale.getdefaultlocale", return_value=("es_ES", "UTF-8")):
-            assert detect_preferred_language() == "es"
+        with patch("locale.getlocale", return_value=(None, None)):
+            with patch("locale.getdefaultlocale", return_value=("es_ES", "UTF-8")):
+                assert detect_preferred_language() == "es"
 
 
 # --- updater.py ---

@@ -355,15 +355,25 @@ def test_redteam_bettercap_recon_edge():
 def test_redteam_scapy_custom_exception():
     """Test _redteam_scapy_custom exception (line 2221)."""
     with patch("redaudit.core.net_discovery._is_root", return_value=True):
-        import sys
-
+        # Mock scapy imports
         mock_scapy = MagicMock()
-        with patch.dict("sys.modules", {"scapy": mock_scapy, "scapy.all": MagicMock()}):
-            from scapy.all import sniff
+        mock_scapy.__version__ = "2.4.5"
+        mock_dot1q = MagicMock()
+        mock_sniff = MagicMock(side_effect=Exception("Scapy Error"))
 
+        with patch.dict(
+            "sys.modules",
+            {
+                "scapy": mock_scapy,
+                "scapy.all": MagicMock(Dot1Q=mock_dot1q, sniff=mock_sniff),
+            },
+        ):
+            # Need to patch the actual sniff call inside the function
             with patch("scapy.all.sniff", side_effect=Exception("Scapy Error")):
                 res = _redteam_scapy_custom("eth0", {}, active_l2=True)
-                assert "Scapy Error" in res["error"]
+                # The function returns {"status": "error", "error": "..."} on exception
+                assert res["status"] == "error"
+                assert "Scapy Error" in res.get("error", "")
 
 
 def test_sanitize_iface_none():
