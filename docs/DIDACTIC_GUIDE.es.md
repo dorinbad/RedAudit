@@ -151,7 +151,7 @@ flowchart TD
     C --> D[Lista de hosts UP]
     D --> E[Escaneo Paralelo de Puertos]
     E --> F{¿Disparar Deep Scan?}
-    F -->|No| V[Verificación sin agente (opcional)]
+    F -->|No| V["Verificación sin agente (opcional)"]
     F -->|Sí| H[Deep Scan: 3 Fases]
     H --> V
     V --> G[Enriquecimiento Web/SSL/CVE]
