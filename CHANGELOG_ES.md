@@ -10,6 +10,25 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-01-01 (Gobernanza SmartScan y Fase 0)
+
+### Added
+
+- **Enriquecimiento Fase 0 de bajo impacto (opt-in)**: Sondas opcionales y de timeout corto para reverse DNS, mDNS y SNMP sysDescr para reforzar señales de identidad.
+- **Controles de gobernanza SmartScan**: Umbral de identidad y presupuesto de deep scan para mantener el escalado conservador por defecto.
+- **Asistente con Fase 0**: Flujos Express, Standard, Exhaustive y Personalizado permiten activar el enriquecimiento de bajo impacto con defaults persistentes.
+
+### Changed
+
+- **Gating de escalado SmartScan**: El deep scan solo se dispara cuando la identidad es débil frente al umbral configurado.
+- **Reordenación prioritaria UDP**: Solo aplica en hosts con poca visibilidad TCP e identidad muy débil; nunca en modo stealth.
+
+### Fixed
+
+- **Presupuesto de deep scan bajo concurrencia**: Reserva thread-safe para evitar ejecuciones por encima del presupuesto.
+- **Fallback de DNS en Fase 0**: Evita efectos globales de timeout cuando `dig` no está disponible.
+- **Localización del help CLI**: Los nuevos flags muestran ayuda según el idioma seleccionado.
+
 ## [3.9.9] - 2025-12-29 (Fix de heurística de impresoras)
 
 ### Corregido

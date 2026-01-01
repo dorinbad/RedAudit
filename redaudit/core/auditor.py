@@ -111,7 +111,7 @@ class InteractiveNetworkAuditor(
             "nvd_api_key": None,
             # v2.8: Adaptive deep identity scan
             "deep_id_scan": True,
-            # v3.9.9: SmartScan governance defaults
+            # v3.10.0: SmartScan governance defaults
             "low_impact_enrichment": False,
             "deep_scan_budget": DEFAULT_DEEP_SCAN_BUDGET,
             "identity_threshold": DEFAULT_IDENTITY_THRESHOLD,

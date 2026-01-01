@@ -196,7 +196,7 @@ controlado.
 
 ## 5. Referencia CLI (Completa)
 
-Flags verificadas contra `redaudit --help` (v3.9.9):
+Flags verificadas contra `redaudit --help` (v3.10.0):
 
 ### Core
 

@@ -32,7 +32,7 @@ def test_read_pyproject_version_no_match():
 def test_resolve_version_pyproject_fallback():
     """Test _resolve_version using pyproject fallback (line 73)."""
     with patch("redaudit.utils.constants._read_packaged_version_file", return_value=None):
-        with patch("redaudit.utils.constants._read_pyproject_version", return_value="3.9.9"):
+        with patch("redaudit.utils.constants._read_pyproject_version", return_value="3.10.0"):
             # Can't easily test this without reimporting, but we can test the functions
             result = _read_pyproject_version()
-            assert result == "3.9.9"
+            assert result == "3.10.0"

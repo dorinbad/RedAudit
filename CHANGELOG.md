@@ -10,6 +10,25 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-01-01 (SmartScan Governance & Phase0)
+
+### Added
+
+- **Phase0 low-impact enrichment (opt-in)**: Optional, short-timeout probes for reverse DNS, mDNS, and SNMP sysDescr to strengthen identity signals.
+- **SmartScan governance controls**: Identity threshold and deep scan budget flags to keep escalation conservative by default.
+- **Wizard support for Phase0**: Express, Standard, Exhaustive, and Custom flows can enable low-impact enrichment with persisted defaults.
+
+### Changed
+
+- **SmartScan escalation gating**: Deep scans trigger only when identity is weak relative to the configured threshold.
+- **UDP priority reorder**: Applies only for low-identity hosts with minimal TCP visibility; never in stealth mode.
+
+### Fixed
+
+- **Deep scan budget under concurrency**: Thread-safe reservation prevents over-executing budgeted deep scans.
+- **Phase0 DNS fallback**: Avoids global socket timeout side effects when `dig` is unavailable.
+- **CLI help localization**: New flag help strings reflect selected language.
+
 ## [3.9.9] - 2025-12-29 (Printer Heuristic Fix)
 
 ### Fixed
