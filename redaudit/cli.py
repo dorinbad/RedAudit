@@ -34,6 +34,35 @@ def parse_arguments():
     Returns:
         Parsed arguments namespace
     """
+
+    def _resolve_help_lang(argv):
+        for idx, arg in enumerate(argv):
+            if arg == "--lang" and idx + 1 < len(argv):
+                return "es" if argv[idx + 1].lower() == "es" else "en"
+            if arg.startswith("--lang="):
+                return "es" if arg.split("=", 1)[1].lower() == "es" else "en"
+        return "en"
+
+    help_lang = _resolve_help_lang(sys.argv[1:])
+    if help_lang == "es":
+        help_low_impact = (
+            "Habilita enriquecimiento de bajo impacto (DNS/mDNS/SNMP) antes del escaneo TCP. "
+            "Timeouts cortos, ruido mínimo."
+        )
+        help_deep_budget = (
+            "Máximo hosts que pueden ejecutar Deep Scan agresivo por ejecución (0 = sin límite)."
+        )
+        help_identity_threshold = (
+            "Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3)."
+        )
+    else:
+        help_low_impact = (
+            "Enable low-impact enrichment (DNS/mDNS/SNMP) before TCP scanning. "
+            "Short timeouts, minimal noise."
+        )
+        help_deep_budget = "Max hosts that can run aggressive Deep Scan per run (0 = unlimited)."
+        help_identity_threshold = "Minimum identity_score to skip Deep Scan (default: 3)."
+
     parser = argparse.ArgumentParser(
         description=f"RedAudit v{VERSION} - Network Auditing Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -161,21 +190,21 @@ Examples:
     parser.add_argument(
         "--low-impact-enrichment",
         action="store_true",
-        help="Habilita enriquecimiento de bajo impacto (DNS/mDNS/SNMP) antes del escaneo TCP. Timeouts cortos, ruido mínimo.",
+        help=help_low_impact,
     )
     parser.add_argument(
         "--deep-scan-budget",
         type=int,
         default=DEFAULT_DEEP_SCAN_BUDGET,
         metavar="N",
-        help="Máximo hosts que pueden ejecutar Deep Scan agresivo por ejecución (0 = sin límite).",
+        help=help_deep_budget,
     )
     parser.add_argument(
         "--identity-threshold",
         type=int,
         default=DEFAULT_IDENTITY_THRESHOLD,
         metavar="N",
-        help="Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3).",
+        help=help_identity_threshold,
     )
     parser.add_argument(
         "--yes",
