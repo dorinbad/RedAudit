@@ -26,6 +26,7 @@ from redaudit.utils.constants import (
     DEFAULT_UDP_MODE,
     MAX_THREADS,
     MIN_THREADS,
+    suggest_threads,
     UDP_SCAN_MODE_FULL,
     UDP_SCAN_MODE_QUICK,
     UDP_TOP_PORTS,
@@ -1265,17 +1266,24 @@ class InteractiveNetworkAuditor(
                 # Show step header for UX
                 self.print_status(f"[{step}/{TOTAL_STEPS}] " + self.t("threads"), "INFO")
 
+                suggested_threads = suggest_threads()
+                try:
+                    cores = os.cpu_count()
+                except Exception:
+                    cores = None
+                cores_display = str(cores) if isinstance(cores, int) and cores > 0 else "?"
+
                 default_threads = wizard_state.get(
                     "threads",
                     (
                         defaults_for_run.get("threads")
                         if isinstance(defaults_for_run.get("threads"), int)
                         and MIN_THREADS <= defaults_for_run.get("threads") <= MAX_THREADS
-                        else DEFAULT_THREADS
+                        else suggested_threads
                     ),
                 )
                 self.config["threads"] = self.ask_number(
-                    self.t("threads"),
+                    self.t("threads_suggested", suggested_threads, cores_display),
                     default=default_threads,
                     min_val=MIN_THREADS,
                     max_val=MAX_THREADS,

@@ -131,10 +131,10 @@ DEFAULT_IDENTITY_THRESHOLD = 3
 DEFAULT_DEEP_SCAN_BUDGET = 0
 
 # Thread limits and autodetection.
-# Maximum concurrent host scans is capped at 16. Higher values cause:
+# Maximum concurrent host scans. Higher values cause:
 # - Network congestion (packet loss, switch/router saturation)
 # - Diminishing returns (nmap is I/O bound, not CPU bound)
-# - Increased IDS/IPS trigger probability from burst traffic
+# - IDS/IPS triggers from burst traffic patterns
 # - Memory pressure (~50MB per nmap instance)
 # Tested optimal range: 6-12 for most LANs. 16 is a safe ceiling.
 MAX_THREADS = 16
