@@ -1475,24 +1475,25 @@ class AuditorScanMixin:
             result = {"ip": safe_ip, "error": str(exc)}
             try:
                 deep = None
-                budget = self.config.get("deep_scan_budget", 0)
-                deep_count = getattr(self, "_deep_executed_count", 0)
-                if budget > 0 and deep_count >= budget:
-                    if self.logger:
-                        self.logger.info(
-                            self.t(
-                                "deep_scan_budget_exhausted",
-                                deep_count,
-                                budget,
-                                safe_ip,
+                if self.config.get("deep_id_scan", True):
+                    budget = self.config.get("deep_scan_budget", 0)
+                    deep_count = getattr(self, "_deep_executed_count", 0)
+                    if budget > 0 and deep_count >= budget:
+                        if self.logger:
+                            self.logger.info(
+                                self.t(
+                                    "deep_scan_budget_exhausted",
+                                    deep_count,
+                                    budget,
+                                    safe_ip,
+                                )
                             )
-                        )
-                else:
-                    deep = self.deep_scan_host(safe_ip)
-                    if deep:
-                        result["deep_scan"] = deep
-                        result["status"] = finalize_host_status(result)
-                        self._deep_executed_count = deep_count + 1
+                    else:
+                        deep = self.deep_scan_host(safe_ip)
+                        if deep:
+                            result["deep_scan"] = deep
+                            result["status"] = finalize_host_status(result)
+                            self._deep_executed_count = deep_count + 1
             except Exception:
                 if self.logger:
                     self.logger.debug("Deep scan fallback failed for %s", safe_ip, exc_info=True)
