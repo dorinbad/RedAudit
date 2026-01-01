@@ -40,6 +40,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "threads": None,
         "output_dir": None,
         "rate_limit": None,
+        "low_impact_enrichment": None,
         "udp_mode": None,
         "udp_top_ports": None,
         "topology_enabled": None,

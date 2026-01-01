@@ -2,11 +2,11 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](README.md)
 
-![Versión](https://img.shields.io/badge/v3.9.9-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/v3.10.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
-![Cobertura](https://img.shields.io/badge/cobertura-93%25-brightgreen?style=flat-square)
+![Cobertura](https://img.shields.io/badge/cobertura-92.7%25-brightgreen?style=flat-square)
 
 ![Banner de RedAudit](assets/Banner_es.png)
 
@@ -160,10 +160,10 @@ sigue siendo débil o hay señales sospechosas.
 
 **Heurísticas de Disparo** (qué hace un host "ambiguo", sobre todo en rápido/normal):
 
-- Pocos puertos abiertos (≤3)
+- Pocos puertos abiertos (≤3) solo si la identidad está por debajo del umbral
 - Servicios sospechosos (`unknown`, `tcpwrapped`)
 - Falta de MAC/vendor/hostname
-- Sin versión de servicio (score de identidad bajo)
+- Sin versión de servicio (identidad por debajo del umbral)
 - Puertos filtrados o sin respuesta (fallback)
 - Hosts silenciosos con vendor detectado pueden recibir un probe HTTP/HTTPS breve de titulo/meta/encabezado en puertos comunes
 
@@ -254,11 +254,13 @@ El asistente te guía por la selección de objetivo y el perfil de auditoría. O
 - **Exhaustivo**: Escaneo completo con más profundidad. UDP top-ports (500) se activa en hosts ambiguos; Red Team y verificación sin agente activadas. La correlación CVE solo se habilita si ya hay API key NVD configurada.
 - **Custom**: Wizard completo de 8 pasos con navegación atrás para control granular.
 
+La Fase 0 de enriquecimiento de bajo impacto es un prompt opt-in en todos los perfiles (por defecto desactivada).
+
 El asistente cubre:
 
 1. **Selección de objetivo**: Elige una subred local o introduce CIDR manual
 2. **Preset de temporización**: Stealth (T1), Normal (T4) o Agresivo (T5) en Estándar/Exhaustivo
-3. **Opciones**: Hilos, rate limiting, UDP/topología/descubrimiento, verificación sin agente (según perfil)
+3. **Opciones**: Hilos, rate limiting, Fase 0 de bajo impacto, UDP/topología/descubrimiento, verificación sin agente (según perfil)
 4. **Autorización**: Confirma que tienes permiso para escanear
 
 ### Modo No Interactivo / Automatización

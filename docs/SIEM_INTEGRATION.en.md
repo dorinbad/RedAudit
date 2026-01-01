@@ -71,9 +71,9 @@ Each line contains a vulnerability finding:
   "timestamp": "2025-12-18T12:00:00Z",
   "scan_mode": "normal",
   "session_id": "9db9b6b1-2c4c-4b2a-8d42-0b0a6f0b0a3f",
-  "schema_version": "3.9.9",
+  "schema_version": "3.10.0",
   "scanner": "RedAudit",
-  "scanner_version": "3.9.9"
+  "scanner_version": "3.10.0"
 }
 ```
 
@@ -99,9 +99,9 @@ Each line contains a discovered host/service:
   "timestamp": "2025-12-18T12:00:00Z",
   "scan_mode": "normal",
   "session_id": "9db9b6b1-2c4c-4b2a-8d42-0b0a6f0b0a3f",
-  "schema_version": "3.9.9",
+  "schema_version": "3.10.0",
   "scanner": "RedAudit",
-  "scanner_version": "3.9.9"
+  "scanner_version": "3.10.0"
 }
 ```
 

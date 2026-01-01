@@ -32,6 +32,7 @@ class TestWizardRedTeam(unittest.TestCase):
         app.ask_yes_no = Mock(
             side_effect=[
                 False,  # rate limiting
+                False,  # low impact enrichment
                 True,  # active L2
                 True,  # kerbrute userenum
                 False,  # v3.7: net discovery advanced options
@@ -64,6 +65,7 @@ class TestWizardRedTeam(unittest.TestCase):
         app.ask_yes_no = Mock(
             side_effect=[
                 False,  # rate limiting
+                False,  # low impact enrichment
                 False,  # v3.7: webhook prompt
             ]
         )

@@ -101,7 +101,7 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 - **Features disabled**: Vulnerability scans, Nuclei, CVE correlation, agentless verification
 - **Discovery enabled**: Topology + Network Discovery
 - **Timing**: Fast
-- **Questions**: Minimal (auditor name, output dir)
+- **Questions**: Minimal (Phase 0 prompt, auditor name, output dir)
 - **Best for**: Initial reconnaissance, counting live hosts
 - **Detection heuristics**:
   - **Asset type guessing**: Hints from hostname/vendor/agentless signals (e.g., router, switch, printer, media, IoT, VPN).
@@ -114,7 +114,7 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 - **Mode**: `normal` (nmap `-F` / top 100 ports + version detection)
 - **Features**: web vuln scanning enabled (whatweb; nikto/testssl only in full), searchsploit if available, topology + network discovery enabled
 - **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
-- **Questions**: Profile selection + timing + auditor/output prompts
+- **Questions**: Profile selection + timing + Phase 0 prompt + auditor/output prompts
 - **Best for**: Most security audits
 
 ### Exhaustive
@@ -127,7 +127,7 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 - **Features enabled**: Vulnerabilities, Topology, Net Discovery, Red Team, Agentless Verification; Nuclei if installed
 - **CVE Correlation**: Enabled if NVD API key is configured
 - **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
-- **Questions**: Only auditor name and output dir (all else auto-configured)
+- **Questions**: Phase 0 prompt + auditor name and output dir (all else auto-configured)
 - **Best for**: Penetration testing, compliance audits, pre-production validation
 
 ### Custom
@@ -135,7 +135,7 @@ When running `sudo redaudit` in interactive mode, the wizard asks which **audit 
 **Use case:** Full control over all configuration options.
 
 - **Behavior**: Full 8-step wizard with back navigation
-- **Questions**: Scan mode, threads/rate, vulnerability scan, CVE lookup, output/auditor, UDP/topology, net discovery/red team, agentless verification + webhook
+- **Questions**: Scan mode, threads/rate + Phase 0 prompt, vulnerability scan, CVE lookup, output/auditor, UDP/topology, net discovery/red team, agentless verification + webhook
 - **Best for**: Tailored scans with specific requirements
 
 ---
@@ -167,19 +167,22 @@ When enabled (default), RedAudit performs additional scanning on hosts where ini
 
 **Trigger conditions:**
 
-- Fewer than 3 open ports found
+- Fewer than 3 open ports found (when identity is weak)
 - Services identified as `unknown` or `tcpwrapped`
 - MAC/vendor information not obtained
 - **VPN Gateway Detection**: Host shares the MAC address with the gateway but has a different IP (virtual interface)
 
 **Behavior:**
 
+0. (Optional) Phase 0 low-impact enrichment (DNS reverse, mDNS unicast, SNMP sysDescr) when enabled via the wizard prompt or `--low-impact-enrichment`
 1. Phase 1: Aggressive TCP (`-A -p- -sV -Pn`)
 2. Phase 2a: Priority UDP probe (17 common ports including 500/4500)
 3. Phase 2b: UDP top-ports (`--udp-ports`) when mode is `full` and identity is still weak
 4. Quiet hosts with vendor hints and zero open ports may get a short HTTP/HTTPS probe on common paths
 
 Disable with `--no-deep-scan`.
+
+SmartScan uses an identity score (default threshold: 3; full mode uses 4) to decide whether to escalate.
 
 VPN classification is handled by asset typing heuristics (gateway MAC/IP, VPN ports, hostname patterns) after scanning.
 
@@ -197,7 +200,7 @@ predictable.
 
 ## 5. CLI Reference (Complete)
 
-Flags verified against `redaudit --help` (v3.9.9):
+Flags verified against `redaudit --help` (v3.10.0):
 
 ### Core
 
@@ -217,10 +220,13 @@ Flags verified against `redaudit --help` (v3.9.9):
 | `--rate-limit SECONDS` | Delay between hosts (±30% jitter applied) |
 | `--max-hosts N` | Limit hosts to scan |
 | `--no-deep-scan` | Disable adaptive deep scan |
+| `--low-impact-enrichment` | Low-impact enrichment (DNS/mDNS/SNMP) before TCP scanning |
+| `--deep-scan-budget N` | Max hosts that can run aggressive deep scan per run (0 = unlimited) |
+| `--identity-threshold N` | Minimum identity_score to skip deep scan (default: 3) |
 | `--prescan` | Reserved flag (currently stored in config; no pre-scan executed) |
 | `--prescan-ports RANGE` | Reserved (default: 1-1024) |
 | `--prescan-timeout SECONDS` | Reserved (default: 0.5) |
-| `--stealth` | T1 timing, 1 thread, 5s delay (IDS evasion) |
+| `--stealth` | T1 timing, 1 thread, 5s delay (detection-sensitive environments) |
 
 ### UDP Scanning
 

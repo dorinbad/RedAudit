@@ -21,6 +21,8 @@ from redaudit.utils.constants import (
     COLORS,
     DEFAULT_LANG,
     DEFAULT_THREADS,
+    DEFAULT_DEEP_SCAN_BUDGET,
+    DEFAULT_IDENTITY_THRESHOLD,
     DEFAULT_UDP_MODE,
     MAX_THREADS,
     MIN_THREADS,
@@ -109,6 +111,10 @@ class InteractiveNetworkAuditor(
             "nvd_api_key": None,
             # v2.8: Adaptive deep identity scan
             "deep_id_scan": True,
+            # v3.10.0: SmartScan governance defaults
+            "low_impact_enrichment": False,
+            "deep_scan_budget": DEFAULT_DEEP_SCAN_BUDGET,
+            "identity_threshold": DEFAULT_IDENTITY_THRESHOLD,
             # v3.1+: Optional topology discovery
             "topology_enabled": False,
             "topology_only": False,
@@ -318,6 +324,7 @@ class InteractiveNetworkAuditor(
                     udp_top_ports=self.config.get("udp_top_ports"),
                     topology_enabled=self.config.get("topology_enabled"),
                     topology_only=self.config.get("topology_only"),
+                    low_impact_enrichment=self.config.get("low_impact_enrichment"),
                     # v3.2.3+: New defaults
                     scan_mode=self.config.get("scan_mode"),
                     scan_vulnerabilities=self.config.get("scan_vulnerabilities"),
@@ -356,6 +363,7 @@ class InteractiveNetworkAuditor(
         """Execute the complete scan workflow."""
         self.scan_start_time = datetime.now()
         self.start_heartbeat()
+        self._deep_executed_count = 0
 
         inhibitor = None
         if self.config.get("prevent_sleep", True):
@@ -931,6 +939,11 @@ class InteractiveNetworkAuditor(
         else:
             self.rate_limit_delay = 0.0
 
+        low_impact = defaults_for_run.get("low_impact_enrichment")
+        self.config["low_impact_enrichment"] = (
+            bool(low_impact) if isinstance(low_impact, bool) else False
+        )
+
         # 5. Vulnerabilities
         self.config["scan_vulnerabilities"] = defaults_for_run.get("scan_vulnerabilities", True)
         self.config["nuclei_enabled"] = bool(defaults_for_run.get("nuclei_enabled", False))
@@ -1090,6 +1103,11 @@ class InteractiveNetworkAuditor(
             self.config["windows_verify_enabled"] = False
             self.config["save_txt_report"] = True
             self.config["save_html_report"] = True
+            persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
+            low_impact_default = "yes" if persisted_low_impact else "no"
+            self.config["low_impact_enrichment"] = self.ask_yes_no(
+                self.t("low_impact_enrichment_q"), default=low_impact_default
+            )
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
             self.rate_limit_delay = 0.0  # Express = always fast
@@ -1109,6 +1127,11 @@ class InteractiveNetworkAuditor(
             self.config["windows_verify_enabled"] = False
             self.config["save_txt_report"] = True
             self.config["save_html_report"] = True
+            persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
+            low_impact_default = "yes" if persisted_low_impact else "no"
+            self.config["low_impact_enrichment"] = self.ask_yes_no(
+                self.t("low_impact_enrichment_q"), default=low_impact_default
+            )
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
             # v3.9.0: Apply timing settings
@@ -1174,6 +1197,12 @@ class InteractiveNetworkAuditor(
 
             # Webhook off by default
             self.config["webhook_url"] = ""
+
+            persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
+            low_impact_default = "yes" if persisted_low_impact else "no"
+            self.config["low_impact_enrichment"] = self.ask_yes_no(
+                self.t("low_impact_enrichment_q"), default=low_impact_default
+            )
 
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
@@ -1267,6 +1296,12 @@ class InteractiveNetworkAuditor(
                             self.t("rate_delay"), default=delay_default, min_val=0, max_val=60
                         )
                     )
+
+                persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
+                low_impact_default = "yes" if persisted_low_impact else "no"
+                self.config["low_impact_enrichment"] = self.ask_yes_no(
+                    self.t("low_impact_enrichment_q"), default=low_impact_default
+                )
 
                 step += 1
                 continue

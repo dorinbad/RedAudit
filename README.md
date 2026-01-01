@@ -2,11 +2,11 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](README_ES.md)
 
-![Version](https://img.shields.io/badge/v3.9.9-blue?style=flat-square)
+![Version](https://img.shields.io/badge/v3.10.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
-![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen?style=flat-square)
+![Coverage](https://img.shields.io/badge/coverage-92.7%25-brightgreen?style=flat-square)
 
 <div align="center">
 
@@ -115,46 +115,46 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│              PHASE 1: Mode-Specific Nmap Profile            │
-│        fast/normal/full modes drive the base scan           │
+│          FASE 1: Perfil Nmap según el modo de escaneo        │
+│        rápido/normal/completo definen el scan base           │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
               ┌───────────────────────┐
-              │  Identity Evaluation  │
-              │  • MAC/vendor?        │
-              │  • Hostname/DNS?      │
-              │  • Service version?   │
-              │  • CPE/banner?        │
-              │  • HTTP title/heading?│
-              │  • Agentless hints?   │
+              │  Evaluación Identidad │
+              │  • ¿MAC/vendor?       │
+              │  • ¿Hostname/DNS?     │
+              │  • ¿Versión servicio? │
+              │  • ¿CPE/banner?       │
+              │  • HTTP titulo/encab.?│
+              │  • ¿Hints sin agente? │
               └───────────┬───────────┘
                           │
             ┌─────────────┴─────────────┐
             │                           │
             ▼                           ▼
     ┌───────────────┐          ┌────────────────┐
-    │ SUFFICIENT    │          │ AMBIGUOUS HOST │
-    │ Stop scanning │          │ Continue...    │
+    │ SUFICIENTE    │          │ HOST AMBIGUO   │
+    │ Detener scan  │          │ Continuar...   │
     └───────────────┘          └───────┬────────┘
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │   PHASE 2a: Priority UDP             │
-                    │   17 common ports (DNS, DHCP, SNMP)  │
+                    │  FASE 2a: UDP Prioritario            │
+                    │  17 puertos comunes (DNS/DHCP/SNMP)  │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
                           │                         │
                           ▼                         ▼
                   ┌───────────────┐        ┌────────────────┐
-                  │ Identity found│        │ Still ambiguous│
-                  │ Stop          │        │ (full mode)    │
+                  │ Identidad OK  │        │ Aún ambiguo    │
+                  │ Detener       │        │ (modo full)    │
                   └───────────────┘        └───────┬────────┘
                                                    │
                                                    ▼
                               ┌─────────────────────────────────┐
-                              │   PHASE 2b: Extended UDP        │
+                              │     FASE 2b: UDP Extendido      │
                               │  --top-ports N (configurable)   │
                               └─────────────────────────────────┘
 ```
@@ -163,10 +163,10 @@ In **full/completo** mode, the base profile is already aggressive, so deep ident
 
 **Trigger Heuristics** (what makes a host "ambiguous", mostly in fast/normal):
 
-- Few open ports (≤3)
+- Low visibility (few open ports) only when identity score is below the threshold
 - Suspicious services (`unknown`, `tcpwrapped`)
 - Missing MAC/vendor/hostname
-- No version info (low identity score)
+- No version info (identity score below the threshold)
 - Filtered or no-response ports (deep scan fallback)
 - Quiet hosts with vendor hints may get a short HTTP/HTTPS title/meta/heading probe on common ports
 
@@ -256,11 +256,13 @@ The wizard offers 4 audit profiles:
 - **Exhaustive**: Full port scan with deeper discovery. UDP top-ports (500) is enabled for ambiguous hosts; Red Team discovery and agentless verification are enabled. CVE correlation is enabled only if an NVD API key is already configured.
 - **Custom**: Full 8-step wizard with back navigation for granular control.
 
+Phase 0 low-impact enrichment is an opt-in wizard prompt across all profiles (default off).
+
 The wizard covers:
 
 1. **Target Selection**: Choose a local subnet or enter manual CIDR
 2. **Timing Preset**: Stealth (T1), Normal (T4), or Aggressive (T5) for Standard/Exhaustive profiles
-3. **Options**: Threads, rate limiting, UDP/topology/net discovery, agentless verification (varies by profile)
+3. **Options**: Threads, rate limiting, Phase 0 low-impact enrichment, UDP/topology/net discovery, agentless verification (varies by profile)
 4. **Authorization**: Confirm you have permission to scan
 
 ### Non-Interactive / Automation

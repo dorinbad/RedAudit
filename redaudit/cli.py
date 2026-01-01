@@ -20,6 +20,8 @@ from redaudit.utils.constants import (
     MAX_CIDR_LENGTH,
     DEFAULT_UDP_MODE,
     UDP_TOP_PORTS,
+    DEFAULT_DEEP_SCAN_BUDGET,
+    DEFAULT_IDENTITY_THRESHOLD,
 )
 from redaudit.utils.i18n import TRANSLATIONS, detect_preferred_language
 from redaudit.utils.paths import expand_user_path, get_default_reports_base_dir
@@ -32,6 +34,35 @@ def parse_arguments():
     Returns:
         Parsed arguments namespace
     """
+
+    def _resolve_help_lang(argv):
+        for idx, arg in enumerate(argv):
+            if arg == "--lang" and idx + 1 < len(argv):
+                return "es" if argv[idx + 1].lower() == "es" else "en"
+            if arg.startswith("--lang="):
+                return "es" if arg.split("=", 1)[1].lower() == "es" else "en"
+        return "en"
+
+    help_lang = _resolve_help_lang(sys.argv[1:])
+    if help_lang == "es":
+        help_low_impact = (
+            "Habilita enriquecimiento de bajo impacto (DNS/mDNS/SNMP) antes del escaneo TCP. "
+            "Timeouts cortos, ruido mínimo."
+        )
+        help_deep_budget = (
+            "Máximo hosts que pueden ejecutar Deep Scan agresivo por ejecución (0 = sin límite)."
+        )
+        help_identity_threshold = (
+            "Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3)."
+        )
+    else:
+        help_low_impact = (
+            "Enable low-impact enrichment (DNS/mDNS/SNMP) before TCP scanning. "
+            "Short timeouts, minimal noise."
+        )
+        help_deep_budget = "Max hosts that can run aggressive Deep Scan per run (0 = unlimited)."
+        help_identity_threshold = "Minimum identity_score to skip Deep Scan (default: 3)."
+
     parser = argparse.ArgumentParser(
         description=f"RedAudit v{VERSION} - Network Auditing Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -156,6 +187,25 @@ Examples:
         "--max-hosts", type=int, help="Maximum number of hosts to scan (default: all)"
     )
     parser.add_argument("--no-deep-scan", action="store_true", help="Disable adaptive deep scan")
+    parser.add_argument(
+        "--low-impact-enrichment",
+        action="store_true",
+        help=help_low_impact,
+    )
+    parser.add_argument(
+        "--deep-scan-budget",
+        type=int,
+        default=DEFAULT_DEEP_SCAN_BUDGET,
+        metavar="N",
+        help=help_deep_budget,
+    )
+    parser.add_argument(
+        "--identity-threshold",
+        type=int,
+        default=DEFAULT_IDENTITY_THRESHOLD,
+        metavar="N",
+        help=help_identity_threshold,
+    )
     parser.add_argument(
         "--yes",
         "-y",
@@ -519,6 +569,15 @@ def configure_from_args(app, args) -> bool:
 
     # Set deep scan
     app.config["deep_id_scan"] = not args.no_deep_scan
+    app.config["low_impact_enrichment"] = bool(getattr(args, "low_impact_enrichment", False))
+    deep_scan_budget = getattr(args, "deep_scan_budget", DEFAULT_DEEP_SCAN_BUDGET)
+    if not isinstance(deep_scan_budget, int) or deep_scan_budget < 0:
+        deep_scan_budget = DEFAULT_DEEP_SCAN_BUDGET
+    app.config["deep_scan_budget"] = deep_scan_budget
+    identity_threshold = getattr(args, "identity_threshold", DEFAULT_IDENTITY_THRESHOLD)
+    if not isinstance(identity_threshold, int) or identity_threshold < 0:
+        identity_threshold = DEFAULT_IDENTITY_THRESHOLD
+    app.config["identity_threshold"] = identity_threshold
 
     # Set pre-scan configuration (v2.7)
     app.config["prescan_enabled"] = args.prescan
