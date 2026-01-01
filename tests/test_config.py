@@ -103,6 +103,7 @@ class TestDefaultConfig(unittest.TestCase):
             "threads",
             "output_dir",
             "rate_limit",
+            "low_impact_enrichment",
             "udp_mode",
             "udp_top_ports",
             "topology_enabled",
