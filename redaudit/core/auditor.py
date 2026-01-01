@@ -1275,6 +1275,12 @@ class InteractiveNetworkAuditor(
                         )
                     )
 
+                persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
+                low_impact_default = "yes" if persisted_low_impact else "no"
+                self.config["low_impact_enrichment"] = self.ask_yes_no(
+                    self.t("low_impact_enrichment_q"), default=low_impact_default
+                )
+
                 step += 1
                 continue
 

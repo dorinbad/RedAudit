@@ -121,6 +121,7 @@ TRANSLATIONS = {
         "cryptography_required": "Error: Encryption requires python3-cryptography. Install with: sudo apt install python3-cryptography",
         "rate_limiting": "Enable rate limiting (slower but stealthier)?",
         "rate_delay": "Delay between hosts (seconds; 0 = none):",
+        "low_impact_enrichment_q": "Enable Phase 0 low-impact enrichment (DNS/mDNS/SNMP)?",
         "ports_truncated": "⚠️  {}: {} ports found, showing top 50",
         # v3.1+: Persisted defaults
         "save_defaults_q": "Save these settings as defaults for future runs?",
@@ -453,6 +454,7 @@ TRANSLATIONS = {
         "cryptography_required": "Error: El cifrado requiere python3-cryptography. Instala con: sudo apt install python3-cryptography",
         "rate_limiting": "¿Activar limitación de velocidad (más lento pero más sigiloso)?",
         "rate_delay": "Retardo entre hosts (segundos; 0 = ninguno):",
+        "low_impact_enrichment_q": "¿Activar enriquecimiento de bajo impacto (Fase 0: DNS/mDNS/SNMP)?",
         "ports_truncated": "⚠️  {}: {} puertos encontrados, mostrando los 50 principales",
         # v3.1+: Defaults persistentes
         "save_defaults_q": "¿Guardar estos ajustes como valores por defecto para futuras ejecuciones?",

@@ -20,7 +20,7 @@ def test_configure_scan_interactive_full_flow(monkeypatch, tmp_path):
     choice_with_back = iter([1, 0, 0, 0, 0, 0, 0])
     # First choice is profile (3=Custom), second is redteam mode
     choice = iter([3, 1])
-    yes_no = iter([False, True, True])
+    yes_no = iter([False, False, True, True])
     numbers = iter(["all", 4, 10])
 
     monkeypatch.setattr(app, "print_status", lambda *_a, **_k: None)
