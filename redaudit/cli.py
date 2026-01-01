@@ -34,6 +34,7 @@ def parse_arguments():
     Returns:
         Parsed arguments namespace
     """
+
     def _resolve_help_lang(argv):
         for idx, arg in enumerate(argv):
             if arg == "--lang" and idx + 1 < len(argv):
@@ -51,15 +52,15 @@ def parse_arguments():
         help_deep_budget = (
             "Máximo hosts que pueden ejecutar Deep Scan agresivo por ejecución (0 = sin límite)."
         )
-        help_identity_threshold = "Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3)."
+        help_identity_threshold = (
+            "Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3)."
+        )
     else:
         help_low_impact = (
             "Enable low-impact enrichment (DNS/mDNS/SNMP) before TCP scanning. "
             "Short timeouts, minimal noise."
         )
-        help_deep_budget = (
-            "Max hosts that can run aggressive Deep Scan per run (0 = unlimited)."
-        )
+        help_deep_budget = "Max hosts that can run aggressive Deep Scan per run (0 = unlimited)."
         help_identity_threshold = "Minimum identity_score to skip Deep Scan (default: 3)."
 
     parser = argparse.ArgumentParser(
