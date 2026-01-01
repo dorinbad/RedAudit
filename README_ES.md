@@ -86,7 +86,7 @@ sudo redaudit
 | **Logging de Sesión** | Captura de salida terminal en doble formato (`.log` raw + `.txt` limpio) |
 | **Escaneo con Timeout** | Escaneos de host con timeout duro; progreso con ETA límite |
 | **Soporte IPv6 + Proxy** | Escaneo dual-stack completo con pivoting SOCKS5 |
-| **Rate Limiting** | Retardo inter-host configurable con jitter ±30% para evasión IDS |
+| **Rate Limiting** | Retardo inter-host configurable con jitter ±30% para entornos sensibles a IDS |
 | **Interfaz Bilingüe** | Localización completa Inglés/Español |
 | **Auto-Actualización** | Actualizaciones atómicas staged con rollback automático en caso de fallo |
 
@@ -300,7 +300,7 @@ redaudit --diff ~/reports/lunes.json ~/reports/viernes.json
 | `--cve-lookup` | Correlación CVE via NVD API |
 | `--diff OLD NEW` | Análisis diferencial entre escaneos |
 | `--html-report` | Generar dashboard HTML interactivo |
-| `--stealth` | Activar timing paranoid para evasión IDS |
+| `--stealth` | Activar timing paranoid para entornos sensibles a IDS |
 | `-y, --yes` | Omitir confirmaciones (modo automatización) |
 
 Consulta `redaudit --help` o [USAGE.md](docs/USAGE.es.md) para la lista completa de opciones.
@@ -326,7 +326,7 @@ RedAudit aplica plantillas de temporización nmap según tu selección:
 | `--threads N` | Escaneo paralelo de hosts | 6 para equilibrado, 2-4 para sigilo |
 | `--rate-limit N` | Retardo inter-host (segundos) | 1-5s para entornos de producción |
 | `--udp-ports N` | Top UDP en modo full | 100 (defecto), rango 50-500 |
-| `--stealth` | Modo paranoid | Usar cuando evasión IDS es crítica |
+| `--stealth` | Modo paranoid | Usar en entornos sensibles a IDS/IPS |
 
 ### Salida y Cifrado
 
@@ -437,7 +437,7 @@ redaudit/
 | **Fernet** | Cifrado simétrico (AES-128-CBC + HMAC-SHA256) |
 | **PBKDF2** | Derivación de clave basada en contraseña (480k iteraciones) |
 | **Thread Pool** | Workers concurrentes para escaneo paralelo de hosts |
-| **Rate Limiting** | Retardo inter-host con jitter ±30% para evasión IDS |
+| **Rate Limiting** | Retardo inter-host con jitter ±30% para reducir probabilidad de alertas |
 | **Heartbeat** | Hilo de fondo que avisa tras ~60s de silencio (umbral de fallo ~300s) |
 
 ### Solución de Problemas

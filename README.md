@@ -115,46 +115,46 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│          FASE 1: Perfil Nmap según el modo de escaneo        │
-│        rápido/normal/completo definen el scan base           │
+│           PHASE 1: Nmap profile based on scan mode          │
+│          fast/normal/full define the base scan              │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
               ┌───────────────────────┐
-              │  Evaluación Identidad │
-              │  • ¿MAC/vendor?       │
-              │  • ¿Hostname/DNS?     │
-              │  • ¿Versión servicio? │
-              │  • ¿CPE/banner?       │
-              │  • HTTP titulo/encab.?│
-              │  • ¿Hints sin agente? │
+              │  Identity Evaluation  │
+              │  • MAC/vendor?        │
+              │  • Hostname/DNS?      │
+              │  • Service version?   │
+              │  • CPE/banner?        │
+              │  • HTTP title/header? │
+              │  • Agentless hints?   │
               └───────────┬───────────┘
                           │
             ┌─────────────┴─────────────┐
             │                           │
             ▼                           ▼
     ┌───────────────┐          ┌────────────────┐
-    │ SUFICIENTE    │          │ HOST AMBIGUO   │
-    │ Detener scan  │          │ Continuar...   │
+    │  SUFFICIENT   │          │ AMBIGUOUS HOST │
+    │  Stop scan    │          │ Continue...    │
     └───────────────┘          └───────┬────────┘
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │  FASE 2a: UDP Prioritario            │
-                    │  17 puertos comunes (DNS/DHCP/SNMP)  │
+                    │  PHASE 2a: Priority UDP              │
+                    │  17 common ports (DNS/DHCP/SNMP)     │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
                           │                         │
                           ▼                         ▼
                   ┌───────────────┐        ┌────────────────┐
-                  │ Identidad OK  │        │ Aún ambiguo    │
-                  │ Detener       │        │ (modo full)    │
+                  │  Identity OK  │        │ Still ambiguous│
+                  │  Stop         │        │ (full mode)    │
                   └───────────────┘        └───────┬────────┘
                                                    │
                                                    ▼
                               ┌─────────────────────────────────┐
-                              │     FASE 2b: UDP Extendido      │
+                              │     PHASE 2b: Extended UDP      │
                               │  --top-ports N (configurable)   │
                               └─────────────────────────────────┘
 ```
