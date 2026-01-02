@@ -61,6 +61,7 @@ This file is reusable "initial context" for contributors working on RedAudit. Th
   - `chore(pre-commit): apply formatting fixes`
 - Group commits by intent:
   1) code fix/feature, 2) tests, 3) docs, 4) release bump/notes, 5) formatting-only (if needed).
+- **Cleanup**: After merging to `main` and pushing, explicitly delete the local and remote feature branch (e.g., `git branch -d feature/xyz` and `git push origin --delete feature/xyz`).
 
 ## Local Quality Gate (Must Pass Before Merge)
 
