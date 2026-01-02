@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from redaudit.utils.constants import SECURE_FILE_MODE, VERSION
+from redaudit.utils.vendor_hints import get_best_vendor
 
 
 def _get_reverse_dns(host: Dict) -> str:
@@ -98,17 +99,24 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
             or agentless.get("domain")
             or "-"
         )
+        # v3.10.1: Get MAC from multiple sources, vendor with hostname fallback
+        deep_scan = host.get("deep_scan", {}) or {}
+        mac_address = deep_scan.get("mac_address") or host.get("mac") or "-"
+        mac_vendor = deep_scan.get("vendor")
+        hostname = host.get("hostname") or _get_reverse_dns(host) or "-"
+        # Use vendor_hints for hostname-based fallback when MAC vendor missing
+        display_vendor = get_best_vendor(mac_vendor, hostname, allow_guess=True) or "-"
         host_table.append(
             {
                 "ip": host.get("ip", ""),
-                "hostname": host.get("hostname") or _get_reverse_dns(host) or "-",
+                "hostname": hostname,
                 "status": host.get("status", "up"),
                 "ports_count": len(host.get("ports", [])),
                 "risk_score": host.get("risk_score", 0),
-                "mac": host.get("deep_scan", {}).get("mac_address", "-"),
-                "vendor": host.get("deep_scan", {}).get("vendor", "-"),
+                "mac": mac_address,
+                "vendor": display_vendor,
                 "os": host.get("os_detected")
-                or host.get("deep_scan", {}).get("os_detected")
+                or deep_scan.get("os_detected")
                 or agentless.get("os", "-"),
                 "asset_type": host.get("asset_type", "-"),
                 "tags": ", ".join(host.get("tags", [])),

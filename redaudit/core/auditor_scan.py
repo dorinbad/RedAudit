@@ -343,11 +343,12 @@ class AuditorScanMixin:
     def _apply_net_discovery_identity(self, host_record: Dict[str, Any]) -> None:
         """
         Merge net_discovery hints (MAC/vendor/hostname/UPnP) into host record.
+        v3.10.1: Also check topology neighbor_cache as fallback MAC source.
         """
         r = self.results
         nd_results = r.get("net_discovery") if isinstance(r, dict) else None
         if not isinstance(nd_results, dict):
-            return
+            nd_results = {}
 
         ip = host_record.get("ip")
         if not ip:
@@ -364,11 +365,37 @@ class AuditorScanMixin:
 
         mac = None
         vendor = None
+        # Source 1: net_discovery.arp_hosts
         for host in nd_results.get("arp_hosts", []) or []:
             if isinstance(host, dict) and host.get("ip") == ip:
                 mac = host.get("mac") or None
                 vendor = host.get("vendor") or None
                 break
+
+        # Source 2: topology.interfaces[].arp.hosts + neighbor_cache (fallback)
+        if not mac:
+            pipeline = r.get("pipeline", {}) if isinstance(r, dict) else {}
+            topology = pipeline.get("topology", {}) if isinstance(pipeline, dict) else {}
+            for iface in topology.get("interfaces", []) or []:
+                if not isinstance(iface, dict):
+                    continue
+                # Check arp.hosts first
+                arp = iface.get("arp", {}) or {}
+                for h in arp.get("hosts", []) or []:
+                    if isinstance(h, dict) and h.get("ip") == ip:
+                        mac = h.get("mac") or None
+                        vendor = h.get("vendor") or None
+                        break
+                if mac:
+                    break
+                # Check neighbor_cache
+                neighbor_cache = iface.get("neighbor_cache", {}) or {}
+                for entry in neighbor_cache.get("entries", []) or []:
+                    if isinstance(entry, dict) and entry.get("ip") == ip and entry.get("mac"):
+                        mac = entry.get("mac")
+                        break
+                if mac:
+                    break
 
         if isinstance(vendor, str) and "unknown" in vendor.lower():
             vendor = None
