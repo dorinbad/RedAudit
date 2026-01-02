@@ -15,7 +15,7 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 
 from redaudit.utils.constants import (
     COLORS,
@@ -514,40 +514,7 @@ class InteractiveNetworkAuditor(
                                     total=100,
                                 )
                                 nd_start_time = time.time()
-                                last_heartbeat = nd_start_time
-
-                                def _nd_progress(
-                                    label: str, step_index: int, step_total: int
-                                ) -> None:
-                                    nonlocal last_heartbeat
-                                    try:
-                                        pct = (
-                                            int((step_index / step_total) * 100)
-                                            if step_total
-                                            else 0
-                                        )
-                                        if step_total and step_index >= step_total:
-                                            pct = min(pct, 99)
-                                        # v3.8.1: Truncate label to 35 chars for clean display
-                                        label_short = label[:35] + "…" if len(label) > 35 else label
-                                        progress.update(
-                                            task,
-                                            completed=pct,
-                                            description=f"{label_short}",
-                                        )
-                                        # v3.8.1: Heartbeat every 30s for long phases
-                                        now = time.time()
-                                        if now - last_heartbeat >= 30.0:
-                                            elapsed = int(now - nd_start_time)
-                                            mins, secs = divmod(elapsed, 60)
-                                            self.print_status(
-                                                f"Net Discovery en progreso... ({mins}:{secs:02d} transcurrido)",
-                                                "INFO",
-                                                force=True,
-                                            )
-                                            last_heartbeat = now
-                                    except Exception:
-                                        pass
+                                nd_start_time = time.time()
 
                                 self.results["net_discovery"] = discover_networks(
                                     target_networks=self.config.get("target_networks", []),
@@ -556,7 +523,9 @@ class InteractiveNetworkAuditor(
                                     redteam=self.config.get("net_discovery_redteam", False),
                                     redteam_options=redteam_options,
                                     extra_tools=self.extra_tools,
-                                    progress_callback=_nd_progress,
+                                    progress_callback=lambda lbl, s, t: self._nd_progress_callback(
+                                        lbl, s, t, progress, task, nd_start_time
+                                    ),
                                     logger=self.logger,
                                 )
                                 progress.update(task, completed=100, description="complete")
@@ -568,11 +537,6 @@ class InteractiveNetworkAuditor(
                                 touch_activity=self._touch_activity,
                             ) as indicator:
 
-                                def _nd_progress(
-                                    label: str, step_index: int, step_total: int
-                                ) -> None:
-                                    indicator.update(f"{label} ({step_index}/{step_total})")
-
                                 self.results["net_discovery"] = discover_networks(
                                     target_networks=self.config.get("target_networks", []),
                                     interface=iface,
@@ -580,7 +544,9 @@ class InteractiveNetworkAuditor(
                                     redteam=self.config.get("net_discovery_redteam", False),
                                     redteam_options=redteam_options,
                                     extra_tools=self.extra_tools,
-                                    progress_callback=_nd_progress,
+                                    progress_callback=lambda lbl, s, t: indicator.update(
+                                        f"{lbl} ({s}/{t})"
+                                    ),
                                     logger=self.logger,
                                 )
 
@@ -768,7 +734,15 @@ class InteractiveNetworkAuditor(
                                         severity="medium,high,critical",
                                         timeout=nuclei_timeout_s,
                                         batch_size=batch_size,
-                                        progress_callback=_nuclei_progress,
+                                        progress_callback=lambda c, t, e: self._nuclei_progress_callback(
+                                            c,
+                                            t,
+                                            e,
+                                            progress,
+                                            task,
+                                            progress_start_t,
+                                            nuclei_timeout_s,
+                                        ),
                                         use_internal_progress=False,
                                         logger=self.logger,
                                         dry_run=bool(self.config.get("dry_run", False)),
@@ -1174,7 +1148,9 @@ class InteractiveNetworkAuditor(
             else:
                 self.config["cve_lookup_enabled"] = False
                 self.print_status(self.t("nvd_not_configured_reminder"), "WARNING")
-                print(f"  {self.COLORS['CYAN']}{self.t('nvd_get_key_hint')}{self.COLORS['ENDC']}")
+                print(
+                    f"  {self.COLORS['CYAN']}{self.t('nvd_get_key_hint')}" f"{self.COLORS['ENDC']}"
+                )
 
             # Discovery - all enabled
             self.config["topology_enabled"] = True
@@ -1483,9 +1459,8 @@ class InteractiveNetworkAuditor(
                             (i for i, (v, _) in enumerate(udp_profiles) if v == udp_ports_default),
                             len(udp_profiles) - 1,
                         )
-                        selected_idx = self.ask_choice(
-                            self.t("udp_ports_profile_q"), options, profile_default
-                        )
+                        q = self.t("udp_ports_profile_q")
+                        selected_idx = self.ask_choice(q, options, profile_default)
                         selected = udp_profiles[selected_idx][0]
                         if selected == "custom":
                             self.config["udp_top_ports"] = self.ask_number(
@@ -1761,3 +1736,67 @@ class InteractiveNetworkAuditor(
         for key, val in fields:
             display_val = val if val is not None else "-"
             self.print_status(f"- {self.t(key)}: {display_val}", "INFO")
+
+    # ---------- Progress Callbacks (v3.9.0 Refactor for Testability) ----------
+
+    def _nd_progress_callback(
+        self,
+        label: str,
+        step_index: int,
+        step_total: int,
+        progress: Any,
+        task: Any,
+        start_time: float,
+    ) -> None:
+        """Callback for Net Discovery progress updates."""
+        try:
+            pct = int((step_index / step_total) * 100) if step_total else 0
+            if step_total and step_index >= step_total:
+                pct = min(pct, 99)
+            # v3.8.1: Truncate label to 35 chars for clean display
+            lbl_s = label[:35] + "…" if len(label) > 35 else label
+            progress.update(
+                task,
+                completed=pct,
+                description=f"{lbl_s}",
+            )
+            # v3.8.1: Heartbeat every 30s for long phases
+            now = time.time()
+            if not hasattr(self, "_nd_last_heartbeat"):
+                self._nd_last_heartbeat = start_time
+
+            if now - self._nd_last_heartbeat >= 30.0:
+                elapsed = int(now - start_time)
+                mins, secs = divmod(elapsed, 60)
+                msg = f"Net Discovery en progreso... ({mins}:{secs:02d} elapsed)"
+                self.print_status(msg, "INFO", force=True)
+                self._nd_last_heartbeat = now
+        except Exception:
+            pass
+
+    def _nuclei_progress_callback(
+        self,
+        completed: int,
+        total: int,
+        eta: str,
+        progress: Any,
+        task: Any,
+        start_time: float,
+        timeout: int,
+    ) -> None:
+        """Callback for Nuclei scan progress updates."""
+        try:
+            rem = max(0, total - completed)
+            ela_s = max(0.001, time.time() - start_time)
+            rate = completed / ela_s if completed else 0.0
+            eta_est_v = self._format_eta(rem / rate) if rate > 0.0 and rem else ""
+            progress.update(
+                task,
+                completed=completed,
+                description=f"[cyan]Nuclei ({completed}/{total})",
+                eta_upper=self._format_eta(rem * timeout if rem else 0),
+                eta_est=f"ETA≈ {eta_est_v}" if eta_est_v else "",
+                detail=f"batch {completed}/{total}",
+            )
+        except Exception:
+            pass

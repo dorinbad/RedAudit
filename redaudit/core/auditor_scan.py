@@ -148,7 +148,8 @@ class AuditorScanMixin:
                 missing.append(tname)
 
         if missing:
-            self.print_status(self.t("missing_opt", ", ".join(missing)), "WARNING")
+            msg = self.t("missing_opt", ", ".join(missing))
+            self.print_status(msg, "WARNING")
         return True
 
     # ---------- Input utilities (inherited from WizardMixin) ----------
@@ -217,22 +218,26 @@ class AuditorScanMixin:
 
     def ask_network_range(self):
         """Ask user to select target network(s)."""
-        print(f"\n{self.COLORS['HEADER']}{self.t('selection_target')}{self.COLORS['ENDC']}")
+        h = self.COLORS["HEADER"]
+        print(f"\n{h}{self.t('selection_target')}{self.COLORS['ENDC']}")
         print("-" * 60)
         nets = self.detect_all_networks()
         if nets:
-            print(f"{self.COLORS['OKGREEN']}{self.t('interface_detected')}{self.COLORS['ENDC']}")
+            g = self.COLORS["OKGREEN"]
+            print(f"{g}{self.t('interface_detected')}{self.COLORS['ENDC']}")
             opts = []
             for n in nets:
                 info = f" ({n['interface']})" if n["interface"] else ""
-                opts.append(f"{n['network']}{info} - ~{n['hosts_estimated']} hosts")
+                h_est = n["hosts_estimated"]
+                opts.append(f"{n['network']}{info} - ~{h_est} hosts")
             opts.append(self.t("manual_entry"))
             opts.append(self.t("scan_all"))
             choice = self.ask_choice(self.t("select_net"), opts)
             if choice == len(opts) - 2:
                 return [self.ask_manual_network()]
             if choice == len(opts) - 1:
-                # v3.2.3: Deduplicate networks (same CIDR on multiple interfaces)
+                # v3.2.3: Deduplicate networks (same CIDR on multiple
+                # interfaces)
                 seen = set()
                 unique_nets = []
                 for n in nets:
@@ -320,7 +325,8 @@ class AuditorScanMixin:
         return raw.strip()
 
     def _lookup_topology_identity(self, ip: str) -> Tuple[Optional[str], Optional[str]]:
-        topo = self.results.get("topology") if isinstance(self.results, dict) else None
+        t = self.results.get("topology")
+        topo = t if isinstance(self.results, dict) else None
         if not isinstance(topo, dict):
             return None, None
         for iface in topo.get("interfaces", []) or []:
@@ -335,8 +341,11 @@ class AuditorScanMixin:
         return None, None
 
     def _apply_net_discovery_identity(self, host_record: Dict[str, Any]) -> None:
-        """Merge net_discovery hints (MAC/vendor/hostname/UPnP) into host record."""
-        nd_results = self.results.get("net_discovery") if isinstance(self.results, dict) else None
+        """
+        Merge net_discovery hints (MAC/vendor/hostname/UPnP) into host record.
+        """
+        r = self.results
+        nd_results = r.get("net_discovery") if isinstance(r, dict) else None
         if not isinstance(nd_results, dict):
             return
 
@@ -346,7 +355,8 @@ class AuditorScanMixin:
 
         if not host_record.get("hostname"):
             for host in nd_results.get("netbios_hosts", []) or []:
-                if isinstance(host, dict) and host.get("ip") == ip and host.get("name"):
+                is_match = isinstance(host, dict) and host.get("ip") == ip and host.get("name")
+                if is_match:
                     name = str(host.get("name") or "").strip()
                     if name:
                         host_record["hostname"] = sanitize_hostname(name) or name
@@ -423,7 +433,8 @@ class AuditorScanMixin:
 
                 def _lookup():
                     try:
-                        result_holder["value"] = socket.gethostbyaddr(safe_ip)[0]
+                        name = socket.gethostbyaddr(safe_ip)[0]
+                        result_holder["value"] = name
                     except Exception:
                         result_holder["value"] = None
 
@@ -467,7 +478,8 @@ class AuditorScanMixin:
 
         # SNMP sysDescr (read-only, only if community is public).
         try:
-            community = str(self.config.get("net_discovery_snmp_community", "public") or "").strip()
+            comm_cfg = self.config.get("net_discovery_snmp_community", "public")
+            community = str(comm_cfg or "").strip()
             if community.lower() == "public" and shutil.which("snmpwalk"):
                 snmp_timeout = min(1.0, float(PHASE0_TIMEOUT))
                 runner = CommandRunner(
@@ -823,10 +835,12 @@ class AuditorScanMixin:
         if rec.get("error"):
             return None, str(rec["error"])
 
-        raw_stdout = self._coerce_text(rec.get("stdout_full") or rec.get("stdout") or "")
+        r_out = rec.get("stdout_full") or rec.get("stdout") or ""
+        raw_stdout = self._coerce_text(r_out)
         xml_output = self._extract_nmap_xml(raw_stdout)
         if not xml_output:
-            raw_stderr = self._coerce_text(rec.get("stderr_full") or rec.get("stderr") or "")
+            r_err = rec.get("stderr_full") or rec.get("stderr") or ""
+            raw_stderr = self._coerce_text(r_err)
             xml_output = self._extract_nmap_xml(raw_stderr)
         if not xml_output:
             stderr = self._coerce_text(rec.get("stderr", "")).strip()
