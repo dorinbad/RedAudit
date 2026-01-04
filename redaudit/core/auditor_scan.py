@@ -26,7 +26,7 @@ from redaudit.core.agentless_verify import (
 )
 from redaudit.core.command_runner import CommandRunner
 from redaudit.core.crypto import is_crypto_available
-from redaudit.core.models import Host
+from redaudit.core.models import Host, Service
 from redaudit.core.network import get_neighbor_mac
 from redaudit.core.scanner import (
     banner_grab_fallback,
@@ -1112,6 +1112,10 @@ class AuditorScanMixin:
             any_version = False
             unknown_ports = []
 
+            # v4.0: Populate Host model services
+            host_obj = self.scanner.get_or_create_host(safe_ip)
+            host_obj.services = []
+
             for proto in data.all_protocols():
                 for p in data[proto]:
                     svc = data[proto][p]
@@ -1132,6 +1136,20 @@ class AuditorScanMixin:
                     # Track ports with no useful info for banner fallback
                     if not product and name in ("", "tcpwrapped", "unknown"):
                         unknown_ports.append(p)
+
+                    # Add to Host model
+                    svc_obj = Service(
+                        port=p,
+                        protocol=proto,
+                        name=name,
+                        product=product,
+                        version=version,
+                        state=svc.get("state", "open"),
+                        reason=svc.get("reason", ""),
+                        tunnel=svc.get("tunnel", ""),
+                        cpe=(cpe if isinstance(cpe, list) else [cpe]) if cpe else [],
+                    )
+                    host_obj.add_service(svc_obj)
 
                     ports.append(
                         {
