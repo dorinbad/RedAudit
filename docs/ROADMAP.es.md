@@ -39,7 +39,7 @@ Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con r
 
 | Característica | Versión | Verificación |
 | :--- | :--- | :--- |
-| **Detección Interfaces VPN** | v3.9.6 | `redaudit/core/entity_resolver.py`. Clasifica gateways VPN via heurística same-MAC, puertos VPN (500/4500/1194/51820), y patrones de hostname. |
+| **Detección Interfaces VPN** | v3.9.6 | `redaudit/core/entity_resolver.py`. Clasifica gateways VPN via OUI de vendor, puertos VPN (500/4500/1194/51820), y patrones de hostname. |
 | **Pack de Firmas IoT** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Payloads UDP específicos para WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter. |
 | **Selector de Perfil del Wizard** | v3.9.0 | `redaudit/core/auditor.py`. Express/Estándar/Exhaustivo presets + modo Custom. |
 | **Modos de Temporización Reales** | v3.9.0 | `redaudit/core/scanner/nmap.py`, `redaudit/core/auditor_scan.py`. Aplica nmap `-T1`/`-T4`/`-T5` con ajustes de delay/threads. |
