@@ -14,6 +14,9 @@ class _DummyWizard(WizardMixin):
     def __init__(self):
         self.lang = "en"
         self.config = {"dry_run": False}
+        from unittest.mock import MagicMock
+
+        self.ui = MagicMock()
         self.COLORS = {
             "FAIL": "",
             "BOLD": "",
