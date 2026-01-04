@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout repository
@@ -61,7 +61,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
@@ -73,9 +73,9 @@ jobs:
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
-        continue-on-error: true  # TODO: Fix shellcheck warnings then remove
+        continue-on-error: true # TODO: Fix shellcheck warnings then remove
         with:
-          scandir: '.'
+          scandir: "."
           severity: warning
 
   update-badge:
@@ -88,11 +88,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
-          pip install pytest python-nmap cryptography
+          sudo apt-get update
+          sudo apt-get install -y nmap
+          pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run tests and get coverage
+        id: coverage
+        run: |
+          pytest tests/ --cov=redaudit --cov-report=term | tee coverage_output.txt
+          COVERAGE=$(grep -oP 'TOTAL.*\s+\K\d+(?=%)' coverage_output.txt || echo "0")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage: $COVERAGE%"
 
       - name: Count tests
         id: count
@@ -101,7 +112,7 @@ jobs:
           echo "test_count=$TEST_COUNT" >> $GITHUB_OUTPUT
           echo "Found $TEST_COUNT tests"
 
-      - name: Update Gist Badge
+      - name: Update Tests Badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
@@ -110,3 +121,13 @@ jobs:
           label: tests
           message: ${{ steps.count.outputs.test_count }} passing
           color: brightgreen
+
+      - name: Update Coverage Badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: ${{ secrets.GIST_ID }}
+          filename: redaudit-coverage.json
+          label: coverage
+          message: ${{ steps.coverage.outputs.coverage }}%
+          color: ${{ steps.coverage.outputs.coverage >= 90 && 'brightgreen' || steps.coverage.outputs.coverage >= 70 && 'yellow' || 'red' }}
