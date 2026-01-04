@@ -188,15 +188,15 @@ class InteractiveNetworkAuditor(
 
     def show_config_summary(self):
         """Display configuration summary."""
-        show_config_summary(self.config, self.ui.t, self.COLORS)
+        show_config_summary(self.config, self.ui.t, self.ui.colors)
 
     def show_results(self):
         """Display final results summary."""
-        show_results_summary(self.results, self.ui.t, self.COLORS, self.config["output_dir"])
+        show_results_summary(self.results, self.ui.t, self.ui.colors, self.config["output_dir"])
 
     def show_legal_warning(self):
         """Display legal warning and ask for confirmation."""
-        print(f"{self.COLORS['FAIL']}{self.ui.t('legal_warn')}{self.COLORS['ENDC']}")
+        print(f"{self.ui.colors['FAIL']}{self.ui.t('legal_warn')}{self.ui.colors['ENDC']}")
         return self.ask_yes_no(self.ui.t("legal_ask"), default="no")
 
     def save_results(self, partial=False):
@@ -297,7 +297,7 @@ class InteractiveNetworkAuditor(
                     if show_summary:
                         self._show_defaults_summary(persisted_defaults)
 
-        print(f"\n{self.COLORS['HEADER']}{self.ui.t('scan_config')}{self.COLORS['ENDC']}")
+        print(f"\n{self.ui.colors['HEADER']}{self.ui.t('scan_config')}{self.ui.colors['ENDC']}")
         print("=" * 60)
 
         # Targets: if the user chose to start immediately, prefer persisted targets when valid.
@@ -1004,7 +1004,7 @@ class InteractiveNetworkAuditor(
         auditor_default = auditor_default or ""
         auditor_prompt = self.ui.t("auditor_name_q")
         auditor_name = input(
-            f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {auditor_prompt} "
+            f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
             f"[{auditor_default}]: "
         ).strip()
         if not auditor_name:
@@ -1021,7 +1021,8 @@ class InteractiveNetworkAuditor(
 
         output_prompt = self.ui.t("output_dir_q")
         output_dir = input(
-            f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {output_prompt} " f"[{default_output}]: "
+            f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {output_prompt} "
+            f"[{default_output}]: "
         ).strip()
         if not output_dir:
             output_dir = default_output
@@ -1168,8 +1169,8 @@ class InteractiveNetworkAuditor(
                 self.config["cve_lookup_enabled"] = False
                 self.ui.print_status(self.ui.t("nvd_not_configured_reminder"), "WARNING")
                 print(
-                    f"  {self.COLORS['CYAN']}{self.ui.t('nvd_get_key_hint')}"
-                    f"{self.COLORS['ENDC']}"
+                    f"  {self.ui.colors['CYAN']}{self.ui.t('nvd_get_key_hint')}"
+                    f"{self.ui.colors['ENDC']}"
                 )
 
             # Discovery - all enabled
@@ -1399,7 +1400,7 @@ class InteractiveNetworkAuditor(
                 auditor_default = auditor_default or ""
                 auditor_prompt = self.ui.t("auditor_name_q")
                 auditor_name = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {auditor_prompt} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
                     f"[{auditor_default}]: "
                 ).strip()
                 if not auditor_name:
@@ -1414,7 +1415,7 @@ class InteractiveNetworkAuditor(
                     default_reports = expand_user_path(persisted_output.strip())
 
                 out_dir = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.ui.t('output_dir')} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('output_dir')} "
                     f"[{default_reports}]: "
                 ).strip()
                 if not out_dir:
@@ -1597,7 +1598,7 @@ class InteractiveNetworkAuditor(
                                 defaults_for_run.get("net_discovery_kerberos_realm") or ""
                             )
                             realm = input(
-                                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.ui.t('kerberos_realm_q')} "
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('kerberos_realm_q')} "
                                 f"[{persisted_realm}]: "
                             ).strip()
                             self.config["net_discovery_kerberos_realm"] = (
@@ -1608,7 +1609,7 @@ class InteractiveNetworkAuditor(
                                 defaults_for_run.get("net_discovery_kerberos_userlist") or ""
                             )
                             userlist = input(
-                                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.ui.t('kerberos_userlist_q')} "
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('kerberos_userlist_q')} "
                                 f"[{persisted_userlist}]: "
                             ).strip()
                             self.config["net_discovery_kerberos_userlist"] = (

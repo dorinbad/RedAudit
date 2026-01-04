@@ -185,15 +185,15 @@ class AuditorVulnMixin:
                 if self.config["scan_mode"] == "completo" and self.extra_tools.get("testssl.sh"):
                     self.current_phase = f"vulns:testssl:{ip}:{port}"
                     self._set_ui_detail(f"[testssl] {ip}:{port}")
-                    self.print_status(
-                        f"[testssl] {ip}:{port} → {self.t('testssl_analysis', ip, port)}", "INFO"
+                    self.ui.print_status(
+                        f"[testssl] {ip}:{port} → {self.ui.t('testssl_analysis', ip, port)}", "INFO"
                     )
                     ssl_analysis = ssl_deep_analysis(ip, port, self.extra_tools, self.logger)
                     if ssl_analysis:
                         finding["testssl_analysis"] = ssl_analysis
                         # Alert if vulnerabilities found
                         if ssl_analysis.get("vulnerabilities"):
-                            self.print_status(
+                            self.ui.print_status(
                                 f"⚠️  SSL/TLS vulnerabilities detected on {ip}:{port}", "WARNING"
                             )
 
@@ -266,7 +266,7 @@ class AuditorVulnMixin:
                                     filtered = original_count - len(verified)
                                     if filtered > 0:
                                         finding["nikto_filtered_count"] = filtered
-                                        self.print_status(
+                                        self.ui.print_status(
                                             f"[nikto] {ip}:{port} → Filtered {filtered}/{original_count} false positives",
                                             "INFO",
                                         )
@@ -292,7 +292,7 @@ class AuditorVulnMixin:
 
         self.current_phase = "vulns"
         self._set_ui_detail("web vuln scan")
-        self.print_status(self.t("vuln_analysis", len(web_hosts)), "HEADER")
+        self.ui.print_status(self.ui.t("vuln_analysis", len(web_hosts)), "HEADER")
         workers = min(3, self.config["threads"])
         workers = max(1, int(workers))
 
@@ -384,7 +384,7 @@ class AuditorVulnMixin:
                                 progress.update(
                                     task,
                                     advance=1,
-                                    description=f"[cyan]{self.t('scanned_host', host_ip)}",
+                                    description=f"[cyan]{self.ui.t('scanned_host', host_ip)}",
                                     eta_upper=self._format_eta(remaining_budget_s / workers),
                                     eta_est=f"ETA≈ {eta_est_val}" if eta_est_val else "",
                                     detail=last_detail,
@@ -402,7 +402,9 @@ class AuditorVulnMixin:
                             if res:
                                 self.results["vulnerabilities"].append(res)
                         except Exception as exc:
-                            self.print_status(self.t("worker_error", exc), "WARNING", force=True)
+                            self.ui.print_status(
+                                self.ui.t("worker_error", exc), "WARNING", force=True
+                            )
                             if self.logger:
                                 self.logger.debug(
                                     "Vuln worker exception details for %s", host_ip, exc_info=True
@@ -412,8 +414,8 @@ class AuditorVulnMixin:
                             0.0, remaining_budget_s - budgets.get(host_ip, 0.0)
                         )
                         if total and done % max(1, total // 10) == 0:
-                            self.print_status(
-                                f"{self.t('progress', done, total)} | ETA≤ {self._format_eta(remaining_budget_s / workers)}",
+                            self.ui.print_status(
+                                f"{self.ui.t('progress', done, total)} | ETA≤ {self._format_eta(remaining_budget_s / workers)}",
                                 "INFO",
                                 update_activity=False,
                                 force=True,

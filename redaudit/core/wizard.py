@@ -48,18 +48,18 @@ class WizardMixin:
 
     def print_banner(self) -> None:
         """Print the RedAudit banner."""
-        subtitle = self.t("banner_subtitle", self._detect_os_banner_label())
+        subtitle = self.ui.t("banner_subtitle", self._detect_os_banner_label())
         banner = f"""
-{self.COLORS['FAIL']}
- ____          _    {self.COLORS['BOLD']}{self.COLORS['HEADER']}_             _ _ _{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|  _ \\ ___  __| |  {self.COLORS['BOLD']}{self.COLORS['HEADER']}/ \\  _   _  __| (_) |_{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-| |_) / _ \\/ _` | {self.COLORS['BOLD']}{self.COLORS['HEADER']}/ _ \\| | | |/ _` | | __|{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|  _ <  __/ (_| |{self.COLORS['BOLD']}{self.COLORS['HEADER']}/ ___ \\ |_| | (_| | | |_{self.COLORS['ENDC']}{self.COLORS['FAIL']}
-|_| \\_\\___|\\__,_|{self.COLORS['BOLD']}{self.COLORS['HEADER']}/_/   \\_\\__,_|\\__,_|_|\\__|{self.COLORS['ENDC']}
-                                     {self.COLORS['CYAN']}v{VERSION}{self.COLORS['ENDC']}
-{self.COLORS['OKBLUE']}══════════════════════════════════════════════════════{self.COLORS['ENDC']}
-{self.COLORS['BOLD']}{subtitle}{self.COLORS['ENDC']}
-{self.COLORS['OKBLUE']}══════════════════════════════════════════════════════{self.COLORS['ENDC']}
+{self.ui.colors['FAIL']}
+ ____          _    {self.ui.colors['BOLD']}{self.ui.colors['HEADER']}_             _ _ _{self.ui.colors['ENDC']}{self.ui.colors['FAIL']}
+|  _ \\ ___  __| |  {self.ui.colors['BOLD']}{self.ui.colors['HEADER']}/ \\  _   _  __| (_) |_{self.ui.colors['ENDC']}{self.ui.colors['FAIL']}
+| |_) / _ \\/ _` | {self.ui.colors['BOLD']}{self.ui.colors['HEADER']}/ _ \\| | | |/ _` | | __|{self.ui.colors['ENDC']}{self.ui.colors['FAIL']}
+|  _ <  __/ (_| |{self.ui.colors['BOLD']}{self.ui.colors['HEADER']}/ ___ \\ |_| | (_| | | |_{self.ui.colors['ENDC']}{self.ui.colors['FAIL']}
+|_| \\_\\___|\\__,_|{self.ui.colors['BOLD']}{self.ui.colors['HEADER']}/_/   \\_\\__,_|\\__,_|_|\\__|{self.ui.colors['ENDC']}
+                                     {self.ui.colors['CYAN']}v{VERSION}{self.ui.colors['ENDC']}
+{self.ui.colors['OKBLUE']}══════════════════════════════════════════════════════{self.ui.colors['ENDC']}
+{self.ui.colors['BOLD']}{subtitle}{self.ui.colors['ENDC']}
+{self.ui.colors['OKBLUE']}══════════════════════════════════════════════════════{self.ui.colors['ENDC']}
 """
         print(banner)
 
@@ -208,7 +208,7 @@ class WizardMixin:
             visible += 1
             idx += 1
         out.append("...")
-        out.append(self.COLORS["ENDC"])
+        out.append(self.ui.colors["ENDC"])
         return "".join(out)
 
     def _arrow_menu(
@@ -231,29 +231,29 @@ class WizardMixin:
             if header:
                 lines.append(
                     self._truncate_menu_text(
-                        f"{self.COLORS['HEADER']}{header}{self.COLORS['ENDC']}", width
+                        f"{self.ui.colors['HEADER']}{header}{self.ui.colors['ENDC']}", width
                     )
                 )
                 lines.append(self._truncate_menu_text(sep, width))
             else:
                 lines.append(
                     self._truncate_menu_text(
-                        f"{self.COLORS['OKBLUE']}{'—' * min(60, width)}{self.COLORS['ENDC']}",
+                        f"{self.ui.colors['OKBLUE']}{'—' * min(60, width)}{self.ui.colors['ENDC']}",
                         width,
                     )
                 )
             lines.append(
                 self._truncate_menu_text(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}", width
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {question}", width
                 )
             )
             for i, opt in enumerate(options):
-                marker = f"{self.COLORS['BOLD']}❯{self.COLORS['ENDC']}" if i == index else " "
+                marker = f"{self.ui.colors['BOLD']}❯{self.ui.colors['ENDC']}" if i == index else " "
                 opt_display = self._format_menu_option(opt)
                 lines.append(self._truncate_menu_text(f"  {marker} {opt_display}", width))
             lines.append(
                 self._truncate_menu_text(
-                    f"{self.COLORS['OKBLUE']}{self.t('menu_nav_hint')}{self.COLORS['ENDC']}",
+                    f"{self.ui.colors['OKBLUE']}{self.ui.t('menu_nav_hint')}{self.ui.colors['ENDC']}",
                     width,
                 )
             )
@@ -292,15 +292,15 @@ class WizardMixin:
             return option
         stripped = option.strip()
         labels = (
-            (self.t("yes_default"), "OKGREEN"),
-            (self.t("yes_option"), "OKGREEN"),
-            (self.t("no_default"), "FAIL"),
-            (self.t("no_option"), "FAIL"),
-            (self.t("wizard_go_back"), "OKBLUE"),
+            (self.ui.t("yes_default"), "OKGREEN"),
+            (self.ui.t("yes_option"), "OKGREEN"),
+            (self.ui.t("no_default"), "FAIL"),
+            (self.ui.t("no_option"), "FAIL"),
+            (self.ui.t("wizard_go_back"), "OKBLUE"),
         )
         for label, color in labels:
             if label and stripped.startswith(label):
-                return f"{self.COLORS[color]}{option}{self.COLORS['ENDC']}"
+                return f"{self.ui.colors[color]}{option}{self.ui.colors['ENDC']}"
         return option
 
     def show_main_menu(self) -> int:
@@ -312,43 +312,51 @@ class WizardMixin:
         """
         if self._use_arrow_menu():
             opts = [
-                f"1) {self.t('menu_option_scan')}",
-                f"2) {self.t('menu_option_update')}",
-                f"3) {self.t('menu_option_diff')}",
-                f"0) {self.t('menu_option_exit')}",
+                f"1) {self.ui.t('menu_option_scan')}",
+                f"2) {self.ui.t('menu_option_update')}",
+                f"3) {self.ui.t('menu_option_diff')}",
+                f"0) {self.ui.t('menu_option_exit')}",
             ]
             choice = self._arrow_menu(
-                self.t("menu_prompt"),
+                self.ui.t("menu_prompt"),
                 opts,
                 0,
                 header=f"RedAudit v{VERSION}",
             )
             return 0 if choice == 3 else choice + 1
 
-        print(f"\n{self.COLORS['HEADER']}RedAudit v{VERSION}{self.COLORS['ENDC']}")
+        print(f"\n{self.ui.colors['HEADER']}RedAudit v{VERSION}{self.ui.colors['ENDC']}")
         print("─" * 60)
-        print(f"  {self.COLORS['CYAN']}1){self.COLORS['ENDC']} {self.t('menu_option_scan')}")
-        print(f"  {self.COLORS['CYAN']}2){self.COLORS['ENDC']} {self.t('menu_option_update')}")
-        print(f"  {self.COLORS['CYAN']}3){self.COLORS['ENDC']} {self.t('menu_option_diff')}")
-        print(f"  {self.COLORS['CYAN']}0){self.COLORS['ENDC']} {self.t('menu_option_exit')}")
+        print(
+            f"  {self.ui.colors['CYAN']}1){self.ui.colors['ENDC']} {self.ui.t('menu_option_scan')}"
+        )
+        print(
+            f"  {self.ui.colors['CYAN']}2){self.ui.colors['ENDC']} {self.ui.t('menu_option_update')}"
+        )
+        print(
+            f"  {self.ui.colors['CYAN']}3){self.ui.colors['ENDC']} {self.ui.t('menu_option_diff')}"
+        )
+        print(
+            f"  {self.ui.colors['CYAN']}0){self.ui.colors['ENDC']} {self.ui.t('menu_option_exit')}"
+        )
         print("─" * 60)
 
         while True:
             try:
                 ans = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('menu_prompt')} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('menu_prompt')} "
                 ).strip()
                 if ans in ("0", "1", "2", "3"):
                     return int(ans)
-                self.print_status(self.t("menu_invalid_option"), "WARNING")
+                self.ui.print_status(self.ui.t("menu_invalid_option"), "WARNING")
             except KeyboardInterrupt:
                 print("")
                 return 0
 
     def show_legal_warning(self) -> bool:
         """Display legal warning and ask for confirmation."""
-        print(f"\n{self.COLORS['WARNING']}{self.t('legal_warning')}{self.COLORS['ENDC']}")
-        return self.ask_yes_no(self.t("legal_accept"), default="no")
+        print(f"\n{self.ui.colors['WARNING']}{self.ui.t('legal_warning')}{self.ui.colors['ENDC']}")
+        return self.ask_yes_no(self.ui.t("legal_accept"), default="no")
 
     # ---------- Input utilities ----------
 
@@ -359,17 +367,17 @@ class WizardMixin:
             default_idx = 0 if default in ("yes", "y", "s", "si", "sí") else 1
             is_yes_default = default_idx == 0
             options = [
-                self.t("yes_default") if is_yes_default else self.t("yes_option"),
-                self.t("no_default") if not is_yes_default else self.t("no_option"),
+                self.ui.t("yes_default") if is_yes_default else self.ui.t("yes_option"),
+                self.ui.t("no_default") if not is_yes_default else self.ui.t("no_option"),
             ]
             try:
                 return self._arrow_menu(question, options, default_idx) == 0
             except Exception:
                 pass
         opts = (
-            self.t("ask_yes_no_opts")
+            self.ui.t("ask_yes_no_opts")
             if default in ("yes", "y", "s", "si", "sí")
-            else self.t("ask_yes_no_opts_neg")
+            else self.ui.t("ask_yes_no_opts_neg")
         )
         valid = {
             "yes": True,
@@ -382,9 +390,9 @@ class WizardMixin:
         }
         while True:
             try:
-                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+                print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
                 ans = (
-                    input(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}{opts}: ")
+                    input(f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {question}{opts}: ")
                     .strip()
                     .lower()
                 )
@@ -406,9 +414,9 @@ class WizardMixin:
             default_display = "todos" if self.lang == "es" else "all"
         while True:
             try:
-                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+                print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
                 ans = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question} [{default_display}]: "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {question} [{default_display}]: "
                 ).strip()
                 if ans == "":
                     return default_return
@@ -418,7 +426,7 @@ class WizardMixin:
                     num = int(ans)
                     if min_val <= num <= max_val:
                         return num
-                    self.print_status(self.t("val_out_of_range", min_val, max_val), "WARNING")
+                    self.ui.print_status(self.ui.t("val_out_of_range", min_val, max_val), "WARNING")
                 except ValueError:
                     continue
             except KeyboardInterrupt:
@@ -433,15 +441,15 @@ class WizardMixin:
                 return self._arrow_menu(question, options, default)
             except Exception:
                 pass
-        print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-        print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {question}")
+        print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
+        print(f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {question}")
         for i, opt in enumerate(options):
-            marker = f"{self.COLORS['BOLD']}>{self.COLORS['ENDC']}" if i == default else " "
+            marker = f"{self.ui.colors['BOLD']}>{self.ui.colors['ENDC']}" if i == default else " "
             print(f"  {marker} {i + 1}. {opt}")
         while True:
             try:
                 ans = input(
-                    f"\n{self.t('select_opt')} [1-{len(options)}] ({default + 1}): "
+                    f"\n{self.ui.t('select_opt')} [1-{len(options)}] ({default + 1}): "
                 ).strip()
                 if ans == "":
                     return default
@@ -480,7 +488,7 @@ class WizardMixin:
             step_header = f"[{step_num}/{total_steps}] "
 
         # Add "< Volver" / "< Go Back" as the last option (only if not first step)
-        back_label = self.t("wizard_go_back")
+        back_label = self.ui.t("wizard_go_back")
         show_back = step_num > 1  # Don't show back on first step
         display_options = list(options) + ([back_label] if show_back else [])
 
@@ -494,16 +502,18 @@ class WizardMixin:
                 pass
 
         # Fallback text-based menu
-        print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
-        print(f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {step_header}{question}")
+        print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
+        print(f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {step_header}{question}")
         for i, opt in enumerate(display_options):
-            marker = f"{self.COLORS['BOLD']}>{self.COLORS['ENDC']}" if i == default else " "
+            marker = f"{self.ui.colors['BOLD']}>{self.ui.colors['ENDC']}" if i == default else " "
             print(f"  {marker} {i + 1}. {opt}")
 
         while True:
             try:
                 prompt_range = f"1-{len(display_options)}"
-                ans = input(f"\n{self.t('select_opt')} [{prompt_range}] ({default + 1}): ").strip()
+                ans = input(
+                    f"\n{self.ui.t('select_opt')} [{prompt_range}] ({default + 1}): "
+                ).strip()
                 if ans == "":
                     return default
                 # Support "0" or "b" or "back" for going back
@@ -527,16 +537,16 @@ class WizardMixin:
         while True:
             try:
                 net = input(
-                    f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} CIDR (e.g. 192.168.1.0/24): "
+                    f"\n{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} CIDR (e.g. 192.168.1.0/24): "
                 ).strip()
                 if len(net) > MAX_CIDR_LENGTH:
-                    self.print_status(self.t("invalid_cidr"), "WARNING")
+                    self.ui.print_status(self.ui.t("invalid_cidr"), "WARNING")
                     continue
                 try:
                     ipaddress.ip_network(net, strict=False)
                     return net
                 except ValueError:
-                    self.print_status(self.t("invalid_cidr"), "WARNING")
+                    self.ui.print_status(self.ui.t("invalid_cidr"), "WARNING")
             except KeyboardInterrupt:
                 print("")
                 self.signal_handler(None, None)
@@ -546,7 +556,7 @@ class WizardMixin:
 
     def _show_defaults_summary(self, persisted_defaults: Dict) -> None:
         """Display summary of persisted defaults."""
-        self.print_status(self.t("defaults_summary_title"), "INFO")
+        self.ui.print_status(self.ui.t("defaults_summary_title"), "INFO")
 
         def fmt_targets(val):
             if not isinstance(val, list) or not val:
@@ -557,7 +567,7 @@ class WizardMixin:
         def fmt_bool(val):
             if val is None:
                 return "-"
-            return self.t("enabled") if val else self.t("disabled")
+            return self.ui.t("enabled") if val else self.ui.t("disabled")
 
         fields = [
             ("defaults_summary_targets", fmt_targets(persisted_defaults.get("target_networks"))),
@@ -579,7 +589,7 @@ class WizardMixin:
 
         for key, val in fields:
             display_val = val if val is not None else "-"
-            self.print_status(f"- {self.t(key)}: {display_val}", "INFO")
+            self.ui.print_status(f"- {self.ui.t(key)}: {display_val}", "INFO")
 
     def _apply_run_defaults(self, defaults_for_run: Dict) -> None:
         """Apply persisted defaults to self.config without prompts."""
@@ -634,21 +644,21 @@ class WizardMixin:
         Returns:
             Webhook URL or empty string if skipped
         """
-        if not self.ask_yes_no(self.t("webhook_q"), default="no"):
+        if not self.ask_yes_no(self.ui.t("webhook_q"), default="no"):
             return ""
 
         while True:
             try:
-                print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+                print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
                 # v3.8.0: Added hint with example URL formats
                 hint = (
-                    self.COLORS["OKBLUE"]
+                    self.ui.colors["OKBLUE"]
                     + "(e.g. https://hooks.slack.com/services/... or https://outlook.office.com/webhook/...)"
-                    + self.COLORS["ENDC"]
+                    + self.ui.colors["ENDC"]
                 )
                 print(f"  {hint}")
                 url = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('webhook_url_prompt')} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('webhook_url_prompt')} "
                 ).strip()
 
                 if not url:
@@ -656,13 +666,13 @@ class WizardMixin:
 
                 # Basic validation
                 if not url.startswith("https://"):
-                    self.print_status(self.t("webhook_invalid_url"), "WARNING")
+                    self.ui.print_status(self.ui.t("webhook_invalid_url"), "WARNING")
                     continue
 
-                self.print_status(self.t("webhook_configured", url[:50] + "..."), "OK")
+                self.ui.print_status(self.ui.t("webhook_configured", url[:50] + "..."), "OK")
 
                 # Optional: test the webhook
-                if self.ask_yes_no(self.t("webhook_test_q"), default="no"):
+                if self.ask_yes_no(self.ui.t("webhook_test_q"), default="no"):
                     self._test_webhook(url)
 
                 return url
@@ -682,13 +692,15 @@ class WizardMixin:
                 "source": "wizard",
             }
             if send_webhook(url, test_payload):
-                self.print_status(self.t("webhook_test_success"), "OK")
+                self.ui.print_status(self.ui.t("webhook_test_success"), "OK")
                 return True
             else:
-                self.print_status(self.t("webhook_test_failed", "Connection failed"), "WARNING")
+                self.ui.print_status(
+                    self.ui.t("webhook_test_failed", "Connection failed"), "WARNING"
+                )
                 return False
         except Exception as e:
-            self.print_status(self.t("webhook_test_failed", str(e)), "WARNING")
+            self.ui.print_status(self.ui.t("webhook_test_failed", str(e)), "WARNING")
             return False
 
     # ---------- v3.7: Advanced Net Discovery Options ----------
@@ -706,51 +718,51 @@ class WizardMixin:
             "redteam_max_targets": 50,
         }
 
-        if not self.ask_yes_no(self.t("net_discovery_advanced_q"), default="no"):
+        if not self.ask_yes_no(self.ui.t("net_discovery_advanced_q"), default="no"):
             return options
 
         try:
             # SNMP Community
-            print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+            print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
             # v3.8.0: Added hint for SNMP community string
             hint = (
-                self.COLORS["OKBLUE"]
+                self.ui.colors["OKBLUE"]
                 + "(ENTER = 'public', or try 'private', 'community', etc.)"
-                + self.COLORS["ENDC"]
+                + self.ui.colors["ENDC"]
             )
             print(f"  {hint}")
             snmp = input(
-                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('net_discovery_snmp_prompt')} "
+                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('net_discovery_snmp_prompt')} "
                 f"[{options['snmp_community']}]: "
             ).strip()
             if snmp:
                 options["snmp_community"] = snmp[:64]  # Safety limit
 
             # DNS Zone
-            print(f"\n{self.COLORS['OKBLUE']}{'—' * 60}{self.COLORS['ENDC']}")
+            print(f"\n{self.ui.colors['OKBLUE']}{'—' * 60}{self.ui.colors['ENDC']}")
             # v3.8.0: Added hint for DNS zone with examples
             hint_dns = (
-                self.COLORS["OKBLUE"]
+                self.ui.colors["OKBLUE"]
                 + "(e.g. corp.local, example.com, internal.lan — ENTER to skip)"
-                + self.COLORS["ENDC"]
+                + self.ui.colors["ENDC"]
             )
             print(f"  {hint_dns}")
             dns_zone = input(
-                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('net_discovery_dns_zone_prompt')} "
+                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('net_discovery_dns_zone_prompt')} "
             ).strip()
             if dns_zone:
                 options["dns_zone"] = dns_zone[:128]
 
             # Max targets
             max_tgt = self.ask_number(
-                self.t("net_discovery_max_targets_prompt"),
+                self.ui.t("net_discovery_max_targets_prompt"),
                 default=50,
                 min_val=1,
                 max_val=500,
             )
             options["redteam_max_targets"] = max_tgt
 
-            self.print_status(self.t("net_discovery_options_saved"), "OK")
+            self.ui.print_status(self.ui.t("net_discovery_options_saved"), "OK")
 
         except KeyboardInterrupt:
             print("")

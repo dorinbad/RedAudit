@@ -23,6 +23,9 @@ class _DummyWizard(WizardMixin):
         }
         self._messages = []
         self.rate_limit_delay = 0.0
+        # v4.0 UI Composition support
+        self.colors = self.COLORS
+        self.ui = self
 
     def t(self, key, *args):
         return key.format(*args) if args else key

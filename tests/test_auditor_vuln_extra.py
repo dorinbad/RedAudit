@@ -29,7 +29,11 @@ class _DummyAuditor(AuditorVulnMixin):
         self.current_phase = ""
         self._ui_detail = ""
         self.interrupted = False
+        self.interrupted = False
         self.statuses = []
+        # v4.0 Shim
+        self.ui = self
+        self.colors = {}
 
     def _set_ui_detail(self, detail):
         self._ui_detail = detail

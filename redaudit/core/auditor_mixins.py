@@ -633,34 +633,34 @@ class AuditorCryptoMixin:
         self.config["encryption_enabled"] = False
 
         if not self.cryptography_available:
-            self.print_status(self.t("crypto_missing"), "WARNING")
+            self.ui.print_status(self.ui.t("crypto_missing"), "WARNING")
             if non_interactive:
-                self.print_status(self.t("cryptography_required"), "FAIL")
+                self.ui.print_status(self.ui.t("cryptography_required"), "FAIL")
             return
 
         if not non_interactive:
-            if self.ask_yes_no(self.t("encrypt_reports"), default="no"):
+            if self.ask_yes_no(self.ui.t("encrypt_reports"), default="no"):
                 try:
-                    pwd = ask_password_twice(self.t("encryption_password"), self.lang)
+                    pwd = ask_password_twice(self.ui.t("encryption_password"), self.lang)
                     key, salt = derive_key_from_password(pwd)
                     self.encryption_key = key
                     self.config["encryption_salt"] = base64.b64encode(salt).decode()
                     self.encryption_enabled = True
                     self.config["encryption_enabled"] = True
-                    self.print_status(self.t("encryption_enabled"), "OKGREEN")
+                    self.ui.print_status(self.ui.t("encryption_enabled"), "OKGREEN")
                 except RuntimeError as exc:
                     if "cryptography not available" in str(exc):
-                        self.print_status(self.t("cryptography_required"), "FAIL")
+                        self.ui.print_status(self.ui.t("cryptography_required"), "FAIL")
                     else:
                         raise
         else:
             if not self.cryptography_available:
-                self.print_status(self.t("cryptography_required"), "FAIL")
+                self.ui.print_status(self.ui.t("cryptography_required"), "FAIL")
                 return
 
             if password is None:
                 password = generate_random_password()
-                self.print_status(
+                self.ui.print_status(
                     f"⚠️  Generated random encryption password (save this!): {password}", "WARNING"
                 )
 
@@ -670,10 +670,10 @@ class AuditorCryptoMixin:
                 self.config["encryption_salt"] = base64.b64encode(salt).decode()
                 self.encryption_enabled = True
                 self.config["encryption_enabled"] = True
-                self.print_status(self.t("encryption_enabled"), "OKGREEN")
+                self.ui.print_status(self.ui.t("encryption_enabled"), "OKGREEN")
             except RuntimeError as exc:
                 if "cryptography not available" in str(exc):
-                    self.print_status(self.t("cryptography_required"), "FAIL")
+                    self.ui.print_status(self.ui.t("cryptography_required"), "FAIL")
                 else:
                     raise
 
@@ -697,16 +697,16 @@ class AuditorNVDMixin:
                 validate_nvd_api_key,
             )
         except ImportError:
-            self.print_status(self.t("config_module_missing"), "WARNING")
+            self.ui.print_status(self.ui.t("config_module_missing"), "WARNING")
             return
 
         # If key provided via CLI, just use it
         if api_key:
             if validate_nvd_api_key(api_key):
                 self.config["nvd_api_key"] = api_key
-                self.print_status(self.t("nvd_key_set_cli"), "OKGREEN")
+                self.ui.print_status(self.ui.t("nvd_key_set_cli"), "OKGREEN")
             else:
-                self.print_status(self.t("nvd_key_invalid"), "WARNING")
+                self.ui.print_status(self.ui.t("nvd_key_invalid"), "WARNING")
             return
 
         # If already configured, use existing
@@ -717,58 +717,60 @@ class AuditorNVDMixin:
 
         # Non-interactive mode without key - warn but continue
         if non_interactive:
-            self.print_status(self.t("nvd_key_not_configured"), "WARNING")
+            self.ui.print_status(self.ui.t("nvd_key_not_configured"), "WARNING")
             return
 
         # Interactive: ask user
         if not self.config.get("cve_lookup_enabled"):
             return  # Only prompt if CVE lookup is enabled
 
-        print(f"\n{self.COLORS['WARNING']}")
+        print(f"\n{self.ui.colors['WARNING']}")
         print("=" * 60)
-        print(self.t("nvd_setup_header"))
+        print(self.ui.t("nvd_setup_header"))
         print("=" * 60)
-        print(f"{self.COLORS['ENDC']}")
-        print(self.t("nvd_setup_info"))
+        print(f"{self.ui.colors['ENDC']}")
+        print(self.ui.t("nvd_setup_info"))
         print(
-            f"\n{self.COLORS['CYAN']}https://nvd.nist.gov/developers/request-an-api-key{self.COLORS['ENDC']}\n"
+            f"\n{self.ui.colors['CYAN']}https://nvd.nist.gov/developers/request-an-api-key{self.ui.colors['ENDC']}\n"
         )
 
         options = [
-            self.t("nvd_option_config"),  # Save in config file
-            self.t("nvd_option_env"),  # Use environment variable
-            self.t("nvd_option_skip"),  # Continue without
+            self.ui.t("nvd_option_config"),  # Save in config file
+            self.ui.t("nvd_option_env"),  # Use environment variable
+            self.ui.t("nvd_option_skip"),  # Continue without
         ]
 
-        choice = self.ask_choice(self.t("nvd_ask_storage"), options, default=2)
+        choice = self.ask_choice(self.ui.t("nvd_ask_storage"), options, default=2)
 
         if choice == 0:  # Save in config file
             while True:
                 try:
-                    key = input(f"\n{self.COLORS['CYAN']}?{self.COLORS['ENDC']} API Key: ").strip()
+                    key = input(
+                        f"\n{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} API Key: "
+                    ).strip()
                     if not key:
-                        self.print_status(self.t("nvd_key_skipped"), "INFO")
+                        self.ui.print_status(self.ui.t("nvd_key_skipped"), "INFO")
                         break
 
                     if validate_nvd_api_key(key):
                         if set_nvd_api_key(key, "config"):
                             self.config["nvd_api_key"] = key
-                            self.print_status(self.t("nvd_key_saved"), "OKGREEN")
+                            self.ui.print_status(self.ui.t("nvd_key_saved"), "OKGREEN")
                         else:
-                            self.print_status(self.t("nvd_key_save_error"), "WARNING")
+                            self.ui.print_status(self.ui.t("nvd_key_save_error"), "WARNING")
                         break
                     else:
-                        self.print_status(self.t("nvd_key_invalid_format"), "WARNING")
+                        self.ui.print_status(self.ui.t("nvd_key_invalid_format"), "WARNING")
                 except KeyboardInterrupt:
                     print("")
                     break
 
         elif choice == 1:  # Environment variable
-            print(f"\n{self.t('nvd_env_instructions')}")
+            print(f"\n{self.ui.t('nvd_env_instructions')}")
             print(
-                f"  {self.COLORS['CYAN']}export NVD_API_KEY='your-api-key-here'{self.COLORS['ENDC']}"
+                f"  {self.ui.colors['CYAN']}export NVD_API_KEY='your-api-key-here'{self.ui.colors['ENDC']}"
             )
-            self.print_status(self.t("nvd_env_set_later"), "INFO")
+            self.ui.print_status(self.ui.t("nvd_env_set_later"), "INFO")
 
         else:  # Skip
-            self.print_status(self.t("nvd_slow_mode"), "WARNING")
+            self.ui.print_status(self.ui.t("nvd_slow_mode"), "WARNING")
