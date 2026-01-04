@@ -18,6 +18,16 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 *(No hay elementos de prioridad alta pendientes actualmente)*
 
+### Refactorización Arquitectónica (Prioridad: Crítica - v4.0)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Migración Mixin → Composición** | 📋 Planificado | Refactorizar `InteractiveNetworkAuditor` de 7 Mixins a patrón Composición usando Strangler Fig con adaptadores. |
+| **Fase 1: UIManager** | ⏳ Pendiente | Extraer `AuditorUIMixin` → clase `UIManager` con adaptador para compatibilidad. |
+| **Fase 2: ConfigContext** | ⏳ Pendiente | Encapsular `self.config` dict en clase tipada `ConfigurationContext`. |
+| **Fase 3: NetworkScanner** | ⏳ Pendiente | Extraer `AuditorScanMixin` → clase `NetworkScanner` con inyección de dependencias. |
+| **Fase 4: Limpieza** | ⏳ Pendiente | Eliminar adaptadores, usar composición directa, limpiar tests legacy. |
+
 ### Extensiones Red Team (Prioridad: Media)
 
 *(No hay elementos de prioridad media pendientes actualmente)*
@@ -26,7 +36,7 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
-| **Consolidación Suite Tests** | ✅ Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 83%. |
+| **Consolidación Suite Tests** | ✅ Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 85%. |
 
 ### Infraestructura (Prioridad: Baja)
 
