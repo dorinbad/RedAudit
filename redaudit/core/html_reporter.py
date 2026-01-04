@@ -95,6 +95,8 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
 
     # Host table data
     host_table = []
+    # v3.10.2: Detect scanner's own IPs to mark as "Auditor Node"
+    scanner_ips = {n.get("ip") for n in results.get("network_info", []) if n.get("ip")}
     for host in hosts:
         agentless = host.get("agentless_fingerprint", {}) or {}
         agentless_summary = (
@@ -106,7 +108,16 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
         )
         # v3.10.1: Get MAC from multiple sources, vendor with hostname fallback
         deep_scan = host.get("deep_scan", {}) or {}
-        mac_address = deep_scan.get("mac_address") or host.get("mac") or "-"
+        # v3.10.2: Fix MAC extraction - check both mac_address (canonical) and mac (legacy)
+        mac_address = (
+            deep_scan.get("mac_address") or host.get("mac_address") or host.get("mac") or ""
+        )
+        # v3.10.2: Mark scanner's own IPs as "Auditor Node" when MAC unavailable
+        host_ip = host.get("ip", "")
+        if not mac_address and host_ip in scanner_ips:
+            mac_address = "(Auditor Node)" if lang != "es" else "(Nodo Auditor)"
+        elif not mac_address:
+            mac_address = "-"
         mac_vendor = deep_scan.get("vendor")
         hostname = host.get("hostname") or _get_reverse_dns(host) or "-"
         # Use vendor_hints for hostname-based fallback when MAC vendor missing
