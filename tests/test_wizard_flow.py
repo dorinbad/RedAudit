@@ -171,11 +171,13 @@ def test_show_main_menu_arrow(monkeypatch):
     monkeypatch.setattr(wiz, "_use_arrow_menu", lambda: True)
 
     def fake_arrow_menu(*args, **kwargs):
-        return 2  # Select third option (exit)
+        return 2  # Select third option (diff), returns index=2
 
     monkeypatch.setattr(wiz, "_arrow_menu", fake_arrow_menu)
     result = wiz.show_main_menu()
-    assert result == 2
+    # show_main_menu returns: 0 if choice==3 else choice+1
+    # So choice=2 → returns 3 (diff)
+    assert result == 3
 
 
 def test_ask_choice_arrow_mode(monkeypatch):
