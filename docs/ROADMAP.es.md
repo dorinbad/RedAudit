@@ -22,6 +22,12 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 *(No hay elementos de prioridad media pendientes actualmente)*
 
+### Infraestructura (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Consolidación Suite Tests** | 🔧 En Progreso | Refactorizar 199 archivos de test fragmentados → ~20 archivos semánticos. Crear `conftest.py` para fixtures compartidos. Eliminar artefactos de "coverage gaming". Rama: `refactor/test-suite-consolidation`. |
+
 ### Infraestructura (Prioridad: Baja)
 
 | Característica | Estado | Descripción |

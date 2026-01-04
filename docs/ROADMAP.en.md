@@ -22,6 +22,12 @@ These features are approved but **not yet implemented** in the codebase.
 
 *(No medium priority items currently pending)*
 
+### Infrastructure (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Test Suite Consolidation** | 🔧 In Progress | Refactor 199 fragmented test files → ~20 semantic files. Create `conftest.py` for shared fixtures. Eliminate "coverage gaming" artifacts. Branch: `refactor/test-suite-consolidation`. |
+
 ### Infrastructure (Priority: Low)
 
 | Feature | Status | Description |
