@@ -165,7 +165,8 @@ def test_crypto_component_setup():
     c = MockCrypto()
     with patch("redaudit.core.auditor_components.ask_password_twice", return_value="pwd"):
         with patch(
-            "redaudit.core.auditor_components.derive_key_from_password", return_value=(b"key", b"salt")
+            "redaudit.core.auditor_components.derive_key_from_password",
+            return_value=(b"key", b"salt"),
         ):
             c.setup_encryption()
             assert c.encryption_enabled is True
