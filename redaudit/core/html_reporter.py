@@ -106,7 +106,10 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
         )
         # v3.10.1: Get MAC from multiple sources, vendor with hostname fallback
         deep_scan = host.get("deep_scan", {}) or {}
-        mac_address = deep_scan.get("mac_address") or host.get("mac") or "-"
+        # v3.10.2: Fix MAC extraction - check both mac_address (canonical) and mac (legacy)
+        mac_address = (
+            deep_scan.get("mac_address") or host.get("mac_address") or host.get("mac") or "-"
+        )
         mac_vendor = deep_scan.get("vendor")
         hostname = host.get("hostname") or _get_reverse_dns(host) or "-"
         # Use vendor_hints for hostname-based fallback when MAC vendor missing
