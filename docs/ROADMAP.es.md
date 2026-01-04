@@ -26,7 +26,7 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
-| **Consolidación Suite Tests** | 🔧 En Progreso | Refactorizar 199 archivos de test fragmentados → ~20 archivos semánticos. Crear `conftest.py` para fixtures compartidos. Eliminar artefactos de "coverage gaming". Rama: `refactor/test-suite-consolidation`. |
+| **Consolidación Suite Tests** | ✅ Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 83%. |
 
 ### Infraestructura (Prioridad: Baja)
 
