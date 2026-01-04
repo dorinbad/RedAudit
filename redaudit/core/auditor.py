@@ -161,6 +161,12 @@ class InteractiveNetworkAuditor(
 
         self.logger = None
         self._setup_logging()
+
+        # v4.0: Direct Composition - UIManager
+        from redaudit.core.ui_manager import UIManager
+
+        self._ui_manager = UIManager(lang=self.lang, colors=self.COLORS, logger=self.logger)
+
         signal.signal(signal.SIGINT, self.signal_handler)
 
     # v4.0: Adapter property for gradual migration to ConfigurationContext
