@@ -21,9 +21,6 @@ from redaudit.utils.constants import (
     COLORS,
     DEFAULT_LANG,
     DEFAULT_THREADS,
-    DEFAULT_DEEP_SCAN_BUDGET,
-    DEFAULT_IDENTITY_THRESHOLD,
-    DEFAULT_UDP_MODE,
     MAX_THREADS,
     MIN_THREADS,
     suggest_threads,
@@ -60,6 +57,8 @@ from redaudit.core.reporter import (
     show_config_summary,
     show_results_summary,
 )
+from redaudit.core.config_context import ConfigurationContext
+from redaudit.core.network_scanner import NetworkScanner
 
 
 class InteractiveNetworkAuditor(
@@ -85,52 +84,9 @@ class InteractiveNetworkAuditor(
             "vulnerabilities": [],
             "summary": {},
         }
-        self.config = {
-            "target_networks": [],
-            "max_hosts": "all",
-            "max_hosts_value": "all",
-            "scan_mode": "normal",
-            "threads": DEFAULT_THREADS,
-            "output_dir": get_default_reports_base_dir(),
-            # v3.5: Dry-run (print commands without executing)
-            "dry_run": False,
-            # v3.5: Best-effort prevent system/display sleep during scan
-            "prevent_sleep": True,
-            "scan_vulnerabilities": True,
-            "save_txt_report": True,
-            "encryption_salt": None,
-            # UDP scan config (v2.8)
-            "udp_mode": DEFAULT_UDP_MODE,
-            "udp_top_ports": UDP_TOP_PORTS,
-            # v3.0 configuration
-            "ipv6_only": False,
-            "cve_lookup_enabled": False,
-            "nvd_api_key": None,
-            # v2.8: Adaptive deep identity scan
-            "deep_id_scan": True,
-            # v3.10.0: SmartScan governance defaults
-            "low_impact_enrichment": False,
-            "deep_scan_budget": DEFAULT_DEEP_SCAN_BUDGET,
-            "identity_threshold": DEFAULT_IDENTITY_THRESHOLD,
-            # v3.1+: Optional topology discovery
-            "topology_enabled": False,
-            "topology_only": False,
-            # v3.2+: Enhanced network discovery
-            # None = auto (enabled in full/topology), True/False = explicit override
-            "net_discovery_enabled": None,
-            "net_discovery_protocols": None,  # None = all, or list like ["dhcp", "netbios"]
-            "net_discovery_redteam": False,
-            "net_discovery_interface": None,
-            "net_discovery_max_targets": 50,
-            "net_discovery_snmp_community": "public",
-            "net_discovery_dns_zone": None,
-            "net_discovery_kerberos_realm": None,
-            "net_discovery_kerberos_userlist": None,
-            "net_discovery_active_l2": False,
-            # v3.8: Agentless Windows verification (SMB/RDP/LDAP)
-            "windows_verify_enabled": False,
-            "windows_verify_max_targets": 20,
-        }
+        # v4.0: ConfigurationContext Composition
+        # v4.0: ConfigurationContext Composition
+        self.cfg = ConfigurationContext()
 
         self.encryption_enabled = False
         self.encryption_key = None
@@ -161,37 +117,47 @@ class InteractiveNetworkAuditor(
 
         self.logger = None
         self._setup_logging()
+
+        # v4.0: Direct Composition - UIManager
+        from redaudit.core.ui_manager import UIManager
+
+        self._ui_manager = UIManager(lang=self.lang, colors=self.COLORS, logger=self.logger)
+        self.scanner = NetworkScanner(self.cfg, self._ui_manager, self.logger)
+
         signal.signal(signal.SIGINT, self.signal_handler)
 
     # v4.0: Adapter property for gradual migration to ConfigurationContext
+    # v4.0: Adapter property for gradual migration to ConfigurationContext
     @property
-    def cfg(self):
+    def config(self):
         """
-        Get typed ConfigurationContext wrapper (adapter pattern).
-
-        This allows gradual migration from dict access to typed properties.
-        Eventually, all config access will go through self.cfg instead of self.config.
+        Backward compatibility proxy for self.cfg (ConfigurationContext).
+        Allows access akin to self.config["key"].
         """
-        if not hasattr(self, "_config_context"):
-            from redaudit.core.config_context import ConfigurationContext
+        return self.cfg
 
-            self._config_context = ConfigurationContext(self.config)
-        return self._config_context
+    @config.setter
+    def config(self, value):
+        # Handle re-assignment of self.config
+        if isinstance(value, ConfigurationContext):
+            self.cfg = value
+        else:
+            self.cfg = ConfigurationContext(value)
 
     # ---------- Reporting ----------
 
     def show_config_summary(self):
         """Display configuration summary."""
-        show_config_summary(self.config, self.t, self.COLORS)
+        show_config_summary(self.config, self.ui.t, self.ui.colors)
 
     def show_results(self):
         """Display final results summary."""
-        show_results_summary(self.results, self.t, self.COLORS, self.config["output_dir"])
+        show_results_summary(self.results, self.ui.t, self.ui.colors, self.config["output_dir"])
 
     def show_legal_warning(self):
         """Display legal warning and ask for confirmation."""
-        print(f"{self.COLORS['FAIL']}{self.t('legal_warn')}{self.COLORS['ENDC']}")
-        return self.ask_yes_no(self.t("legal_ask"), default="no")
+        print(f"{self.ui.colors['FAIL']}{self.ui.t('legal_warn')}{self.ui.colors['ENDC']}")
+        return self.ask_yes_no(self.ui.t("legal_ask"), default="no")
 
     def save_results(self, partial=False):
         """Save results to files."""
@@ -204,8 +170,8 @@ class InteractiveNetworkAuditor(
             self.encryption_enabled,
             self.encryption_key,
             partial,
-            self.print_status,
-            self.t,
+            self.ui.print_status,
+            self.ui.t,
             self.logger,
         )
 
@@ -268,28 +234,30 @@ class InteractiveNetworkAuditor(
             mode = getattr(self, "defaults_mode", "ask") or "ask"
             if mode == "ignore":
                 defaults_for_run = {}
-                self.print_status(self.t("defaults_ignore_confirm"), "INFO")
+                self.ui.print_status(self.ui.t("defaults_ignore_confirm"), "INFO")
             elif mode == "ask":
-                self.print_status(self.t("defaults_detected"), "INFO")
+                self.ui.print_status(self.ui.t("defaults_detected"), "INFO")
                 options = [
-                    self.t("defaults_action_use"),
-                    self.t("defaults_action_review"),
-                    self.t("defaults_action_ignore"),
+                    self.ui.t("defaults_action_use"),
+                    self.ui.t("defaults_action_review"),
+                    self.ui.t("defaults_action_ignore"),
                 ]
-                choice = self.ask_choice(self.t("defaults_action_q"), options, 0)
+                choice = self.ask_choice(self.ui.t("defaults_action_q"), options, 0)
                 if choice == 2:
                     defaults_for_run = {}
-                    self.print_status(self.t("defaults_ignore_confirm"), "INFO")
+                    self.ui.print_status(self.ui.t("defaults_ignore_confirm"), "INFO")
                 elif choice == 0:
                     # Use defaults and continue immediately (no re-asking scan parameters).
                     should_skip_config = True
                     auto_start = True
                 elif choice == 1:
-                    show_summary = self.ask_yes_no(self.t("defaults_show_summary_q"), default="no")
+                    show_summary = self.ask_yes_no(
+                        self.ui.t("defaults_show_summary_q"), default="no"
+                    )
                     if show_summary:
                         self._show_defaults_summary(persisted_defaults)
 
-        print(f"\n{self.COLORS['HEADER']}{self.t('scan_config')}{self.COLORS['ENDC']}")
+        print(f"\n{self.ui.colors['HEADER']}{self.ui.t('scan_config')}{self.ui.colors['ENDC']}")
         print("=" * 60)
 
         # Targets: if the user chose to start immediately, prefer persisted targets when valid.
@@ -303,8 +271,8 @@ class InteractiveNetworkAuditor(
             and all(isinstance(t, str) and t.strip() for t in target_networks)
         ):
             self.config["target_networks"] = [t.strip() for t in target_networks]
-            self.print_status(
-                self.t("defaults_targets_applied", len(self.config["target_networks"])), "INFO"
+            self.ui.print_status(
+                self.ui.t("defaults_targets_applied", len(self.config["target_networks"])), "INFO"
             )
         else:
             self.config["target_networks"] = self.ask_network_range()
@@ -322,7 +290,7 @@ class InteractiveNetworkAuditor(
 
         # v3.1+: Save chosen settings as persistent defaults (optional).
         # v3.2.2+: Simplified - max 2 final prompts (save + start)
-        wants_save_defaults = self.ask_yes_no(self.t("save_defaults_q"), default="no")
+        wants_save_defaults = self.ask_yes_no(self.ui.t("save_defaults_q"), default="no")
         if wants_save_defaults:
             try:
                 from redaudit.utils.config import update_persistent_defaults
@@ -360,16 +328,16 @@ class InteractiveNetworkAuditor(
                     auditor_name=self.config.get("auditor_name"),
                     lang=self.lang,
                 )
-                self.print_status(
-                    self.t("defaults_saved") if ok else self.t("defaults_save_error"),
+                self.ui.print_status(
+                    self.ui.t("defaults_saved") if ok else self.ui.t("defaults_save_error"),
                     "OKGREEN" if ok else "WARNING",
                 )
             except Exception:
-                self.print_status(self.t("defaults_save_error"), "WARNING")
+                self.ui.print_status(self.ui.t("defaults_save_error"), "WARNING")
                 if self.logger:
                     self.logger.debug("Failed to persist defaults", exc_info=True)
 
-        return self.ask_yes_no(self.t("start_audit"), default="yes")
+        return self.ask_yes_no(self.ui.t("start_audit"), default="yes")
 
     def run_complete_scan(self):
         """Execute the complete scan workflow."""
@@ -404,7 +372,9 @@ class InteractiveNetworkAuditor(
             # Ensure network_info is populated for reports and topology discovery.
             if not self.results.get("network_info"):
                 try:
-                    self.detect_all_networks()
+                    # v4.0: Use Scanner
+                    nets = self.scanner.detect_local_networks()
+                    self.results["network_info"] = nets
                 except Exception:
                     if self.logger:
                         self.logger.debug("Failed to detect local networks", exc_info=True)
@@ -416,7 +386,7 @@ class InteractiveNetworkAuditor(
                     from redaudit.core.topology import discover_topology
 
                     self.current_phase = "topology"
-                    self.print_status(self.t("topology_start"), "INFO")
+                    self.ui.print_status(self.ui.t("topology_start"), "INFO")
 
                     # v3.2.3: Add spinner progress for topology phase
                     try:
@@ -482,7 +452,7 @@ class InteractiveNetworkAuditor(
                     from redaudit.core.net_discovery import discover_networks
 
                     self.current_phase = "net_discovery"
-                    self.print_status(self.t("net_discovery_start"), "INFO")
+                    self.ui.print_status(self.ui.t("net_discovery_start"), "INFO")
 
                     iface = self._select_net_discovery_interface()
                     redteam_options = {
@@ -564,14 +534,14 @@ class InteractiveNetworkAuditor(
                     # Log discovered DHCP servers
                     dhcp_servers = self.results["net_discovery"].get("dhcp_servers", [])
                     if dhcp_servers:
-                        self.print_status(
-                            self.t("net_discovery_dhcp_found", len(dhcp_servers)),
+                        self.ui.print_status(
+                            self.ui.t("net_discovery_dhcp_found", len(dhcp_servers)),
                             "OKGREEN",
                         )
                     candidate_vlans = self.results["net_discovery"].get("candidate_vlans", [])
                     if candidate_vlans:
-                        self.print_status(
-                            self.t("net_discovery_vlans_found", len(candidate_vlans)),
+                        self.ui.print_status(
+                            self.ui.t("net_discovery_vlans_found", len(candidate_vlans)),
                             "WARNING",
                         )
 
@@ -581,13 +551,13 @@ class InteractiveNetworkAuditor(
                         arp_hosts = self.results["net_discovery"].get("arp_hosts", [])
                         upnp_devices = self.results["net_discovery"].get("upnp_devices", [])
                         tcp_hosts = self.results["net_discovery"].get("hyperscan_tcp_hosts", {})
-                        self.print_status(
+                        self.ui.print_status(
                             f"✓ HyperScan: {len(arp_hosts)} ARP, {len(upnp_devices)} IoT/UPNP, {len(tcp_hosts)} TCP hosts ({hyperscan_dur:.1f}s)",
                             "OKGREEN",
                         )
                     backdoors = self.results["net_discovery"].get("potential_backdoors", [])
                     if backdoors:
-                        self.print_status(
+                        self.ui.print_status(
                             f"⚠️  {len(backdoors)} puertos sospechosos (backdoor) detectados",
                             "WARNING",
                         )
@@ -601,8 +571,8 @@ class InteractiveNetworkAuditor(
                 self.config.get("target_networks", []) or []
             )
             if discovery_hosts:
-                self.print_status(
-                    self.t("net_discovery_seed_hosts", len(discovery_hosts)),
+                self.ui.print_status(
+                    self.ui.t("net_discovery_seed_hosts", len(discovery_hosts)),
                     "INFO",
                 )
 
@@ -618,13 +588,13 @@ class InteractiveNetworkAuditor(
                 all_hosts.extend(discovery_hosts)
                 added = len(set(all_hosts) - before)
                 if added > 0:
-                    self.print_status(
-                        self.t("net_discovery_seed_added", added),
+                    self.ui.print_status(
+                        self.ui.t("net_discovery_seed_added", added),
                         "INFO",
                     )
 
             if not all_hosts:
-                self.print_status(self.t("no_hosts"), "WARNING")
+                self.ui.print_status(self.ui.t("no_hosts"), "WARNING")
                 self.stop_heartbeat()
                 return False
 
@@ -632,7 +602,9 @@ class InteractiveNetworkAuditor(
             if max_val != "all" and isinstance(max_val, int):
                 all_hosts = all_hosts[:max_val]
 
-            results = self.scan_hosts_concurrent(all_hosts)
+            # v4.0: Pass Host objects to scanning engine
+            host_targets = [self.scanner.get_or_create_host(ip) for ip in all_hosts]
+            results = self.scan_hosts_concurrent(host_targets)
 
             # v3.8: Agentless Windows verification (SMB/RDP/LDAP) - opt-in
             if not self.interrupted:
@@ -671,7 +643,7 @@ class InteractiveNetworkAuditor(
                 and is_nuclei_available()
                 and not self.interrupted
             ):
-                self.print_status(self.t("nuclei_scan_start"), "INFO")
+                self.ui.print_status(self.ui.t("nuclei_scan_start"), "INFO")
                 try:
                     nuclei_targets = get_http_targets_from_hosts(results)
                     if nuclei_targets:
@@ -757,7 +729,7 @@ class InteractiveNetworkAuditor(
                                         use_internal_progress=False,
                                         logger=self.logger,
                                         dry_run=bool(self.config.get("dry_run", False)),
-                                        print_status=self.print_status,
+                                        print_status=self.ui.print_status,
                                     )
                         except Exception:
                             nuclei_result = run_nuclei_scan(
@@ -767,7 +739,7 @@ class InteractiveNetworkAuditor(
                                 timeout=300,
                                 logger=self.logger,
                                 dry_run=bool(self.config.get("dry_run", False)),
-                                print_status=self.print_status,
+                                print_status=self.ui.print_status,
                             )
 
                         findings = nuclei_result.get("findings") or []
@@ -821,17 +793,17 @@ class InteractiveNetworkAuditor(
 
                         merged = self._merge_nuclei_findings(findings)
                         if merged > 0:
-                            self.print_status(self.t("nuclei_findings", merged), "OK")
+                            self.ui.print_status(self.ui.t("nuclei_findings", merged), "OK")
                             if suspected:
-                                self.print_status(
-                                    self.t("nuclei_suspected", len(suspected)), "WARNING"
+                                self.ui.print_status(
+                                    self.ui.t("nuclei_suspected", len(suspected)), "WARNING"
                                 )
                         else:
-                            self.print_status(self.t("nuclei_no_findings"), "INFO")
+                            self.ui.print_status(self.ui.t("nuclei_no_findings"), "INFO")
                 except Exception as e:
                     if self.logger:
                         self.logger.warning("Nuclei scan failed: %s", e, exc_info=True)
-                    self.print_status(f"Nuclei: {e}", "WARNING")
+                    self.ui.print_status(f"Nuclei: {e}", "WARNING")
 
             self.config["rate_limit_delay"] = self.rate_limit_delay
             generate_summary(self.results, self.config, all_hosts, results, self.scan_start_time)
@@ -887,13 +859,13 @@ class InteractiveNetworkAuditor(
 
     def signal_handler(self, sig, frame):
         """Handle SIGINT (Ctrl+C) with proper cleanup."""
-        self.print_status(self.t("interrupted"), "WARNING")
+        self.ui.print_status(self.ui.t("interrupted"), "WARNING")
         self.current_phase = "interrupted"
         self.interrupted = True
 
         # Kill all active subprocesses (nmap, tcpdump, etc.)
         if self._active_subprocesses:
-            self.print_status(self.t("terminating_scans"), "WARNING")
+            self.ui.print_status(self.ui.t("terminating_scans"), "WARNING")
             self.kill_all_subprocesses()
 
         # Stop heartbeat monitoring
@@ -994,9 +966,9 @@ class InteractiveNetworkAuditor(
         # Auditor name
         auditor_default = defaults_for_run.get("auditor_name", "") if defaults_for_run else ""
         auditor_default = auditor_default or ""
-        auditor_prompt = self.t("auditor_name_q")
+        auditor_prompt = self.ui.t("auditor_name_q")
         auditor_name = input(
-            f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {auditor_prompt} "
+            f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
             f"[{auditor_default}]: "
         ).strip()
         if not auditor_name:
@@ -1011,9 +983,10 @@ class InteractiveNetworkAuditor(
         else:
             default_output = default_reports
 
-        output_prompt = self.t("output_dir_q")
+        output_prompt = self.ui.t("output_dir_q")
         output_dir = input(
-            f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {output_prompt} " f"[{default_output}]: "
+            f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {output_prompt} "
+            f"[{default_output}]: "
         ).strip()
         if not output_dir:
             output_dir = default_output
@@ -1040,22 +1013,22 @@ class InteractiveNetworkAuditor(
 
         while profile_choice is None:
             profile_options = [
-                self.t("wizard_profile_express"),
-                self.t("wizard_profile_standard"),
-                self.t("wizard_profile_exhaustive"),
-                self.t("wizard_profile_custom"),
+                self.ui.t("wizard_profile_express"),
+                self.ui.t("wizard_profile_standard"),
+                self.ui.t("wizard_profile_exhaustive"),
+                self.ui.t("wizard_profile_custom"),
             ]
-            profile_idx = self.ask_choice(self.t("wizard_profile_q"), profile_options, default=1)
+            profile_idx = self.ask_choice(self.ui.t("wizard_profile_q"), profile_options, default=1)
 
             # For profiles that ask timing, include a back option
             if profile_idx in (1, 2):  # Standard or Exhaustive
                 timing_options = [
-                    self.t("timing_stealth"),
-                    self.t("timing_normal"),
-                    self.t("timing_aggressive"),
-                    self.t("go_back"),
+                    self.ui.t("timing_stealth"),
+                    self.ui.t("timing_normal"),
+                    self.ui.t("timing_aggressive"),
+                    self.ui.t("go_back"),
                 ]
-                timing_choice = self.ask_choice(self.t("timing_q"), timing_options, default=1)
+                timing_choice = self.ask_choice(self.ui.t("timing_q"), timing_options, default=1)
                 if timing_choice == 3:  # Go back
                     continue  # Re-show profile selector
 
@@ -1092,7 +1065,7 @@ class InteractiveNetworkAuditor(
             persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
             low_impact_default = "yes" if persisted_low_impact else "no"
             self.config["low_impact_enrichment"] = self.ask_yes_no(
-                self.t("low_impact_enrichment_q"), default=low_impact_default
+                self.ui.t("low_impact_enrichment_q"), default=low_impact_default
             )
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
@@ -1116,7 +1089,7 @@ class InteractiveNetworkAuditor(
             persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
             low_impact_default = "yes" if persisted_low_impact else "no"
             self.config["low_impact_enrichment"] = self.ask_yes_no(
-                self.t("low_impact_enrichment_q"), default=low_impact_default
+                self.ui.t("low_impact_enrichment_q"), default=low_impact_default
             )
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
@@ -1129,7 +1102,7 @@ class InteractiveNetworkAuditor(
 
         # PROFILE 2: Exhaustive - Maximum discovery (auto-configures everything)
         if profile_choice == 2:
-            self.print_status(self.t("exhaustive_mode_applying"), "INFO")
+            self.ui.print_status(self.ui.t("exhaustive_mode_applying"), "INFO")
 
             # Core scan settings - maximum
             self.config["scan_mode"] = "completo"
@@ -1158,9 +1131,10 @@ class InteractiveNetworkAuditor(
                 self.setup_nvd_api_key(non_interactive=True)
             else:
                 self.config["cve_lookup_enabled"] = False
-                self.print_status(self.t("nvd_not_configured_reminder"), "WARNING")
+                self.ui.print_status(self.ui.t("nvd_not_configured_reminder"), "WARNING")
                 print(
-                    f"  {self.COLORS['CYAN']}{self.t('nvd_get_key_hint')}" f"{self.COLORS['ENDC']}"
+                    f"  {self.ui.colors['CYAN']}{self.ui.t('nvd_get_key_hint')}"
+                    f"{self.ui.colors['ENDC']}"
                 )
 
             # Discovery - all enabled
@@ -1189,7 +1163,7 @@ class InteractiveNetworkAuditor(
             persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
             low_impact_default = "yes" if persisted_low_impact else "no"
             self.config["low_impact_enrichment"] = self.ask_yes_no(
-                self.t("low_impact_enrichment_q"), default=low_impact_default
+                self.ui.t("low_impact_enrichment_q"), default=low_impact_default
             )
 
             # v3.9.0: Ask auditor name and output dir for all profiles
@@ -1213,9 +1187,9 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             if step == 1:
                 scan_modes = [
-                    self.t("mode_fast"),
-                    self.t("mode_normal"),
-                    self.t("mode_full"),
+                    self.ui.t("mode_fast"),
+                    self.ui.t("mode_normal"),
+                    self.ui.t("mode_full"),
                 ]
                 modes_map = {0: "rapido", 1: "normal", 2: "completo"}
                 persisted = defaults_for_run.get("scan_mode")
@@ -1224,7 +1198,7 @@ class InteractiveNetworkAuditor(
                 )
 
                 choice = self.ask_choice_with_back(
-                    self.t("scan_mode"),
+                    self.ui.t("scan_mode"),
                     scan_modes,
                     default_idx,
                     step_num=step,
@@ -1238,7 +1212,7 @@ class InteractiveNetworkAuditor(
 
                 # Set max_hosts based on mode
                 if self.config["scan_mode"] != "rapido":
-                    limit = self.ask_number(self.t("ask_num_limit"), default="all")
+                    limit = self.ask_number(self.ui.t("ask_num_limit"), default="all")
                     self.config["max_hosts_value"] = limit
                 else:
                     self.config["max_hosts_value"] = "all"
@@ -1251,7 +1225,7 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             elif step == 2:
                 # Show step header for UX
-                self.print_status(f"[{step}/{TOTAL_STEPS}] " + self.t("threads"), "INFO")
+                self.ui.print_status(f"[{step}/{TOTAL_STEPS}] " + self.ui.t("threads"), "INFO")
 
                 suggested_threads = suggest_threads()
                 try:
@@ -1270,7 +1244,7 @@ class InteractiveNetworkAuditor(
                     ),
                 )
                 self.config["threads"] = self.ask_number(
-                    self.t("threads_suggested", suggested_threads, cores_display),
+                    self.ui.t("threads_suggested", suggested_threads, cores_display),
                     default=default_threads,
                     min_val=MIN_THREADS,
                     max_val=MAX_THREADS,
@@ -1282,20 +1256,20 @@ class InteractiveNetworkAuditor(
                 if not isinstance(default_rate, (int, float)) or default_rate < 0:
                     default_rate = 0.0
                 if self.ask_yes_no(
-                    self.t("rate_limiting"), default="yes" if default_rate > 0 else "no"
+                    self.ui.t("rate_limiting"), default="yes" if default_rate > 0 else "no"
                 ):
                     delay_default = int(default_rate) if default_rate > 0 else 1
                     delay_default = min(max(delay_default, 0), 60)
                     self.rate_limit_delay = float(
                         self.ask_number(
-                            self.t("rate_delay"), default=delay_default, min_val=0, max_val=60
+                            self.ui.t("rate_delay"), default=delay_default, min_val=0, max_val=60
                         )
                     )
 
                 persisted_low_impact = defaults_for_run.get("low_impact_enrichment")
                 low_impact_default = "yes" if persisted_low_impact else "no"
                 self.config["low_impact_enrichment"] = self.ask_yes_no(
-                    self.t("low_impact_enrichment_q"), default=low_impact_default
+                    self.ui.t("low_impact_enrichment_q"), default=low_impact_default
                 )
 
                 step += 1
@@ -1306,14 +1280,14 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             elif step == 3:
                 vuln_options = [
-                    self.t("yes_option") + " — " + self.t("vuln_scan_opt"),
-                    self.t("no_option"),
+                    self.ui.t("yes_option") + " — " + self.ui.t("vuln_scan_opt"),
+                    self.ui.t("no_option"),
                 ]
                 default_idx = 0 if defaults_for_run.get("scan_vulnerabilities") is not False else 1
                 default_idx = wizard_state.get("vuln_idx", default_idx)
 
                 choice = self.ask_choice_with_back(
-                    self.t("vuln_scan_q"),
+                    self.ui.t("vuln_scan_q"),
                     vuln_options,
                     default_idx,
                     step_num=step,
@@ -1334,7 +1308,7 @@ class InteractiveNetworkAuditor(
                     and is_nuclei_available()
                 ):
                     self.config["nuclei_enabled"] = self.ask_yes_no(
-                        self.t("nuclei_q"),
+                        self.ui.t("nuclei_q"),
                         default="yes" if defaults_for_run.get("nuclei_enabled") else "no",
                     )
 
@@ -1346,14 +1320,14 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             elif step == 4:
                 cve_options = [
-                    self.t("yes_option") + " — NVD API",
-                    self.t("no_option"),
+                    self.ui.t("yes_option") + " — NVD API",
+                    self.ui.t("no_option"),
                 ]
                 default_idx = 0 if defaults_for_run.get("cve_lookup_enabled") else 1
                 default_idx = wizard_state.get("cve_idx", default_idx)
 
                 choice = self.ask_choice_with_back(
-                    self.t("cve_lookup_q"),
+                    self.ui.t("cve_lookup_q"),
                     cve_options,
                     default_idx,
                     step_num=step,
@@ -1377,7 +1351,7 @@ class InteractiveNetworkAuditor(
             # STEP 5: Output Directory
             # ═══════════════════════════════════════════════════════════════════
             elif step == 5:
-                self.print_status(f"[{step}/{TOTAL_STEPS}] " + self.t("output_dir"), "INFO")
+                self.ui.print_status(f"[{step}/{TOTAL_STEPS}] " + self.ui.t("output_dir"), "INFO")
 
                 auditor_default = wizard_state.get(
                     "auditor_name",
@@ -1388,9 +1362,9 @@ class InteractiveNetworkAuditor(
                     ),
                 )
                 auditor_default = auditor_default or ""
-                auditor_prompt = self.t("auditor_name_q")
+                auditor_prompt = self.ui.t("auditor_name_q")
                 auditor_name = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {auditor_prompt} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
                     f"[{auditor_default}]: "
                 ).strip()
                 if not auditor_name:
@@ -1405,7 +1379,7 @@ class InteractiveNetworkAuditor(
                     default_reports = expand_user_path(persisted_output.strip())
 
                 out_dir = input(
-                    f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('output_dir')} "
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('output_dir')} "
                     f"[{default_reports}]: "
                 ).strip()
                 if not out_dir:
@@ -1425,7 +1399,7 @@ class InteractiveNetworkAuditor(
             elif step == 6:
                 # UDP configuration (only for non-rapido modes with deep scan)
                 if self.config["scan_mode"] != "rapido" and self.config.get("deep_id_scan"):
-                    udp_modes = [self.t("udp_mode_quick"), self.t("udp_mode_full")]
+                    udp_modes = [self.ui.t("udp_mode_quick"), self.ui.t("udp_mode_full")]
                     udp_map = {0: UDP_SCAN_MODE_QUICK, 1: UDP_SCAN_MODE_FULL}
                     persisted_udp = defaults_for_run.get("udp_mode")
                     default_idx = wizard_state.get(
@@ -1433,7 +1407,7 @@ class InteractiveNetworkAuditor(
                     )
 
                     choice = self.ask_choice_with_back(
-                        self.t("udp_mode_q"),
+                        self.ui.t("udp_mode_q"),
                         udp_modes,
                         default_idx,
                         step_num=step,
@@ -1459,23 +1433,23 @@ class InteractiveNetworkAuditor(
 
                     if self.config["udp_mode"] == UDP_SCAN_MODE_FULL:
                         udp_profiles = [
-                            (50, self.t("udp_ports_profile_fast")),
-                            (100, self.t("udp_ports_profile_balanced")),
-                            (200, self.t("udp_ports_profile_thorough")),
-                            (500, self.t("udp_ports_profile_aggressive")),
-                            ("custom", self.t("udp_ports_profile_custom")),
+                            (50, self.ui.t("udp_ports_profile_fast")),
+                            (100, self.ui.t("udp_ports_profile_balanced")),
+                            (200, self.ui.t("udp_ports_profile_thorough")),
+                            (500, self.ui.t("udp_ports_profile_aggressive")),
+                            ("custom", self.ui.t("udp_ports_profile_custom")),
                         ]
                         options = [label for _, label in udp_profiles]
                         profile_default = next(
                             (i for i, (v, _) in enumerate(udp_profiles) if v == udp_ports_default),
                             len(udp_profiles) - 1,
                         )
-                        q = self.t("udp_ports_profile_q")
+                        q = self.ui.t("udp_ports_profile_q")
                         selected_idx = self.ask_choice(q, options, profile_default)
                         selected = udp_profiles[selected_idx][0]
                         if selected == "custom":
                             self.config["udp_top_ports"] = self.ask_number(
-                                self.t("udp_ports_q"),
+                                self.ui.t("udp_ports_q"),
                                 default=udp_ports_default,
                                 min_val=50,
                                 max_val=500,
@@ -1485,9 +1459,9 @@ class InteractiveNetworkAuditor(
 
                 # Topology discovery
                 topo_options = [
-                    self.t("topology_disabled"),
-                    self.t("topology_enabled_scan"),
-                    self.t("topology_only_mode"),
+                    self.ui.t("topology_disabled"),
+                    self.ui.t("topology_enabled_scan"),
+                    self.ui.t("topology_only_mode"),
                 ]
                 persisted_topo = defaults_for_run.get("topology_enabled")
                 persisted_only = defaults_for_run.get("topology_only")
@@ -1495,7 +1469,7 @@ class InteractiveNetworkAuditor(
                 default_idx = wizard_state.get("topo_idx", default_idx)
 
                 topo_choice = self.ask_choice_with_back(
-                    self.t("topology_discovery_q"),
+                    self.ui.t("topology_discovery_q"),
                     topo_options,
                     default_idx,
                     step_num=step,
@@ -1517,8 +1491,8 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             elif step == 7:
                 nd_options = [
-                    self.t("yes_option") + " — DHCP/NetBIOS/mDNS/UPNP",
-                    self.t("no_option"),
+                    self.ui.t("yes_option") + " — DHCP/NetBIOS/mDNS/UPNP",
+                    self.ui.t("no_option"),
                 ]
                 persisted_nd = defaults_for_run.get("net_discovery_enabled")
                 nd_default = (
@@ -1533,7 +1507,7 @@ class InteractiveNetworkAuditor(
                 default_idx = wizard_state.get("nd_idx", default_idx)
 
                 choice = self.ask_choice_with_back(
-                    self.t("net_discovery_q"),
+                    self.ui.t("net_discovery_q"),
                     nd_options,
                     default_idx,
                     step_num=step,
@@ -1549,16 +1523,16 @@ class InteractiveNetworkAuditor(
 
                 if enable_net_discovery:
                     # Red Team options
-                    rt_options = [self.t("redteam_mode_a"), self.t("redteam_mode_b")]
+                    rt_options = [self.ui.t("redteam_mode_a"), self.ui.t("redteam_mode_b")]
                     rt_default = 1 if defaults_for_run.get("net_discovery_redteam") else 0
                     redteam_choice = self.ask_choice(
-                        self.t("redteam_mode_q"), rt_options, rt_default
+                        self.ui.t("redteam_mode_q"), rt_options, rt_default
                     )
 
                     wants_redteam = redteam_choice == 1
                     is_root = hasattr(os, "geteuid") and os.geteuid() == 0
                     if wants_redteam and not is_root:
-                        self.print_status(self.t("redteam_requires_root"), "WARNING")
+                        self.ui.print_status(self.ui.t("redteam_requires_root"), "WARNING")
                         wants_redteam = False
 
                     self.config["net_discovery_redteam"] = bool(wants_redteam)
@@ -1571,13 +1545,14 @@ class InteractiveNetworkAuditor(
                         # L2 Active probing
                         persisted_l2 = defaults_for_run.get("net_discovery_active_l2")
                         self.config["net_discovery_active_l2"] = self.ask_yes_no(
-                            self.t("redteam_active_l2_q"), default="yes" if persisted_l2 else "no"
+                            self.ui.t("redteam_active_l2_q"),
+                            default="yes" if persisted_l2 else "no",
                         )
 
                         # Kerberos enumeration
                         persisted_krb = defaults_for_run.get("net_discovery_kerberos_userenum")
                         enable_kerberos = self.ask_yes_no(
-                            self.t("redteam_kerberos_userenum_q"),
+                            self.ui.t("redteam_kerberos_userenum_q"),
                             default="yes" if persisted_krb else "no",
                         )
                         self.config["net_discovery_kerberos_userenum"] = enable_kerberos
@@ -1587,7 +1562,7 @@ class InteractiveNetworkAuditor(
                                 defaults_for_run.get("net_discovery_kerberos_realm") or ""
                             )
                             realm = input(
-                                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('kerberos_realm_q')} "
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('kerberos_realm_q')} "
                                 f"[{persisted_realm}]: "
                             ).strip()
                             self.config["net_discovery_kerberos_realm"] = (
@@ -1598,7 +1573,7 @@ class InteractiveNetworkAuditor(
                                 defaults_for_run.get("net_discovery_kerberos_userlist") or ""
                             )
                             userlist = input(
-                                f"{self.COLORS['CYAN']}?{self.COLORS['ENDC']} {self.t('kerberos_userlist_q')} "
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('kerberos_userlist_q')} "
                                 f"[{persisted_userlist}]: "
                             ).strip()
                             self.config["net_discovery_kerberos_userlist"] = (
@@ -1629,14 +1604,14 @@ class InteractiveNetworkAuditor(
             # ═══════════════════════════════════════════════════════════════════
             elif step == 8:
                 win_options = [
-                    self.t("yes_option") + " — SMB/RDP/LDAP/SSH/HTTP",
-                    self.t("no_option"),
+                    self.ui.t("yes_option") + " — SMB/RDP/LDAP/SSH/HTTP",
+                    self.ui.t("no_option"),
                 ]
                 default_idx = 0 if defaults_for_run.get("windows_verify_enabled") else 1
                 default_idx = wizard_state.get("win_idx", default_idx)
 
                 choice = self.ask_choice_with_back(
-                    self.t("windows_verify_q"),
+                    self.ui.t("windows_verify_q"),
                     win_options,
                     default_idx,
                     step_num=step,
@@ -1656,7 +1631,10 @@ class InteractiveNetworkAuditor(
                         else 20
                     )
                     self.config["windows_verify_max_targets"] = self.ask_number(
-                        self.t("windows_verify_max_q"), default=max_default, min_val=1, max_val=200
+                        self.ui.t("windows_verify_max_q"),
+                        default=max_default,
+                        min_val=1,
+                        max_val=200,
                     )
                 else:
                     self.config["windows_verify_enabled"] = False
@@ -1675,7 +1653,7 @@ class InteractiveNetworkAuditor(
     def _show_defaults_summary(self, persisted_defaults: Dict) -> None:
         """Display summary of persisted defaults."""
         # v3.2.3: Display ALL saved defaults
-        self.print_status(self.t("defaults_summary_title"), "INFO")
+        self.ui.print_status(self.ui.t("defaults_summary_title"), "INFO")
 
         def fmt_targets(val):
             if not isinstance(val, list) or not val:
@@ -1687,7 +1665,7 @@ class InteractiveNetworkAuditor(
         def fmt_bool(val):
             if val is None:
                 return "-"
-            return self.t("enabled") if val else self.t("disabled")
+            return self.ui.t("enabled") if val else self.ui.t("disabled")
 
         # Display all saved defaults
         fields = [
@@ -1746,7 +1724,7 @@ class InteractiveNetworkAuditor(
 
         for key, val in fields:
             display_val = val if val is not None else "-"
-            self.print_status(f"- {self.t(key)}: {display_val}", "INFO")
+            self.ui.print_status(f"- {self.ui.t(key)}: {display_val}", "INFO")
 
     # ---------- Progress Callbacks (v3.9.0 Refactor for Testability) ----------
 
@@ -1780,7 +1758,7 @@ class InteractiveNetworkAuditor(
                 elapsed = int(now - start_time)
                 mins, secs = divmod(elapsed, 60)
                 msg = f"Net Discovery en progreso... ({mins}:{secs:02d} elapsed)"
-                self.print_status(msg, "INFO", force=True)
+                self.ui.print_status(msg, "INFO", force=True)
                 self._nd_last_heartbeat = now
         except Exception:
             pass

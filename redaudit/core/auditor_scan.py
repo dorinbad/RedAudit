@@ -11,7 +11,7 @@ import math
 import os
 import random
 import re
-import shlex
+
 import shutil
 import socket
 import threading
@@ -24,10 +24,10 @@ from redaudit.core.agentless_verify import (
     select_agentless_probe_targets,
     summarize_agentless_fingerprint,
 )
-from redaudit.core.auditor_mixins import _ActivityIndicator
 from redaudit.core.command_runner import CommandRunner
 from redaudit.core.crypto import is_crypto_available
-from redaudit.core.network import detect_all_networks, get_neighbor_mac
+from redaudit.core.models import Host, Service
+from redaudit.core.network import get_neighbor_mac
 from redaudit.core.scanner import (
     banner_grab_fallback,
     enrich_host_with_dns,
@@ -48,6 +48,7 @@ from redaudit.core.scanner import (
     stop_background_capture,
 )
 from redaudit.core.udp_probe import run_udp_probe
+from redaudit.core.network_scanner import NetworkScanner
 from redaudit.utils.constants import (
     DEFAULT_IDENTITY_THRESHOLD,
     DEFAULT_UDP_MODE,
@@ -77,56 +78,34 @@ class AuditorScanMixin:
     logger: Optional[logging.Logger]
     rate_limit_delay: float
     interrupted: bool
+    scanner: NetworkScanner
 
     if TYPE_CHECKING:
 
         def _coerce_text(self, value: object) -> str:
             raise NotImplementedError
 
-    # v4.0: Adapter property for gradual migration to NetworkScanner
-    @property
-    def scanner(self):
-        """
-        Get NetworkScanner instance (adapter pattern).
-
-        This allows gradual migration from mixin methods to composed scanner.
-        Eventually, scanning logic will go through self.scanner.
-        """
-        if not hasattr(self, "_network_scanner"):
-            from redaudit.core.config_context import ConfigurationContext
-            from redaudit.core.network_scanner import NetworkScanner
-            from redaudit.core.ui_manager import UIManager
-
-            cfg = ConfigurationContext(self.config)
-            ui = UIManager(
-                lang=getattr(self, "lang", "en"),
-                colors=getattr(self, "COLORS", None),
-                logger=self.logger,
-            )
-            self._network_scanner = NetworkScanner(cfg, ui, self.logger)
-        return self._network_scanner
-
     # ---------- Dependencies ----------
 
     def check_dependencies(self):
         """Check and verify required dependencies."""
-        self.print_status(self.t("verifying_env"), "HEADER")
+        self.ui.print_status(self.ui.t("verifying_env"), "HEADER")
 
         if shutil.which("nmap") is None:
-            self.print_status(self.t("nmap_binary_missing"), "FAIL")
+            self.ui.print_status(self.ui.t("nmap_binary_missing"), "FAIL")
             return False
 
         global nmap
         try:
             nmap = importlib.import_module("nmap")
-            self.print_status(self.t("nmap_avail"), "OKGREEN")
+            self.ui.print_status(self.ui.t("nmap_avail"), "OKGREEN")
         except ImportError:
-            self.print_status(self.t("nmap_missing"), "FAIL")
+            self.ui.print_status(self.ui.t("nmap_missing"), "FAIL")
             return False
 
         self.cryptography_available = is_crypto_available()
         if not self.cryptography_available:
-            self.print_status(self.t("crypto_missing"), "WARNING")
+            self.ui.print_status(self.ui.t("crypto_missing"), "WARNING")
 
         tools = [
             "whatweb",
@@ -165,26 +144,19 @@ class AuditorScanMixin:
                         break
             if path:
                 self.extra_tools[tname] = path
-                self.print_status(self.t("avail_at", tname, path), "OKGREEN")
+                self.ui.print_status(self.ui.t("avail_at", tname, path), "OKGREEN")
             else:
                 self.extra_tools[tname] = None
                 missing.append(tname)
 
         if missing:
-            msg = self.t("missing_opt", ", ".join(missing))
-            self.print_status(msg, "WARNING")
+            msg = self.ui.t("missing_opt", ", ".join(missing))
+            self.ui.print_status(msg, "WARNING")
         return True
 
     # ---------- Input utilities (inherited from WizardMixin) ----------
 
     # ---------- Network detection ----------
-
-    def detect_all_networks(self):
-        """Detect all local networks."""
-        self.print_status(self.t("analyzing_nets"), "INFO")
-        nets = detect_all_networks(self.lang, self.print_status)
-        self.results["network_info"] = nets
-        return nets
 
     def _collect_discovery_hosts(self, target_networks: List[str]) -> List[str]:
         """Collect host IPs from enhanced discovery results (best-effort)."""
@@ -195,6 +167,8 @@ class AuditorScanMixin:
             ip = sanitize_ip(value)
             if ip:
                 ips.add(ip)
+                # v4.0: Ensure Host object exists in scanner
+                self.scanner.get_or_create_host(ip)
 
         for ip in discovery.get("alive_hosts", []) or []:
             _add_ip(ip)
@@ -241,21 +215,23 @@ class AuditorScanMixin:
 
     def ask_network_range(self):
         """Ask user to select target network(s)."""
-        h = self.COLORS["HEADER"]
-        print(f"\n{h}{self.t('selection_target')}{self.COLORS['ENDC']}")
+        h = self.ui.colors["HEADER"]
+        print(f"\n{h}{self.ui.t('selection_target')}{self.ui.colors['ENDC']}")
         print("-" * 60)
-        nets = self.detect_all_networks()
+        # v4.0: Use Scanner directly (Populate results for consistency)
+        nets = self.scanner.detect_local_networks()
+        self.results["network_info"] = nets
         if nets:
-            g = self.COLORS["OKGREEN"]
-            print(f"{g}{self.t('interface_detected')}{self.COLORS['ENDC']}")
+            g = self.ui.colors["OKGREEN"]
+            print(f"{g}{self.ui.t('interface_detected')}{self.ui.colors['ENDC']}")
             opts = []
             for n in nets:
                 info = f" ({n['interface']})" if n["interface"] else ""
                 h_est = n["hosts_estimated"]
                 opts.append(f"{n['network']}{info} - ~{h_est} hosts")
-            opts.append(self.t("manual_entry"))
-            opts.append(self.t("scan_all"))
-            choice = self.ask_choice(self.t("select_net"), opts)
+            opts.append(self.ui.t("manual_entry"))
+            opts.append(self.ui.t("scan_all"))
+            choice = self.ask_choice(self.ui.t("select_net"), opts)
             if choice == len(opts) - 2:
                 return [self.ask_manual_network()]
             if choice == len(opts) - 1:
@@ -271,7 +247,7 @@ class AuditorScanMixin:
                 return unique_nets
             return [nets[choice]["network"]]
         else:
-            self.print_status(self.t("no_nets_auto"), "WARNING")
+            self.ui.print_status(self.ui.t("no_nets_auto"), "WARNING")
             return [self.ask_manual_network()]
 
     def _select_net_discovery_interface(self) -> Optional[str]:
@@ -314,12 +290,12 @@ class AuditorScanMixin:
     @staticmethod
     def sanitize_ip(ip_str):
         """Sanitize and validate IP address."""
-        return sanitize_ip(ip_str)
+        return NetworkScanner.sanitize_ip(ip_str)
 
     @staticmethod
     def sanitize_hostname(hostname):
         """Sanitize and validate hostname."""
-        return sanitize_hostname(hostname)
+        return NetworkScanner.sanitize_hostname(hostname)
 
     def is_web_service(self, name):
         """Check if service is web-related."""
@@ -332,20 +308,6 @@ class AuditorScanMixin:
         if mode in ("full", "completo"):
             return 300.0
         return 60.0
-
-    @staticmethod
-    def _extract_nmap_xml(raw: str) -> str:
-        if not raw:
-            return ""
-        start = raw.find("<nmaprun")
-        if start < 0:
-            start = raw.find("<?xml")
-        if start > 0:
-            raw = raw[start:]
-        end = raw.rfind("</nmaprun>")
-        if end >= 0:
-            raw = raw[: end + len("</nmaprun>")]
-        return raw.strip()
 
     def _lookup_topology_identity(self, ip: str) -> Tuple[Optional[str], Optional[str]]:
         t = self.results.get("topology")
@@ -585,148 +547,10 @@ class AuditorScanMixin:
         return match.group(1) if match else ""
 
     def _compute_identity_score(self, host_record: Dict[str, Any]) -> Tuple[int, List[str]]:
-        score = 0
-        signals: List[str] = []
-        ports = host_record.get("ports") or []
-        device_type_hints: List[str] = []
-
-        if host_record.get("hostname"):
-            score += 1
-            signals.append("hostname")
-        if any(p.get("product") or p.get("version") for p in ports):
-            score += 1
-            signals.append("service_version")
-        if any(p.get("cpe") for p in ports):
-            score += 1
-            signals.append("cpe")
-
-        deep_meta = host_record.get("deep_scan") or {}
-        if deep_meta.get("mac_address") or deep_meta.get("vendor"):
-            score += 1
-            signals.append("mac_vendor")
-            vendor_lower = str(deep_meta.get("vendor") or "").lower()
-            if any(
-                x in vendor_lower
-                for x in ("apple", "samsung", "xiaomi", "huawei", "oppo", "oneplus")
-            ):
-                device_type_hints.append("mobile")
-            elif any(
-                x in vendor_lower for x in ("hp", "canon", "epson", "brother", "lexmark", "xerox")
-            ):
-                device_type_hints.append("printer")
-            elif any(
-                x in vendor_lower
-                for x in ("philips", "signify", "wiz", "yeelight", "lifx", "tp-link tapo")
-            ):
-                device_type_hints.append("iot_lighting")
-            elif "tuya" in vendor_lower:
-                device_type_hints.append("iot")
-            elif any(
-                x in vendor_lower
-                for x in (
-                    "avm",
-                    "fritz",
-                    "cisco",
-                    "juniper",
-                    "mikrotik",
-                    "ubiquiti",
-                    "netgear",
-                    "dlink",
-                    "asus",
-                    "linksys",
-                    "tp-link",
-                    "sercomm",
-                    "sagemcom",
-                )
-            ):
-                device_type_hints.append("router")
-            elif any(
-                x in vendor_lower for x in ("google", "amazon", "roku", "lg", "sony", "vizio")
-            ):
-                device_type_hints.append("smart_tv")
-
-        hostname_lower = str(host_record.get("hostname") or "").lower()
-        if any(x in hostname_lower for x in ("iphone", "ipad", "ipod", "macbook", "imac")):
-            if "mobile" not in device_type_hints:
-                device_type_hints.append("mobile")
-        elif any(x in hostname_lower for x in ("android", "galaxy", "pixel", "oneplus")):
-            if "mobile" not in device_type_hints:
-                device_type_hints.append("mobile")
-
-        if host_record.get("os_detected") or deep_meta.get("os_detected"):
-            score += 1
-            signals.append("os_detected")
-        if any(p.get("banner") for p in ports):
-            score += 1
-            signals.append("banner")
-
+        """Compute identity/confidence score (delegated to NetworkScanner)."""
         nd_results = self.results.get("net_discovery") or {}
-        nd_hosts_ips = set()
-        for h in nd_results.get("arp_hosts", []) or []:
-            nd_hosts_ips.add(h.get("ip"))
-        for h in nd_results.get("upnp_devices", []) or []:
-            nd_hosts_ips.add(h.get("ip"))
-        for svc in nd_results.get("mdns_services", []):
-            for addr in svc.get("addresses", []):
-                nd_hosts_ips.add(addr)
-
-        if host_record.get("ip") in nd_hosts_ips:
-            score += 1
-            signals.append("net_discovery")
-
-        for upnp in nd_results.get("upnp_devices", []) or []:
-            if upnp.get("ip") == host_record.get("ip"):
-                upnp_type = str(upnp.get("device_type") or upnp.get("st") or "").lower()
-                if "router" in upnp_type or "gateway" in upnp_type:
-                    device_type_hints.append("router")
-                    score += 1
-                    signals.append("upnp_router")
-                elif "printer" in upnp_type:
-                    device_type_hints.append("printer")
-                elif "mediarenderer" in upnp_type or "mediaplayer" in upnp_type:
-                    device_type_hints.append("smart_tv")
-                break
-
-        for svc in nd_results.get("mdns_services", []):
-            if host_record.get("ip") in svc.get("addresses", []):
-                svc_type = str(svc.get("type") or "").lower()
-                if "_ipp" in svc_type or "_printer" in svc_type:
-                    device_type_hints.append("printer")
-                elif "_airplay" in svc_type or "_raop" in svc_type:
-                    device_type_hints.append("apple_device")
-                elif "_googlecast" in svc_type:
-                    device_type_hints.append("chromecast")
-                elif "_hap" in svc_type or "_homekit" in svc_type:
-                    device_type_hints.append("homekit")
-
-        for p in ports:
-            svc = str(p.get("service") or "").lower()
-            prod = str(p.get("product") or "").lower()
-            if any(x in svc or x in prod for x in ("ipp", "printer", "cups")):
-                device_type_hints.append("printer")
-            elif any(x in svc or x in prod for x in ("router", "mikrotik", "routeros")):
-                device_type_hints.append("router")
-            elif "esxi" in prod or "vmware" in prod or "vcenter" in prod:
-                device_type_hints.append("hypervisor")
-
-        agentless = host_record.get("agentless_fingerprint") or {}
-        if agentless.get("http_title") or agentless.get("http_server"):
-            score += 1
-            signals.append("http_probe")
-
-        phase0 = host_record.get("phase0_enrichment") or {}
-        if phase0.get("dns_reverse"):
-            score += 1
-            signals.append("dns_reverse")
-        if phase0.get("mdns_name"):
-            score += 1
-            signals.append("mdns_name")
-        if phase0.get("snmp_sysDescr"):
-            score += 1
-            signals.append("snmp_sysDescr")
-
-        host_record["device_type_hints"] = list(set(device_type_hints))
-        return score, signals
+        # v4.0: Usage of composed NetworkScanner
+        return self.scanner.compute_identity_score(host_record, nd_results)
 
     def _should_trigger_deep(
         self,
@@ -849,81 +673,6 @@ class AuditorScanMixin:
             setattr(self, "_deep_executed_count", deep_count + 1)
             return True, deep_count + 1
 
-    def _run_nmap_xml_scan(self, target: str, args: str) -> Tuple[Optional[Any], str]:
-        """
-        Run an nmap scan with XML output and enforce a hard timeout.
-
-        Returns:
-            (PortScanner or None, error message string if any)
-        """
-        if is_dry_run(self.config.get("dry_run")):
-            return None, "dry_run"
-        if shutil.which("nmap") is None:
-            return None, "nmap_not_available"
-        if nmap is None:
-            return None, "python_nmap_missing"
-
-        host_timeout_s = self._parse_host_timeout_s(args)
-        if host_timeout_s is None:
-            host_timeout_s = self._scan_mode_host_timeout_s()
-        timeout_s = max(30.0, host_timeout_s + 30.0)
-        cmd = ["nmap"] + shlex.split(args) + ["-oX", "-", target]
-
-        record_sink: Dict[str, Any] = {"commands": []}
-        rec = run_nmap_command(
-            cmd,
-            int(timeout_s),
-            target,
-            record_sink,
-            logger=self.logger,
-            dry_run=False,
-            max_stdout=0,
-            max_stderr=2000,
-            include_full_output=True,
-        )
-
-        if rec.get("error"):
-            return None, str(rec["error"])
-
-        r_out = rec.get("stdout_full") or rec.get("stdout") or ""
-        raw_stdout = self._coerce_text(r_out)
-        xml_output = self._extract_nmap_xml(raw_stdout)
-        if not xml_output:
-            r_err = rec.get("stderr_full") or rec.get("stderr") or ""
-            raw_stderr = self._coerce_text(r_err)
-            xml_output = self._extract_nmap_xml(raw_stderr)
-        if not xml_output:
-            stderr = self._coerce_text(rec.get("stderr", "")).strip()
-            if len(stderr) > 200:
-                stderr = f"{stderr[:200].rstrip()}..."
-            return None, stderr or "empty_nmap_output"
-
-        nm = nmap.PortScanner()
-        analyser = getattr(nm, "analyse_nmap_xml_scan", None) or getattr(
-            nm, "analyze_nmap_xml_scan", None
-        )
-        if analyser:
-            try:
-                analyser(
-                    xml_output,
-                    nmap_err=self._coerce_text(rec.get("stderr", "")),
-                    nmap_err_keep_trace=self._coerce_text(rec.get("stderr", "")),
-                    nmap_warn_keep_trace="",
-                )
-            except Exception as exc:
-                msg = str(exc).strip().replace("\n", " ")
-                if len(msg) > 200:
-                    msg = f"{msg[:200].rstrip()}..."
-                return None, f"nmap_xml_parse_error: {msg or 'invalid_xml'}"
-        else:
-            # Fallback for stubs or older python-nmap builds without XML parser.
-            try:
-                nm.scan(target, arguments=args)
-            except Exception as exc:
-                return None, f"nmap_scan_fallback_error: {exc}"
-
-        return nm, ""
-
     @staticmethod
     def _parse_host_timeout_s(nmap_args: str) -> Optional[float]:
         if not isinstance(nmap_args, str):
@@ -964,8 +713,8 @@ class AuditorScanMixin:
         self._set_ui_detail(f"[deep] {safe_ip} tcp")
         deep_obj = {"strategy": "adaptive_v2.8", "commands": []}
 
-        self.print_status(
-            self.t("deep_identity_start", safe_ip, self.t("deep_strategy_adaptive")),
+        self.ui.print_status(
+            self.ui.t("deep_identity_start", safe_ip, self.ui.t("deep_strategy_adaptive")),
             "WARNING",
         )
 
@@ -992,8 +741,8 @@ class AuditorScanMixin:
                 "9",
                 safe_ip,
             ]
-            self.print_status(
-                self.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING"
+            self.ui.print_status(
+                self.ui.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING"
             )
             rec1 = run_nmap_command(
                 cmd_p1,
@@ -1020,7 +769,7 @@ class AuditorScanMixin:
 
             # Phase 2: UDP scanning (Intelligent strategy)
             if has_identity:
-                self.print_status(self.t("deep_scan_skip"), "OKGREEN")
+                self.ui.print_status(self.ui.t("deep_scan_skip"), "OKGREEN")
                 deep_obj["phase2_skipped"] = True
             else:
                 # Phase 2a: Quick UDP scan of priority ports only
@@ -1037,8 +786,8 @@ class AuditorScanMixin:
                                 "Skipping invalid UDP priority port token: %r", p, exc_info=True
                             )
                         continue
-                self.print_status(
-                    self.t(
+                self.ui.print_status(
+                    self.ui.t(
                         "deep_udp_priority_cmd",
                         safe_ip,
                         f"async UDP probe ({len(priority_ports)} ports)",
@@ -1114,8 +863,8 @@ class AuditorScanMixin:
                         UDP_HOST_TIMEOUT_STRICT,
                         safe_ip,
                     ]
-                    self.print_status(
-                        self.t("deep_udp_full_cmd", safe_ip, " ".join(cmd_p2b), udp_top_ports),
+                    self.ui.print_status(
+                        self.ui.t("deep_udp_full_cmd", safe_ip, " ".join(cmd_p2b), udp_top_ports),
                         "WARNING",
                     )
                     self._set_ui_detail(f"[deep] {safe_ip} udp top {udp_top_ports}")
@@ -1152,7 +901,7 @@ class AuditorScanMixin:
                     deep_obj["pcap_capture"] = pcap_result
 
         total_dur = sum(c.get("duration_seconds", 0) for c in deep_obj["commands"])
-        self.print_status(self.t("deep_identity_done", safe_ip, total_dur), "OKGREEN")
+        self.ui.print_status(self.ui.t("deep_identity_done", safe_ip, total_dur), "OKGREEN")
         return deep_obj
 
     def scan_network_discovery(self, network):
@@ -1161,61 +910,63 @@ class AuditorScanMixin:
         self._set_ui_detail(f"[nmap] {network} discovery")
         self.logger.info("Discovery on %s", network)
         args = get_nmap_arguments("rapido", self.config)  # v3.9.0: Pass config for timing
-        self.print_status(self.t("nmap_cmd", network, f"nmap {args} {network}"), "INFO")
-        if is_dry_run(self.config.get("dry_run")):
-            return []
-        nm = nmap.PortScanner()
-        try:
-            # Nmap host discovery can look "stuck" on larger subnets; keep a visible activity
-            # indicator while the scan is running.
-            try:
-                from rich.progress import Progress, SpinnerColumn, TimeElapsedColumn
+        self.ui.print_status(self.ui.t("nmap_cmd", network, f"nmap {args} {network}"), "INFO")
 
-                with self._progress_ui():
-                    with Progress(
-                        SpinnerColumn(),
-                        self._safe_text_column(
-                            f"[cyan]Discovery {network}[/cyan] {{task.description}}",
-                            overflow="ellipsis",
-                            no_wrap=True,
-                        ),
-                        TimeElapsedColumn(),
-                        console=self._progress_console(),
-                        transient=True,
-                        refresh_per_second=4,
-                    ) as progress:
-                        task = progress.add_task("nmap host discovery...", total=None)
-                        nm.scan(hosts=network, arguments=args)
-                        progress.update(task, description="complete")
-            except Exception:
-                with _ActivityIndicator(
-                    label=f"Discovery {network}",
-                    initial="nmap host discovery...",
-                    touch_activity=self._touch_activity,
-                ):
-                    nm.scan(hosts=network, arguments=args)
-        except Exception as exc:
-            self.logger.error("Discovery failed on %s: %s", network, exc)
-            self.logger.debug("Discovery exception details for %s", network, exc_info=True)
-            self.print_status(self.t("scan_error", exc), "FAIL")
+        # v4.0: Delegate to NetworkScanner (cleaner, robust error handling)
+        nm, err = self.scanner.run_nmap_scan(network, args)
+
+        if err:
+            self.logger.error("Discovery failed on %s: %s", network, err)
+            self.ui.print_status(self.ui.t("scan_error", err), "FAIL")
             return []
-        hosts = [h for h in nm.all_hosts() if nm[h].state() == "up"]
-        self.print_status(self.t("hosts_active", network, len(hosts)), "OKGREEN")
-        return hosts
+
+        if not nm:
+            return []
+
+        hosts_out = []
+        for ip in nm.all_hosts():
+            if nm[ip].state() == "up":
+                # v4.0: Populate central Host model
+                host_obj = self.scanner.get_or_create_host(ip)
+                host_obj.status = "up"
+
+                # Extract discovery metadata
+                if "addresses" in nm[ip]:
+                    addrs = nm[ip]["addresses"]
+                    if "mac" in addrs:
+                        host_obj.mac_address = addrs["mac"]
+
+                if "vendor" in nm[ip]:
+                    # python-nmap vendor is {mac: name}
+                    for mac, vendor in nm[ip]["vendor"].items():
+                        if mac == host_obj.mac_address:
+                            host_obj.vendor = vendor
+                            break
+
+                if "hostnames" in nm[ip]:
+                    for h_rec in nm[ip]["hostnames"]:
+                        if h_rec.get("name"):
+                            host_obj.hostname = h_rec["name"]
+                            break
+
+                hosts_out.append(ip)
+
+        self.ui.print_status(self.ui.t("hosts_active", network, len(hosts_out)), "OKGREEN")
+        return hosts_out
 
     def scan_host_ports(self, host):
         """
-        Scan ports on a single host (v2.8.0).
-
-        Improvements:
-        - Intelligent status finalization based on deep scan results
-        - Banner grab fallback for unidentified services
-        - Better handling of filtered/no-response hosts
+        Scan ports on a single host.
+        Accepts IP string or Host object (v4.0).
         """
-        safe_ip = sanitize_ip(host)
-        if not safe_ip:
-            self.logger.warning("Invalid IP: %s", host)
-            return {"ip": host, "error": "Invalid IP"}
+        if isinstance(host, Host):
+
+            safe_ip = host.ip
+        else:
+            safe_ip = sanitize_ip(host)
+            if not safe_ip:
+                self.logger.warning("Invalid IP: %s", host)
+                return {"ip": host, "error": "Invalid IP"}
 
         self.current_phase = f"ports:{safe_ip}"
         mode_label = str(self.config.get("scan_mode", "") or "").strip()
@@ -1226,25 +977,21 @@ class AuditorScanMixin:
         # v3.9.0: Pass config so nmap_timing (T1/T4/T5) is applied
         args = get_nmap_arguments(self.config["scan_mode"], self.config)
         self.logger.debug("Nmap scan %s %s", safe_ip, args)
-        self.print_status(self.t("nmap_cmd", safe_ip, f"nmap {args} {safe_ip}"), "INFO")
+        self.ui.print_status(self.ui.t("nmap_cmd", safe_ip, f"nmap {args} {safe_ip}"), "INFO")
         if is_dry_run(self.config.get("dry_run")):
-            return {
-                "ip": safe_ip,
-                "hostname": "",
-                "ports": [],
-                "web_ports_count": 0,
-                "total_ports_found": 0,
-                "status": STATUS_DOWN,
-                "dry_run": True,
-            }
+            host_obj = self.scanner.get_or_create_host(safe_ip)
+            host_obj.status = STATUS_DOWN
+            host_obj.raw_nmap_data = {"dry_run": True}
+            return host_obj
         phase0_enrichment: Dict[str, Any] = {}
         if self.config.get("low_impact_enrichment"):
             phase0_enrichment = self._run_low_impact_enrichment(safe_ip)
         try:
-            nm, scan_error = self._run_nmap_xml_scan(safe_ip, args)
+            # v4.0: Use NetworkScanner direct execution
+            nm, scan_error = self.scanner.run_nmap_scan(safe_ip, args)
             if not nm:
                 self.logger.warning("Nmap scan failed for %s: %s", safe_ip, scan_error)
-                self.print_status(
+                self.ui.print_status(
                     f"⚠️  Nmap scan failed {safe_ip}: {scan_error}",
                     "FAIL",
                     force=True,
@@ -1265,22 +1012,21 @@ class AuditorScanMixin:
                         deep_meta["mac_address"] = mac
                     if vendor:
                         deep_meta["vendor"] = vendor
-                result = {
-                    "ip": safe_ip,
-                    "hostname": "",
-                    "ports": [],
-                    "web_ports_count": 0,
-                    "total_ports_found": 0,
-                    "status": STATUS_NO_RESPONSE,
-                    "error": scan_error,
-                    "scan_timeout_s": (
-                        self._parse_host_timeout_s(args) or self._scan_mode_host_timeout_s()
-                    ),
-                    "deep_scan": deep_meta,
-                }
+                    deep_meta["vendor"] = vendor
+
+                # v4.0: Populate Host model on scan failure (topology only)
+                host_obj = self.scanner.get_or_create_host(safe_ip)
+                host_obj.status = STATUS_NO_RESPONSE
+                host_obj.raw_nmap_data = {"error": scan_error}
+                if deep_meta:
+                    host_obj.deep_scan = deep_meta
+
+                # Preserve result dict for phase0 logic below if needed, but we return object
                 if self.config.get("low_impact_enrichment"):
-                    result["phase0_enrichment"] = phase0_enrichment or {}
-                return result
+                    host_obj.phase0_enrichment = phase0_enrichment or {}
+
+                return host_obj
+
             if safe_ip not in nm.all_hosts():
                 # Host didn't respond to initial scan - do deep scan
                 deep = None
@@ -1290,7 +1036,7 @@ class AuditorScanMixin:
                     if not reserved:
                         if self.logger:
                             self.logger.info(
-                                self.t(
+                                self.ui.t(
                                     "deep_scan_budget_exhausted",
                                     deep_count,
                                     budget,
@@ -1317,7 +1063,17 @@ class AuditorScanMixin:
                     result["os_detected"] = deep["os_detected"]
                 # Finalize status based on deep scan results
                 result["status"] = finalize_host_status(result)
-                return result
+
+                # v4.0: Populate Host model
+                host_obj = self.scanner.get_or_create_host(safe_ip)
+                host_obj.status = result["status"]
+                host_obj.deep_scan = result.get("deep_scan") or {}
+                host_obj.phase0_enrichment = result.get("phase0_enrichment") or {}
+                host_obj.raw_nmap_data = {"error": scan_error}
+                if result.get("os_detected"):
+                    host_obj.os_detected = result["os_detected"]
+
+                return host_obj
 
             data = nm[safe_ip]
             hostname = ""
@@ -1335,6 +1091,10 @@ class AuditorScanMixin:
             suspicious = False
             any_version = False
             unknown_ports = []
+
+            # v4.0: Populate Host model services
+            host_obj = self.scanner.get_or_create_host(safe_ip)
+            host_obj.services = []
 
             for proto in data.all_protocols():
                 for p in data[proto]:
@@ -1357,6 +1117,20 @@ class AuditorScanMixin:
                     if not product and name in ("", "tcpwrapped", "unknown"):
                         unknown_ports.append(p)
 
+                    # Add to Host model
+                    svc_obj = Service(
+                        port=p,
+                        protocol=proto,
+                        name=name,
+                        product=product,
+                        version=version,
+                        state=svc.get("state", "open"),
+                        reason=svc.get("reason", ""),
+                        tunnel=svc.get("tunnel", ""),
+                        cpe=(cpe if isinstance(cpe, list) else [cpe]) if cpe else [],
+                    )
+                    host_obj.add_service(svc_obj)
+
                     ports.append(
                         {
                             "port": p,
@@ -1372,7 +1146,7 @@ class AuditorScanMixin:
 
             total_ports = len(ports)
             if total_ports > MAX_PORTS_DISPLAY:
-                self.print_status(self.t("ports_truncated", safe_ip, total_ports), "WARNING")
+                self.ui.print_status(self.ui.t("ports_truncated", safe_ip, total_ports), "WARNING")
                 ports = ports[:MAX_PORTS_DISPLAY]
 
             host_record = {
@@ -1423,7 +1197,7 @@ class AuditorScanMixin:
 
             # v2.8.0: Banner grab fallback for unidentified ports
             if unknown_ports and len(unknown_ports) <= 20:
-                self.print_status(self.t("banner_grab", safe_ip, len(unknown_ports)), "INFO")
+                self.ui.print_status(self.ui.t("banner_grab", safe_ip, len(unknown_ports)), "INFO")
                 banner_info = banner_grab_fallback(safe_ip, unknown_ports, logger=self.logger)
                 if banner_info:
                     # Merge banner info into ports
@@ -1500,7 +1274,7 @@ class AuditorScanMixin:
                     deep_reasons.append("budget_exhausted")
                     if self.logger:
                         self.logger.info(
-                            self.t(
+                            self.ui.t(
                                 "deep_scan_budget_exhausted",
                                 deep_count,
                                 budget,
@@ -1530,8 +1304,8 @@ class AuditorScanMixin:
                         exploits = exploit_lookup(product, version, self.extra_tools, self.logger)
                         if exploits:
                             port_info["known_exploits"] = exploits
-                            self.print_status(
-                                self.t("exploits_found", len(exploits), f"{product} {version}"),
+                            self.ui.print_status(
+                                self.ui.t("exploits_found", len(exploits), f"{product} {version}"),
                                 "WARNING",
                             )
 
@@ -1581,8 +1355,6 @@ class AuditorScanMixin:
 
             enrich_host_with_dns(host_record, self.extra_tools)
             # v3.10.1: Consolidate DNS reverse from phase0 if enrichment failed
-            # This ensures consumers like reporters only need to check host["dns"]["reverse"]
-            # for the canonical hostname, though they may still double-check phase0 for completeness.
             if not host_record.get("dns", {}).get("reverse"):
                 phase0 = host_record.get("phase0_enrichment", {})
                 if phase0.get("dns_reverse"):
@@ -1592,13 +1364,35 @@ class AuditorScanMixin:
             # v2.8.0: Finalize status based on all collected data
             host_record["status"] = finalize_host_status(host_record)
 
-            return host_record
+            # v4.0: Sync final enrichment data to Host model
+            host_obj.dns = host_record.get("dns", {})
+            host_obj.status = host_record.get("status")
+            host_obj.risk_score = host_record.get("risk_score", 0.0)
+            if host_record.get("deep_scan"):
+                host_obj.deep_scan = host_record["deep_scan"]
+            if host_record.get("os_detected"):
+                host_obj.os_detected = host_record["os_detected"]
+            if host_record.get("phase0_enrichment"):
+                host_obj.phase0_enrichment = host_record["phase0_enrichment"]
+            if host_record.get("agentless_fingerprint"):
+                host_obj.agentless_fingerprint = host_record["agentless_fingerprint"]
+            if host_record.get("agentless_probe"):
+                host_obj.agentless_probe = host_record["agentless_probe"]
+
+            return host_obj
 
         except Exception as exc:
             self.logger.error("Scan error %s: %s", safe_ip, exc, exc_info=True)
             # Keep terminal output clean while progress UIs are active.
-            self.print_status(f"⚠️  Scan error {safe_ip}: {exc}", "FAIL", force=True)
-            result = {"ip": safe_ip, "error": str(exc)}
+            self.ui.print_status(f"⚠️  Scan error {safe_ip}: {exc}", "FAIL", force=True)
+
+            # v4.0: Return Host object on error
+            host_obj = self.scanner.get_or_create_host(safe_ip)
+            # We don't overwrite existing data on error, just status if needed?
+            # Actually, standard behavior is to return a result indicating error.
+            # We'll map the error state to the object for this scan session.
+
+            result_dict = {"ip": safe_ip, "error": str(exc)}
             try:
                 deep = None
                 if self.config.get("deep_id_scan", True):
@@ -1607,7 +1401,7 @@ class AuditorScanMixin:
                     if not reserved:
                         if self.logger:
                             self.logger.info(
-                                self.t(
+                                self.ui.t(
                                     "deep_scan_budget_exhausted",
                                     deep_count,
                                     budget,
@@ -1617,18 +1411,40 @@ class AuditorScanMixin:
                     else:
                         deep = self.deep_scan_host(safe_ip)
                         if deep:
-                            result["deep_scan"] = deep
-                            result["status"] = finalize_host_status(result)
+                            result_dict["deep_scan"] = deep
+                            result_dict["status"] = finalize_host_status(result_dict)
+
+                            # Sync to Host object
+                            host_obj.deep_scan = deep
+                            host_obj.status = result_dict["status"]
+                            if deep.get("os_detected"):
+                                host_obj.os_detected = deep["os_detected"]
+
             except Exception:
                 if self.logger:
                     self.logger.debug("Deep scan fallback failed for %s", safe_ip, exc_info=True)
                 pass
-            return result
+            return host_obj
 
     def scan_hosts_concurrent(self, hosts):
         """Scan multiple hosts concurrently with progress bar."""
-        self.print_status(self.t("scan_start", len(hosts)), "HEADER")
-        unique_hosts = sorted(set(hosts))
+        self.ui.print_status(self.ui.t("scan_start", len(hosts)), "HEADER")
+
+        # v4.0: Deduplicate hosts (handling both str and Host objects)
+        unique_map = {}
+        from redaudit.core.models import Host
+
+        for h in hosts:
+            if isinstance(h, Host):
+                ip = h.ip
+                val = h
+            else:
+                ip = str(h)
+                val = ip
+            if ip not in unique_map:
+                unique_map[ip] = val
+
+        unique_hosts = [unique_map[ip] for ip in sorted(unique_map.keys())]
         results = []
         threads = max(1, int(self.config.get("threads", 1)))
         start_t = time.time()
@@ -1678,7 +1494,7 @@ class AuditorScanMixin:
                         initial_detail = self._get_ui_detail()
                         # v3.8.1: Simplified task - no ETA fields
                         task = progress.add_task(
-                            f"[cyan]{self.t('scanning_hosts')}",
+                            f"[cyan]{self.ui.t('scanning_hosts')}",
                             total=total,
                             detail=initial_detail,
                         )
@@ -1704,7 +1520,7 @@ class AuditorScanMixin:
                             if now - last_heartbeat >= 60.0:
                                 elapsed = int(now - start_t)
                                 mins, secs = divmod(elapsed, 60)
-                                self.print_status(
+                                self.ui.print_status(
                                     f"Escaneando hosts... {done}/{total} ({mins}:{secs:02d} transcurrido)",
                                     "INFO",
                                     force=True,
@@ -1730,7 +1546,7 @@ class AuditorScanMixin:
                                 progress.update(
                                     task,
                                     advance=1,
-                                    description=f"[cyan]{self.t('scanned_host', host_ip)}",
+                                    description=f"[cyan]{self.ui.t('scanned_host', host_ip)}",
                                     detail=last_detail,
                                 )
                 else:
@@ -1755,8 +1571,8 @@ class AuditorScanMixin:
                         if total and done % max(1, total // 10) == 0:
                             elapsed = int(time.time() - start_t)
                             mins, secs = divmod(elapsed, 60)
-                            self.print_status(
-                                f"{self.t('progress', done, total)} ({mins}:{secs:02d} transcurrido)",
+                            self.ui.print_status(
+                                f"{self.ui.t('progress', done, total)} ({mins}:{secs:02d} transcurrido)",
                                 "INFO",
                                 update_activity=False,
                                 force=True,
@@ -1777,16 +1593,16 @@ class AuditorScanMixin:
 
         targets = select_agentless_probe_targets(host_results)
         if not targets:
-            self.print_status(self.t("windows_verify_none"), "INFO")
+            self.ui.print_status(self.ui.t("windows_verify_none"), "INFO")
             return
 
         max_targets = int(self.config.get("windows_verify_max_targets", 20) or 20)
         max_targets = min(max(max_targets, 1), 200)
         if len(targets) > max_targets:
             targets = sorted(targets, key=lambda t: t.ip)[:max_targets]
-            self.print_status(self.t("windows_verify_limit", max_targets), "WARNING")
+            self.ui.print_status(self.ui.t("windows_verify_limit", max_targets), "WARNING")
 
-        self.print_status(self.t("windows_verify_start", len(targets)), "HEADER")
+        self.ui.print_status(self.ui.t("windows_verify_start", len(targets)), "HEADER")
 
         host_index = {h.get("ip"): h for h in host_results if isinstance(h, dict)}
         results: List[Dict[str, Any]] = []
@@ -1828,7 +1644,7 @@ class AuditorScanMixin:
                         refresh_per_second=4,
                     ) as progress:
                         task = progress.add_task(
-                            f"[cyan]{self.t('windows_verify_label')}",
+                            f"[cyan]{self.ui.t('windows_verify_label')}",
                             total=total,
                             detail="",
                             eta_upper=self._format_eta(
@@ -1870,7 +1686,7 @@ class AuditorScanMixin:
                                 progress.update(
                                     task,
                                     advance=1,
-                                    description=f"[cyan]{self.t('windows_verify_label')} ({done}/{total})",
+                                    description=f"[cyan]{self.ui.t('windows_verify_label')} ({done}/{total})",
                                     eta_upper=self._format_eta(
                                         upper_per_target_s * math.ceil(remaining / workers)
                                         if remaining
@@ -1903,8 +1719,8 @@ class AuditorScanMixin:
                             )
                             elapsed = int(time.time() - start_t)
                             mins, secs = divmod(elapsed, 60)
-                            self.print_status(
-                                f"{self.t('windows_verify_label')} {done}/{total} | ETA≈ {eta_est_val}",
+                            self.ui.print_status(
+                                f"{self.ui.t('windows_verify_label')} {done}/{total} | ETA≈ {eta_est_val}",
                                 "INFO",
                                 update_activity=False,
                                 force=True,

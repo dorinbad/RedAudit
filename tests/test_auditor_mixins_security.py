@@ -19,6 +19,9 @@ class _DummyAuditor(AuditorCryptoMixin, AuditorNVDMixin):
         self.lang = "en"
         self.COLORS = {"WARNING": "", "ENDC": "", "CYAN": ""}
         self.printed = []
+        # v4.0 Shim
+        self.ui = self
+        self.colors = self.COLORS
 
     def t(self, key, *_args):
         return key

@@ -3,13 +3,27 @@
 RedAudit - Tests for auditor vulnerability helpers.
 """
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from redaudit.core.auditor import InteractiveNetworkAuditor
 
 
 def _make_app():
     app = InteractiveNetworkAuditor()
+    # v4.0 Mock UI
+    app._ui_manager = MagicMock()
+    app._ui_manager.colors = {
+        "ENDC": "",
+        "OKBLUE": "",
+        "CYAN": "",
+        "BOLD": "",
+        "HEADER": "",
+        "FAIL": "",
+        "OKGREEN": "",
+        "WARNING": "",
+    }
+    app._ui_manager.t.side_effect = lambda key, *args: key
+
     app.print_status = lambda *_args, **_kwargs: None
     app._set_ui_detail = lambda *_args, **_kwargs: None
     app.logger = None

@@ -12,10 +12,22 @@ from __future__ import annotations
 import ipaddress
 import logging
 import re
+import shlex
+import shutil
 import socket
 from typing import Any, Dict, List, Optional, Tuple
 
+try:
+    import nmap
+except ImportError:
+    nmap = None
+
+from redaudit.core.scanner.nmap import run_nmap_command
+from redaudit.utils.dry_run import is_dry_run
+
 from redaudit.core.config_context import ConfigurationContext
+from redaudit.core.models import Host
+from redaudit.core.network import detect_all_networks
 from redaudit.core.ui_manager import UIManager
 from redaudit.utils.constants import (
     STATUS_DOWN,
@@ -25,18 +37,12 @@ from redaudit.utils.constants import (
 
 class NetworkScanner:
     """
-    Standalone network scanner with dependency injection.
-
-    This class encapsulates network scanning logic that was previously
-    in AuditorScanMixin, allowing for easier testing and composability.
+    Composed Network Scanner for RedAudit v4.0.
+    Encapsulates all logic related to network discovery, Nmap execution,
+    identity calculation, and result parsing.
     """
 
-    def __init__(
-        self,
-        config: ConfigurationContext,
-        ui: UIManager,
-        logger: Optional[logging.Logger] = None,
-    ):
+    def __init__(self, config: ConfigurationContext, ui: UIManager, logger=None):
         """
         Initialize NetworkScanner.
 
@@ -50,83 +56,186 @@ class NetworkScanner:
         self.logger = logger
         self.interrupted = False
 
+        # v4.0: Central Host Repository
+        self.hosts: Dict[str, Host] = {}
+
+    def get_or_create_host(self, ip: str) -> Host:
+        """Get existing host or create new one."""
+        if ip not in self.hosts:
+            self.hosts[ip] = Host(ip=ip)
+        return self.hosts[ip]
+
+    def add_host(self, host: Host) -> None:
+        """Add or update a host in the repository."""
+        self.hosts[host.ip] = host
+
+    # -------------------------------------------------------------------------
+    # Network Discovery (Migrated)
+    # -------------------------------------------------------------------------
+
+    def detect_local_networks(self) -> List[Dict[str, Any]]:
+        """Detect all local networks using net_discovery module."""
+        self.ui.print_status(self.ui.t("analyzing_nets"), "INFO")
+        lang = str(self.config.get("lang", "en"))
+        return detect_all_networks(lang, self.ui.print_status)
+
     # -------------------------------------------------------------------------
     # Identity Scoring (Pure Logic - No I/O)
     # -------------------------------------------------------------------------
 
-    def compute_identity_score(self, host_record: Dict[str, Any]) -> Tuple[int, List[str]]:
+    def compute_identity_score(
+        self,
+        host_record: Dict[str, Any],
+        net_discovery_results: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[int, List[str]]:
         """
-        Compute identity confidence score for a host.
+        Compute identity confidence score and enrich device_type_hints.
+        (Migrated from AuditorScanMixin analysis logic).
+        """
+        if net_discovery_results is None:
+            net_discovery_results = {}
 
-        Returns:
-            Tuple of (score, list of reasons)
-        """
         score = 0
-        reasons = []
-
-        # --- MAC-derived identity ---
-        mac = host_record.get("mac") or ""
-        vendor = host_record.get("vendor") or ""
-
-        if mac and mac.upper() not in ("UNKNOWN", ""):
-            score += 10
-            reasons.append("mac_present")
-
-            if vendor and vendor.lower() not in ("unknown", ""):
-                score += 15
-                reasons.append(f"vendor:{vendor[:20]}")
-
-        # --- Hostname quality ---
-        hostname = host_record.get("hostname") or ""
-        if hostname:
-            hostname_lower = hostname.lower()
-            # Weak: just reverse DNS
-            if hostname_lower.startswith("dhcp") or hostname_lower.startswith("ip-"):
-                score += 5
-                reasons.append("hostname_weak")
-            # Strong: appears to be a real name
-            elif "." in hostname or len(hostname) > 6:
-                score += 20
-                reasons.append("hostname_strong")
-            else:
-                score += 10
-                reasons.append("hostname_present")
-
-        # --- Port/service richness ---
+        signals: List[str] = []
         ports = host_record.get("ports") or []
-        if isinstance(ports, list):
-            open_ports = [p for p in ports if p.get("state") == "open"]
-            num_open = len(open_ports)
+        device_type_hints: List[str] = []
 
-            if num_open >= 5:
-                score += 15
-                reasons.append(f"ports:{num_open}")
-            elif num_open >= 2:
-                score += 10
-                reasons.append(f"ports:{num_open}")
-            elif num_open >= 1:
-                score += 5
-                reasons.append(f"ports:{num_open}")
+        if host_record.get("hostname"):
+            score += 1
+            signals.append("hostname")
+        if any(p.get("product") or p.get("version") for p in ports):
+            score += 1
+            signals.append("service_version")
+        if any(p.get("cpe") for p in ports):
+            score += 1
+            signals.append("cpe")
 
-            # Check for version info
-            has_version = any(p.get("version") for p in open_ports)
-            if has_version:
-                score += 10
-                reasons.append("version_info")
+        deep_meta = host_record.get("deep_scan") or {}
+        if deep_meta.get("mac_address") or deep_meta.get("vendor"):
+            score += 1
+            signals.append("mac_vendor")
+            vendor_lower = str(deep_meta.get("vendor") or "").lower()
+            if any(
+                x in vendor_lower
+                for x in ("apple", "samsung", "xiaomi", "huawei", "oppo", "oneplus")
+            ):
+                device_type_hints.append("mobile")
+            elif any(
+                x in vendor_lower for x in ("hp", "canon", "epson", "brother", "lexmark", "xerox")
+            ):
+                device_type_hints.append("printer")
+            elif any(
+                x in vendor_lower
+                for x in ("philips", "signify", "wiz", "yeelight", "lifx", "tp-link tapo")
+            ):
+                device_type_hints.append("iot_lighting")
+            elif "tuya" in vendor_lower:
+                device_type_hints.append("iot")
+            elif any(
+                x in vendor_lower
+                for x in (
+                    "avm",
+                    "fritz",
+                    "cisco",
+                    "juniper",
+                    "mikrotik",
+                    "ubiquiti",
+                    "netgear",
+                    "dlink",
+                    "asus",
+                    "linksys",
+                    "tp-link",
+                    "sercomm",
+                    "sagemcom",
+                )
+            ):
+                device_type_hints.append("router")
+            elif any(
+                x in vendor_lower for x in ("google", "amazon", "roku", "lg", "sony", "vizio")
+            ):
+                device_type_hints.append("smart_tv")
 
-        # --- OS detection ---
-        os_info = host_record.get("os_detection") or ""
-        if os_info and os_info.lower() not in ("unknown", ""):
-            score += 15
-            reasons.append("os_detected")
+        hostname_lower = str(host_record.get("hostname") or "").lower()
+        if any(x in hostname_lower for x in ("iphone", "ipad", "ipod", "macbook", "imac")):
+            if "mobile" not in device_type_hints:
+                device_type_hints.append("mobile")
+        elif any(x in hostname_lower for x in ("android", "galaxy", "pixel", "oneplus")):
+            if "mobile" not in device_type_hints:
+                device_type_hints.append("mobile")
 
-        # --- Smart scan hints ---
-        smart = host_record.get("smart_scan") or {}
-        if smart.get("classification"):
-            score += 10
-            reasons.append(f"classified:{smart['classification']}")
+        if host_record.get("os_detected") or deep_meta.get("os_detected"):
+            score += 1
+            signals.append("os_detected")
+        if any(p.get("banner") for p in ports):
+            score += 1
+            signals.append("banner")
 
-        return score, reasons
+        nd_hosts_ips = set()
+        for h in net_discovery_results.get("arp_hosts", []) or []:
+            nd_hosts_ips.add(h.get("ip"))
+        for h in net_discovery_results.get("upnp_devices", []) or []:
+            nd_hosts_ips.add(h.get("ip"))
+        for svc in net_discovery_results.get("mdns_services", []):
+            for addr in svc.get("addresses", []):
+                nd_hosts_ips.add(addr)
+
+        if host_record.get("ip") in nd_hosts_ips:
+            score += 1
+            signals.append("net_discovery")
+
+        for upnp in net_discovery_results.get("upnp_devices", []) or []:
+            if upnp.get("ip") == host_record.get("ip"):
+                upnp_type = str(upnp.get("device_type") or upnp.get("st") or "").lower()
+                if "router" in upnp_type or "gateway" in upnp_type:
+                    device_type_hints.append("router")
+                    score += 1
+                    signals.append("upnp_router")
+                elif "printer" in upnp_type:
+                    device_type_hints.append("printer")
+                elif "mediarenderer" in upnp_type or "mediaplayer" in upnp_type:
+                    device_type_hints.append("smart_tv")
+                break
+
+        for svc in net_discovery_results.get("mdns_services", []):
+            if host_record.get("ip") in svc.get("addresses", []):
+                svc_type = str(svc.get("type") or "").lower()
+                if "_ipp" in svc_type or "_printer" in svc_type:
+                    device_type_hints.append("printer")
+                elif "_airplay" in svc_type or "_raop" in svc_type:
+                    device_type_hints.append("apple_device")
+                elif "_googlecast" in svc_type:
+                    device_type_hints.append("chromecast")
+                elif "_hap" in svc_type or "_homekit" in svc_type:
+                    device_type_hints.append("homekit")
+
+        for p in ports:
+            svc = str(p.get("service") or "").lower()
+            prod = str(p.get("product") or "").lower()
+            if any(x in svc or x in prod for x in ("ipp", "printer", "cups")):
+                device_type_hints.append("printer")
+            elif any(x in svc or x in prod for x in ("router", "mikrotik", "routeros")):
+                device_type_hints.append("router")
+            elif "esxi" in prod or "vmware" in prod or "vcenter" in prod:
+                device_type_hints.append("hypervisor")
+
+        agentless = host_record.get("agentless_fingerprint") or {}
+        if agentless.get("http_title") or agentless.get("http_server"):
+            score += 1
+            signals.append("http_probe")
+
+        phase0 = host_record.get("phase0_enrichment") or {}
+        if phase0.get("dns_reverse"):
+            score += 1
+            signals.append("dns_reverse")
+        if phase0.get("mdns_name"):
+            score += 1
+            signals.append("mdns_name")
+        if phase0.get("snmp_sysDescr"):
+            score += 1
+            signals.append("snmp_sysDescr")
+
+        host_record["device_type_hints"] = list(set(device_type_hints))
+        return score, signals
 
     def should_trigger_deep_scan(
         self,
@@ -286,6 +395,133 @@ class NetworkScanner:
         web_ports = {80, 443, 8080, 8443, 8000, 8888, 3000, 5000}
         open_ports = set(NetworkScanner.get_open_ports(host_record))
         return bool(open_ports & web_ports)
+
+    # -------------------------------------------------------------------------
+    # Nmap Execution (Migrated)
+    # -------------------------------------------------------------------------
+
+    def run_nmap_scan(self, target: str, args: str) -> Tuple[Optional[Any], str]:
+        """
+        Run an nmap scan with XML output and timeout enforcement.
+
+        Returns:
+            (PortScanner or None, error message string if any)
+        """
+        if is_dry_run(self.config.get("dry_run")):
+            return None, "dry_run"
+        if shutil.which("nmap") is None:
+            return None, "nmap_not_available"
+        if nmap is None:
+            return None, "python_nmap_missing"
+
+        host_timeout_s = self._parse_host_timeout_s(args)
+        if host_timeout_s is None:
+            host_timeout_s = self._get_default_host_timeout()
+
+        timeout_s = max(30.0, host_timeout_s + 30.0)
+        cmd = ["nmap"] + shlex.split(args) + ["-oX", "-", target]
+
+        record_sink: Dict[str, Any] = {"commands": []}
+        rec = run_nmap_command(
+            cmd,
+            int(timeout_s),
+            target,
+            record_sink,
+            logger=self.logger,
+            dry_run=False,
+            max_stdout=0,
+            max_stderr=2000,
+            include_full_output=True,
+        )
+
+        if rec.get("error"):
+            return None, str(rec["error"])
+
+        r_out = rec.get("stdout_full") or rec.get("stdout") or ""
+        raw_stdout = self._coerce_text(r_out)
+        xml_output = self._extract_nmap_xml(raw_stdout)
+        if not xml_output:
+            r_err = rec.get("stderr_full") or rec.get("stderr") or ""
+            raw_stderr = self._coerce_text(r_err)
+            xml_output = self._extract_nmap_xml(raw_stderr)
+        if not xml_output:
+            stderr = self._coerce_text(rec.get("stderr", "")).strip()
+            if len(stderr) > 200:
+                stderr = f"{stderr[:200].rstrip()}..."
+            return None, stderr or "empty_nmap_output"
+
+        nm = nmap.PortScanner()
+        analyser = getattr(nm, "analyse_nmap_xml_scan", None) or getattr(
+            nm, "analyze_nmap_xml_scan", None
+        )
+        if analyser:
+            try:
+                analyser(
+                    xml_output,
+                    nmap_err=self._coerce_text(rec.get("stderr", "")),
+                    nmap_err_keep_trace=self._coerce_text(rec.get("stderr", "")),
+                    nmap_warn_keep_trace="",
+                )
+            except Exception as exc:
+                msg = str(exc).strip().replace("\n", " ")
+                if len(msg) > 200:
+                    msg = f"{msg[:200].rstrip()}..."
+                return None, f"nmap_xml_parse_error: {msg or 'invalid_xml'}"
+        else:
+            # Fallback for stubs or older python-nmap builds without XML parser.
+            try:
+                nm.scan(target, arguments=args)
+            except Exception as exc:
+                return None, f"nmap_scan_fallback_error: {exc}"
+
+        return nm, ""
+
+    def _get_default_host_timeout(self) -> float:
+        mode = str(self.config.get("scan_mode") or "").strip().lower()
+        if mode in ("fast", "rapido"):
+            return 10.0
+        if mode in ("full", "completo"):
+            return 300.0
+        return 60.0
+
+    @staticmethod
+    def _parse_host_timeout_s(nmap_args: str) -> Optional[float]:
+        if not isinstance(nmap_args, str):
+            return None
+        m = re.search(r"--host-timeout\s+(\d+)(ms|s|m|h)\b", nmap_args)
+        if not m:
+            return None
+        val = int(m.group(1))
+        unit = m.group(2)
+        if unit == "ms":
+            return val / 1000.0
+        if unit == "s":
+            return float(val)
+        if unit == "m":
+            return float(val) * 60.0
+        if unit == "h":
+            return float(val) * 3600.0
+        return None
+
+    @staticmethod
+    def _extract_nmap_xml(raw: str) -> str:
+        if not raw:
+            return ""
+        start = raw.find("<nmaprun")
+        if start < 0:
+            start = raw.find("<?xml")
+        if start > 0:
+            raw = raw[start:]
+        end = raw.rfind("</nmaprun>")
+        if end >= 0:
+            raw = raw[: end + len("</nmaprun>")]
+        return raw.strip()
+
+    @staticmethod
+    def _coerce_text(value: Any) -> str:
+        if isinstance(value, bytes):
+            return value.decode("utf-8", errors="replace")
+        return str(value) if value is not None else ""
 
 
 def create_network_scanner(
