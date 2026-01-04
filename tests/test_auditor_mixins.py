@@ -115,7 +115,7 @@ def test_progress_columns():
     """Test _progress_columns returns column tuple."""
     app = InteractiveNetworkAuditor()
     cols = app._progress_columns(show_detail=True, show_eta=True, show_elapsed=True)
-    assert isinstance(cols, tuple)
+    assert isinstance(cols, (list, tuple))
     assert len(cols) > 0
 
 

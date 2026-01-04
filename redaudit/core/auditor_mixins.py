@@ -135,6 +135,13 @@ class _ActivityIndicator:
 
 
 class AuditorUIMixin:
+    """
+    UI mixin for auditor class.
+
+    v4.0: Gradually migrating to UIManager via adapter pattern.
+    The `ui` property provides access to standalone UIManager.
+    """
+
     activity_lock: threading.Lock
     COLORS: dict
     logger: Optional[logging.Logger]
@@ -145,6 +152,25 @@ class AuditorUIMixin:
     current_phase: str
     last_activity: datetime
     lang: str
+
+    # v4.0: Adapter property for gradual migration to UIManager
+    @property
+    def ui(self):
+        """
+        Get UIManager instance (adapter pattern).
+
+        This allows gradual migration from mixin methods to composed UIManager.
+        Eventually, all UI calls will go through self.ui instead of self.method.
+        """
+        if not hasattr(self, "_ui_manager"):
+            from redaudit.core.ui_manager import UIManager
+
+            self._ui_manager = UIManager(
+                lang=getattr(self, "lang", "en"),
+                colors=getattr(self, "COLORS", None),
+                logger=getattr(self, "logger", None),
+            )
+        return self._ui_manager
 
     def t(self, key, *args):
         """Get translated text."""
