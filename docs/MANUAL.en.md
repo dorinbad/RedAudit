@@ -2,11 +2,11 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](MANUAL.es.md)
 
-**Audience:** Security analysts, penetration testers, system administrators
+**Audience:** Security analysts, penetration testers, and system administrators.
 
-**Scope:** Installation, operation, output artifacts, security model
+**Scope:** Installation, operation, output artifacts, and security model.
 
-**What this document does NOT cover:** Exploitation techniques, code internals
+**What this document does NOT cover:** Exploitation techniques and code internals.
 
 **Source of Truth:** `redaudit --help`, `redaudit/core/auditor.py`
 

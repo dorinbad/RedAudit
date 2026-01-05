@@ -2,11 +2,11 @@
 
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](USAGE.en.md)
 
-**Audiencia:** Pentesters, Operadores de Seguridad, Blue Teamers
+**Audiencia:** Pentesters, operadores de seguridad y Blue Teamers.
 
-**Alcance:** Opciones CLI, ejemplos de uso, configuración, opciones de ejecución
+**Alcance:** Opciones CLI, ejemplos de uso, configuración y opciones de ejecución.
 
-**Qué NO cubre este documento:** Teoría de redes, desarrollo de exploits
+**Qué NO cubre este documento:** Teoría de redes y desarrollo de exploits.
 
 **Fuente de verdad:** `redaudit --help`
 
