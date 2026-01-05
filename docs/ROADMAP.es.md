@@ -18,6 +18,16 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 *(No hay elementos de prioridad alta pendientes actualmente)*
 
+### v4.1 Optimizaciones de Rendimiento (Prioridad: Alta)
+
+Optimizaciones siguiendo el patrón "descubrimiento rápido, fingerprint dirigido":
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Descubrimiento HyperScan-First** | 🚧 Planificado | Usar HyperScan (asyncio) para escanear los 65.535 puertos primero (~60-90s), luego ejecutar fingerprinting nmap solo en puertos descubiertos. Reemplaza el enfoque lento actual de nmap -p-. Mejora esperada: 3-4x más rápido. |
+| **Escaneo Vulns Paralelo** | 🚧 Planificado | Ejecutar nikto/testssl/whatweb concurrentemente en lugar de secuencialmente por host. Mejora esperada: 2-3x más rápido en fase de vulnerabilidades web. |
+| **Pre-filtrado Targets Nikto** | 🚧 Planificado | Omitir Nikto en servidores CDN/proxy (Cloudflare, Akamai) basándose en cabecera Server. Reduce falsos positivos en ~50%. |
+
 ### v4.0 Refactorización Arquitectónica ✅ (Liberado en v3.10.2)
 
 Refactorización interna utilizando el patrón Strangler Fig:
