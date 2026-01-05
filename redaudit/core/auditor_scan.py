@@ -1403,6 +1403,50 @@ class AuditorScan:
                         + ["tcp_aggressive"]
                     )
 
+                    # v4.0.4: Fallback to HyperScan ports when nmap times out or finds 0 ports
+                    # This handles cases like Metasploitable2 where deep scans timeout
+                    deep_commands = (deep or {}).get("commands", [])
+                    nmap_timed_out = any(
+                        cmd.get("returncode") == 124
+                        or "timeout" in str(cmd.get("error", "")).lower()
+                        for cmd in deep_commands
+                        if "nmap" in str(cmd.get("command", "")).lower()
+                    )
+                    if (nmap_timed_out or len(ports) == 0) and hyperscan_ports:
+                        # Use HyperScan ports as fallback
+                        from redaudit.utils.constants import WEB_LIKELY_PORTS
+
+                        fallback_ports = []
+                        for p in hyperscan_ports:
+                            is_web = p in WEB_LIKELY_PORTS
+                            fallback_ports.append(
+                                {
+                                    "port": p,
+                                    "protocol": "tcp",
+                                    "service": "http" if is_web else "unknown",
+                                    "product": "",
+                                    "version": "",
+                                    "extrainfo": "detected by HyperScan (nmap timeout fallback)",
+                                    "cpe": [],
+                                    "is_web_service": is_web,
+                                }
+                            )
+                            if is_web:
+                                web_count += 1
+                        if fallback_ports:
+                            ports.extend(fallback_ports)
+                            host_record["ports"] = ports
+                            host_record["total_ports_found"] = len(ports)
+                            host_record["web_ports_count"] = web_count
+                            host_record["smart_scan"]["hyperscan_fallback_used"] = True
+                            if self.logger:
+                                self.logger.info(
+                                    "Used HyperScan fallback for %s: %d ports (nmap %s)",
+                                    safe_ip,
+                                    len(fallback_ports),
+                                    "timeout" if nmap_timed_out else "no results",
+                                )
+
             if total_ports == 0 and self.config.get("deep_id_scan", True):
                 identity_source = host_record.get("deep_scan") or {}
                 has_identity_hint = bool(

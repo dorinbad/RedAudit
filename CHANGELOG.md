@@ -24,6 +24,7 @@ Release notes live under `docs/releases/` for additional context.
 ### Changed
 
 - **Deep Scan Logic**: Uses HyperScan ports as signal for deep scan decision (`hyperscan_ports_detected` reason). Also forces `web_count` when HyperScan found web ports (80, 443, 3000, 8080, etc.).
+- **HyperScan Fallback**: When nmap times out (returncode 124) or finds 0 ports, we now populate the port list from HyperScan data with `hyperscan_fallback_used` flag. This handles slow-responding hosts like Metasploitable2.
 
 ## [4.0.3] - 2026-01-05
 
