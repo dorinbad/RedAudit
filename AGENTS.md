@@ -25,11 +25,13 @@ This file is reusable "initial context" for contributors working on RedAudit. Th
 - Never revert unrelated changes; if unexpected changes appear, stop and ask how to proceed.
 - Keep comments minimal and only when they clarify non-obvious logic.
 - Respect execution constraints; request approval only when elevated actions are required by the environment.
+- **Fragility of Parsers:** This tool relies heavily on parsing `stdout` from `nmap`, `nikto`, and `nuclei`. If you modify any logic in `agentless_verify.py` or `scanner_versions.py`, you **MUST** verify the changes against actual output from modern versions of these tools. Do not rely solely on existing unit tests, as they test against "frozen" mock data.
 
 ### Planning and Scoping
 
 - Use a short multi-step plan for complex tasks; avoid single-step plans.
 - Update the plan after completing a step.
+- **SIEM Changes:** "SIEM integration" in this repo means strictly **ECS-compliant JSONL output**. Do not implement direct socket/API transmission logic unless explicitly scoped as a major feature.
 
 ### Review Responses
 
@@ -121,7 +123,8 @@ The test suite prioritizes maintainability over raw coverage numbers:
 - **Semantic file names**: Test files match the module they cover (e.g., `test_entity_resolver.py` for `entity_resolver.py`). Avoid names like `batch1`, `to_90`, `aggressive`.
 - **Extend existing files**: When adding tests for a module, add them to the existing test file rather than creating new fragmented files.
 - **No coverage gaming**: Do not create tests solely to hit a coverage number. Each test should verify meaningful behavior.
-- **One mock, many tests**: Define mock classes once and reuse via fixtures. A single well-designed mock beats 50 copy-pasted variants.
+- One mock, many tests: Define mock classes once and reuse via fixtures. A single well-designed mock beats 50 copy-pasted variants.
+- **Refresh Mock Data:** When touching parsing logic, do not just update the regex to make the test pass. Verify if the tool's output format has changed and update the raw string fixtures in `conftest.py` or the test file to reflect reality.
 
 When modifying tests:
 
