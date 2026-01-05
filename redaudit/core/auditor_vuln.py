@@ -280,6 +280,42 @@ class AuditorVuln:
         def run_nikto():
             if not self.extra_tools.get("nikto"):
                 return {}
+
+            # v4.1: Pre-filter CDN/proxy hosts to reduce false positives
+            # These services return generic responses that trigger many Nikto findings
+            CDN_PROXY_INDICATORS = {
+                "cloudflare",
+                "akamai",
+                "cloudfront",
+                "fastly",
+                "varnish",
+                "nginx",  # Only when combined with CDN headers
+                "imperva",
+                "incapsula",
+                "sucuri",
+                "aws",
+            }
+
+            # Check if we already have server header info from http_enrichment
+            server_header = str(finding.get("server", "")).lower()
+            headers_raw = str(finding.get("headers", "")).lower()
+
+            is_cdn_proxy = any(cdn in server_header for cdn in CDN_PROXY_INDICATORS)
+            # Additional checks for CDN-specific headers
+            if not is_cdn_proxy:
+                cdn_headers = ["cf-ray", "x-amz-cf-id", "x-akamai", "x-varnish", "x-sucuri"]
+                is_cdn_proxy = any(h in headers_raw for h in cdn_headers)
+
+            if is_cdn_proxy:
+                if self.logger:
+                    self.logger.info(
+                        "Skipping Nikto for %s:%d - CDN/proxy detected (%s)",
+                        ip,
+                        port,
+                        server_header[:50] if server_header else "cdn-headers",
+                    )
+                return {"nikto_skipped": "cdn_proxy_detected", "nikto_server": server_header[:100]}
+
             try:
                 self._set_ui_detail(f"[nikto] {ip}:{port}")
                 from redaudit.core.verify_vuln import filter_nikto_false_positives
