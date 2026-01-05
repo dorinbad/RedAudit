@@ -1010,44 +1010,70 @@ class AuditorScan:
         )
         hyperscan_discovered_ports: List[int] = []
 
+        # v4.1: Check for existing masscan results from Red Team discovery
+        # This avoids redundant port scanning if masscan already ran
+        masscan_ports_for_host: List[int] = []
         if hyperscan_first_enabled:
-            self._set_ui_detail(f"[HyperScan] {safe_ip} (65535 ports)")
-            self.ui.print_status(
-                f"⚡ HyperScan-First: Scanning all 65,535 ports on {safe_ip}...",
-                "INFO",
-            )
-            try:
-                hyperscan_discovered_ports = hyperscan_full_port_sweep(
-                    safe_ip,
-                    batch_size=self.config.get("hyperscan_batch_size", 5000),
-                    timeout=self.config.get("hyperscan_timeout", 0.3),
-                    logger=self.logger,
+            net_discovery = self.results.get("net_discovery") or {}
+            redteam = net_discovery.get("redteam") or {}
+            masscan_result = redteam.get("masscan") or {}
+            masscan_open = masscan_result.get("open_ports") or []
+            for entry in masscan_open:
+                if isinstance(entry, dict) and entry.get("ip") == safe_ip:
+                    port = entry.get("port")
+                    if isinstance(port, int) and 1 <= port <= 65535:
+                        masscan_ports_for_host.append(port)
+            masscan_ports_for_host = sorted(set(masscan_ports_for_host))
+
+        if hyperscan_first_enabled:
+            # v4.1: If masscan already found ports for this host, use them directly
+            if masscan_ports_for_host:
+                self.ui.print_status(
+                    f"✓ Reusing {len(masscan_ports_for_host)} ports from masscan for {safe_ip}",
+                    "OKGREEN",
                 )
-                if hyperscan_discovered_ports:
-                    # Build targeted nmap args for discovered ports only
-                    port_list = ",".join(str(p) for p in hyperscan_discovered_ports)
-                    # Use -sV -sC -A for full fingerprinting but only on discovered ports
-                    args = f"-sV -sC -A -Pn -p {port_list}"
-                    # Apply timing template from config
-                    timing = self.config.get("nmap_timing")
-                    if timing:
-                        args = f"-T{timing} {args}"
+                hyperscan_discovered_ports = masscan_ports_for_host
+            else:
+                # Run HyperScan-First if no masscan results
+                self._set_ui_detail(f"[HyperScan] {safe_ip} (65535 ports)")
+                self.ui.print_status(
+                    f"⚡ HyperScan-First: Scanning all 65,535 ports on {safe_ip}...",
+                    "INFO",
+                )
+                try:
+                    hyperscan_discovered_ports = hyperscan_full_port_sweep(
+                        safe_ip,
+                        batch_size=self.config.get("hyperscan_batch_size", 1000),
+                        timeout=self.config.get("hyperscan_timeout", 0.5),
+                        logger=self.logger,
+                    )
+                except Exception as hs_err:
+                    self.logger.warning(
+                        "HyperScan-First failed for %s: %s, falling back to nmap",
+                        safe_ip,
+                        hs_err,
+                    )
+                    hyperscan_discovered_ports = []
+
+            if hyperscan_discovered_ports:
+                # Build targeted nmap args for discovered ports only
+                port_list = ",".join(str(p) for p in hyperscan_discovered_ports)
+                # Use -sV -sC -A for full fingerprinting but only on discovered ports
+                args = f"-sV -sC -A -Pn -p {port_list}"
+                # Apply timing template from config
+                timing = self.config.get("nmap_timing")
+                if timing:
+                    args = f"-T{timing} {args}"
+                if not masscan_ports_for_host:  # Only show if we ran HyperScan
                     self.ui.print_status(
                         f"✓ HyperScan found {len(hyperscan_discovered_ports)} open ports, targeting nmap fingerprint",
                         "OKGREEN",
                     )
-                else:
-                    # HyperScan found nothing, fall back to standard nmap scan
-                    self.ui.print_status(
-                        "⚠ HyperScan found 0 ports, falling back to standard nmap scan",
-                        "WARNING",
-                    )
-                    args = get_nmap_arguments(self.config["scan_mode"], self.config)
-            except Exception as hs_err:
-                self.logger.warning(
-                    "HyperScan-First failed for %s: %s, falling back to nmap",
-                    safe_ip,
-                    hs_err,
+            else:
+                # HyperScan found nothing, fall back to standard nmap scan
+                self.ui.print_status(
+                    "⚠ HyperScan found 0 ports, falling back to standard nmap scan",
+                    "WARNING",
                 )
                 args = get_nmap_arguments(self.config["scan_mode"], self.config)
 
