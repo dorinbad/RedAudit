@@ -381,14 +381,15 @@ class AuditorUI:
             return TextColumn(*args, **kwargs)
 
     def _progress_columns(self, *, show_detail: bool, show_eta: bool, show_elapsed: bool):
-        """v3.8.2: Simplified progress columns - removed spinner (caused display issues)."""
+        """v4.0.4: Restored spinner for visual feedback during long scans."""
         try:
-            from rich.progress import BarColumn, TimeElapsedColumn
+            from rich.progress import BarColumn, SpinnerColumn, TimeElapsedColumn
         except ImportError:
             return []
         width = self._terminal_width()
         bar_width = max(8, min(28, width // 4))
         columns = [
+            SpinnerColumn("dots"),
             self._safe_text_column(
                 "[progress.description]{task.description}",
                 overflow="ellipsis",
@@ -410,7 +411,6 @@ class AuditorUI:
                     markup=True,
                 )
             )
-        # v3.8.2: Removed SpinnerColumn - caused display issues during long phases
         return [c for c in columns if c is not None]
 
     @contextmanager

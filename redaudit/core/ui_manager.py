@@ -136,10 +136,10 @@ class UIManager:
         """Print using Rich console for progress compatibility."""
         rich_color_map = {
             "OKBLUE": "bright_blue",
-            "OKGREEN": "green",
-            "WARNING": "yellow",
-            "FAIL": "red",
-            "HEADER": "magenta",
+            "OKGREEN": "bright_green",
+            "WARNING": "bright_yellow",
+            "FAIL": "bright_red",
+            "HEADER": "bright_magenta",
         }
         rich_style = rich_color_map.get(color_key, "bright_blue")
         try:

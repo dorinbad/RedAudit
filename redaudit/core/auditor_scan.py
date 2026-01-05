@@ -1608,7 +1608,8 @@ class AuditorScan:
                     if self.interrupted:
                         break
                     fut = executor.submit(self.scan_host_ports, h)
-                    futures[fut] = h
+                    # v4.0.4: Store IP string for progress display (not Host object)
+                    futures[fut] = h.ip if hasattr(h, "ip") else str(h)
                     if self.rate_limit_delay > 0:
                         # A3: Jitter ±30% for IDS evasion
                         jitter = random.uniform(-0.3, 0.3) * self.rate_limit_delay
