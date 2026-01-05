@@ -90,6 +90,20 @@ sudo redaudit
 | **Interfaz Bilingüe** | Localización completa Inglés/Español |
 | **Auto-Actualización** | Actualizaciones atómicas staged con rollback automático en caso de fallo |
 
+### Próximamente en v4.1: Descubrimiento HyperScan-First
+
+> **Escaneos completos 3-4x más rápidos** con los mismos resultados ricos.
+
+La próxima versión mayor invierte el orden de escaneo: HyperScan (nuestro motor async creado desde cero) ahora sondea los 65.535 puertos en ~60-90 segundos, y luego pasa solo los puertos abiertos a nmap para fingerprinting. Esto elimina timeouts en hosts complejos y reduce drásticamente el tiempo de escaneo manteniendo detección completa de servicios.
+
+| Optimización | Beneficio |
+|:---|:---|
+| **HyperScan-First** | Barrido TCP async → nmap dirigido (3-4x más rápido) |
+| **Escaneo Vulns Paralelo** | nikto/testssl/whatweb ejecutan concurrentemente (2-3x más rápido) |
+| **Filtrado Inteligente de Targets** | Omite hosts CDN/proxy para Nikto (~50% menos falsos positivos) |
+
+Ver [ROADMAP](../docs/ROADMAP.es.md) para más detalles.
+
 ---
 
 ## Cómo Funciona
