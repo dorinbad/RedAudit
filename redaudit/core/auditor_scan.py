@@ -1000,10 +1000,11 @@ class AuditorScan:
             phase0_enrichment = self._run_low_impact_enrichment(safe_ip)
 
         # v4.1: HyperScan-First optimization
-        # For mode=full (non-stealth), probe all 65,535 ports with HyperScan first,
+        # For mode=full/completo (non-stealth), probe all 65,535 ports with HyperScan first,
         # then run nmap only on discovered ports for fingerprinting
+        is_full_mode = mode_label in ("full", "completo")
         hyperscan_first_enabled = (
-            mode_label == "full"
+            is_full_mode
             and not self.config.get("stealth")
             and not self.config.get("no_hyperscan_first")
         )
