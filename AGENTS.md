@@ -113,6 +113,8 @@ python3 -m unittest discover -s tests
 The test suite prioritizes maintainability over raw coverage numbers:
 
 - **Use `conftest.py`**: Shared fixtures (`MockAuditorBase`, sample data) live in `tests/conftest.py`. Do not duplicate mock classes across files.
+- **Directory structure**: Keep tests under `tests/core`, `tests/cli`, `tests/utils`, `tests/integration` to mirror the codebase.
+- **Consolidate satellites**: Prefer a single `test_<module>.py` per module; fold edge/progress/extra coverage into that file instead of creating `*_edge_cases.py` or similar.
 - **Semantic file names**: Test files match the module they cover (e.g., `test_entity_resolver.py` for `entity_resolver.py`). Avoid names like `batch1`, `to_90`, `aggressive`.
 - **Extend existing files**: When adding tests for a module, add them to the existing test file rather than creating new fragmented files.
 - **No coverage gaming**: Do not create tests solely to hit a coverage number. Each test should verify meaningful behavior.
@@ -219,6 +221,7 @@ When changing behavior/UX, update the relevant docs in both EN/ES (flat docs str
 - release notes: `docs/releases/RELEASE_NOTES_vX.Y.Z*.md`
 
 Make sure menu text, flags, defaults, and examples match the code.
+For ES docs, use Spanish (Spain) phrasing (`es-ES`) and avoid LATAM variants; do not mention this preference in user-facing docs.
 
 ## Versioning & Release Checklist (SemVer)
 
