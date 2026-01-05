@@ -36,10 +36,13 @@ class UIManager:
         lang: str = "en",
         colors: Optional[Dict[str, str]] = None,
         logger: Optional[Any] = None,
+        progress_active_callback: Optional[Any] = None,
     ):
         self.lang = lang
         self.colors = colors or COLORS
         self.logger = logger
+        # v4.0.4: Callback to check parent's progress state
+        self._progress_active_callback = progress_active_callback
 
         # Thread safety locks
         self._print_lock = threading.Lock()
@@ -51,6 +54,17 @@ class UIManager:
         self._ui_detail = ""
         self.last_activity = datetime.now()
         self.current_phase = "init"
+
+    def _is_progress_active(self) -> bool:
+        """Check if progress UI is active (local or parent state)."""
+        if self._ui_progress_active:
+            return True
+        if self._progress_active_callback:
+            try:
+                return bool(self._progress_active_callback())
+            except Exception:
+                pass
+        return False
 
     def t(self, key: str, *args) -> str:
         """Get translated text."""
@@ -101,7 +115,8 @@ class UIManager:
         endc = self.colors.get("ENDC", "") if is_tty else ""
 
         msg = "" if message is None else str(message)
-        if self._ui_progress_active and not force:
+        progress_active = self._is_progress_active()
+        if progress_active and not force:
             if not self._should_emit_during_progress(msg, status_display):
                 try:
                     if msg:
@@ -126,7 +141,7 @@ class UIManager:
             lines.extend(wrapped if wrapped else [""])
 
         with self._print_lock:
-            if self._ui_progress_active:
+            if progress_active:
                 self._print_with_rich(ts, status_display, color_key, lines)
             else:
                 self._print_ansi(ts, status_display, color, endc, lines)
