@@ -16,7 +16,12 @@ import pytest
 
 from redaudit import InteractiveNetworkAuditor
 from redaudit.core.wizard import Wizard
-from redaudit.utils.constants import DEFAULT_THREADS, MAX_CIDR_LENGTH, UDP_SCAN_MODE_QUICK, UDP_TOP_PORTS
+from redaudit.utils.constants import (
+    DEFAULT_THREADS,
+    MAX_CIDR_LENGTH,
+    UDP_SCAN_MODE_QUICK,
+    UDP_TOP_PORTS,
+)
 
 
 class _TextWizard(Wizard):
@@ -86,6 +91,7 @@ def _set_inputs(monkeypatch, values):
 
 # --- Arrow menu helpers ---
 
+
 def test_arrow_menu_moves_down_and_selects(monkeypatch):
     wiz = _UIWizard()
     keys = iter(["down", "enter"])
@@ -152,6 +158,7 @@ def test_arrow_menu_skips_empty_key(monkeypatch):
 
 
 # --- Flow and prompt helpers ---
+
 
 def test_show_main_menu_text(monkeypatch):
     wiz = _TextWizard()
@@ -277,9 +284,7 @@ def test_ask_choice_with_back_arrow_menu_returns_selection(monkeypatch):
     wiz = _UIWizard()
     monkeypatch.setattr(wiz, "_use_arrow_menu", lambda: True)
     monkeypatch.setattr(wiz, "_arrow_menu", lambda *_args, **_kwargs: 1)
-    assert (
-        wiz.ask_choice_with_back("pick", ["a", "b"], default=0, step_num=2, total_steps=3) == 1
-    )
+    assert wiz.ask_choice_with_back("pick", ["a", "b"], default=0, step_num=2, total_steps=3) == 1
 
 
 def test_ask_choice_with_back_arrow_menu_exception(monkeypatch):
@@ -443,9 +448,7 @@ def test_show_defaults_summary_handles_none_values():
 
 def test_apply_run_defaults_invalid_threads_and_defaults(monkeypatch):
     wiz = _TextWizard()
-    monkeypatch.setattr(
-        "redaudit.core.wizard.get_default_reports_base_dir", lambda: "/tmp/default"
-    )
+    monkeypatch.setattr("redaudit.core.wizard.get_default_reports_base_dir", lambda: "/tmp/default")
     defaults = {"threads": "bad", "rate_limit": 5, "output_dir": ""}
     wiz._apply_run_defaults(defaults)
     assert wiz.config["threads"] == DEFAULT_THREADS
@@ -626,7 +629,7 @@ def test_detect_os_banner_label_truncates_long_single_word(monkeypatch):
 
 def test_detect_os_banner_label_ignores_invalid_lines(monkeypatch):
     wiz = _UIWizard()
-    content = "BADLINE\nNAME=\"Test\"\n"
+    content = 'BADLINE\nNAME="Test"\n'
     monkeypatch.setattr("redaudit.core.wizard.os.path.exists", lambda *_args, **_kwargs: True)
     monkeypatch.setattr("builtins.open", mock_open(read_data=content))
     assert wiz._detect_os_banner_label() == "TEST"
@@ -888,6 +891,7 @@ def test_ask_manual_network_keyboard_interrupt(monkeypatch):
 
 
 # --- Prompt clarity and red team wiring ---
+
 
 class TestWizardPrompts(unittest.TestCase):
     def test_net_discovery_snmp_prompt_shows_default_brackets(self):

@@ -31,6 +31,7 @@ from redaudit.core.hyperscan import (
     _udp_probe,
 )
 
+
 def test_build_discovery_packets():
     ssdp = hyperscan._build_ssdp_msearch()
     mdns = hyperscan._build_mdns_query()
@@ -70,6 +71,7 @@ def test_hyperscan_deep_scan_empty_and_forward(monkeypatch):
     assert result == {"10.0.0.1": [80]}
     assert called["targets"] == ["10.0.0.1"]
     assert called["ports"][0] == 1
+
 
 def test_hyperscan_udp_sweep_collects_results(monkeypatch):
     captured = {}
@@ -212,6 +214,7 @@ def test_hyperscan_full_discovery_priority_targets(monkeypatch):
     assert result["tcp_hosts"]["10.0.0.1"] == [22]
     assert result["total_hosts_found"] == 2
 
+
 def test_hyperscan_udp_broadcast_edge():
     """Test hyperscan_udp_broadcast with invalid CIDR and socket failures (lines 419, 432, 446-462)."""
     # 419: Invalid network
@@ -328,6 +331,7 @@ def test_hyperscan_with_nmap_enrichment_parse():
             assert res["service_info"]["1.1.1.1"][80] == "http"
             assert res["service_info"]["1.1.1.1"][443] == "https"
 
+
 def test_hyperscan_udp_broadcast_recv_loop():
     """Test hyperscan_udp_broadcast recv loop edge cases (lines 446-462)."""
     with patch("socket.socket") as mock_sock_cls:
@@ -361,6 +365,7 @@ def test_hyperscan_with_progress_complete():
         with patch("redaudit.core.hyperscan.hyperscan_full_discovery", return_value={"ok": True}):
             hyperscan_with_progress(["1.1.1.0/24"])
             assert mock_progress.called
+
 
 class _DummyProgress:
     instances = []
