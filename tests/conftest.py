@@ -6,8 +6,17 @@ duplication across test files.
 """
 
 import logging
-import pytest
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+TESTS_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = TESTS_ROOT.parent
+for path in (str(TESTS_ROOT), str(PROJECT_ROOT)):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 from redaudit.core.config_context import ConfigurationContext
 from redaudit.core.network_scanner import NetworkScanner
