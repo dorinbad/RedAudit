@@ -233,8 +233,8 @@ def hyperscan_tcp_sweep_sync(
 
 def hyperscan_full_port_sweep(
     target_ip: str,
-    batch_size: int = 5000,
-    timeout: float = 0.3,
+    batch_size: int = 1000,  # Reduced from 5000 to avoid 'Too many open files'
+    timeout: float = 0.5,  # Slightly increased for reliability
     logger=None,
     progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> List[int]:
@@ -247,8 +247,8 @@ def hyperscan_full_port_sweep(
 
     Args:
         target_ip: Single IP address to scan
-        batch_size: Concurrent connections (default 5000, safe for most systems)
-        timeout: Per-connection timeout in seconds (0.3s is aggressive but fast)
+        batch_size: Concurrent connections (default 1000, safe for ulimit)
+        timeout: Per-connection timeout in seconds (0.5s is reliable)
         logger: Optional logger
         progress_callback: Optional callback(completed, total, desc) for progress
 
@@ -272,15 +272,27 @@ def hyperscan_full_port_sweep(
 
     start_time = time.time()
 
-    # Use existing TCP sweep function
-    results = hyperscan_tcp_sweep_sync(
-        targets=[target_ip],
-        ports=all_ports,
-        batch_size=batch_size,
-        timeout=timeout,
-        logger=logger,
-        progress_callback=progress_callback,
-    )
+    # v4.1 fix: Use new event loop to avoid conflicts with ThreadPoolExecutor
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            results = loop.run_until_complete(
+                hyperscan_tcp_sweep(
+                    targets=[target_ip],
+                    ports=all_ports,
+                    batch_size=batch_size,
+                    timeout=timeout,
+                    logger=logger,
+                    progress_callback=progress_callback,
+                )
+            )
+        finally:
+            loop.close()
+    except Exception as e:
+        if logger:
+            logger.warning("HyperScan FULL failed for %s: %s", target_ip, e)
+        return []
 
     open_ports = sorted(results.get(target_ip, []))
     duration = time.time() - start_time
