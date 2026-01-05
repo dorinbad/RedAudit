@@ -9,7 +9,7 @@ import os
 import base64
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 try:
     from cryptography.fernet import Fernet

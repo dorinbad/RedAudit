@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from redaudit import InteractiveNetworkAuditor
 from redaudit.utils.constants import VERSION, MAX_INPUT_LENGTH, MAX_CIDR_LENGTH

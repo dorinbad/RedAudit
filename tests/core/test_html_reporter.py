@@ -3,6 +3,8 @@
 RedAudit - Tests for HTML report helpers.
 """
 
+import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -124,3 +126,113 @@ def test_generate_and_save_html_report(tmp_path):
         )
         assert path is not None
         assert Path(path).read_text(encoding="utf-8") == "<html>normal</html>"
+
+
+def test_get_reverse_dns_empty():
+    assert html_reporter._get_reverse_dns({}) == ""
+    assert html_reporter._get_reverse_dns({"dns": {"reverse": [None]}}) == ""
+    assert html_reporter._get_reverse_dns({"dns": {"reverse": ["host.local."]}}) == "host.local"
+
+
+def test_basename_filter_empty():
+    env = html_reporter.get_template_env()
+    basename_filter = env.filters["basename"]
+    assert basename_filter("") == ""
+    assert basename_filter(None) == ""
+    assert basename_filter("/path/to/file.txt") == "file.txt"
+
+
+def test_prepare_report_data_no_observations():
+    results = {
+        "vulnerabilities": [
+            {
+                "host": "1.2.3.4",
+                "vulnerabilities": [
+                    {
+                        "severity": "high",
+                        "parsed_observations": None,
+                        "nikto_findings": None,
+                    }
+                ],
+            }
+        ]
+    }
+    data = html_reporter.prepare_report_data(results, {"target_networks": []})
+    assert data["finding_table"][0]["observations"] == []
+
+
+def test_extract_finding_title_evidence_parser_exception():
+    vuln = {"parsed_observations": ["some observation"]}
+    with patch(
+        "redaudit.core.evidence_parser._derive_descriptive_title",
+        side_effect=Exception("parse error"),
+    ):
+        title = html_reporter._extract_finding_title(vuln)
+        assert "Service Finding" in title or "Finding" in title
+
+
+def test_extract_finding_title_evidence_parser_none():
+    vuln = {"parsed_observations": ["some observation"]}
+    with patch("redaudit.core.evidence_parser._derive_descriptive_title", return_value=None):
+        title = html_reporter._extract_finding_title(vuln)
+        assert "Service Finding" in title or "Finding" in title
+
+
+def test_translate_finding_title_fallback():
+    assert html_reporter._translate_finding_title("Unknown Title", "es") == "Unknown Title"
+    assert html_reporter._translate_finding_title("Unknown Title", "en") == "Unknown Title"
+
+
+def test_prepare_report_data_with_reverse_dns():
+    results = {"hosts": [{"ip": "1.2.3.4", "dns": {"reverse": ["myhost.local."]}}]}
+    data = html_reporter.prepare_report_data(results, {})
+    assert data["host_table"][0]["hostname"] == "myhost.local"
+
+
+def test_get_template_env_import_error():
+    with patch.dict("sys.modules", {"jinja2": None}):
+        try:
+            html_reporter.get_template_env()
+            assert False, "Should have raised ImportError"
+        except (ImportError, AttributeError):
+            pass
+
+
+def test_save_html_report_chmod_error():
+    results = {
+        "hosts": [],
+        "vulnerabilities": [],
+        "summary": {},
+        "timestamp": "2025-01-01",
+        "pipeline": {},
+        "smart_scan_summary": {},
+        "config_snapshot": {},
+    }
+    config = {"target_networks": ["192.168.1.0/24"], "scan_mode": "smart"}
+
+    class _Template:
+        def render(self, **kwargs):
+            return "<html>test</html>"
+
+    class _Env:
+        def get_template(self, _name):
+            return _Template()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch("redaudit.core.html_reporter.get_template_env", return_value=_Env()):
+            with patch("os.chmod", side_effect=PermissionError("Mock chmod error")):
+                output_path = html_reporter.save_html_report(results, config, tmpdir)
+                assert output_path is not None
+                assert os.path.exists(output_path)
+
+
+def test_save_html_report_generation_error():
+    results = {"hosts": [], "vulnerabilities": []}
+    config = {}
+
+    with patch(
+        "redaudit.core.html_reporter.generate_html_report", side_effect=RuntimeError("Mock error")
+    ):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_path = html_reporter.save_html_report(results, config, tmpdir)
+            assert output_path is None

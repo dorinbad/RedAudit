@@ -3,9 +3,13 @@
 RedAudit - Tests for auditor vulnerability helpers.
 """
 
-from unittest.mock import patch, MagicMock
+import contextlib
+from unittest.mock import MagicMock, patch
 
+from redaudit.core import auditor_vuln
 from redaudit.core.auditor import InteractiveNetworkAuditor
+from redaudit.core.auditor_vuln import AuditorVuln
+from redaudit.core.models import Host
 
 
 def _make_app():
@@ -42,6 +46,26 @@ def test_parse_url_target():
     )
 
 
+def test_parse_url_target_handles_empty_and_invalid(monkeypatch):
+    app = _make_app()
+    assert app._parse_url_target("   ") == ("", 0, "")
+    assert app._parse_url_target("example.com:bad") == ("example.com", 0, "")
+    assert app._parse_url_target("http://example.com") == ("example.com", 80, "http")
+
+    def _broken_parse(*_args, **_kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr("urllib.parse.urlparse", _broken_parse)
+    assert app._parse_url_target("http://bad.example") == ("", 0, "")
+
+
+def test_normalize_host_info_with_host_model():
+    host = Host(ip="10.0.0.9", ports=[{"port": 80, "service": "http"}], web_ports_count=1)
+    normalized = AuditorVuln._normalize_host_info(host)
+    assert normalized["ip"] == "10.0.0.9"
+    assert normalized["web_ports_count"] == 1
+
+
 def test_merge_nuclei_findings_creates_hosts():
     app = _make_app()
     app.results["vulnerabilities"] = [{"host": "10.0.0.1", "vulnerabilities": []}]
@@ -55,6 +79,24 @@ def test_merge_nuclei_findings_creates_hosts():
 
     vuln_hosts = {entry["host"] for entry in app.results["vulnerabilities"]}
     assert vuln_hosts == {"10.0.0.1", "10.0.0.2"}
+
+
+def test_merge_nuclei_findings_skips_invalid_entries():
+    app = _make_app()
+    app.results["vulnerabilities"] = ["invalid", {"host": "10.0.0.1", "vulnerabilities": []}]
+
+    findings = [
+        "bad",
+        {"matched_at": "", "host": "10.0.0.2:443", "template_id": "t2"},
+        {"matched_at": "", "host": "", "template_id": "t3"},
+    ]
+    merged = app._merge_nuclei_findings(findings)
+    assert merged == 1
+
+
+def test_merge_nuclei_findings_empty_list():
+    app = _make_app()
+    assert app._merge_nuclei_findings([]) == 0
 
 
 def test_estimate_vuln_budget_s_full_mode():
@@ -77,6 +119,14 @@ def test_estimate_vuln_budget_s_full_mode():
     assert app._estimate_vuln_budget_s({"ports": []}) == 0.0
 
 
+def test_estimate_vuln_budget_invalid_port():
+    app = _make_app()
+    app.config["scan_mode"] = "normal"
+    app.extra_tools = {}
+    host_info = {"ports": [{"port": "bad", "service": "http"}]}
+    assert app._estimate_vuln_budget_s(host_info) == 15.0
+
+
 def test_scan_vulnerabilities_web_basic_https():
     app = _make_app()
     app.config["scan_mode"] = "normal"
@@ -97,3 +147,307 @@ def test_scan_vulnerabilities_web_basic_https():
     assert finding["url"] == "https://10.0.0.3:443/"
     assert finding["http_status"] == 200
     assert finding["tls"] == "ok"
+
+
+def test_scan_vulnerabilities_web_no_web_ports():
+    auditor = _DummyAuditor()
+    auditor.config["scan_mode"] = "normal"
+    host_info = {"ip": "10.0.0.5", "ports": [{"port": 22, "service": "ssh"}]}
+    assert auditor.scan_vulnerabilities_web(host_info) is None
+
+
+class _DummyLogger:
+    def debug(self, *_args, **_kwargs):
+        pass
+
+    def info(self, *_args, **_kwargs):
+        pass
+
+    def error(self, *_args, **_kwargs):
+        pass
+
+
+class _DummyAuditor(AuditorVuln):
+    def __init__(self):
+        self.results = {"vulnerabilities": []}
+        self.extra_tools = {}
+        self.config = {"scan_mode": "completo", "threads": 2, "dry_run": False}
+        self.logger = _DummyLogger()
+        self.current_phase = ""
+        self._ui_detail = ""
+        self.interrupted = False
+        self.statuses = []
+        self.ui = self
+        self.colors = {}
+
+    def _set_ui_detail(self, detail):
+        self._ui_detail = detail
+
+    def _get_ui_detail(self):
+        return self._ui_detail
+
+    def _progress_ui(self):
+        return contextlib.nullcontext()
+
+    def _progress_columns(self, **_kwargs):
+        return ()
+
+    def _progress_console(self):
+        return None
+
+    def _format_eta(self, _value):
+        return "00:00"
+
+    def print_status(self, *args, **kwargs):
+        self.statuses.append((args, kwargs))
+
+    def t(self, key, *_args):
+        return key
+
+
+class _DummyResult:
+    def __init__(self, stdout="", stderr="", timed_out=False):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.timed_out = timed_out
+
+
+class _DummyRunner:
+    def __init__(self, **_kwargs):
+        pass
+
+    def run(self, cmd, **_kwargs):
+        tool = cmd[0]
+        if "whatweb" in tool:
+            return _DummyResult(stdout="whatweb: nginx 1.18")
+        if "nikto" in tool:
+            return _DummyResult(stdout="+ Finding 1\n+ Finding 2\n")
+        return _DummyResult()
+
+
+def test_scan_vulnerabilities_web_full_flow(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.extra_tools = {
+        "whatweb": "/usr/bin/whatweb",
+        "nikto": "/usr/bin/nikto",
+        "testssl.sh": "/usr/bin/testssl.sh",
+    }
+
+    monkeypatch.setattr(auditor_vuln, "http_enrichment", lambda *_args, **_kwargs: {"http": "ok"})
+    monkeypatch.setattr(auditor_vuln, "tls_enrichment", lambda *_args, **_kwargs: {"tls": "1.2"})
+    monkeypatch.setattr(
+        auditor_vuln, "ssl_deep_analysis", lambda *_args, **_kwargs: {"vulnerabilities": ["x"]}
+    )
+    monkeypatch.setattr(auditor_vuln, "CommandRunner", _DummyRunner)
+
+    def _filter(findings, *_args, **_kwargs):
+        return findings[:1]
+
+    monkeypatch.setattr("redaudit.core.verify_vuln.filter_nikto_false_positives", _filter)
+
+    host_info = {
+        "ip": "10.0.0.1",
+        "ports": [{"port": 443, "service": "https", "is_web_service": True}],
+    }
+
+    result = auditor.scan_vulnerabilities_web(host_info)
+    assert result is not None
+    assert result["host"] == "10.0.0.1"
+    assert result["vulnerabilities"]
+    finding = result["vulnerabilities"][0]
+    assert "whatweb" in finding
+    assert "nikto_findings" in finding
+    assert finding.get("nikto_filtered_count") == 1
+    assert "testssl_analysis" in finding
+
+
+def test_scan_vulnerabilities_web_whatweb_exception(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.config["scan_mode"] = "normal"
+    auditor.extra_tools = {"whatweb": "/usr/bin/whatweb"}
+    auditor.logger = MagicMock()
+
+    class _BoomRunner:
+        def __init__(self, **_kwargs):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(auditor_vuln, "http_enrichment", lambda *_args, **_kwargs: {"http": "ok"})
+    monkeypatch.setattr(auditor_vuln, "CommandRunner", _BoomRunner)
+
+    host_info = {
+        "ip": "10.0.0.6",
+        "ports": [{"port": 80, "service": "http", "is_web_service": True}],
+    }
+    result = auditor.scan_vulnerabilities_web(host_info)
+    assert result["host"] == "10.0.0.6"
+    assert auditor.logger.debug.called
+
+
+def test_scan_vulnerabilities_web_nikto_exception(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.config["scan_mode"] = "completo"
+    auditor.extra_tools = {"nikto": "/usr/bin/nikto"}
+    auditor.logger = MagicMock()
+
+    class _BoomRunner:
+        def __init__(self, **_kwargs):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(auditor_vuln, "http_enrichment", lambda *_args, **_kwargs: {"http": "ok"})
+    monkeypatch.setattr(auditor_vuln, "CommandRunner", _BoomRunner)
+
+    host_info = {
+        "ip": "10.0.0.7",
+        "ports": [{"port": 80, "service": "http", "is_web_service": True}],
+    }
+    result = auditor.scan_vulnerabilities_web(host_info)
+    assert result["host"] == "10.0.0.7"
+    assert auditor.logger.debug.called
+
+
+def test_scan_vulnerabilities_concurrent_fallback(monkeypatch):
+    auditor = _DummyAuditor()
+
+    def _fake_scan(host):
+        return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
+
+    monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _fake_scan)
+
+    real_import = __import__
+
+    def _blocked_import(name, *args, **kwargs):
+        if name == "rich.progress":
+            raise ImportError("blocked")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.__import__", _blocked_import)
+
+    host_results = [{"ip": "10.0.0.2", "web_ports_count": 1, "ports": [{"port": 80}]}]
+    auditor.scan_vulnerabilities_concurrent(host_results)
+    assert auditor.results["vulnerabilities"]
+
+
+def test_scan_vulnerabilities_concurrent_rich_progress(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.config["threads"] = 1
+    auditor.logger = MagicMock()
+    details = ["first", "updated"]
+
+    def _next_detail():
+        return details.pop(0) if details else "updated"
+
+    auditor._get_ui_detail = _next_detail
+
+    def _scan(host):
+        if host["ip"] == "10.0.0.2":
+            raise RuntimeError("boom")
+        return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
+
+    class _DummyProgress:
+        def __init__(self, *args, **kwargs):
+            self.updates = []
+            self.added = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def add_task(self, *args, **kwargs):
+            self.added.append((args, kwargs))
+            return "task"
+
+        def update(self, task, **kwargs):
+            self.updates.append((task, kwargs))
+
+    monkeypatch.setattr("rich.progress.Progress", _DummyProgress)
+    monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _scan)
+
+    host_results = [
+        {"ip": "10.0.0.1", "web_ports_count": 1, "ports": [{"port": 80, "service": "http"}]},
+        {"ip": "10.0.0.2", "web_ports_count": 1, "ports": [{"port": 80, "service": "http"}]},
+    ]
+    auditor.scan_vulnerabilities_concurrent(host_results)
+    assert auditor.results["vulnerabilities"]
+    assert auditor.logger.info.called
+    assert auditor.logger.error.called
+    assert auditor.logger.debug.called
+
+
+def test_scan_vulnerabilities_concurrent_rich_interrupted(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.config["threads"] = 1
+    auditor.interrupted = True
+
+    class _DummyProgress:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def add_task(self, *_args, **_kwargs):
+            return "task"
+
+        def update(self, *_args, **_kwargs):
+            return None
+
+    monkeypatch.setattr("rich.progress.Progress", _DummyProgress)
+
+    host_results = [{"ip": "10.0.0.3", "web_ports_count": 1, "ports": [{"port": 80}]}]
+    auditor.scan_vulnerabilities_concurrent(host_results)
+
+
+def test_scan_vulnerabilities_concurrent_no_web_hosts():
+    auditor = _DummyAuditor()
+    auditor.scan_vulnerabilities_concurrent([{"ip": "10.0.0.4", "web_ports_count": 0}])
+
+
+def test_scan_vulnerabilities_concurrent_fallback_interrupt(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.interrupted = True
+
+    def _fake_scan(host):
+        return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
+
+    monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _fake_scan)
+
+    real_import = __import__
+
+    def _blocked_import(name, *args, **kwargs):
+        if name == "rich.progress":
+            raise ImportError("blocked")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.__import__", _blocked_import)
+
+    host_results = [{"ip": "10.0.0.5", "web_ports_count": 1, "ports": [{"port": 80}]}]
+    auditor.scan_vulnerabilities_concurrent(host_results)
+
+
+def test_scan_vulnerabilities_concurrent_fallback_worker_error(monkeypatch):
+    auditor = _DummyAuditor()
+    auditor.logger = MagicMock()
+
+    def _boom(_host):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _boom)
+
+    real_import = __import__
+
+    def _blocked_import(name, *args, **kwargs):
+        if name == "rich.progress":
+            raise ImportError("blocked")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.__import__", _blocked_import)
+
+    host_results = [{"ip": "10.0.0.6", "web_ports_count": 1, "ports": [{"port": 80}]}]
+    auditor.scan_vulnerabilities_concurrent(host_results)
+    assert auditor.statuses
+    assert auditor.logger.debug.called

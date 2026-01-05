@@ -10,10 +10,11 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from redaudit.core.jsonl_exporter import export_all, _extract_title
+from redaudit.core.jsonl_exporter import export_all, export_summary_json, _extract_title
 
 
 class TestJsonlExporter(unittest.TestCase):
@@ -110,3 +111,55 @@ class TestJsonlExporter(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_export_summary_chmod_exception():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_path = os.path.join(tmpdir, "summary.json")
+        results = {
+            "schema_version": "3.1",
+            "session_id": "test",
+            "summary": {},
+            "hosts": [],
+            "vulnerabilities": [],
+        }
+
+        with patch("os.chmod", side_effect=PermissionError("Access denied")):
+            summary = export_summary_json(results, output_path)
+            assert summary is not None
+
+
+def test_extract_title_x_frame_options():
+    vuln = {"parsed_observations": ["X-Frame-Options header missing"]}
+    title = _extract_title(vuln)
+    assert "X-Frame-Options" in title
+
+
+def test_extract_title_x_content_type():
+    vuln = {"parsed_observations": ["X-Content-Type-Options header missing"]}
+    title = _extract_title(vuln)
+    assert "X-Content-Type" in title
+
+
+def test_extract_title_cert_expired():
+    vuln = {"parsed_observations": ["SSL certificate expired"]}
+    title = _extract_title(vuln)
+    assert "Expired" in title
+
+
+def test_extract_title_self_signed():
+    vuln = {"parsed_observations": ["Self-signed certificate detected"]}
+    title = _extract_title(vuln)
+    assert "Self-Signed" in title
+
+
+def test_extract_title_server_banner():
+    vuln = {"parsed_observations": ["Server banner: Apache/2.4.41"]}
+    title = _extract_title(vuln)
+    assert "Server Version" in title or "Banner" in title
+
+
+def test_extract_title_fallback_no_url():
+    vuln = {"port": 8080}
+    title = _extract_title(vuln)
+    assert "8080" in title

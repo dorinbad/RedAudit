@@ -8,7 +8,7 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from redaudit.core.scanner import start_background_capture, stop_background_capture
 

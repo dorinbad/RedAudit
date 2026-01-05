@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch, MagicMock
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from redaudit.core.network import (
     detect_interface_type,
@@ -221,3 +221,105 @@ class TestNetworkDetection(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_detect_networks_netifaces_ipv6_prefix_with_slash():
+    import sys
+
+    mock_netifaces = MagicMock()
+    mock_netifaces.interfaces.return_value = ["eth0"]
+    mock_netifaces.AF_INET = 2
+    mock_netifaces.AF_INET6 = 10
+    mock_netifaces.ifaddresses.return_value = {
+        10: [
+            {
+                "addr": "2001:db8::1",
+                "netmask": "ffff:ffff:ffff:ffff::/64",
+            }
+        ]
+    }
+
+    with patch.dict(sys.modules, {"netifaces": mock_netifaces}):
+        result = detect_networks_netifaces(include_ipv6=True)
+        assert isinstance(result, list)
+
+
+def test_detect_networks_netifaces_ipv6_value_error():
+    import sys
+
+    mock_netifaces = MagicMock()
+    mock_netifaces.interfaces.return_value = ["eth0"]
+    mock_netifaces.AF_INET = 2
+    mock_netifaces.AF_INET6 = 10
+    mock_netifaces.ifaddresses.return_value = {
+        10: [
+            {
+                "addr": "invalid-ipv6-address",
+                "netmask": "64",
+            }
+        ]
+    }
+
+    with patch.dict(sys.modules, {"netifaces": mock_netifaces}):
+        result = detect_networks_netifaces(include_ipv6=True)
+        assert isinstance(result, list)
+
+
+def test_detect_networks_fallback_ipv4_short_line():
+    with patch("redaudit.core.network.CommandRunner") as mock_runner_class:
+        mock_runner = MagicMock()
+        mock_runner_class.return_value = mock_runner
+
+        mock_result = MagicMock()
+        mock_result.stdout = "1: lo\n2: eth0"
+        mock_runner.run.return_value = mock_result
+
+        result = detect_networks_fallback()
+        assert isinstance(result, list)
+
+
+def test_detect_networks_fallback_ipv4_value_error():
+    with patch("redaudit.core.network.CommandRunner") as mock_runner_class:
+        mock_runner = MagicMock()
+        mock_runner_class.return_value = mock_runner
+
+        mock_result = MagicMock()
+        mock_result.stdout = "1: eth0 inet invalid-ip/24"
+        mock_runner.run.return_value = mock_result
+
+        result = detect_networks_fallback()
+        assert isinstance(result, list)
+
+
+def test_detect_networks_fallback_ipv6_short_line():
+    with patch("redaudit.core.network.CommandRunner") as mock_runner_class:
+        mock_runner = MagicMock()
+        mock_runner_class.return_value = mock_runner
+
+        mock_result_v4 = MagicMock()
+        mock_result_v4.stdout = ""
+
+        mock_result_v6 = MagicMock()
+        mock_result_v6.stdout = "1: lo\n2: eth0"
+
+        mock_runner.run.side_effect = [mock_result_v4, mock_result_v6]
+
+        result = detect_networks_fallback(include_ipv6=True)
+        assert isinstance(result, list)
+
+
+def test_detect_networks_fallback_ipv6_value_error():
+    with patch("redaudit.core.network.CommandRunner") as mock_runner_class:
+        mock_runner = MagicMock()
+        mock_runner_class.return_value = mock_runner
+
+        mock_result_v4 = MagicMock()
+        mock_result_v4.stdout = ""
+
+        mock_result_v6 = MagicMock()
+        mock_result_v6.stdout = "1: eth0 inet6 invalid-ipv6/64 scope global"
+
+        mock_runner.run.side_effect = [mock_result_v4, mock_result_v6]
+
+        result = detect_networks_fallback(include_ipv6=True)
+        assert isinstance(result, list)

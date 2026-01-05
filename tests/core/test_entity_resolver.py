@@ -4,17 +4,19 @@ RedAudit - Tests for entity_resolver module
 v2.9 Entity Resolution for multi-interface hosts
 """
 
-import sys
 import os
+import sys
 import unittest
+from unittest.mock import MagicMock
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from redaudit.core.entity_resolver import (
     normalize_hostname,
     extract_identity_fingerprint,
     create_unified_asset,
     guess_asset_type,
+    _derive_asset_name,
     reconcile_assets,
 )
 
@@ -202,3 +204,76 @@ class TestEntityResolver(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_create_unified_asset_vendor_fallback():
+    host = {
+        "ip": "1.2.3.4",
+        "deep_scan": {
+            "mac_address": "00:11:22:33:44:55",
+            "vendor": "Some Strange Vendor Name That is Long",
+        },
+    }
+    asset = create_unified_asset([host, host])
+    assert asset["interfaces"][0]["type"] == "Some Strange Vendor "
+
+
+def test_guess_asset_type_android_fallback():
+    host = {"hostname": "android-device", "ports": []}
+    assert guess_asset_type(host) == "mobile"
+
+
+def test_guess_asset_type_agentless_types():
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "switch"}}) == "switch"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "printer"}}) == "printer"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "smart_tv"}}) == "media"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "media"}}) == "media"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "iot"}}) == "iot"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "smart_device"}}) == "iot"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "nas"}}) == "server"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "bmc"}}) == "server"
+    assert guess_asset_type({"agentless_fingerprint": {"device_type": "hypervisor"}}) == "server"
+
+
+def test_guess_asset_type_iot_hint():
+    host = {"device_type_hints": ["iot"]}
+    assert guess_asset_type(host) == "iot"
+
+
+def test_guess_asset_type_switch_hint():
+    host = {"agentless_fingerprint": {"http_title": "Managed Switch"}}
+    assert guess_asset_type(host) == "switch"
+
+
+def test_guess_asset_type_os_fingerprints():
+    assert guess_asset_type({"os_detected": "Android 10"}) == "mobile"
+    assert guess_asset_type({"os_detected": "iOS 14"}) == "mobile"
+    assert guess_asset_type({"os_detected": "iPhone OS"}) == "mobile"
+
+
+def test_guess_asset_type_vendor_patterns():
+    assert guess_asset_type({"deep_scan": {"vendor": "Apple Inc."}}) == "workstation"
+    assert guess_asset_type({"deep_scan": {"vendor": "Tuya Smart"}}) == "iot"
+    assert guess_asset_type({"deep_scan": {"vendor": "Google LLC"}}) == "smart_device"
+
+
+def test_guess_asset_type_port_patterns():
+    assert guess_asset_type({"ports": [{"port": 80}]}) == "iot"
+    assert (
+        guess_asset_type({"ports": [{"port": 80}, {"port": 443}, {"port": 22}, {"port": 21}]})
+        == "server"
+    )
+
+
+def test_derive_asset_name_no_vendor():
+    host = {"agentless_fingerprint": {"http_title": "Some Title"}}
+    assert _derive_asset_name(host) == "Some Title"
+
+
+def test_reconcile_assets_logging():
+    host1 = {"ip": "1.2.3.4", "hostname": "host-a"}
+    host2 = {"ip": "1.2.3.5", "hostname": "host-a"}
+    logger = MagicMock()
+    unified = reconcile_assets([host1, host2], logger=logger)
+    assert len(unified) == 1
+    logger.info.assert_called()

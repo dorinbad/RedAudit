@@ -12,10 +12,10 @@ import stat
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # Add parent directory to path for CI compatibility
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 # Import the module under test
 from redaudit.core.nvd import (
@@ -25,7 +25,9 @@ from redaudit.core.nvd import (
     ensure_cache_dir,
     NVD_CACHE_DIR,
     enrich_port_with_cves,
+    enrich_host_with_cves,
 )
+from redaudit.core.models import Host
 
 
 class TestBuildCpeQuery(unittest.TestCase):
@@ -178,6 +180,135 @@ class TestEnrichPortWithCves(unittest.TestCase):
         }
         enrich_port_with_cves(port, api_key="12345678-1234-1234-1234-123456789abc", logger=None)
         mock_query.assert_not_called()
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_cpe_23_passthrough_and_critical_severity(self, _mock_sleep, mock_query):
+        mock_query.return_value = [{"cvss_score": 9.8}]
+        port = {
+            "service": "http",
+            "product": "",
+            "version": "",
+            "cpe": "cpe:2.3:a:vendor:prod:1.0:*:*:*:*:*:*:*",
+        }
+        result = enrich_port_with_cves(port, api_key=None, logger=None)
+        self.assertEqual(result.get("cve_max_severity"), "CRITICAL")
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_cpe_legacy_conversion(self, _mock_sleep, mock_query):
+        mock_query.return_value = []
+        port = {
+            "service": "",
+            "product": "",
+            "version": "",
+            "cpe": "cpe:/a:vendor:prod:1.2.3",
+        }
+        enrich_port_with_cves(port, api_key=None, logger=None)
+        _, kwargs = mock_query.call_args
+        self.assertIn("cpe:2.3:a:vendor:prod:1.2.3", kwargs.get("cpe_name", ""))
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_cpe_legacy_short_skips_query(self, _mock_sleep, mock_query):
+        port = {
+            "service": "svc",
+            "product": "",
+            "version": "",
+            "cpe": "cpe:/a:vendor",
+        }
+        enrich_port_with_cves(port, api_key=None, logger=None)
+        mock_query.assert_not_called()
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_cpe_23_wildcard_version_requires_version(self, _mock_sleep, mock_query):
+        port = {
+            "service": "svc",
+            "product": "svc",
+            "version": "",
+            "cpe": "cpe:2.3:a:vendor:prod:*:*:*:*:*:*:*:*",
+        }
+        enrich_port_with_cves(port, api_key=None, logger=None)
+        mock_query.assert_not_called()
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_cpe_23_wildcard_version_sanitized_empty(self, _mock_sleep, mock_query):
+        port = {
+            "service": "svc",
+            "product": "svc",
+            "version": "???",
+            "cpe": "cpe:2.3:a:vendor:prod:*:*:*:*:*:*:*:*",
+        }
+        enrich_port_with_cves(port, api_key=None, logger=None)
+        mock_query.assert_not_called()
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_keyword_fallback_sets_medium_severity(self, _mock_sleep, mock_query):
+        mock_query.side_effect = [[], [{"cvss_score": 4.2}]]
+        port = {"service": "nginx/1.2.3", "product": "", "version": "", "cpe": None}
+        result = enrich_port_with_cves(port, api_key=None, logger=None)
+        self.assertEqual(result.get("cve_max_severity"), "MEDIUM")
+        self.assertEqual(result.get("cve_count"), 1)
+        self.assertEqual(mock_query.call_count, 2)
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_severity_high_and_low(self, _mock_sleep, mock_query):
+        mock_query.return_value = [{"cvss_score": 7.5}]
+        port = {
+            "service": "http",
+            "product": "",
+            "version": "1.0",
+            "cpe": "cpe:2.3:a:vendor:prod:1.0:*:*:*:*:*:*:*",
+        }
+        result = enrich_port_with_cves(port, api_key=None, logger=None)
+        self.assertEqual(result.get("cve_max_severity"), "HIGH")
+
+        mock_query.return_value = [{"cvss_score": 0.1}]
+        port = {
+            "service": "http",
+            "product": "",
+            "version": "1.0",
+            "cpe": "cpe:2.3:a:vendor:prod:1.0:*:*:*:*:*:*:*",
+        }
+        result = enrich_port_with_cves(port, api_key=None, logger=None)
+        self.assertEqual(result.get("cve_max_severity"), "LOW")
+
+    @patch("redaudit.core.nvd.query_nvd")
+    @patch("redaudit.core.nvd.time.sleep")
+    def test_no_product_no_version_returns(self, _mock_sleep, mock_query):
+        port = {"service": "", "product": "", "version": "", "cpe": None}
+        result = enrich_port_with_cves(port, api_key=None, logger=None)
+        self.assertEqual(result, port)
+        mock_query.assert_not_called()
+
+
+class TestEnrichHostWithCves(unittest.TestCase):
+    @patch("redaudit.core.nvd.enrich_port_with_cves")
+    def test_enrich_host_dict_summary(self, mock_enrich):
+        mock_enrich.side_effect = [
+            {"cve_count": 2, "cve_max_severity": "HIGH", "version": "1.0"},
+        ]
+        host = {"ports": [{"version": "1.0"}, {"service": "noop"}]}
+        result = enrich_host_with_cves(host, api_key=None, logger=None)
+        self.assertEqual(result["cve_summary"]["total"], 2)
+        self.assertEqual(mock_enrich.call_count, 1)
+
+    @patch("redaudit.core.nvd.enrich_port_with_cves")
+    def test_enrich_host_object_summary(self, mock_enrich):
+        mock_enrich.return_value = {
+            "cve_count": 1,
+            "cve_max_severity": "CRITICAL",
+            "version": "1.0",
+            "cpe": ["cpe:/a:vendor:prod:1.0"],
+        }
+        host = Host(ip="1.1.1.1", ports=[{"version": "1.0", "cpe": ["cpe:/a:vendor:prod:1.0"]}])
+        result = enrich_host_with_cves(host, api_key=None, logger=None)
+        self.assertIs(result, host)
+        self.assertEqual(host.cve_summary.get("critical"), 1)
 
 
 if __name__ == "__main__":

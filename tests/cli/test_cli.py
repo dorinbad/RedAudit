@@ -3,10 +3,12 @@
 RedAudit - Tests for CLI helpers.
 """
 
+import builtins
 import os
+import runpy
 import sys
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -44,6 +46,56 @@ class _DummyApp:
     def setup_encryption(self, non_interactive=True, password=None):
         self.config["encrypt"] = True
         self.config["encrypt_password"] = password
+
+
+class _DummyAuditor:
+    choices = []
+
+    def __init__(self):
+        self.COLORS = {
+            "CYAN": "",
+            "ENDC": "",
+            "WARNING": "",
+            "FAIL": "",
+            "OKGREEN": "",
+        }
+        self.logger = None
+
+    def t(self, key, *_args):
+        return key
+
+    def clear_screen(self):
+        return None
+
+    def print_banner(self):
+        return None
+
+    def check_dependencies(self):
+        return True
+
+    def show_legal_warning(self):
+        return True
+
+    def ask_yes_no(self, *_args, **_kwargs):
+        return False
+
+    def show_main_menu(self):
+        return self.choices.pop(0)
+
+    def interactive_setup(self):
+        return False
+
+    def run_complete_scan(self):
+        return True
+
+    def print_status(self, *_args, **_kwargs):
+        return None
+
+
+def _patch_auditor(monkeypatch, choices):
+    _DummyAuditor.choices = list(choices)
+    monkeypatch.setattr("redaudit.core.auditor.InteractiveNetworkAuditor", _DummyAuditor)
+    monkeypatch.setattr("redaudit.core.updater.interactive_update_check", lambda **_k: False)
 
 
 def _base_args(**overrides):
@@ -349,3 +401,184 @@ def test_main_non_root_allow_non_root(monkeypatch):
     monkeypatch.setattr(cli, "configure_from_args", _configure)
     with pytest.raises(SystemExit):
         cli.main()
+
+
+def test_cli_main_interactive_exit(monkeypatch):
+    _patch_auditor(monkeypatch, [0])
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(cli.sys, "argv", ["redaudit", "--skip-update-check"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+
+def test_cli_main_interactive_start_scan_cancel(monkeypatch):
+    _patch_auditor(monkeypatch, [1])
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(cli.sys, "argv", ["redaudit", "--skip-update-check"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+
+def test_cli_main_interactive_check_updates_non_root(monkeypatch):
+    _patch_auditor(monkeypatch, [2, 0])
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 1000)
+    monkeypatch.setattr(cli.sys, "argv", ["redaudit", "--allow-non-root", "--skip-update-check"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+
+def test_cli_main_interactive_diff_reports(monkeypatch, tmp_path):
+    _patch_auditor(monkeypatch, [3, 0])
+    monkeypatch.setattr(cli.os, "geteuid", lambda: 0)
+    monkeypatch.setattr(cli.sys, "argv", ["redaudit", "--skip-update-check"])
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        builtins,
+        "input",
+        lambda *_a, **_k: "old.json" if "old" in _a[0] else "new.json",
+    )
+    monkeypatch.setattr(
+        "redaudit.core.diff.generate_diff_report", lambda *_a, **_k: {"generated_at": "2025-01-01"}
+    )
+    monkeypatch.setattr("redaudit.core.diff.format_diff_text", lambda *_a, **_k: "diff text")
+    monkeypatch.setattr("redaudit.core.diff.format_diff_markdown", lambda *_a, **_k: "diff md")
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 0
+
+
+def test_cli_max_hosts_arg():
+    with patch("sys.argv", ["redaudit", "--target", "1.1.1.1", "--max-hosts", "5", "--yes"]):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                mock_app = MockAuditor.return_value
+                mock_app.config = {}
+                mock_app.check_dependencies.return_value = True
+                mock_app.run_complete_scan.return_value = True
+                with pytest.raises(SystemExit) as e:
+                    cli.main()
+                assert e.value.code == 0
+                assert mock_app.config["max_hosts_value"] == 5
+
+
+def test_cli_diff_chmod_exception(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "old.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "new.json").write_text("{}", encoding="utf-8")
+
+    mock_diff = {
+        "generated_at": "2025-01-01",
+        "old_report": {"path": "old.json", "timestamp": "2025-01-01T00:00:00", "total_hosts": 1},
+        "new_report": {"path": "new.json", "timestamp": "2025-01-01T00:01:00", "total_hosts": 2},
+        "changes": {"new_hosts": ["1.1.1.1"], "removed_hosts": [], "changed_hosts": []},
+        "summary": {
+            "new_hosts_count": 1,
+            "removed_hosts_count": 0,
+            "changed_hosts_count": 0,
+            "total_new_ports": 0,
+            "total_closed_ports": 0,
+            "total_new_vulnerabilities": 0,
+            "has_changes": True,
+        },
+    }
+
+    with patch("sys.argv", ["redaudit", "--diff", "old.json", "new.json"]):
+        with patch("redaudit.core.diff.generate_diff_report", return_value=mock_diff):
+            with patch("os.chmod", side_effect=OSError("Permission denied")):
+                with pytest.raises(SystemExit) as e:
+                    cli.main()
+                assert e.value.code == 0
+
+
+def test_cli_proxy_failure():
+    with patch(
+        "sys.argv", ["redaudit", "--target", "1.1.1.1", "--proxy", "socks5://bad:1080", "--yes"]
+    ):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.proxy.ProxyManager") as MockProxy:
+                mock_pm = MockProxy.return_value
+                mock_pm.is_valid.return_value = True
+                mock_pm.test_connection.return_value = (False, "Timeout")
+                with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                    mock_app = MockAuditor.return_value
+                    mock_app.check_dependencies.return_value = True
+                    mock_app.t.return_value = "Proxy test failed"
+                    with pytest.raises(SystemExit) as e:
+                        cli.main()
+                    assert e.value.code == 1
+
+
+def test_cli_update_check_interactive():
+    with patch("sys.argv", ["redaudit"]):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                mock_app = MockAuditor.return_value
+                mock_app.clear_screen = MagicMock()
+                mock_app.print_banner = MagicMock()
+                mock_app.ask_yes_no.return_value = True
+
+                with patch(
+                    "redaudit.core.updater.interactive_update_check", return_value=True
+                ) as mock_update:
+                    with pytest.raises(SystemExit) as e:
+                        cli.main()
+                    assert e.value.code == 0
+                    assert mock_update.called
+
+
+def test_cli_main_menu_diff_failure():
+    with patch("sys.argv", ["redaudit"]):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                mock_app = MockAuditor.return_value
+                mock_app.ask_yes_no.return_value = False
+                mock_app.show_main_menu.side_effect = [3, 0]
+                with patch("builtins.input", side_effect=["old.json", "new.json"]):
+                    with patch("redaudit.core.diff.generate_diff_report", return_value=None):
+                        with pytest.raises(SystemExit) as e:
+                            cli.main()
+                        assert e.value.code == 0
+                        assert mock_app.print_status.called
+
+
+def test_cli_main_menu_update_check():
+    with patch("sys.argv", ["redaudit"]):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                mock_app = MockAuditor.return_value
+                mock_app.ask_yes_no.return_value = False
+                mock_app.show_main_menu.side_effect = [2, 0]
+                with patch("redaudit.core.updater.interactive_update_check") as mock_update:
+                    with pytest.raises(SystemExit) as e:
+                        cli.main()
+                    assert e.value.code == 0
+                    assert mock_update.called
+
+
+def test_cli_stealth_mode_config():
+    with patch("sys.argv", ["redaudit", "--target", "1.1.1.1", "--stealth", "--yes"]):
+        with patch("os.geteuid", return_value=0):
+            with patch("redaudit.core.auditor.InteractiveNetworkAuditor") as MockAuditor:
+                mock_app = MockAuditor.return_value
+                mock_app.config = {}
+                mock_app.check_dependencies.return_value = True
+                mock_app.run_complete_scan.return_value = True
+                with pytest.raises(SystemExit) as e:
+                    cli.main()
+                assert e.value.code == 0
+                assert mock_app.config["stealth_mode"] is True
+                assert mock_app.config["threads"] == 1
+
+
+def test_module_entrypoint_invokes_cli_main():
+    with patch("redaudit.cli.main") as mocked:
+        runpy.run_module("redaudit.__main__", run_name="__main__")
+        mocked.assert_called_once()
