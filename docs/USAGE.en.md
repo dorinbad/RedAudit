@@ -3,8 +3,11 @@
 [![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](USAGE.es.md)
 
 **Audience:** Pentesters, Security Operators, Blue Teamers
+
 **Scope:** CLI limits, usage examples, configuration, runtime options
+
 **What this document does NOT cover:** Network theory, exploit development
+
 **Source of Truth:** `redaudit --help`
 
 ---

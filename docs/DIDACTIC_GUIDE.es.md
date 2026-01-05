@@ -3,8 +3,11 @@
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](DIDACTIC_GUIDE.en.md)
 
 **Audiencia:** Instructores, Profesores, Mentores
+
 **Propósito:** Enseñar conceptos de auditoría de red usando RedAudit como herramienta práctica
+
 **Conocimiento Previo:** Fundamentos TCP/IP, uso básico de CLI Linux
+
 **Fuente de verdad:** `redaudit/core/auditor.py`, `redaudit/core/auditor_scan.py`
 
 > **Esto NO es un manual de software.** Para referencia CLI, ver [USAGE.es.md](USAGE.es.md). Para detalles de arquitectura, ver [MANUAL.es.md](MANUAL.es.md).

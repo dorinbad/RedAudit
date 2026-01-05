@@ -3,8 +3,11 @@
 [![View in English](https://img.shields.io/badge/View%20in%20English-blue?style=flat-square)](MANUAL.en.md)
 
 **Audiencia:** Analistas de seguridad, pentesters, administradores de sistemas
+
 **Alcance:** Instalación, operación, artefactos de salida, modelo de seguridad
+
 **Qué NO cubre este documento:** Técnicas de explotación, internos del código
+
 **Fuente de verdad:** `redaudit --help`, `redaudit/core/auditor.py`
 
 ---
