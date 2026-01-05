@@ -1116,6 +1116,20 @@ class AuditorScan:
                     extrainfo = svc.get("extrainfo", "") or ""
                     cpe = svc.get("cpe") or []
                     is_web = is_web_service(name)
+                    # v4.0.4: Port-based fallback for misidentified web services
+                    # e.g., Juice Shop on port 3000 detected as "ppp" by nmap
+                    if not is_web:
+                        from redaudit.utils.constants import WEB_LIKELY_PORTS
+
+                        if p in WEB_LIKELY_PORTS:
+                            is_web = True
+                            if self.logger:
+                                self.logger.debug(
+                                    "Port-based web detection for %s:%d (service=%s)",
+                                    safe_ip,
+                                    p,
+                                    name or "unknown",
+                                )
                     if is_web:
                         web_count += 1
 
@@ -1256,6 +1270,24 @@ class AuditorScan:
                 identity_score=identity_score,
                 identity_threshold=identity_threshold,
             )
+
+            # v4.0.4: Force web vuln scan for hosts with HTTP fingerprint from net_discovery
+            # This fixes the detection gap where hosts passing identity threshold skip vuln scan
+            agentless_fp = host_record.get("agentless_fingerprint") or {}
+            if agentless_fp.get("http_title") or agentless_fp.get("http_server"):
+                if web_count == 0:
+                    web_count = 1  # Ensure host is included in web vulnerability scanning
+                    host_record["web_ports_count"] = web_count
+                    if self.logger:
+                        self.logger.info(
+                            "HTTP fingerprint detected for %s (%s), forcing web vuln scan",
+                            safe_ip,
+                            agentless_fp.get("http_title") or agentless_fp.get("http_server"),
+                        )
+                if not trigger_deep and total_ports == 0:
+                    # Force deep scan to discover ports when we know HTTP is present
+                    trigger_deep = True
+                    deep_reasons.append("http_fingerprint_present")
 
             open_tcp_ports = sum(1 for p in ports if p.get("protocol") == "tcp")
             udp_priority_used = False
