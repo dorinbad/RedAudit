@@ -98,7 +98,7 @@ sudo redaudit
 
 > **3-4x faster full scans** with the same rich results.
 
-The next major release inverts the scan order: HyperScan (our custom async engine) now probes all 65,535 ports in ~60-90 seconds, then hands only the open ports to nmap for fingerprinting. This eliminates timeouts on complex hosts and dramatically reduces scan time while preserving full service detection.
+The next major release inverts the scan order: HyperScan (RedAudit's native async engine) now probes all 65,535 ports in ~60-90 seconds, then hands only the open ports to nmap for fingerprinting. This eliminates timeouts on complex hosts and dramatically reduces scan time while preserving full service detection.
 
 | Optimization | Benefit |
 |:---|:---|
