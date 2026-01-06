@@ -98,13 +98,13 @@ sudo redaudit
 
 > **3-4x faster full scans** with the same rich results.
 
-The next major release inverts the scan order: HyperScan (RedAudit's native async engine) now probes all 65,535 ports in ~60-90 seconds, then hands only the open ports to nmap for fingerprinting. This eliminates timeouts on complex hosts and dramatically reduces scan time while preserving full service detection. Sequential execution enables safe usage of high batch sizes (2000+) without file descriptor exhaustion.
+**New in v4.1:** The scan order is inverted: HyperScan (RedAudit's native async engine) probes all 65,535 ports in ~60-90 seconds, then hands only the open ports to nmap for fingerprinting. This eliminates timeouts on complex hosts and dramatically reduces scan time while preserving full service detection. Sequential execution enables safe usage of high batch sizes (2000+) without file descriptor exhaustion.
 
 | Optimization | Benefit |
 |:---|:---|
 | **HyperScan-First** | Async TCP sweep → targeted nmap (3-4x faster) |
 | **Parallel Vuln Scanning** | nikto/testssl/whatweb run concurrently (2-3x faster) |
-| **Smart Target Filtering** | Skip CDN/proxy hosts for Nikto (~50% fewer false positives) |
+| **Smart Result Filtering** | Post-scan filtering of CDN/proxy false positives (~50% less noise) |
 
 See [ROADMAP](docs/ROADMAP.en.md) for details.
 
@@ -118,8 +118,8 @@ RedAudit operates as an orchestration layer, managing concurrent execution threa
 
 1. **HyperScan**: Async UDP/TCP discovery.
 2. **Adaptive Deep Scan**: Targeted enumeration based on host identity.
-3. **Entity Resolution**: Consolidating multi-interface devices into single assets.
-4. **Smart Filtering**: Reducing noise via context-aware verification (`verify_vuln.py`).
+3.| **Entity Resolution** | Identity-Based consolidation of multi-interface devices (heuristic) |.
+3. **Smart Filtering**: Reducing noise via context-aware verification (`verify_vuln.py`).
 
 ![System Overview](docs/images/system_overview_en.png)
 

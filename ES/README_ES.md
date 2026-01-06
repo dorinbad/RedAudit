@@ -94,13 +94,13 @@ sudo redaudit
 
 > **Escaneos completos 3-4x más rápidos** con los mismos resultados ricos.
 
-La próxima versión mayor invierte el orden de escaneo: HyperScan (el motor async nativo de RedAudit) ahora sondea los 65.535 puertos en ~60-90 segundos, y luego pasa solo los puertos abiertos a nmap para fingerprinting. Esto elimina timeouts en hosts complejos y reduce drásticamente el tiempo de escaneo manteniendo detección completa de servicios. La ejecución secuencial permite batch_size alto (2000) sin problemas de descriptores.
+**Nuevo en v4.1:** El orden de escaneo se invierte: HyperScan (el motor async nativo de RedAudit) sondea los 65.535 puertos en ~60-90 segundos, y luego pasa solo los puertos abiertos a nmap para fingerprinting. Esto elimina timeouts en hosts complejos y reduce drásticamente el tiempo de escaneo manteniendo detección completa de servicios. La ejecución secuencial permite batch_size alto (2000) sin problemas de descriptores.
 
 | Optimización | Beneficio |
 |:---|:---|
 | **HyperScan-First** | Barrido TCP async → nmap dirigido (3-4x más rápido) |
 | **Escaneo Vulns Paralelo** | nikto/testssl/whatweb ejecutan concurrentemente (2-3x más rápido) |
-| **Filtrado Inteligente de Targets** | Omite hosts CDN/proxy para Nikto (~50% menos falsos positivos) |
+| **Filtrado Inteligente de Resultados** | Filtrado post-escaneo de falsos positivos en CDNs/proxies (~50% menos ruido) |
 
 Ver [ROADMAP](../docs/ROADMAP.es.md) para más detalles.
 
@@ -114,8 +114,8 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 
 1. **HyperScan**: Descubrimiento async UDP/TCP.
 2. **Deep Scan Adaptativo**: Enumeración dirigida basada en la identidad del host.
-3. **Resolución de Entidad**: Consolidación de dispositivos multi-interfaz en activos únicos.
-4. **Filtrado Inteligente**: Reducción de ruido vía verificación consciente del contexto (`verify_vuln.py`).
+3.| **Resolución de Entidad** | Consolidación basada en identidad de dispositivos multi-interfaz (heurística) |.
+3. **Filtrado Inteligente**: Reducción de ruido vía verificación consciente del contexto (`verify_vuln.py`).
 
 ![Vista General del Sistema](../docs/images/system_overview_es.png)
 
