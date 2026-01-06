@@ -9,6 +9,7 @@ Main orchestrator class for network auditing operations.
 
 import math
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -1229,6 +1230,13 @@ class InteractiveNetworkAuditor:
 
             # v3.10.1: Auto-enable Phase 0 in Exhaustive mode (Goal: maximize information)
             self.config["low_impact_enrichment"] = True
+
+            # v4.2: Enable web app security tools in Exhaustive (full assessment)
+            if shutil.which("zap.sh"):
+                self.config["zap_enabled"] = True
+            # SQLMap: level 3 = thorough, risk 2 = medium-high (risk 3 = destructive)
+            self.config["sqlmap_level"] = 3
+            self.config["sqlmap_risk"] = 2
 
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
