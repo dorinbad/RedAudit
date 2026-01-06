@@ -420,6 +420,7 @@ RedAudit orchestrates (does not modify or install):
 | `nmap` | Always | `hosts[].ports` |
 | `whatweb` | HTTP/HTTPS detected | `vulnerabilities[].whatweb` |
 | `nikto` | HTTP/HTTPS + full mode | `vulnerabilities[].nikto_findings` |
+| `sqlmap` | HTTP/HTTPS + full mode (v4.1+) | `vulnerabilities[].sqlmap_findings` |
 | `testssl.sh` | HTTPS + full mode | `vulnerabilities[].testssl_analysis` |
 | `nuclei` | HTTP/HTTPS + full mode (if installed and enabled) | `vulnerabilities[].nuclei_findings` |
 | `searchsploit` | Services with version detected | `ports[].known_exploits` |

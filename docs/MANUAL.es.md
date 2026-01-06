@@ -416,6 +416,7 @@ RedAudit orquesta (no modifica ni instala):
 | `nmap` | Siempre | `hosts[].ports` |
 | `whatweb` | HTTP/HTTPS detectado | `vulnerabilities[].whatweb` |
 | `nikto` | HTTP/HTTPS + modo full | `vulnerabilities[].nikto_findings` |
+| `sqlmap` | HTTP/HTTPS + modo full (v4.1+) | `vulnerabilities[].sqlmap_findings` |
 | `testssl.sh` | HTTPS + modo full | `vulnerabilities[].testssl_analysis` |
 | `nuclei` | HTTP/HTTPS + modo full (si está instalado y habilitado) | `vulnerabilities[].nuclei_findings` |
 | `searchsploit` | Servicios con versión detectada | `ports[].known_exploits` |

@@ -80,6 +80,9 @@ class AuditorScan:
     rate_limit_delay: float
     interrupted: bool
     scanner: NetworkScanner
+    ui: Any  # Defined in Auditor subclass, typed as Any to satisfy mypy
+    # v4.1: Pre-discovered ports from sequential HyperScan-First phase
+    _hyperscan_prescan_ports: Dict[str, List[int]]
 
     if TYPE_CHECKING:
 
@@ -997,6 +1000,37 @@ class AuditorScan:
         phase0_enrichment: Dict[str, Any] = {}
         if self.config.get("low_impact_enrichment"):
             phase0_enrichment = self._run_low_impact_enrichment(safe_ip)
+
+        # v4.1: HyperScan-First optimization - now uses prescan results
+        # All HyperScan work happens in _run_hyperscan_prescan() before ThreadPoolExecutor
+        is_full_mode = mode_label in ("full", "completo")
+        hyperscan_first_enabled = (
+            is_full_mode
+            and not self.config.get("stealth")
+            and not self.config.get("no_hyperscan_first")
+        )
+        prescan_ports: List[int] = []
+
+        if hyperscan_first_enabled:
+            # Check for pre-discovered ports (use __dict__ to avoid __getattr__ recursion)
+            if "_hyperscan_prescan_ports" in self.__dict__:
+                prescan_ports = self._hyperscan_prescan_ports.get(safe_ip, [])
+
+            if prescan_ports:
+                # Use pre-discovered ports for nmap fingerprinting (-A includes -sV -sC -O)
+                port_list = ",".join(str(p) for p in prescan_ports)
+                args = f"-A -Pn -p {port_list}"
+                timing = self.config.get("nmap_timing")
+                if timing:
+                    args = f"-T{timing} {args}"
+            else:
+                # No prescan results - fall back to standard nmap scan
+                args = get_nmap_arguments(self.config["scan_mode"], self.config)
+
+        self._set_ui_detail(f"[nmap] {safe_ip} ({mode_label})")
+        self.logger.debug("Nmap scan %s %s", safe_ip, args)
+        self.ui.print_status(self.ui.t("nmap_cmd", safe_ip, f"nmap {args} {safe_ip}"), "INFO")
+
         try:
             # v4.0: Use NetworkScanner direct execution
             nm, scan_error = self.scanner.run_nmap_scan(safe_ip, args)
@@ -1563,6 +1597,98 @@ class AuditorScan:
                     self.logger.debug("Deep scan fallback failed for %s", safe_ip, exc_info=True)
                 pass
             return host_obj
+
+    def _run_hyperscan_prescan(self, host_ips: List[str]) -> Dict[str, List[int]]:
+        """
+        v4.1: Run HyperScan-First sequentially on all hosts BEFORE parallel nmap.
+
+        This avoids file descriptor exhaustion by running HyperScan one at a time
+        (or with limited concurrency), allowing higher batch_size for efficiency.
+
+        Returns:
+            Dict mapping IP -> list of discovered open ports
+        """
+        from redaudit.core.hyperscan import hyperscan_full_port_sweep
+
+        # Check if HyperScan-First is enabled
+        mode_label = self.config.get("scan_mode", "")
+        is_full_mode = mode_label in ("full", "completo")
+        if not is_full_mode or self.config.get("stealth") or self.config.get("no_hyperscan_first"):
+            return {}
+
+        # Initialize the prescan dict (use __dict__ to avoid __getattr__ recursion)
+        if "_hyperscan_prescan_ports" not in self.__dict__:
+            self._hyperscan_prescan_ports = {}
+
+        # Check for existing masscan results to reuse
+        net_discovery = self.results.get("net_discovery") or {}
+        redteam = net_discovery.get("redteam") or {}
+        masscan_result = redteam.get("masscan") or {}
+        masscan_open = masscan_result.get("open_ports") or []
+
+        # Build masscan port index
+        masscan_ports: Dict[str, List[int]] = {}
+        for entry in masscan_open:
+            if isinstance(entry, dict):
+                ip = entry.get("ip")
+                port = entry.get("port")
+                if ip and isinstance(port, int) and 1 <= port <= 65535:
+                    if ip not in masscan_ports:
+                        masscan_ports[ip] = []
+                    masscan_ports[ip].append(port)
+
+        prescan_count = len(host_ips)
+        self.ui.print_status(
+            f"⚡ HyperScan-First: Pre-scanning {prescan_count} hosts sequentially...",
+            "INFO",
+        )
+
+        start_time = time.time()
+        # Run HyperScan sequentially (one at a time to avoid FD exhaustion)
+        for idx, ip in enumerate(host_ips, 1):
+            if self.interrupted:
+                break
+
+            # Check if masscan already has ports for this host
+            if ip in masscan_ports:
+                self._hyperscan_prescan_ports[ip] = sorted(set(masscan_ports[ip]))
+                self.ui.print_status(
+                    f"  [{idx}/{prescan_count}] {ip}: reusing {len(masscan_ports[ip])} masscan ports",
+                    "OKGREEN",
+                )
+                continue
+
+            # Run HyperScan for this host
+            try:
+                ports = hyperscan_full_port_sweep(
+                    ip,
+                    batch_size=2000,  # High batch_size is safe with sequential execution
+                    timeout=0.5,
+                    logger=self.logger,
+                )
+                self._hyperscan_prescan_ports[ip] = ports
+                if ports:
+                    self.ui.print_status(
+                        f"  [{idx}/{prescan_count}] {ip}: found {len(ports)} open ports",
+                        "OKGREEN",
+                    )
+                else:
+                    self.ui.print_status(
+                        f"  [{idx}/{prescan_count}] {ip}: no ports detected",
+                        "WARNING",
+                    )
+            except Exception as e:
+                self.logger.warning("HyperScan prescan failed for %s: %s", ip, e)
+                self._hyperscan_prescan_ports[ip] = []  # Empty = fallback to nmap
+
+        duration = time.time() - start_time
+        total_ports = sum(len(p) for p in self._hyperscan_prescan_ports.values())
+        self.ui.print_status(
+            f"✓ HyperScan-First complete: {total_ports} total ports in {duration:.1f}s",
+            "OKGREEN",
+        )
+
+        return self._hyperscan_prescan_ports
 
     def scan_hosts_concurrent(self, hosts):
         """Scan multiple hosts concurrently with progress bar."""
