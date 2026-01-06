@@ -108,7 +108,7 @@ sudo redaudit
 | **Seguridad Web App** | `sqlmap` + `OWASP ZAP` para evaluación profunda de vulnerabilidades web |
 | **Deduplicación Estricta** | Sanitización robusta que previene reportes de hosts duplicados |
 
-Ver [NOTAS DE LANZAMIENTO](docs/releases/RELEASE_NOTES_v4.2.0_ES.md) para más detalles.
+Ver [NOTAS DE LANZAMIENTO](docs/releases/RELEASE_NOTES_v4.2.1_ES.md) para más detalles.
 
 ---
 
@@ -120,8 +120,8 @@ RedAudit opera como una capa de orquestación, gestionando hilos de ejecución c
 
 1. **HyperScan**: Descubrimiento async UDP/TCP.
 2. **Deep Scan Adaptativo**: Enumeración dirigida basada en la identidad del host.
-3.| **Resolución de Entidad** | Consolidación basada en identidad de dispositivos multi-interfaz (heurística) |.
-3. **Filtrado Inteligente**: Reducción de ruido vía verificación consciente del contexto (`verify_vuln.py`).
+3. **Resolución de Entidad**: Consolidación basada en identidad de dispositivos multi-interfaz (heurística).
+4. **Filtrado Inteligente**: Reducción de ruido vía verificación consciente del contexto (`verify_vuln.py`).
 
 ![Vista General del Sistema](../docs/images/system_overview_es.png)
 

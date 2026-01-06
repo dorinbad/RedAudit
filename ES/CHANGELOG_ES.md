@@ -10,6 +10,12 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-01-06
+
+### Corregido
+
+- **Documentación**: Corregido un error de formato en la lista "Vista General de Arquitectura" en `README.md` y `README_ES.md`.
+
 ## [4.2.0] - 2026-01-06
 
 ### Añadido
