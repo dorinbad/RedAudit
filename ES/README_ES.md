@@ -94,7 +94,7 @@ sudo redaudit
 
 > **Escaneos completos 3-4x más rápidos** con los mismos resultados ricos.
 
-La próxima versión mayor invierte el orden de escaneo: HyperScan (el motor async nativo de RedAudit) ahora sondea los 65.535 puertos en ~60-90 segundos, y luego pasa solo los puertos abiertos a nmap para fingerprinting. Esto elimina timeouts en hosts complejos y reduce drásticamente el tiempo de escaneo manteniendo detección completa de servicios.
+La próxima versión mayor invierte el orden de escaneo: HyperScan (el motor async nativo de RedAudit) ahora sondea los 65.535 puertos en ~60-90 segundos, y luego pasa solo los puertos abiertos a nmap para fingerprinting. Esto elimina timeouts en hosts complejos y reduce drásticamente el tiempo de escaneo manteniendo detección completa de servicios. La ejecución secuencial permite batch_size alto (2000) sin problemas de descriptores.
 
 | Optimización | Beneficio |
 |:---|:---|
