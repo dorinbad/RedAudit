@@ -93,7 +93,7 @@ echo "$MSG_INSTALL"
 # 2) Dependencies
 # -------------------------------------------
 
-EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto sqlmap traceroute"
+EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto sqlmap zaproxy traceroute"
 
 echo ""
 echo "$MSG_PKGS"
@@ -170,8 +170,21 @@ if [[ ! -f "/usr/local/bin/kerbrute" ]]; then
     else
         echo "[WARN] Failed to download kerbrute from GitHub. Skipping."
     fi
-else
     echo "[OK] kerbrute already installed"
+fi
+
+# -------------------------------------------
+# 2d) Check for OWASP ZAP (zaproxy)
+# -------------------------------------------
+
+if ! command -v zap.sh >/dev/null 2>&1 && ! command -v zaproxy >/dev/null 2>&1; then
+    if [[ "$LANG_CODE" == "es" ]]; then
+        echo "[WARN] 'zaproxy' no encontrado. La integración de escaneo ZAP no estará disponible."
+        echo "       Considera instalarlo manualmente (owasp-zap) si 'apt' fallo."
+    else
+        echo "[WARN] 'zaproxy' not found. ZAP scanning integration will be unavailable."
+        echo "       Consider manual installation (owasp-zap) if 'apt' failed."
+    fi
 fi
 
 # -------------------------------------------
