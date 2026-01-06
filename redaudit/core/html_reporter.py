@@ -129,6 +129,7 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
                 "status": host.get("status", "up"),
                 "ports_count": len(host.get("ports", [])),
                 "risk_score": host.get("risk_score", 0),
+                "risk_score_breakdown": host.get("risk_score_breakdown", {}),
                 "mac": mac_address,
                 "vendor": display_vendor,
                 "os": host.get("os_detected")

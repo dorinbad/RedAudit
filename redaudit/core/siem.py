@@ -384,6 +384,114 @@ def calculate_risk_score(host_record: Dict) -> int:
     return min(100, round(final_score))
 
 
+def calculate_risk_score_with_breakdown(host_record: Dict) -> Dict:
+    """
+    Calculate risk score with detailed breakdown for reporting.
+
+    v4.3: Returns score plus breakdown components for HTML tooltips.
+
+    Args:
+        host_record: Host record dictionary
+
+    Returns:
+        Dict with 'score' and 'breakdown' containing:
+        - max_cvss: Maximum CVSS score found
+        - base_score: Base score (max_cvss * 10)
+        - density_bonus: Logarithmic density bonus
+        - exposure_multiplier: 1.0 or 1.15
+        - total_vulns: Count of vulnerabilities
+        - has_exposed_port: Boolean for external-facing ports
+    """
+    import math
+
+    ports = host_record.get("ports", [])
+    if not ports:
+        return {
+            "score": 0,
+            "breakdown": {
+                "max_cvss": 0.0,
+                "base_score": 0.0,
+                "density_bonus": 0.0,
+                "exposure_multiplier": 1.0,
+                "total_vulns": 0,
+                "has_exposed_port": False,
+            },
+        }
+
+    max_cvss = 0.0
+    total_vulns = 0
+    has_exposed_port = False
+
+    exposed_ports = {
+        21,
+        22,
+        23,
+        25,
+        53,
+        80,
+        110,
+        143,
+        443,
+        445,
+        993,
+        995,
+        3306,
+        3389,
+        5432,
+        8080,
+        8443,
+    }
+
+    for port in ports:
+        port_number = port.get("port", 0)
+
+        if port_number in exposed_ports:
+            has_exposed_port = True
+
+        cves = port.get("cves", [])
+        for cve in cves:
+            cvss = cve.get("cvss_score")
+            if cvss and isinstance(cvss, (int, float)) and cvss > max_cvss:
+                max_cvss = float(cvss)
+            total_vulns += 1
+
+        exploits = port.get("known_exploits", [])
+        if exploits:
+            max_cvss = max(max_cvss, 8.0)
+            total_vulns += len(exploits)
+
+        service = (port.get("service") or "").lower()
+        if service in ("telnet", "rlogin", "rsh"):
+            max_cvss = max(max_cvss, 9.0)
+            total_vulns += 1
+        elif service == "ftp":
+            max_cvss = max(max_cvss, 7.5)
+            total_vulns += 1
+        elif "ssl" in service and port_number not in (443, 8443):
+            max_cvss = max(max_cvss, 5.0)
+
+    base_score = max_cvss * 10
+    density_bonus = 0.0
+    if total_vulns > 0:
+        density_bonus = min(20.0, math.log10(total_vulns + 1) * 15)
+
+    exposure_multiplier = 1.15 if has_exposed_port else 1.0
+    final_score = (base_score + density_bonus) * exposure_multiplier
+    capped_score = min(100, round(final_score))
+
+    return {
+        "score": capped_score,
+        "breakdown": {
+            "max_cvss": round(max_cvss, 1),
+            "base_score": round(base_score, 1),
+            "density_bonus": round(density_bonus, 1),
+            "exposure_multiplier": exposure_multiplier,
+            "total_vulns": total_vulns,
+            "has_exposed_port": has_exposed_port,
+        },
+    }
+
+
 def generate_observable_hash(host_record: Dict) -> str:
     """
     Generate SHA256 hash for host record deduplication.
@@ -847,8 +955,10 @@ def enrich_report_for_siem(results: Dict, config: Dict) -> Dict:
         # Add ECS host format
         host["ecs_host"] = build_ecs_host(host)
 
-        # Add risk score
-        host["risk_score"] = calculate_risk_score(host)
+        # Add risk score with breakdown for HTML tooltips (v4.3)
+        risk_result = calculate_risk_score_with_breakdown(host)
+        host["risk_score"] = risk_result["score"]
+        host["risk_score_breakdown"] = risk_result["breakdown"]
 
         # Add observable hash
         host["observable_hash"] = generate_observable_hash(host)

@@ -110,6 +110,46 @@ class TestSIEM(unittest.TestCase):
 
         self.assertGreater(score_insecure, score_secure)
 
+    def test_calculate_risk_score_with_breakdown(self):
+        """Test that calculate_risk_score_with_breakdown returns score and breakdown."""
+        host = {
+            "ip": "192.168.1.1",
+            "ports": [
+                {
+                    "port": 80,
+                    "service": "http",
+                    "cves": [{"cve_id": "CVE-2021-1234", "cvss_score": 8.5}],
+                },
+                {"port": 22, "service": "ssh"},
+            ],
+        }
+        result = calculate_risk_score(host)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
+
+    def test_calculate_risk_score_with_breakdown_details(self):
+        """Test that breakdown contains expected fields."""
+        from redaudit.core.siem import calculate_risk_score_with_breakdown
+
+        host = {
+            "ip": "192.168.1.1",
+            "ports": [
+                {
+                    "port": 80,
+                    "service": "http",
+                    "cves": [{"cve_id": "CVE-2021-1234", "cvss_score": 9.8}],
+                },
+            ],
+        }
+        result = calculate_risk_score_with_breakdown(host)
+
+        self.assertIn("score", result)
+        self.assertIn("breakdown", result)
+        self.assertEqual(result["breakdown"]["max_cvss"], 9.8)
+        self.assertEqual(result["breakdown"]["exposure_multiplier"], 1.15)
+        self.assertTrue(result["breakdown"]["has_exposed_port"])
+        self.assertGreater(result["score"], 0)
+
     def test_calculate_risk_score_with_exploits(self):
         """Test risk score with known exploits."""
         host = {
