@@ -575,7 +575,7 @@ class InteractiveNetworkAuditor:
                         upnp_devices = self.results["net_discovery"].get("upnp_devices", [])
                         tcp_hosts = self.results["net_discovery"].get("hyperscan_tcp_hosts", {})
                         self.ui.print_status(
-                            f"✓ HyperScan: {len(arp_hosts)} ARP, {len(upnp_devices)} IoT/UPNP, {len(tcp_hosts)} TCP hosts ({hyperscan_dur:.1f}s)",
+                            f"✅ HyperScan: {len(arp_hosts)} ARP, {len(upnp_devices)} IoT/UPNP, {len(tcp_hosts)} TCP hosts ({hyperscan_dur:.1f}s)",
                             "OKGREEN",
                         )
                     backdoors = self.results["net_discovery"].get("potential_backdoors", [])

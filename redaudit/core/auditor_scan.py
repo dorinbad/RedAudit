@@ -1824,8 +1824,14 @@ class AuditorScan:
             # Sanitization: Strip ANSI codes and whitespace
             clean_ip = ansi_escape.sub("", raw_ip).strip()
 
-            if clean_ip and clean_ip not in unique_map:
-                unique_map[clean_ip] = val
+            if clean_ip:
+                if clean_ip in unique_map:
+                    if self.logger:
+                        self.logger.debug(
+                            f"Duplicate host ignored in scan: '{clean_ip}' (raw: {repr(raw_ip)})"
+                        )
+                else:
+                    unique_map[clean_ip] = val
 
         unique_hosts = [unique_map[ip] for ip in sorted(unique_map.keys())]
         results = []

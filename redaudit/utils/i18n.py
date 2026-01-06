@@ -422,7 +422,7 @@ TRANSLATIONS = {
         "wizard_profile_custom": "Personalizado — Control total (8 pasos)",
         "nvd_not_configured_reminder": "⚠️  API key de NVD no configurada. Se omitirá correlación CVE.",
         "nvd_get_key_hint": "   Obtén una key gratis en: https://nvd.nist.gov/developers/request-an-api-key",
-        "exhaustive_mode_applying": "🚀 Aplicando perfil Exhaustivo para máximo descubrimiento...",
+        "exhaustive_mode_applying": "Aplicando perfil Exhaustivo para máximo descubrimiento...",
         "timing_q": "Velocidad de escaneo (ajustar según sensibilidad de la red):",
         "timing_stealth": "Sigiloso — Lento, entornos sensibles a la detección (2s de retardo)",
         "timing_normal": "Normal — Equilibrado (sin retardo)",
