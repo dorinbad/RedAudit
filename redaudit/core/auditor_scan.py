@@ -1798,15 +1798,16 @@ class AuditorScan:
                     progress = self.ui.get_standard_progress(transient=False)
                     if progress:
                         with progress:
-                            # Create a task for each submitted host
-                            host_tasks = {}  # future -> task_id
+                            # Track per-host start times and tasks
+                            host_tasks = {}  # future -> (task_id, ip, start_time)
                             for fut, ip in futures.items():
                                 task_id = progress.add_task(
                                     f"[cyan]  {ip}",
                                     total=100,
                                     start=True,
                                 )
-                                host_tasks[fut] = (task_id, ip)
+                                # v4.2 fix: Track individual host start time
+                                host_tasks[fut] = (task_id, ip, time.time())
 
                             pending = set(futures)
                             last_heartbeat = start_t
@@ -1820,8 +1821,9 @@ class AuditorScan:
                                     pending, timeout=0.5, return_when=FIRST_COMPLETED
                                 )
 
-                                # v3.8.1: Heartbeat every 60s for visibility
                                 now = time.time()
+
+                                # v3.8.1: Heartbeat every 60s for visibility
                                 if now - last_heartbeat >= 60.0:
                                     elapsed = int(now - start_t)
                                     mins, secs = divmod(elapsed, 60)
@@ -1832,12 +1834,12 @@ class AuditorScan:
                                     )
                                     last_heartbeat = now
 
-                                # Update progress for still-pending hosts (indeterminate spin)
+                                # Update progress for still-pending hosts
                                 for pending_fut in pending:
                                     if pending_fut in host_tasks:
-                                        task_id, ip = host_tasks[pending_fut]
-                                        # Advance slightly to show activity
-                                        elapsed_host = int(now - start_t)
+                                        task_id, ip, host_start = host_tasks[pending_fut]
+                                        # v4.2 fix: Use per-host elapsed time
+                                        elapsed_host = now - host_start
                                         # Cap at 95% until complete
                                         pct = min(
                                             95, int((elapsed_host / max(1, host_timeout_s)) * 100)
@@ -1847,7 +1849,7 @@ class AuditorScan:
                                 for fut in completed:
                                     if fut not in host_tasks:
                                         continue
-                                    task_id, host_ip = host_tasks[fut]
+                                    task_id, host_ip, _ = host_tasks[fut]
                                     try:
                                         res = fut.result()
                                         results.append(res)
