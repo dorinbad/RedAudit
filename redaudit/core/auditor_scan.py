@@ -1585,7 +1585,7 @@ class AuditorScan:
 
         discovery_count = len(host_ips)
         self.ui.print_status(
-            f"⚡ HyperScan-First: Running discovery for {discovery_count} hosts sequentially...",
+            self.ui.t("hyperscan_start").format(discovery_count),
             "INFO",
         )
 
@@ -1599,7 +1599,9 @@ class AuditorScan:
             if ip in masscan_ports:
                 self._hyperscan_discovery_ports[ip] = sorted(set(masscan_ports[ip]))
                 self.ui.print_status(
-                    f"  [{idx}/{discovery_count}] {ip}: reusing {len(masscan_ports[ip])} masscan ports",
+                    self.ui.t("hyperscan_masscan_reuse").format(
+                        idx, discovery_count, ip, len(masscan_ports[ip])
+                    ),
                     "OKGREEN",
                 )
                 continue
@@ -1615,12 +1617,14 @@ class AuditorScan:
                 self._hyperscan_discovery_ports[ip] = ports
                 if ports:
                     self.ui.print_status(
-                        f"  [{idx}/{discovery_count}] {ip}: found {len(ports)} open ports",
+                        self.ui.t("hyperscan_ports_found").format(
+                            idx, discovery_count, ip, len(ports)
+                        ),
                         "OKGREEN",
                     )
                 else:
                     self.ui.print_status(
-                        f"  [{idx}/{discovery_count}] {ip}: no ports detected",
+                        self.ui.t("hyperscan_no_ports").format(idx, discovery_count, ip),
                         "WARNING",
                     )
             except Exception as e:
@@ -1630,7 +1634,7 @@ class AuditorScan:
         duration = time.time() - start_time
         total_ports = sum(len(p) for p in self._hyperscan_discovery_ports.values())
         self.ui.print_status(
-            f"✓ HyperScan-First complete: {total_ports} total ports in {duration:.1f}s",
+            self.ui.t("hyperscan_complete").format(total_ports, duration),
             "OKGREEN",
         )
 
@@ -1641,7 +1645,7 @@ class AuditorScan:
         if not hosts:
             return
 
-        self.ui.print_status(f"Running Deep Scan on {len(hosts)} hosts...", "HEADER")
+        self.ui.print_status(self.ui.t("deep_scan_running").format(len(hosts)), "HEADER")
         workers = min(3, int(self.config.get("threads", 1)))
         workers = max(1, workers)
 

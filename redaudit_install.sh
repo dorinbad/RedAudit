@@ -77,9 +77,9 @@ else
     MSG_INSTALL="[INFO] Installing/updating RedAudit v${REDAUDIT_VERSION}..."
     MSG_DONE="[OK] Installation completed."
     MSG_USAGE="-> Run 'redaudit' to start."
-    MSG_ALIAS_ADDED="ℹ️ Alias 'redaudit' added to"
-    MSG_ALIAS_EXISTS="ℹ️ Alias 'redaudit' already exists in"
-    MSG_PKGS="📦 Recommended: install the core toolchain (nmap, nuclei, whatweb, nikto, tcpdump, etc.):"
+    MSG_ALIAS_ADDED="[INFO] Alias 'redaudit' added to"
+    MSG_ALIAS_EXISTS="[INFO] Alias 'redaudit' already exists in"
+    MSG_PKGS="[RECOMMENDED] Install the core toolchain (nmap, nuclei, whatweb, nikto, tcpdump, etc.):"
     MSG_TESTSSL_NOTE="Includes testssl.sh install from GitHub (required for TLS deep checks)."
     MSG_ASK="Install now? [Y/n]: "
     MSG_TESTSSL_SKIP="[WARN] testssl.sh not installed. TLS deep checks will be unavailable."
@@ -373,13 +373,28 @@ fi
 echo ""
 echo "$MSG_DONE"
 
+# Show git commit hash for version confirmation
+GIT_COMMIT=""
+if [[ -d "$SCRIPT_DIR/.git" ]] && command -v git >/dev/null 2>&1; then
+    GIT_COMMIT=$(cd "$SCRIPT_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "")
+fi
+if [[ -n "$GIT_COMMIT" ]]; then
+    if [[ "$LANG_CODE" == "es" ]]; then
+        echo "[INFO] Commit instalado: $GIT_COMMIT (rama: $(cd "$SCRIPT_DIR" && git branch --show-current 2>/dev/null || echo "unknown"))"
+    else
+        echo "[INFO] Installed commit: $GIT_COMMIT (branch: $(cd "$SCRIPT_DIR" && git branch --show-current 2>/dev/null || echo "unknown"))"
+    fi
+fi
+
 if [[ "$LANG_CODE" == "es" ]]; then
-    echo "👉 IMPORTANTE: Para usar 'redaudit' inmediatamente, ejecuta:"
+    echo ""
+    echo "IMPORTANTE: Para usar 'redaudit' inmediatamente, ejecuta:"
     echo "   $SOURCE_CMD"
     echo ""
     echo "(O simplemente abre una nueva terminal)"
 else
-    echo "👉 IMPORTANT: To use 'redaudit' immediately, run:"
+    echo ""
+    echo "IMPORTANT: To use 'redaudit' immediately, run:"
     echo "   $SOURCE_CMD"
     echo ""
     echo "(Or simply open a new terminal)"
