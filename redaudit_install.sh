@@ -93,7 +93,7 @@ echo "$MSG_INSTALL"
 # 2) Dependencies
 # -------------------------------------------
 
-EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto traceroute"
+EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto sqlmap traceroute"
 
 echo ""
 echo "$MSG_PKGS"
