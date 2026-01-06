@@ -1017,9 +1017,9 @@ class AuditorScan:
                 prescan_ports = self._hyperscan_prescan_ports.get(safe_ip, [])
 
             if prescan_ports:
-                # Use pre-discovered ports for nmap fingerprinting
+                # Use pre-discovered ports for nmap fingerprinting (-A includes -sV -sC -O)
                 port_list = ",".join(str(p) for p in prescan_ports)
-                args = f"-sV -sC -A -Pn -p {port_list}"
+                args = f"-A -Pn -p {port_list}"
                 timing = self.config.get("nmap_timing")
                 if timing:
                     args = f"-T{timing} {args}"
