@@ -276,13 +276,21 @@ def calculate_severity(finding: str) -> str:
 
 def calculate_risk_score(host_record: Dict) -> int:
     """
-    Calculate overall risk score (0-100) for a host.
+    Calculate overall risk score (0-100) for a host using Weighted Maximum Gravity.
+
+    v4.3: Refactored algorithm based on security audit recommendations.
+
+    Formula:
+    1. Base = max(CVSS_score, exploit_severity, insecure_service_score) * 10
+    2. Density bonus = min(20, log10(num_vulns + 1) * 15)
+    3. Exposure multiplier (1.15x) for common external-facing ports
 
     Score is based on:
-    - Number of open ports
-    - Presence of known exploits
-    - Service types (insecure services add points)
-    - Deep scan findings
+    - Maximum CVSS score from CVE data (primary factor)
+    - Presence of known exploits (high impact)
+    - Insecure services (telnet, ftp, etc.)
+    - Number of vulnerabilities (logarithmic density)
+    - Port exposure (external-facing ports increase risk)
 
     Args:
         host_record: Host record dictionary
@@ -290,27 +298,90 @@ def calculate_risk_score(host_record: Dict) -> int:
     Returns:
         Risk score 0-100
     """
-    score = 0
+    import math
 
     ports = host_record.get("ports", [])
+    if not ports:
+        return 0
 
-    # Base score from number of open ports (max 20 points)
-    score += min(len(ports) * 2, 20)
+    max_cvss = 0.0
+    total_vulns = 0
+    has_exposed_port = False
 
-    # Known exploits (high impact)
+    # Common external-facing ports that increase exposure risk
+    exposed_ports = {
+        21,
+        22,
+        23,
+        25,
+        53,
+        80,
+        110,
+        143,
+        443,
+        445,
+        993,
+        995,
+        3306,
+        3389,
+        5432,
+        8080,
+        8443,
+    }
+
     for port in ports:
-        if port.get("known_exploits"):
-            score += len(port["known_exploits"]) * 15
+        port_number = port.get("port", 0)
 
-        # Insecure services
+        # Check for exposed ports
+        if port_number in exposed_ports:
+            has_exposed_port = True
+
+        # Extract CVSS scores from CVE data
+        cves = port.get("cves", [])
+        for cve in cves:
+            cvss = cve.get("cvss_score")
+            if cvss and isinstance(cvss, (int, float)) and cvss > max_cvss:
+                max_cvss = float(cvss)
+            total_vulns += 1
+
+        # Count known exploits
+        exploits = port.get("known_exploits", [])
+        if exploits:
+            # Known exploits are at least severity 8.0
+            max_cvss = max(max_cvss, 8.0)
+            total_vulns += len(exploits)
+
+        # Insecure services bump minimum severity
         service = (port.get("service") or "").lower()
-        if service in ("telnet", "ftp", "rlogin", "rsh"):
-            score += 10
-        if "ssl" in service and port.get("port") not in (443, 8443):
-            score += 5
+        if service in ("telnet", "rlogin", "rsh"):
+            # Plaintext remote access = critical (9.0)
+            max_cvss = max(max_cvss, 9.0)
+            total_vulns += 1
+        elif service == "ftp":
+            # FTP = high risk (7.5)
+            max_cvss = max(max_cvss, 7.5)
+            total_vulns += 1
+        elif "ssl" in service and port_number not in (443, 8443):
+            # SSL on non-standard port = medium concern
+            max_cvss = max(max_cvss, 5.0)
+
+    # 1. Base score from maximum CVSS (0-100 scale)
+    base_score = max_cvss * 10
+
+    # 2. Density bonus (logarithmic, max 20 points)
+    # More vulnerabilities add risk but with diminishing returns
+    density_bonus = 0.0
+    if total_vulns > 0:
+        density_bonus = min(20.0, math.log10(total_vulns + 1) * 15)
+
+    # 3. Exposure multiplier for external-facing services
+    exposure_multiplier = 1.15 if has_exposed_port else 1.0
+
+    # Calculate final score
+    final_score = (base_score + density_bonus) * exposure_multiplier
 
     # Cap at 100
-    return min(score, 100)
+    return min(100, round(final_score))
 
 
 def generate_observable_hash(host_record: Dict) -> str:

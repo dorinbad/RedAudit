@@ -70,16 +70,35 @@ class TestSIEM(unittest.TestCase):
         self.assertEqual(score, 0)
 
     def test_calculate_risk_score_with_ports(self):
-        """Test risk score increases with ports."""
-        host = {
+        """Test risk score with exposed ports and CVEs.
+
+        v4.3: New algorithm returns 0 for ports without vulnerabilities.
+        Score only increases with CVEs, exploits, or insecure services.
+        """
+        # Ports without CVEs = low risk (score 0 is intentional)
+        host_clean = {
             "ip": "192.168.1.1",
             "ports": [
                 {"port": 22, "service": "ssh"},
                 {"port": 80, "service": "http"},
             ],
         }
-        score = calculate_risk_score(host)
-        self.assertGreater(score, 0)
+        score_clean = calculate_risk_score(host_clean)
+        self.assertEqual(score_clean, 0)
+
+        # Ports with CVE data should have score > 0
+        host_with_cve = {
+            "ip": "192.168.1.1",
+            "ports": [
+                {
+                    "port": 80,
+                    "service": "http",
+                    "cves": [{"cve_id": "CVE-2021-1234", "cvss_score": 7.5}],
+                },
+            ],
+        }
+        score_with_cve = calculate_risk_score(host_with_cve)
+        self.assertGreater(score_with_cve, 0)
 
     def test_calculate_risk_score_insecure_service(self):
         """Test risk score penalty for insecure services."""
