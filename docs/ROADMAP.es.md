@@ -32,6 +32,7 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
+| **Web App Vuln Scan** | 🚧 Planificado | Integrar sqlmap para detección SQLi y ZAP para XSS en aplicaciones web (JuiceShop, DVWA, etc.). |
 | **Separación Deep Scan** | 🚧 Planificado | Extraer Deep Scan de `scan_host_ports()` como fase independiente. |
 | **Red Team → Agentless** | 🚧 Planificado | Pasar resultados SMB/LDAP de Red Team a Agentless Verify. |
 | **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 automáticamente. |
