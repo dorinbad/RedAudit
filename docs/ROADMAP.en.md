@@ -18,11 +18,16 @@ These features are approved but **not yet implemented** in the codebase.
 
 *(No high priority items currently pending)*
 
-### v4.3 Risk Score Improvements (Priority: High) ✅
+### v4.3 Risk Score & Performance Improvements (Priority: High) ✅
 
 | Feature | Status | Description |
 | :--- | :--- | :--- |
 | **Weighted Maximum Gravity Algorithm** | ✅ Done | Refactored `calculate_risk_score()` to use CVSS scores from NVD data as primary factor. Formula: Base (max CVSS * 10) + Density bonus (log10) + Exposure multiplier (1.15x for external ports). |
+| **Risk Score Breakdown Tooltip** | ✅ Done | HTML reports show detailed risk score components on hover (Max CVSS, Base Score, Density Bonus, Exposure Multiplier). |
+| **Identity Score Visualization** | ✅ Done | HTML reports display color-coded identity_score with tooltip showing identity signals. |
+| **Smart-Check CPE Validation** | ✅ Done | Enhanced Nuclei false positive detection using host CPE data before HTTP header checks. |
+| **HyperScan SYN Mode** | ✅ Done | Optional scapy-based SYN scanning (`--hyperscan-mode syn`) for ~10x faster discovery. Auto-detection with fallback to connect mode. |
+| **PCAP Management Utilities** | ✅ Done | `merge_pcap_files()`, `organize_pcap_files()`, `finalize_pcap_artifacts()` for post-scan cleanup. |
 
 ### v4.1 Performance Optimizations (Priority: High) ✅
 
