@@ -1213,6 +1213,7 @@ class InteractiveNetworkAuditor:
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
             self.rate_limit_delay = 0.0  # Express = always fast
+            self.config["hyperscan_mode"] = "auto"  # v4.3: Fast = auto-detect best mode
             return
 
         # PROFILE 1: Standard - Balance (equivalent to old normal mode)
@@ -1241,6 +1242,11 @@ class InteractiveNetworkAuditor:
             if timing_threads_boost:
                 self.config["threads"] = MAX_THREADS
             self.rate_limit_delay = timing_delay
+            # v4.3: HyperScan mode based on timing
+            if timing_nmap_template == "T1":  # Stealth
+                self.config["hyperscan_mode"] = "connect"  # Connect is stealthier than SYN
+            else:
+                self.config["hyperscan_mode"] = "auto"  # Let it auto-detect
             return
 
         # PROFILE 2: Exhaustive - Maximum discovery (auto-configures everything)
@@ -1318,6 +1324,11 @@ class InteractiveNetworkAuditor:
 
             # Rate limiting - already asked in profile selection loop
             self.rate_limit_delay = timing_delay
+            # v4.3: HyperScan mode based on timing (Stealth = connect, else auto)
+            if timing_nmap_template == "T1":  # Stealth
+                self.config["hyperscan_mode"] = "connect"
+            else:
+                self.config["hyperscan_mode"] = "auto"
             return
 
         # PROFILE 3: Custom - Full wizard with 8 steps (original behavior)
@@ -1418,6 +1429,31 @@ class InteractiveNetworkAuditor:
                 self.config["low_impact_enrichment"] = self.ask_yes_no(
                     self.ui.t("low_impact_enrichment_q"), default=low_impact_default
                 )
+
+                # v4.3: HyperScan mode selection
+                hyperscan_options = [
+                    self.ui.t("hyperscan_auto"),
+                    self.ui.t("hyperscan_connect"),
+                    self.ui.t("hyperscan_syn"),
+                ]
+                persisted_hyperscan = defaults_for_run.get("hyperscan_mode", "auto")
+                hyperscan_idx_map = {"auto": 0, "connect": 1, "syn": 2}
+                default_hs_idx = wizard_state.get(
+                    "hyperscan_idx", hyperscan_idx_map.get(persisted_hyperscan, 0)
+                )
+                hs_choice = self.ask_choice_with_back(
+                    self.ui.t("hyperscan_mode_q"),
+                    hyperscan_options,
+                    default_hs_idx,
+                    step_num=step,
+                    total_steps=TOTAL_STEPS,
+                )
+                if hs_choice == self.WIZARD_BACK:
+                    step -= 1
+                    continue
+
+                wizard_state["hyperscan_idx"] = hs_choice
+                self.config["hyperscan_mode"] = ["auto", "connect", "syn"][hs_choice]
 
                 step += 1
                 continue

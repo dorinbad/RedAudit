@@ -5,7 +5,6 @@ Tests for SYN scanner module.
 v4.3: Tests for is_syn_scan_available and syn_probe functions.
 """
 
-import os
 import unittest
 from unittest.mock import patch
 
@@ -25,23 +24,20 @@ class TestSynScanAvailability(unittest.TestCase):
     def test_not_available_without_scapy(self):
         """Should return unavailable when scapy is not installed."""
         with patch("os.geteuid", return_value=0):
-            with patch.dict("sys.modules", {"scapy.all": None}):
-                # Re-import to test with mocked scapy
-                import importlib
-                import redaudit.core.syn_scanner as syn_mod
+            import redaudit.core.syn_scanner as syn_mod
 
-                # Temporarily override SCAPY_AVAILABLE
-                original = syn_mod.SCAPY_AVAILABLE
-                syn_mod.SCAPY_AVAILABLE = False
-                try:
-                    available, reason = is_syn_scan_available()
-                    if available:
-                        # If scapy is actually available, skip this test
-                        self.skipTest("scapy is installed")
-                    else:
-                        self.assertEqual(reason, "scapy_not_installed")
-                finally:
-                    syn_mod.SCAPY_AVAILABLE = original
+            # Temporarily override SCAPY_AVAILABLE
+            original = syn_mod.SCAPY_AVAILABLE
+            syn_mod.SCAPY_AVAILABLE = False
+            try:
+                available, reason = is_syn_scan_available()
+                if available:
+                    # If scapy is actually available, skip this test
+                    self.skipTest("scapy is installed")
+                else:
+                    self.assertEqual(reason, "scapy_not_installed")
+            finally:
+                syn_mod.SCAPY_AVAILABLE = original
 
 
 class TestSynProbe(unittest.TestCase):
