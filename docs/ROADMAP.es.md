@@ -34,8 +34,9 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | :--- | :--- | :--- |
 | **Separación Deep Scan** | 🚧 Planificado | Extraer Deep Scan de `scan_host_ports()` como fase independiente. Mejor utilización de ThreadPoolExecutor. |
 | **Red Team → Agentless** | 🚧 Planificado | Pasar resultados SMB/LDAP de Red Team a Agentless Verify para evitar re-probing duplicado. |
-| **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 (enriquecimiento DNS/mDNS/SNMP) automáticamente sin preguntar. |
-| **HyperScan naming cleanup** | 🚧 Planificado | Renombrar: `hyperscan_tcp_probe` → `hyperscan_host_discovery`, `hyperscan_full_port_sweep` → `hyperscan_port_discovery`. Clarificar propósito de cada uno. |
+| **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 automáticamente sin preguntar. |
+| **Wizard UX: Personalizado** | 🚧 Planificado | Mejorar lógica del wizard "Personalizado" para no redundar preguntas ya respondidas en preestablecidos. |
+| **HyperScan naming cleanup** | 🚧 Planificado | Renombrar: `hyperscan_tcp_probe` → `hyperscan_host_discovery`, `hyperscan_full_port_sweep` → `hyperscan_port_discovery`. |
 
 ### v4.0 Refactorización Arquitectónica ✅ (Liberado en v3.10.2)
 
