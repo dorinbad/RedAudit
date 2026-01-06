@@ -362,7 +362,9 @@ class AuditorVuln:
 
         def run_sqlmap():
             """v4.1: Basic sqlmap integration for SQLi detection."""
-            sqlmap_path = self.extra_tools.get("sqlmap")
+            import shutil
+
+            sqlmap_path = self.extra_tools.get("sqlmap") or shutil.which("sqlmap")
             if not sqlmap_path:
                 return {}
 
