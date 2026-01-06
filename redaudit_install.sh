@@ -93,7 +93,7 @@ echo "$MSG_INSTALL"
 # 2) Dependencies
 # -------------------------------------------
 
-EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto sqlmap zaproxy traceroute"
+EXTRA_PKGS="curl wget openssl nmap tcpdump tshark whois bind9-dnsutils python3-nmap python3-cryptography python3-netifaces python3-requests python3-jinja2 exploitdb git nbtscan netdiscover fping avahi-utils arp-scan lldpd snmp snmp-mibs-downloader enum4linux smbclient samba-common-bin masscan ldap-utils bettercap python3-scapy proxychains4 nuclei whatweb nikto sqlmap traceroute"
 
 echo ""
 echo "$MSG_PKGS"
@@ -174,16 +174,66 @@ if [[ ! -f "/usr/local/bin/kerbrute" ]]; then
 fi
 
 # -------------------------------------------
-# 2d) Check for OWASP ZAP (zaproxy)
+# 2d) Install OWASP ZAP (apt for Kali/Debian, snap for Ubuntu)
 # -------------------------------------------
 
 if ! command -v zap.sh >/dev/null 2>&1 && ! command -v zaproxy >/dev/null 2>&1; then
+    ZAP_INSTALLED=false
+
+    # Try apt first (works on Kali, Debian with backports)
     if [[ "$LANG_CODE" == "es" ]]; then
-        echo "[WARN] 'zaproxy' no encontrado. La integración de escaneo ZAP no estará disponible."
-        echo "       Considera instalarlo manualmente (owasp-zap) si 'apt' fallo."
+        echo "[INFO] Intentando instalar ZAP via apt..."
     else
-        echo "[WARN] 'zaproxy' not found. ZAP scanning integration will be unavailable."
-        echo "       Consider manual installation (owasp-zap) if 'apt' failed."
+        echo "[INFO] Attempting to install ZAP via apt..."
+    fi
+
+    if apt install -y zaproxy 2>/dev/null; then
+        ZAP_INSTALLED=true
+        if [[ "$LANG_CODE" == "es" ]]; then
+            echo "[OK] ZAP instalado via apt"
+        else
+            echo "[OK] ZAP installed via apt"
+        fi
+    else
+        # apt failed (Ubuntu Noble), try snap
+        if [[ "$LANG_CODE" == "es" ]]; then
+            echo "[INFO] apt falló, intentando via snap..."
+        else
+            echo "[INFO] apt failed, trying snap..."
+        fi
+
+        if command -v snap >/dev/null 2>&1; then
+            if snap install zaproxy --classic 2>/dev/null; then
+                ZAP_INSTALLED=true
+                # Create symlink for zap.sh detection
+                if [[ -f "/snap/bin/zaproxy" ]]; then
+                    ln -sf /snap/bin/zaproxy /usr/local/bin/zap.sh 2>/dev/null || true
+                fi
+                if [[ "$LANG_CODE" == "es" ]]; then
+                    echo "[OK] ZAP instalado via snap"
+                else
+                    echo "[OK] ZAP installed via snap"
+                fi
+            fi
+        fi
+    fi
+
+    if ! $ZAP_INSTALLED; then
+        if [[ "$LANG_CODE" == "es" ]]; then
+            echo "[WARN] No se pudo instalar ZAP. Instalación manual requerida."
+            echo "       Ubuntu: sudo snap install zaproxy --classic"
+            echo "       Kali/Debian: sudo apt install zaproxy"
+        else
+            echo "[WARN] Could not install ZAP. Manual installation required."
+            echo "       Ubuntu: sudo snap install zaproxy --classic"
+            echo "       Kali/Debian: sudo apt install zaproxy"
+        fi
+    fi
+else
+    if [[ "$LANG_CODE" == "es" ]]; then
+        echo "[OK] ZAP ya instalado"
+    else
+        echo "[OK] ZAP already installed"
     fi
 fi
 
