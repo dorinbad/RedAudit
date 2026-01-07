@@ -798,12 +798,23 @@ def discover_networks(
                     total_l2_warnings += arp_result.get("l2_warnings", 0)
 
                 # v4.3: Show consolidated L2 warning (didactic)
-                if total_l2_warnings > 0 and logger:
-                    logger.warning(
-                        "ARP Discovery: %d hosts outside local L2 segment (different subnet/VLAN). "
-                        "TCP/UDP scanning will work normally.",
-                        total_l2_warnings,
+                if total_l2_warnings > 0:
+                    warning_msg = (
+                        f"⚠️  ARP Discovery: {total_l2_warnings} hosts detectados fuera de tu red local "
+                        "(subred/VLAN diferente).\n"
+                        "   → Esto es normal si escaneas rangos que incluyen otras redes o el gateway.\n"
+                        "   → El escaneo TCP/UDP funcionará normalmente para estos hosts."
                     )
+                    # Print to terminal (logger.warning only goes to log file)
+                    from datetime import datetime as dt
+
+                    ts = dt.now().strftime("%H:%M:%S")
+                    print(f"\033[93m[{ts}] [WARN]\033[0m {warning_msg}", flush=True)
+                    if logger:
+                        logger.warning(
+                            "ARP Discovery: %d hosts outside local L2 segment. TCP/UDP will work normally.",
+                            total_l2_warnings,
+                        )
                     result["l2_warning_note"] = (
                         f"{total_l2_warnings} hosts detected outside your local network. "
                         "TCP/UDP scanning will work normally for these hosts."
