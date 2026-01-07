@@ -58,6 +58,49 @@ def _run_cmd(
         return -1, "", str(e)
 
 
+def _run_cmd_suppress_stderr(
+    args: List[str],
+    timeout_s: int,
+    logger=None,
+) -> Tuple[int, str, str]:
+    """
+    Execute a command suppressing stderr from being displayed on terminal.
+
+    v4.3: Used for arp-scan which writes warnings directly to tty even when
+    stderr is captured. We capture stderr in memory but don't let it pollute
+    the terminal during progress UI.
+    """
+    import subprocess
+
+    if is_dry_run():
+        if logger:
+            logger.debug(f"[dry-run] {' '.join(args)}")
+        return 0, "", ""
+
+    try:
+        proc = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,  # Capture stderr instead of DEVNULL
+            timeout=float(timeout_s),
+            text=True,
+            check=False,
+        )
+        # Return captured stderr for analysis (e.g., counting warnings)
+        # but it won't be printed to terminal
+        return proc.returncode, proc.stdout or "", proc.stderr or ""
+    except subprocess.TimeoutExpired as e:
+        if logger:
+            logger.warning("Command timeout: %s", " ".join(args))
+        return 124, getattr(e, "stdout", "") or "", getattr(e, "stderr", "") or ""
+    except FileNotFoundError:
+        return 127, "", f"Command not found: {args[0]}"
+    except Exception as e:
+        if logger:
+            logger.error(f"Command execution failed: {e}")
+        return -1, "", str(e)
+
+
 def _check_tools() -> Dict[str, bool]:
     """Check availability of discovery tools."""
     return {
@@ -419,7 +462,9 @@ def arp_scan_active(
     # Add retry for better IoT discovery
     cmd.extend(["--retry", "2"])
 
-    rc, out, err = _run_cmd(cmd, timeout_s, logger)
+    # v4.3: Use suppress_stderr to prevent raw warnings from appearing in terminal
+    # arp-scan warnings are captured, counted, and shown as a single consolidated message
+    rc, out, err = _run_cmd_suppress_stderr(cmd, timeout_s, logger)
 
     # v4.3: Count and consolidate ARP warnings for didactic feedback
     # arp-scan emits "WARNING: Mac address to reach destination not found" for L2-unreachable hosts
