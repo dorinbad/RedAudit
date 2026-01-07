@@ -301,7 +301,8 @@ def calculate_risk_score(host_record: Dict) -> int:
     import math
 
     ports = host_record.get("ports", [])
-    if not ports:
+    findings = host_record.get("findings", [])
+    if not ports and not findings:
         return 0
 
     max_cvss = 0.0

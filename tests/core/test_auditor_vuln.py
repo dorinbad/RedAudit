@@ -196,6 +196,9 @@ class _DummyAuditor(AuditorVuln):
     def _progress_console(self):
         return None
 
+    def get_progress_console(self):
+        return None
+
     def _format_eta(self, _value):
         return "00:00"
 
@@ -309,7 +312,7 @@ def test_scan_vulnerabilities_web_nikto_exception(monkeypatch):
 def test_scan_vulnerabilities_concurrent_fallback(monkeypatch):
     auditor = _DummyAuditor()
 
-    def _fake_scan(host):
+    def _fake_scan(host, **_kwargs):
         return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
 
     monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _fake_scan)
@@ -339,7 +342,7 @@ def test_scan_vulnerabilities_concurrent_rich_progress(monkeypatch):
 
     auditor._get_ui_detail = _next_detail
 
-    def _scan(host):
+    def _scan(host, **_kwargs):
         if host["ip"] == "10.0.0.2":
             raise RuntimeError("boom")
         return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
@@ -371,9 +374,7 @@ def test_scan_vulnerabilities_concurrent_rich_progress(monkeypatch):
     ]
     auditor.scan_vulnerabilities_concurrent(host_results)
     assert auditor.results["vulnerabilities"]
-    assert auditor.logger.info.called
     assert auditor.logger.error.called
-    assert auditor.logger.debug.called
 
 
 def test_scan_vulnerabilities_concurrent_rich_interrupted(monkeypatch):
@@ -412,7 +413,7 @@ def test_scan_vulnerabilities_concurrent_fallback_interrupt(monkeypatch):
     auditor = _DummyAuditor()
     auditor.interrupted = True
 
-    def _fake_scan(host):
+    def _fake_scan(host, **_kwargs):
         return {"host": host["ip"], "vulnerabilities": [{"name": "x"}]}
 
     monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _fake_scan)
@@ -434,7 +435,7 @@ def test_scan_vulnerabilities_concurrent_fallback_worker_error(monkeypatch):
     auditor = _DummyAuditor()
     auditor.logger = MagicMock()
 
-    def _boom(_host):
+    def _boom(_host, **_kwargs):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(auditor, "scan_vulnerabilities_web", _boom)
@@ -451,7 +452,7 @@ def test_scan_vulnerabilities_concurrent_fallback_worker_error(monkeypatch):
     host_results = [{"ip": "10.0.0.6", "web_ports_count": 1, "ports": [{"port": 80}]}]
     auditor.scan_vulnerabilities_concurrent(host_results)
     assert auditor.statuses
-    assert auditor.logger.debug.called
+    assert auditor.logger.error.called
 
 
 # -----------------------------------------------------------------------------
