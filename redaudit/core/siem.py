@@ -365,6 +365,33 @@ def calculate_risk_score(host_record: Dict) -> int:
             # SSL on non-standard port = medium concern
             max_cvss = max(max_cvss, 5.0)
 
+    # v4.3.1: Include vulnerabilities from Nikto/Nuclei finding dumps
+    # These findings may not be attached to specific ports
+    findings = host_record.get("findings", [])
+    severity_map = {
+        "critical": 9.5,
+        "high": 8.0,
+        "medium": 5.0,
+        "low": 2.0,
+        "info": 0.0,
+    }
+
+    for finding in findings:
+        severity = str(finding.get("severity", "info")).lower()
+        score = severity_map.get(severity, 0.0)
+
+        # Override with explicit normalized_severity if available
+        norm = finding.get("normalized_severity")
+        if norm and isinstance(norm, (int, float)):
+            score = float(norm)
+
+        if score > 0:
+            max_cvss = max(max_cvss, score)
+            # Only count as 'vuln' for density if it adds risk (Med+)
+            # otherwise we dilute density with 100 info findings
+            if score >= 4.0:
+                total_vulns += 1
+
     # 1. Base score from maximum CVSS (0-100 scale)
     base_score = max_cvss * 10
 

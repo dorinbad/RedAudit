@@ -787,7 +787,7 @@ class InteractiveNetworkAuditor:
                                     nuclei_result = run_nuclei_scan(
                                         targets=nuclei_targets,
                                         output_dir=output_dir,
-                                        severity="medium,high,critical",
+                                        severity="low,medium,high,critical",
                                         timeout=nuclei_timeout_s,
                                         batch_size=batch_size,
                                         progress_callback=lambda c, t, e: self._nuclei_progress_callback(
@@ -901,6 +901,40 @@ class InteractiveNetworkAuditor:
                 except Exception:
                     if self.logger:
                         self.logger.debug("CVE enrichment failed (best-effort)", exc_info=True)
+
+            # v4.3.1: Re-calculate risk scores with all findings (Nikto/Nuclei/Web)
+            # This ensures risk_score reflects actual vulnerabilities found during scan
+            try:
+                from redaudit.core.siem import calculate_risk_score
+
+                # Map findings to hosts by IP
+                findings_map = {}
+                vulns_data = self.results.get("vulnerabilities", [])
+                for entry in vulns_data:
+                    host_ip = entry.get("host")
+                    if host_ip and entry.get("vulnerabilities"):
+                        if host_ip not in findings_map:
+                            findings_map[host_ip] = []
+                        findings_map[host_ip].extend(entry["vulnerabilities"])
+
+                # Update host records
+                if isinstance(results, list):
+                    for host in results:
+                        # Ensure host is a dict (it might be a Pydantic model in some contexts, but usually dict here)
+                        # If it's an object, we can't easily set findings unless we convert or use setattr
+                        # Assuming dict based on usage in reporter.py
+                        ip = host.get("ip")
+                        if ip and ip in findings_map:
+                            host["findings"] = findings_map[ip]
+
+                        # Recalculate and update
+                        # This works because calculate_risk_score now looks at host["findings"]
+                        new_risk = calculate_risk_score(host)
+                        host["risk_score"] = new_risk
+
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning("Risk score recalculation failed: %s", e)
 
             self.config["rate_limit_delay"] = self.rate_limit_delay
             generate_summary(self.results, self.config, all_hosts, results, self.scan_start_time)

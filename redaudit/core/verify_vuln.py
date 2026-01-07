@@ -639,9 +639,15 @@ def check_nuclei_false_positive(
         if isinstance(raw, dict):
             response = raw.get("response", "") or ""
     server_header = ""
-    for line in response.split("\r\n"):
+    server_header = ""
+    # v4.3.1: Handle both CRLF and LF to ensure Server header is found
+    lines = response.splitlines()
+    for line in lines:
         if line.lower().startswith("server:"):
-            server_header = line.split(":", 1)[1].strip().lower()
+            try:
+                server_header = line.split(":", 1)[1].strip().lower()
+            except IndexError:
+                pass
             break
 
     # Also check agentless fingerprint
@@ -655,6 +661,15 @@ def check_nuclei_false_positive(
 
     # Combine all identifiers
     identifiers = f"{server_header} {agentless_vendor} {agentless_title} {agentless_server}".lower()
+
+    if logger and "micollab" in template_config.get("description", "").lower():
+        logger.debug(
+            "Smart-Check Debug: template=%s identifiers=[%s] expected=%s fp=%s",
+            template_id,
+            identifiers,
+            template_config.get("expected_vendors", []),
+            template_config.get("false_positive_vendors", []),
+        )
 
     # Check if any expected vendor is present
     expected = template_config.get("expected_vendors", [])

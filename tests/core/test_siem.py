@@ -320,6 +320,21 @@ class TestSIEM(unittest.TestCase):
         self.assertEqual(merged_vuln.get("severity_score"), 70)
         self.assertIn("testssl_analysis", merged_vuln)
 
+    def test_calculate_risk_score_with_unattached_findings(self):
+        """Test risk score calculation from general findings list (v4.3.1)."""
+        host = {
+            "ip": "10.0.0.1",
+            "ports": [],
+            "findings": [
+                {"severity": "critical", "name": "Finding 1"},
+                {"severity": "medium", "name": "Finding 2"},
+            ],
+        }
+        score = calculate_risk_score(host)
+        # Critical = 9.5 -> Base ~95
+        self.assertGreater(score, 90)
+
 
 if __name__ == "__main__":
+    unittest.main()
     unittest.main()
