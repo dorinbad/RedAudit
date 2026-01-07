@@ -22,6 +22,7 @@ Closes #
 
 ## Checklist
 
+- [ ] I have read and followed the guidelines in `AGENTS.md` (mandatory)
 - [ ] My code follows the code style of this project
 - [ ] I have updated the documentation accordingly
 - [ ] I have added tests to cover my changes

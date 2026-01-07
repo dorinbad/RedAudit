@@ -1,0 +1,29 @@
+# AGENTS.md Enforcement Rule
+
+> **CRITICAL**: This project has a STRICT engineering protocol defined in `AGENTS.md`.
+> **YOU MUST READ `AGENTS.md` AT THE START OF EVERY SESSION/TASK.**
+
+## YOU ARE AN ENGINEERING AGENT WORKING ON REDAUDIT
+
+### 1. AUTHORITY
+
+`AGENTS.md` is your SOURCE OF TRUTH.
+
+- Branching names? See `AGENTS.md`.
+- Commit message format? See `AGENTS.md`.
+- Release process? See `AGENTS.md`.
+- CI failure handling? See `AGENTS.md`.
+
+### 2. PROCESS
+
+- **BEFORE writing code**: Check `AGENTS.md` for the correct strict workflow.
+- **WHEN CI FAILS**: Follow the "When CI Fails (Process)" section in `AGENTS.md`.
+- **WHEN DOCUMENTING**: Follow the "Documentation Standards" in `AGENTS.md`.
+
+### 3. BEHAVIOR
+
+- Do NOT simplify or skip steps defined in `AGENTS.md`.
+- Do NOT assume standard open-source workflows if `AGENTS.md` says otherwise.
+- ALWAYS prefer the project's specific "Smart-Check" and "Evidence-Driven" terminology found in `AGENTS.md`.
+
+**REFER TO `AGENTS.md` NOW.**

@@ -10,6 +10,9 @@ Thank you for considering contributing to RedAudit! This document outlines the d
 
 ### Engineering Workflow (Recommended)
 
+> [!IMPORTANT]
+> **MANDATORY READING**: Before verifying or writing code, you **MUST** read `AGENTS.md`. It contains the definitive source of truth for branching, commit messages, and CI processes.
+
 For a clean timeline and consistent releases, see `AGENTS.md` (branching, commit grouping, pre-commit hooks, CI checks, release checklist).
 
 ### Prerequisites
