@@ -22,7 +22,8 @@ def test_arp_scan_active_parses_hosts(monkeypatch):
         return 0, output, ""
 
     monkeypatch.setattr(net_discovery.shutil, "which", _which)
-    monkeypatch.setattr(net_discovery, "_run_cmd", _run_cmd)
+    monkeypatch.setattr(net_discovery.shutil, "which", _which)
+    monkeypatch.setattr(net_discovery, "_run_cmd_suppress_stderr", _run_cmd)
 
     result = net_discovery.arp_scan_active(target="192.168.1.0/24", interface="eth0")
     assert result["error"] is None
