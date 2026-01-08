@@ -10,6 +10,13 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [4.3.3] - 2026-01-08
+
+### Corregido
+
+- **Integridad de Datos**: Los hallazgos de vulnerabilidades (Nikto, etc.) ahora se adjuntan correctamente a los objetos `Host` en memoria. Esto corrige el problema donde las vulnerabilidades faltaban en los reportes JSON y los Risk Scores eran 0 a pesar de encontrar debilidades.
+- **UI UX**: Corregido un glitch visual donde el mensaje de estado "heartbeat" ("Net Discovery en progreso...") duplicaba líneas de IP en el wizard. Ahora imprime de forma segura en la consola de progreso.
+
 ## [4.3.2] - 2026-01-08
 
 ### Corregido

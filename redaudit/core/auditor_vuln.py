@@ -629,6 +629,14 @@ class AuditorVuln:
 
     def scan_vulnerabilities_concurrent(self, host_results):
         """Scan vulnerabilities on multiple hosts concurrently with progress bar."""
+        # v4.3.1: Create mapping for Host object lookup to attach findings later
+        ip_to_host = {}
+        for h in host_results or []:
+            if hasattr(h, "ip"):
+                ip_to_host[h.ip] = h
+            elif isinstance(h, dict) and "ip" in h:
+                ip_to_host[h["ip"]] = h
+
         normalized_hosts = [self._normalize_host_info(h) for h in (host_results or [])]
         # v4.0.4: Include hosts with HTTP fingerprint even if web_ports_count == 0
         web_hosts = [
@@ -722,7 +730,19 @@ class AuditorVuln:
                                         res = fut.result()
                                         if res:
                                             self.results["vulnerabilities"].append(res)
-                                            vuln_count = len(res.get("vulnerabilities", []))
+
+                                            # v4.3.1: Attach findings to Host object for risk scoring
+                                            findings = res.get("vulnerabilities", [])
+                                            if host_ip in ip_to_host:
+                                                host_obj = ip_to_host[host_ip]
+                                                if hasattr(host_obj, "findings"):
+                                                    host_obj.findings.extend(findings)
+                                                elif isinstance(host_obj, dict):
+                                                    host_obj.setdefault("findings", []).extend(
+                                                        findings
+                                                    )
+
+                                            vuln_count = len(findings)
                                             count_str = (
                                                 f"({vuln_count} vulns)" if vuln_count else "✓"
                                             )
@@ -759,6 +779,14 @@ class AuditorVuln:
                             res = fut.result()
                             if res:
                                 self.results["vulnerabilities"].append(res)
+                                # v4.3.1: Attach findings to Host object
+                                findings = res.get("vulnerabilities", [])
+                                if host_ip in ip_to_host:
+                                    host_obj = ip_to_host[host_ip]
+                                    if hasattr(host_obj, "findings"):
+                                        host_obj.findings.extend(findings)
+                                    elif isinstance(host_obj, dict):
+                                        host_obj.setdefault("findings", []).extend(findings)
                         except Exception as exc:
                             if self.logger:
                                 self.logger.error("Vuln error %s: %s", host_ip, exc)

@@ -2045,7 +2045,11 @@ class InteractiveNetworkAuditor:
                 elapsed = int(now - start_time)
                 mins, secs = divmod(elapsed, 60)
                 msg = f"Net Discovery en progreso... ({mins}:{secs:02d} elapsed)"
-                self.ui.print_status(msg, "INFO", force=True)
+                # v4.3.2: Use progress console to avoid breaking the live display
+                if hasattr(progress, "console"):
+                    progress.console.print(f"[dim]{msg}[/dim]")
+                else:
+                    self.ui.print_status(msg, "INFO", force=True)
                 self._nd_last_heartbeat = now
         except Exception:
             pass

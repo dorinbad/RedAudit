@@ -10,6 +10,13 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [4.3.3] - 2026-01-08
+
+### Fixed
+
+- **Data Integrity**: Vulnerability findings (from Nikto, etc.) are now correctly attached to `Host` objects in memory. This fixes the issue where vulnerabilities were missing from JSON reports and Risk Scores were calculated as 0 despite finding weaknesses.
+- **UI UX**: Fixed a visual glitch where the "heartbeat" status message ("Net Discovery in progress...") would duplicate IP lines in the wizard UI. It now prints safely to the progress console.
+
 ## [4.3.2] - 2026-01-08
 
 ### Fixed

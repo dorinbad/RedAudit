@@ -109,6 +109,9 @@ class Host:
     # Raw data preservation (for transition)
     raw_nmap_data: Dict = field(default_factory=dict)
 
+    # v4.3.1: Raw finding bucket for risk scoring and JSON export
+    findings: List[Dict] = field(default_factory=list)
+
     @property
     def mac(self) -> str:
         """Alias for backward compatibility during migration."""
@@ -156,6 +159,7 @@ class Host:
             "services": [s.__dict__ for s in self.services],
             "ports": ports,
             "vulnerabilities": [v.to_dict() for v in self.vulnerabilities],
+            "findings": self.findings,  # v4.3.1: Export raw findings
             "tags": list(self.tags),
             "device_type_hints": list(self.device_type_hints),
             "risk_score": self.risk_score,
