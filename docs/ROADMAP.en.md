@@ -70,6 +70,16 @@ legacy inheritance removed and compatibility handled by adapter-backed component
 | **PyPI Distribution** | 🚧 Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
 | **Plugin Engine** | 🚧 Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
 
+### Phase 6: Enterprise Scalability (>50 Hosts) (Priority: Medium)
+
+Focus: Removing bottlenecks for large corporate networks.
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Generator-based Targeting** | 🚧 Planned | Switch from list-based targeting to generator-based streaming. prevents memory spike when loading large subnets (/16). |
+| **Streaming JSON Report** | 🚧 Planned | Write report to disk incrementally instead of building massive DOM in memory. Essential for reports >500MB. |
+| **Smart Thread Scaling** | 🚧 Planned | Dynamic thread pool adjustment based on real-time load/congestion rather than static args. |
+
 ---
 
 ## 2. Implemented Capabilities (Verified)

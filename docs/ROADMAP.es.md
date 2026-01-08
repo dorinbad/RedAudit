@@ -77,6 +77,16 @@ herencia legacy eliminada y compatibilidad gestionada por componentes con adapta
 | **Distribución PyPI** | 🚧 Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
 | **Motor de Plugins** | 🚧 Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
 
+### Fase 6: Escalabilidad Empresarial (>50 Hosts) (Prioridad: Media)
+
+Foco: Eliminar cuellos de botella en grandes redes corporativas.
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Targeting basado en Generadores** | 🚧 Planificado | Cambiar de listas de IPs a streaming por generadores. Evita picos de memoria al cargar grandes subredes (/16). |
+| **Reporte JSON en Streaming** | 🚧 Planificado | Escribir el reporte a disco incrementalmente en lugar de construir un DOM masivo en memoria. Esencial para reportes >500MB. |
+| **Escalado Inteligente de Hilos** | 🚧 Planificado | Ajuste dinámico del pool de hilos basado en carga/congestión real en lugar de argumentos estáticos. |
+
 ---
 
 ## 2. Capacidades Implementadas (Verificado)
