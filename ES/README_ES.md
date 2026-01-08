@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](../README.md)
 
-![Versión](https://img.shields.io/badge/v4.3.3-blue?style=flat-square)
+![Versión](https://img.shields.io/badge/v4.4.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -51,6 +51,7 @@ sudo redaudit
 | :--- | :--- |
 | **Deep Scan Paralelo** | Fase de deep scan totalmente desacoplada ejecutándose en paralelo (hasta 50 hilos) para aceleración masiva |
 | **HyperScan** | Barrido TCP asíncrono + sondas UDP de descubrimiento (incluye broadcast cuando procede) + ARP agresivo |
+| **Smart-Throttle** | Control de congestión adaptativo (AIMD) que previene la pérdida de paquetes ajustando dinámicamente los lotes de escaneo |
 | **Descubrimiento de Topología** | Mapeo L2/L3 (ARP/VLAN/LLDP + gateway/rutas) para contexto de red |
 | **Descubrimiento de Red** | Protocolos broadcast (DHCP/NetBIOS/mDNS/UPnP/ARP/FPING) para visibilidad L2 |
 | **Seguridad Web App** | Integración de `sqlmap` (SQLi) y `OWASP ZAP` (DAST) para escaneo profundo de aplicaciones web |
@@ -83,6 +84,7 @@ sudo redaudit
 | Capacidad | Descripción |
 | :--- | :--- |
 | **Defaults Persistentes** | Preferencias de usuario guardadas en `~/.redaudit/config.json` |
+| **Targeting basado en Generadores** | Procesador de targets en streaming para tamaño de red ilimitado (ej. /16 o /8) sin agotar la RAM |
 | **Webhooks Interactivos** | Alertas por webhook para hallazgos high/critical (asistente o CLI) |
 | **Logging de Sesión** | Captura de salida terminal en doble formato (`.log` raw + `.txt` limpio) |
 | **Escaneo con Timeout** | Escaneos de host con timeout duro; progreso con ETA límite |
@@ -91,9 +93,13 @@ sudo redaudit
 | **Interfaz Bilingüe** | Localización completa Inglés/Español |
 | **Auto-Actualización** | Actualizaciones atómicas staged con rollback automático en caso de fallo |
 
-### Nuevo en v4.3: Risk Scoring Empresarial y Optimizaciones H2
+### Nuevo en v4.4: Escalabilidad Enterprise y Smart-Throttle
 
-> **Puntuación más Inteligente + Escaneos más Profundos.**
+> **Escala Masiva + Velocidad Adaptativa.**
+
+**Smart-Throttle:** Se acabó el tuning manual. RedAudit ahora "siente" la congestión de la red usando un algoritmo AIMD (Incremento Aditivo, Decremento Multiplicativo). Frena cuando hay pérdida de paquetes y acelera en enlaces estables, asegurando la máxima velocidad sin romper la red objetivo.
+
+**Targeting basado en Generadores:** Hemos reescrito el motor de targeting para usar generadores en streaming. Ahora puedes alimentar una red `/8` o millones de IPs aleatorias sin llenar tu RAM.
 
 **Risk Scoring V2:** El motor de riesgos ahora integra la severidad de los hallazgos (low/med/high/crit) de Nikto y Nuclei en la puntuación final. Un host con cero CVEs pero fallos críticos de configuración (ej. falta de auth) ahora reflejará correctamente un riesgo alto.
 

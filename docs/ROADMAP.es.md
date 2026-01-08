@@ -85,7 +85,7 @@ Foco: Eliminar cuellos de botella en grandes redes corporativas.
 | :--- | :--- | :--- |
 | **Targeting basado en Generadores** | 🚧 Planificado | Cambiar de listas de IPs a streaming por generadores. Evita picos de memoria al cargar grandes subredes (/16). |
 | **Reporte JSON en Streaming** | 🚧 Planificado | Escribir el reporte a disco incrementalmente en lugar de construir un DOM masivo en memoria. Esencial para reportes >500MB. |
-| **Escalado Inteligente de Hilos** | 🚧 Planificado | Ajuste dinámico del pool de hilos basado en carga/congestión real en lugar de argumentos estáticos. |
+| **Smart-Throttle (Control Adaptativo)** | 🚧 Planificado | Ajuste dinámico de batch size basado en AIMD (Smart-Throttle). Detecta estrés/pérdida de paquetes y auto-regula el escaneo para evitar DoS. [Ver Especificación](design/smart_throttle_spec.md) |
 
 ---
 

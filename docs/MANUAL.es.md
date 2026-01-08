@@ -197,6 +197,18 @@ SmartScan usa una puntuación de identidad (umbral por defecto: 3; modo full usa
 
 La clasificación VPN se realiza mediante heurísticas de tipado de activo (MAC/IP de gateway, puertos VPN, patrones de hostname).
 
+### Smart-Throttle (Control de Congestión Adaptativo)
+
+RedAudit v4.4+ introduce **Smart-Throttle**, un sistema de límite de tasa adaptativo para operaciones HyperScan.
+
+- **Algoritmo**: Utiliza un algoritmo de Incremento Aditivo, Decremento Multiplicativo (AIMD) similar al control de congestión TCP.
+- **Comportamiento**:
+  - Comienza con un tamaño de lote conservador (500 paquetes).
+  - **Acelera** (Linealmente) cuando la red es estable (timeouts < 1%).
+  - **Estrangula** (Multiplicativamente) cuando se detecta congestión (timeouts > 5%).
+- **Beneficio**: Previene la pérdida de paquetes en redes SOHO/VPN mientras maximiza la velocidad en enlaces de Data Center (escalando hasta 20,000 pps).
+- **Feedback**: La velocidad de escaneo y eventos de throttling (▼/▲) se muestran en tiempo real en la barra de progreso.
+
 **Ejecución Paralela:**
 A partir de v4.2, los deep scans se ejecutan en un pool de hilos dedicado (hasta 50 hilos), desacoplado del bucle principal de descubrimiento. Esto asegura que los escaneos profundos lentos no bloqueen el progreso global.
 

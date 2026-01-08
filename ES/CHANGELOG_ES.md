@@ -8,7 +8,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
-## [Unreleased]
+## [4.4.0] - 2026-01-08
+
+### Añadido
+
+- **Smart-Throttle (Control de Congestión Adaptativo)**: Nuevo algoritmo de limitación de velocidad basado en AIMD (`SmartThrottle`) en HyperScan. Ajusta dinámicamente el `batch_size` basándose en el feedback de timeouts de red, previniendo la pérdida de paquetes en redes congestionadas y acelerando en las estables.
+- **Targeting basado en Generadores**: Refactorizado `HyperScan` para usar generadores perezosos en la expansión de objetivos. Esto permite escanear redes masivas (ej. subredes /16) sin picos de memoria de varios gigabytes.
+- **Mejoras de Escalabilidad**: Optimizada la colección de hosts en `auditor_scan.py` para agilizar el procesamiento de grandes conjuntos de resultados.
+- **Diseño de Arquitectura Distribuida**: Añadida documentación de diseño para el futuro modo de escaneo distribuido Controlador/Trabajador.
+- **Investigación de Migración AsyncIO**: Completado estudio de viabilidad para migración completa a I/O no bloqueante (diferida a v5.0).
+
+### Cambiado
+
+- **HyperScan**: Ahora usa `itertools.product` para la generación de sondas.
+- **UI**: La barra de progreso detallada en HyperScan ahora muestra el estado de regulación en tiempo real (▼/▲) y la velocidad efectiva.
 
 ## [4.3.3] - 2026-01-08
 

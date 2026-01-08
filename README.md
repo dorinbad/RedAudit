@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](ES/README_ES.md)
 
-![Version](https://img.shields.io/badge/v4.3.3-blue?style=flat-square)
+![Version](https://img.shields.io/badge/v4.4.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -55,6 +55,7 @@ sudo redaudit
 |:---|:---|
 | **Parallel Deep Scan** | Fully decoupled deep scan phase running in parallel (up to 50 threads) for massive speedups |
 | **HyperScan** | Async TCP sweep + UDP discovery probes (including broadcast where supported) + aggressive ARP for fast inventory |
+| **Smart-Throttle** | AIMD-based adaptive congestion control that prevents packet loss by dynamically sizing scan batches |
 | **Topology Discovery** | L2/L3 mapping (ARP/VLAN/LLDP + gateway/routes) for network context |
 | **Network Discovery** | Broadcast protocols (DHCP/NetBIOS/mDNS/UPnP/ARP/FPING) for L2 visibility |
 | **Web App Security** | Integrated `sqlmap` (SQLi) and `OWASP ZAP` (DAST) for deep web application scanning |
@@ -87,6 +88,7 @@ sudo redaudit
 | Capability | Description |
 |:---|:---|
 | **Persistent Defaults** | User preferences stored in `~/.redaudit/config.json` |
+| **Generator-based Targeting** | Streaming target processor for unlimited network size (e.g. /16 or /8) without memory/RAM exhaustion |
 | **Interactive Webhooks** | Webhook alerts for high/critical findings (wizard or CLI) |
 | **Session Logging** | Dual-format terminal output capture (`.log` raw + `.txt` clean) for audit trails |
 | **Timeout-Safe Scanning** | Host scans are bounded by hard timeouts; progress shows upper-bound ETA |
@@ -95,9 +97,13 @@ sudo redaudit
 | **Bilingual Interface** | Complete English/Spanish localization |
 | **Auto-Update** | Atomic staged updates with automatic rollback on failure |
 
-### New in v4.3: Enterprise Risk Scoring & H2 Optimizations
+### New in v4.4: Enterprise Scalability & Smart-Throttle
 
-> **Smarter Scoring + Deeper Scans.**
+> **Massive Scale + Adaptive Speed.**
+
+**Smart-Throttle:** No more manual batch size tuning. RedAudit now "senses" network congestion using an AIMD (Additive Increase, Multiplicative Decrease) algorithm. It throttles down when packets drop and accelerates on stable links, ensuring maximum speed without breaking the target network.
+
+**Generator-based Targeting:** We've rewritten the targeting engine to use streaming generators. You can now feed a `/8` network or millions of random IPs without filling your RAM.
 
 **Enterprise-Grade Risk Scoring (V2)**: Configuration findings (Nikto/Nuclei) now drive risk scores.
 

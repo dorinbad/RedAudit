@@ -108,32 +108,76 @@ DEFAULT_ARP_TIMEOUT = 2.0
 
 
 # ============================================================================
+# Smart Throttle (AIMD)
+# ============================================================================
+
+
+class SmartThrottle:
+    """Adaptive congestion control using AIMD algorithm."""
+
+    def __init__(self, initial_batch: int = 500, min_batch: int = 100, max_batch: int = 20000):
+        self.current_batch = initial_batch
+        self.min_batch = min_batch
+        self.max_batch = max_batch
+        self.threshold_timeout = 0.05  # 5% failure rate triggers throttle
+
+    def update(self, sent_count: int, timeout_count: int) -> str:
+        """
+        Update batch size based on execution results.
+        Returns: 'THROTTLE_DOWN', 'ACCELERATE', or 'STABLE'
+        """
+        if sent_count == 0:
+            return "STABLE"
+
+        failure_rate = timeout_count / sent_count
+
+        if failure_rate > self.threshold_timeout:
+            # Multiplicative Decrease (congestion detected)
+            self.current_batch = max(self.min_batch, int(self.current_batch * 0.5))
+            return "THROTTLE_DOWN"
+        elif failure_rate < 0.01:
+            # Additive Increase (good conditions)
+            old_batch = self.current_batch
+            self.current_batch = min(self.max_batch, self.current_batch + 500)
+            return "ACCELERATE" if self.current_batch > old_batch else "STABLE"
+
+        return "STABLE"
+
+
+# ============================================================================
 # TCP Parallel Sweep
 # ============================================================================
 
 
 async def _tcp_connect(
-    semaphore: asyncio.Semaphore,
     ip: str,
     port: int,
     timeout: float,
+    semaphore: Optional[asyncio.Semaphore] = None,
 ) -> Optional[Tuple[str, int]]:
     """
-    Attempt single TCP connection with semaphore limit.
+    Attempt single TCP connection (semaphore optional).
 
     Returns (ip, port) if open, None otherwise.
     """
-    async with semaphore:
+    if semaphore:
+        async with semaphore:
+            return await _do_connect(ip, port, timeout)
+    else:
+        return await _do_connect(ip, port, timeout)
+
+
+async def _do_connect(ip: str, port: int, timeout: float) -> Optional[Tuple[str, int]]:
+    try:
+        _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
         try:
-            _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
-            try:
-                writer.close()
-                await asyncio.wait_for(writer.wait_closed(), timeout=0.5)
-            except Exception:
-                pass
-            return (ip, port)
-        except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
-            return None
+            writer.close()
+            await asyncio.wait_for(writer.wait_closed(), timeout=0.5)
+        except Exception:
+            pass
+        return (ip, port)
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+        return None
 
 
 async def hyperscan_tcp_sweep(
@@ -201,15 +245,16 @@ async def hyperscan_tcp_sweep(
 
     # Default: TCP connect scan
     start_time = time.time()
-    semaphore = asyncio.Semaphore(batch_size)
-    results: Dict[str, List[int]] = {ip: [] for ip in targets}
 
-    # Create all connection tasks
+    import itertools
+
+    # Note: total_probes is still calculated for progress bar, but the list is not materialized
     total_probes = len(targets) * len(ports)
-    tasks = []
-    for ip in targets:
-        for port in ports:
-            tasks.append(_tcp_connect(semaphore, ip, port, timeout))
+
+    # Lazy iterator
+    probe_iterator = itertools.product(targets, ports)
+
+    results: Dict[str, List[int]] = {ip: [] for ip in targets}
 
     if logger:
         logger.info(
@@ -219,22 +264,57 @@ async def hyperscan_tcp_sweep(
             total_probes,
         )
 
-    # Execute in chunks for progress tracking
-    chunk_size = max(1, total_probes // 20)  # ~20 progress updates
+    # Smart-Throttle initialization
+    # Start with conservative batch size (500) regardless of default arg,
+    # unless batch_size arg is unusually small (<500).
+    initial_batch = min(500, batch_size)
+    throttler = SmartThrottle(initial_batch=initial_batch, max_batch=20000)
+
     completed = 0
 
-    for i in range(0, len(tasks), chunk_size):
-        chunk = tasks[i : i + chunk_size]
-        chunk_results = await asyncio.gather(*chunk, return_exceptions=True)
+    while completed < total_probes:
+        if completed >= total_probes:
+            break
 
-        for result in chunk_results:
-            if isinstance(result, tuple):
-                ip, port = result
+        current_batch_size = throttler.current_batch
+
+        # Consume next batch from iterator
+        batch_probes = list(itertools.islice(probe_iterator, current_batch_size))
+
+        if not batch_probes:
+            break
+
+        # Create tasks for this batch (no individual semaphore, batch size controls concurrency)
+        tasks = [_tcp_connect(ip, port, timeout, semaphore=None) for ip, port in batch_probes]
+
+        # Run batch
+        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Analyze results
+        timeouts = 0
+        for res in batch_results:
+            if res is None:
+                timeouts += 1
+            elif isinstance(res, tuple):
+                ip, port = res
                 results[ip].append(port)
 
-        completed += len(chunk)
+        # Update AIMD controller
+        event = throttler.update(len(batch_probes), timeouts)
+
+        completed += len(batch_probes)
+
         if progress_callback:
-            progress_callback(completed, total_probes, "TCP sweep")
+            # Add dynamic feedback to UI
+            speed = f"{throttler.current_batch}/s"
+            icon = ""
+            if event == "THROTTLE_DOWN":
+                icon = "▼"
+            elif event == "ACCELERATE":
+                icon = "▲"
+
+            desc = f"TCP sweep {icon} ({speed})"
+            progress_callback(completed, total_probes, desc)
 
     duration = time.time() - start_time
     open_count = sum(len(ports) for ports in results.values())

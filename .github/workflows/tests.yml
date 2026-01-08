@@ -31,8 +31,8 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements-dev.lock
           pip install -e .
-          pip install pytest pytest-cov pytest-asyncio rich
 
       - name: Run tests with coverage
         run: |
@@ -94,8 +94,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y nmap
+          pip install -r requirements-dev.lock
           pip install -e .
-          pip install pytest pytest-cov
 
       - name: Run tests and get coverage
         id: coverage

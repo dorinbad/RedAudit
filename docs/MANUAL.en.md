@@ -198,6 +198,18 @@ Disable with `--no-deep-scan`.
 
 SmartScan uses an identity score (default threshold: 3; full mode uses 4) to decide whether to escalate.
 
+### Smart-Throttle (Adaptive Congestion Control)
+
+RedAudit v4.4+ introduces **Smart-Throttle**, an adaptive rate limiting system for HyperScan operations.
+
+- **Algorithm**: Uses an Additive Increase, Multiplicative Decrease (AIMD) algorithm similar to TCP congestion control.
+- **Behavior**:
+  - Starts with a conservative batch size (500 packets).
+  - **Accelerates** (Linearly) when the network is stable (timeouts < 1%).
+  - **Throttles** (Multiplicatively) when congestion is detected (timeouts > 5%).
+- **Benefit**: Prevents packet loss on SOHO/VPN networks while maximizing speed on Data Center links (scaling up to 20,000 pps).
+- **Feedback**: Real-time scan speed and throttling events (▼/▲) are displayed in the progress bar.
+
 VPN classification is handled by asset typing heuristics (gateway MAC/IP, VPN ports, hostname patterns) after scanning.
 
 **Parallel Execution:**

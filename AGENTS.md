@@ -81,10 +81,10 @@ pre-commit run --all-files
 
 ### Dependency Setup (Critical)
 
-Before running tests, ensure dev dependencies are installed to avoid missing package errors (e.g., `pytest-asyncio`):
+Before running tests, ensure dev dependencies are installed to avoid missing package errors:
 
 ```bash
-pip install -e ".[dev]"
+pip install -r requirements-dev.lock && pip install -e .
 ```
 
 This repo's `.pre-commit-config.yaml` includes:

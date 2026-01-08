@@ -8,7 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
-## [Unreleased]
+## [4.4.0] - 2026-01-08
+
+### Added
+
+- **Smart-Throttle (Adaptive Congestion Control)**: New AIMD-based rate limiting algorithm (`SmartThrottle`) in HyperScan. It dynamically adjusts the `batch_size` based on network timeout feedback, preventing packet loss on congested networks and accelerating on stable ones.
+- **Generator-based Targeting**: Refactored `HyperScan` to use lazy generators for target expansion. This allows scanning massive networks (e.g., /16 subnets) without multi-gigabyte memory spikes.
+- **Scalability Improvements**: Optimized `auditor_scan.py` host collection to streamline processing of large result sets.
+- **Distributed Architecture Design**: Added design documentation for future Controller/Worker distributed scanning mode.
+- **AsyncIO Migration Investigation**: Completed feasibility study for full non-blocking I/O migration (deferred to v5.0).
+
+### Changed
+
+- **HyperScan**: Now uses `itertools.product` for probe generation.
+- **UI**: detailed progress bar in HyperScan now shows real-time throttling status (▼/▲) and effective speed.
 
 ## [4.3.3] - 2026-01-08
 

@@ -177,53 +177,48 @@ class AuditorScan:
         discovery = self.results.get("net_discovery") or {}
         ips = set()
 
-        def _add_ip(value):
-            ip = sanitize_ip(value)
-            if ip:
-                ips.add(ip)
-                # v4.0: Ensure Host object exists in scanner
-                self.scanner.get_or_create_host(ip)
+        def _add_safe(val):
+            if val:
+                s = sanitize_ip(val)
+                if s:
+                    ips.add(s)
 
+        # Collect from all sources
         for ip in discovery.get("alive_hosts", []) or []:
-            _add_ip(ip)
-        for host in discovery.get("arp_hosts", []) or []:
-            if isinstance(host, dict):
-                _add_ip(host.get("ip"))
-        for host in discovery.get("netbios_hosts", []) or []:
-            if isinstance(host, dict):
-                _add_ip(host.get("ip"))
-        for host in discovery.get("upnp_devices", []) or []:
-            if isinstance(host, dict):
-                _add_ip(host.get("ip"))
-        for svc in discovery.get("mdns_services", []) or []:
-            if isinstance(svc, dict):
-                _add_ip(svc.get("ip"))
-        for srv in discovery.get("dhcp_servers", []) or []:
-            if isinstance(srv, dict):
-                _add_ip(srv.get("ip"))
+            _add_safe(ip)
+
+        # Flatten dictionary-based lists
+        for key in ["arp_hosts", "netbios_hosts", "upnp_devices", "dhcp_servers", "mdns_services"]:
+            for item in discovery.get(key, []) or []:
+                if isinstance(item, dict):
+                    _add_safe(item.get("ip"))
+
+        # HyperScan keys
         for ip in (discovery.get("hyperscan_tcp_hosts") or {}).keys():
-            _add_ip(ip)
+            _add_safe(ip)
 
         if not ips:
             return []
 
-        networks = []
-        for net in target_networks or []:
+        # Filter by target networks if specified
+        if target_networks:
             try:
-                networks.append(ipaddress.ip_network(str(net), strict=False))
-            except Exception:
-                continue
+                # Compile networks once
+                networks = [ipaddress.ip_network(str(n), strict=False) for n in target_networks]
 
-        if networks:
-            filtered = []
-            for ip in ips:
-                try:
-                    ip_obj = ipaddress.ip_address(ip)
-                except Exception:
-                    continue
-                if any(ip_obj in net for net in networks if net.version == ip_obj.version):
-                    filtered.append(ip)
-            return sorted(filtered)
+                filtered = []
+                for ip in ips:
+                    try:
+                        ip_obj = ipaddress.ip_address(ip)
+                        # Check strict overlaps
+                        if any(ip_obj in net for net in networks):
+                            filtered.append(ip)
+                    except ValueError:
+                        continue
+                return sorted(filtered)
+            except Exception:
+                # Fallback if network parsing fails
+                return sorted(ips)
 
         return sorted(ips)
 

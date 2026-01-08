@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "redaudit"
-version = "4.3.3"
+version = "4.4.0"
 description = "CLI tool for structured network auditing and hardening on Kali/Debian systems"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -42,6 +42,7 @@ dependencies = [
     "netifaces>=0.11.0",
     "requests>=2.31.0",
     "jinja2>=3.1.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +50,6 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.23.0",
     "coverage>=7.0.0",
-    "rich>=13.0.0",
     "black>=23.0.0",
     "flake8>=6.0.0",
     "pre-commit>=3.0.0",
