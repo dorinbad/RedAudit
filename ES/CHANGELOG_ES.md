@@ -10,7 +10,14 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
-## [4.3.1] - 2026-01-08
+## [4.3.2] - 2026-01-08
+
+### Corregido
+
+- **Integridad del Lanzamiento**: Corregido desajuste de versión entre `pyproject.toml` y `VERSION` que causó fallos de CI en v4.3.1.
+- **Mantenimiento**: Este lanzamiento reemplaza a v4.3.1 (que falló las autocomprobaciones de CI).
+
+## [4.3.1] - 2026-01-08 [RETIRADO]
 
 ### Corregido
 

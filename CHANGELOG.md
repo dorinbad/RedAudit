@@ -10,7 +10,14 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
-## [4.3.1] - 2026-01-08
+## [4.3.2] - 2026-01-08
+
+### Fixed
+
+- **Release Integrity**: Fixed version mismatch between `pyproject.toml` and `VERSION` file that caused CI failures in v4.3.1.
+- **Maintenance**: This release supersedes v4.3.1 (which failed CI self-checks).
+
+## [4.3.1] - 2026-01-08 [YANKED]
 
 ### Fixed
 
