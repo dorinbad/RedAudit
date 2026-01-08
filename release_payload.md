@@ -1,14 +1,13 @@
-# RedAudit v4.4.0 - Enterprise Scalability & Smart-Throttle
+# RedAudit v4.4.1 - CI Parity and Python 3.9 Compatibility
 
-[![Ver en Español](https://img.shields.io/badge/Ver%20en%20Español-red?style=flat-square)](https://github.com/dorinbadea/RedAudit/blob/v4.4.0/docs/releases/RELEASE_NOTES_v4.4.0_ES.md)
+[![Ver en Espanol](https://img.shields.io/badge/Ver%20en%20Espanol-red?style=flat-square)](https://github.com/dorinbadea/RedAudit/blob/v4.4.1/docs/releases/RELEASE_NOTES_v4.4.1_ES.md)
 
-This release supersedes v4.3.3 and brings major scalability upgrades for large network assessments.
+This release improves CI reliability for the Python 3.9 matrix and adds a local parity script to reproduce CI locally.
 
 ## Key Highlights
 
-- **Smart-Throttle**: AIMD-based adaptive rate limiting that prevents packet loss on congested networks.
-- **Generator-based Targeting**: Scan /16 or larger subnets with minimal RAM usage (<100MB).
-- **Scalability Fixes**: Optimized report generation and memory management for high-host-count scans.
-- **Distributed Design**: New architecture docs for upcoming multi-node support.
+- Python 3.9 compatible dev lock markers for flake8 and pytest transitive dependencies to avoid resolver conflicts.
+- Local CI parity script `scripts/ci_local.sh` to run pre-commit and pytest across Python 3.9-3.12.
+- Faster unit tests for complete scan flows by disabling HyperScan-first only in tests.
 
-**Full Release Notes**: [RELEASE_NOTES_v4.4.0.md](docs/releases/RELEASE_NOTES_v4.4.0.md)
+**Full Release Notes**: https://github.com/dorinbadea/RedAudit/blob/v4.4.1/docs/releases/RELEASE_NOTES_v4.4.1.md
