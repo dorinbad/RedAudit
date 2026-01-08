@@ -922,23 +922,29 @@ class TestWizardRedTeam(unittest.TestCase):
         app.print_status = lambda *_args, **_kwargs: None
         app.setup_encryption = lambda *args, **kwargs: None
 
-        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 0, 0, 0, 1])
+        app.ask_choice_with_back = Mock(side_effect=[1, 0, 0, 0, 1, 1, 0, 0, 0, 1])
         app.ask_choice = Mock(side_effect=[3, 1])
         app.ask_number = Mock(side_effect=["all", 6])
         app.ask_yes_no = Mock(
             side_effect=[
-                False,
-                False,
-                True,
-                True,
-                False,
-                False,
+                False,  # Rate limit
+                False,  # Low impact
+                True,  # Masscan
+                True,  # Active L2
+                True,  # Kerberos
+                False,  # Advanced Net Discovery
+                False,  # Webhook
+                True,  # Save defaults
+                True,  # Start audit
             ]
+            + [False] * 10  # Safe padding
         )
 
         with (
             patch("builtins.input", side_effect=["", "", "", "/tmp/users.txt"]),
             patch("redaudit.core.auditor.os.geteuid", return_value=0),
+            patch("shutil.which", return_value="/usr/bin/mocktool"),
+            patch("redaudit.core.auditor.is_nuclei_available", return_value=True),
         ):
             app._configure_scan_interactive(defaults_for_run={})
 
@@ -953,15 +959,18 @@ class TestWizardRedTeam(unittest.TestCase):
         app.print_status = lambda *_args, **_kwargs: None
         app.setup_encryption = lambda *args, **kwargs: None
 
-        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 0, 0, 0, 1])
+        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 1, 0, 0, 0, 1])
         app.ask_choice = Mock(side_effect=[3, 1])
         app.ask_number = Mock(side_effect=["all", 6])
         app.ask_yes_no = Mock(
             side_effect=[
-                False,
-                False,
-                False,
+                False,  # Rate limit
+                False,  # Low impact
+                False,  # Webhook
+                True,  # Save defaults
+                True,  # Start audit
             ]
+            + [False] * 10  # Safe padding
         )
 
         with (

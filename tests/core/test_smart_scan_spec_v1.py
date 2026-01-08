@@ -171,26 +171,32 @@ def test_budget_exhausted(patch_common):
                     res1 = auditor.scan_host_ports("1.1.1.1")
                     res2 = auditor.scan_host_ports("1.1.1.2")
                     res3 = auditor.scan_host_ports("1.1.1.3")
-    assert deep.call_count == 2
-    assert res1["smart_scan"]["deep_scan_executed"] is True
-    assert res2["smart_scan"]["deep_scan_executed"] is True
-    assert res3["smart_scan"]["deep_scan_executed"] is False
+    # In v4.2, deep_scan_host is decoupled and not called directly by scan_host_ports
+    # But budget should still be reserved and suggestions made
+    assert res1["smart_scan"].get("deep_scan_suggested") is True
+    assert res2["smart_scan"].get("deep_scan_suggested") is True
+    assert res3["smart_scan"].get("deep_scan_suggested") is None
     assert "budget_exhausted" in res3["smart_scan"]["reasons"]
 
 
 def test_budget_zero_no_limit(patch_common):
     auditor = MockAuditor()
     auditor.config["deep_scan_budget"] = 0
-    nm = _make_nmap_mock(
-        ports={"tcp": {80: {"name": "http", "product": "", "version": "", "cpe": []}}}
-    )
-    with patch.object(auditor.scanner, "run_nmap_scan", return_value=(nm, "")):
+    ports = {"tcp": {80: {"name": "http", "product": "", "version": "", "cpe": []}}}
+
+    def _nmap_side_effect(target, _args):
+        return _make_nmap_mock(ip=target, ports=ports), ""
+
+    with patch.object(auditor.scanner, "run_nmap_scan", side_effect=_nmap_side_effect):
         with patch.object(auditor, "_should_trigger_deep", return_value=(True, ["identity_weak"])):
             with patch.object(auditor, "_run_udp_priority_probe", return_value=False):
                 with patch.object(auditor, "deep_scan_host", return_value={}) as deep:
+                    res_list = []
                     for i in range(5):
-                        auditor.scan_host_ports(f"1.1.1.{10 + i}")
-    assert deep.call_count == 5
+                        res = auditor.scan_host_ports(f"1.1.1.{10 + i}")
+                        res_list.append(res)
+    for res in res_list:
+        assert res["smart_scan"].get("deep_scan_suggested") is True
 
 
 def test_stealth_no_udp_reorder(patch_common):
@@ -303,7 +309,12 @@ def test_budget_thread_safe_under_concurrency(patch_common):
                         res1 = fut1.result(timeout=2.0)
                         res2 = fut2.result(timeout=2.0)
 
-    assert deep.call_count == 1
+    # Only one should have deep_scan_suggested=True
+    s1 = res1["smart_scan"].get("deep_scan_suggested")
+    s2 = res2["smart_scan"].get("deep_scan_suggested")
+    assert (s1 and not s2) or (s2 and not s1)
+
+    # The other should have budget_exhausted
     assert "budget_exhausted" in (res1.get("smart_scan") or {}).get(
         "reasons", []
     ) or "budget_exhausted" in (res2.get("smart_scan") or {}).get("reasons", [])
@@ -320,18 +331,3 @@ def test_escalation_reason_in_json(patch_common):
                 with patch.object(auditor, "deep_scan_host", return_value={"os_detected": "Linux"}):
                     res = auditor.scan_host_ports("1.1.1.1")
     assert isinstance(res["smart_scan"]["escalation_reason"], str)
-
-
-def test_escalation_path_recorded(patch_common):
-    auditor = MockAuditor()
-    nm = _make_nmap_mock(
-        ports={"tcp": {80: {"name": "http", "product": "", "version": "", "cpe": []}}}
-    )
-    with patch.object(auditor.scanner, "run_nmap_scan", return_value=(nm, "")):
-        with patch.object(auditor, "_should_trigger_deep", return_value=(True, ["identity_weak"])):
-            with patch.object(auditor, "_run_udp_priority_probe", return_value=False):
-                with patch.object(auditor, "deep_scan_host", return_value={"os_detected": "Linux"}):
-                    res = auditor.scan_host_ports("1.1.1.1")
-    path = res["smart_scan"]["escalation_path"] or ""
-    assert "nmap_initial" in path
-    assert "tcp_aggressive" in path

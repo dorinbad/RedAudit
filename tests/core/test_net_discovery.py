@@ -443,7 +443,9 @@ def test_arp_scan_active_parsing():
     """Test arp_scan_active parsing (lines 414-426)."""
     with patch("shutil.which", return_value="/bin/arp-scan"):
         out = "1.2.3.4\taa:bb:cc:dd:ee:ff\tVendor Name"
-        with patch("redaudit.core.net_discovery._run_cmd", return_value=(0, out, "")):
+        with patch(
+            "redaudit.core.net_discovery._run_cmd_suppress_stderr", return_value=(0, out, "")
+        ):
             res = arp_scan_active()
             assert res["hosts"][0]["vendor"] == "Vendor Name"
 

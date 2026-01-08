@@ -174,19 +174,20 @@ Host script results:
         netdiscover_scan("192.168.1.0/24", interface="eth0", active=True)
         pass
 
-    @patch("redaudit.core.net_discovery.CommandRunner")
+    @patch("redaudit.core.net_discovery._run_cmd_suppress_stderr")
     @patch("shutil.which")
-    def test_run_arp_scan_active(self, mock_which, mock_runner_cls):
+    def test_run_arp_scan_active(self, mock_which, mock_run_cmd):
         """Test the robust arp-scan wrapper."""
-        mock_runner = MagicMock()
-        mock_runner_cls.return_value = mock_runner
         mock_which.return_value = "/usr/bin/arp-scan"
 
-        mock_runner.run.return_value.returncode = 0
-        mock_runner.run.return_value.stdout = """
+        mock_run_cmd.return_value = (
+            0,
+            """
 192.168.1.200\t00:11:22:33:44:55\tVendorA
 192.168.1.201\t00:11:22:33:44:56\tVendorB
-        """
+            """,
+            "",
+        )
 
         result = arp_scan_active(interface="eth0")
         hosts = result.get("hosts", [])
