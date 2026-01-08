@@ -2015,3 +2015,71 @@ def test_run_complete_scan_no_setup(tmp_path):
                         auditor.run_complete_scan()
                         assert "net_discovery" in auditor.results
                         assert auditor.results["net_discovery"]["alive_hosts"] == ["1.1.1.1"]
+
+
+# =============================================================================
+# Consolidated Coverage Tests for v4.4.3
+# =============================================================================
+
+
+class TestLowImpactEnrichment(unittest.TestCase):
+    """Targeted coverage tests for _run_low_impact_enrichment (v4.4.3)."""
+
+    def setUp(self):
+        self.auditor = MockAuditorScan()
+        self.auditor.config["low_impact_enrichment"] = True
+        self.auditor.config["net_discovery_snmp_community"] = "public"
+
+    def test_run_low_impact_enrichment_dns_success(self):
+        """Cover lines 468-469: Successful DNS reverse lookup."""
+        with patch(
+            "redaudit.core.auditor_scan.socket.gethostbyaddr",
+            return_value=("test-host.local", [], []),
+        ):
+            # Pass thread logic
+            with patch("threading.Thread"):
+                pass
+
+        with patch(
+            "redaudit.core.auditor_scan.socket.gethostbyaddr",
+            return_value=("test-host.local", [], []),
+        ):
+            with (
+                patch("redaudit.core.auditor_scan.socket.socket"),
+                patch("redaudit.core.auditor_scan.shutil.which", return_value=None),
+            ):
+                signals = self.auditor._run_low_impact_enrichment("192.168.1.1")
+
+        assert signals.get("dns_reverse") == "test-host.local"
+
+    def test_run_low_impact_enrichment_mdns_build_exception(self):
+        """Cover lines 480-482: Exception during mDNS query build."""
+        with patch(
+            "redaudit.core.hyperscan._build_mdns_query", side_effect=Exception("Build Error")
+        ):
+            with patch("redaudit.core.auditor_scan.socket.socket") as mock_socket:
+                mock_socket.return_value.recvfrom.side_effect = TimeoutError()
+
+                with patch(
+                    "redaudit.core.auditor_scan.socket.gethostbyaddr",
+                    side_effect=Exception("No DNS"),
+                ):
+                    with patch("redaudit.core.auditor_scan.shutil.which", return_value=None):
+                        self.auditor._run_low_impact_enrichment("192.168.1.2")
+
+    def test_run_low_impact_enrichment_snmp_success(self):
+        """Cover lines 538-544: SNMP output parsing."""
+        self.auditor.extra_tools["dig"] = None
+        mock_runner = MagicMock()
+        mock_runner.run.return_value.stdout = 'SNMPv2-MIB::sysDescr.0 = STRING: "My Router v1.0"'
+
+        with patch("redaudit.core.auditor_scan.CommandRunner", return_value=mock_runner):
+            with patch("redaudit.core.auditor_scan.shutil.which", return_value="/usr/bin/snmpwalk"):
+                with patch(
+                    "redaudit.core.auditor_scan.socket.gethostbyaddr",
+                    side_effect=Exception("No DNS"),
+                ):
+                    with patch("redaudit.core.auditor_scan.socket.socket"):
+                        signals = self.auditor._run_low_impact_enrichment("192.168.1.3")
+
+        assert signals.get("snmp_sysDescr") == "My Router v1.0"
