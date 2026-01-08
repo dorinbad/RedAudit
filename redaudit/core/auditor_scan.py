@@ -539,7 +539,7 @@ class AuditorScan:
                     line = text.splitlines()[0].strip()
                     if "=" in line:
                         line = line.split("=", 1)[1].strip()
-                    line = re.sub(r"^[A-Z][A-Z0-9\\-]*:\\s*", "", line).strip().strip('"')
+                    line = re.sub(r"^[A-Z][A-Z0-9-]*:\s*", "", line).strip().strip('"')
                     if line:
                         signals["snmp_sysDescr"] = line[:255]
         except Exception:
