@@ -10,6 +10,15 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-01-08
+
+### Corregido
+
+- **Regresiones de Tests CI**: Resueltos desajustes de mocks y alineación de arquitectura para tests de Wizard, Net Discovery y Smart Scan Spec V1.
+  - Parcheado `_run_cmd_suppress_stderr` en tests de net discovery.
+  - Actualizados tests de aceptación Deep Scan para reflejar arquitectura desacoplada v4.2.
+  - Corregido `StopIteration` en tests interactivos del wizard ampliando inputs mockeados.
+
 ## [4.3.0] - 2026-01-07
 
 ### Añadido
