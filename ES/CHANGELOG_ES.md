@@ -8,6 +8,21 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.4.1] - 2026-01-08
+
+### Añadido
+
+- Script de paridad local `scripts/ci_local.sh` para ejecutar pre-commit y pytest en Python 3.9-3.12.
+
+### Corregido
+
+- El lock de desarrollo en Python 3.9 ahora selecciona versiones compatibles de iniconfig, pytest-asyncio, markdown-it-py, pycodestyle y pyflakes para evitar conflictos de resolución.
+- El lock de runtime ahora selecciona una versión de markdown-it-py compatible con Python 3.9 al ejecutarse en 3.9.
+
+### Cambiado
+
+- Los tests de flujos completos de escaneo desactivan HyperScan-first para mantener el tiempo de ejecución acotado sin afectar el comportamiento en producción.
+
 ## [4.4.0] - 2026-01-08
 
 ### Añadido
