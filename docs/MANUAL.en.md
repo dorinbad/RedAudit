@@ -49,9 +49,7 @@ RedAudit is an **automated network auditing framework** for Linux (Debian-family
 
 ```bash
 git clone https://github.com/dorinbadea/RedAudit.git
-cd RedAudit
-sudo bash redaudit_install.sh
-source ~/.zshrc  # or ~/.bashrc
+cd RedAudit && sudo bash redaudit_install.sh
 ```
 
 The installer:
@@ -68,6 +66,19 @@ git clone https://github.com/dorinbadea/RedAudit.git
 cd RedAudit
 sudo apt install nmap whatweb nikto tcpdump tshark exploitdb python3-nmap python3-cryptography
 sudo python3 -m redaudit --help
+```
+
+### Developer / Reproducible Install (via pip)
+
+For exact dependency matching (Phase 5 compliance), use a virtual environment:
+
+```bash
+git clone https://github.com/dorinbadea/RedAudit.git
+cd RedAudit
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.lock
+pip install .
 ```
 
 TLS deep checks require `testssl.sh`. The installer installs it from GitHub as part of the core toolchain.

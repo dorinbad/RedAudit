@@ -49,9 +49,7 @@ RedAudit es un **framework de auditoría de red automatizado** para Linux (famil
 
 ```bash
 git clone https://github.com/dorinbadea/RedAudit.git
-cd RedAudit
-sudo bash redaudit_install.sh
-source ~/.zshrc  # o ~/.bashrc
+cd RedAudit && sudo bash redaudit_install.sh
 ```
 
 El instalador:
@@ -68,6 +66,19 @@ git clone https://github.com/dorinbadea/RedAudit.git
 cd RedAudit
 sudo apt install nmap whatweb nikto tcpdump tshark exploitdb python3-nmap python3-cryptography
 sudo python3 -m redaudit --help
+```
+
+### Instalación de Desarrollador / Reproducible (vía pip)
+
+Para coincidencia exacta de dependencias (cumplimiento Fase 5), usa un entorno virtual:
+
+```bash
+git clone https://github.com/dorinbadea/RedAudit.git
+cd RedAudit
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.lock
+pip install .
 ```
 
 Los checks TLS profundos requieren `testssl.sh`. El instalador lo instala desde GitHub como parte del toolchain principal.
