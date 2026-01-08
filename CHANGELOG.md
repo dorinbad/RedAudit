@@ -8,7 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
-## [4.4.2] - 2026-01-08
+## [4.4.3] - 2026-01-08
+
+### Fixed
+
+- **mDNS Log Noise**: Suppressed excessive `TimeoutError` tracebacks in `_run_low_impact_enrichment` by handling them as expected behavior (debug level logging).
+- **Agentless Verification**: Fixed data loss where `Host` dataclass objects were not correctly handled during index creation and fingerprint merging, ensuring agentless probe results are properly attached to hosts.
+- **SNMP Logic**: Fixed regex syntax in `_run_low_impact_enrichment` for safer SNMP parsing.
+
+### Improved
+
+- **Test Coverage**: Added targeted unit tests for `redaudit/core/auditor_scan.py` covering mDNS/DNS/SNMP fallback paths and exception handling.
 
 ### Fixed
 
