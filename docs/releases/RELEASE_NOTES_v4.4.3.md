@@ -4,7 +4,7 @@
 
 This hotfix release addresses critical log noise from mDNS probes, fixes a data loss bug in agentless verification due to type mismatches, and increases test coverage for core scan components.
 
-## 🐛 Fixes
+## Fixes
 
 * **mDNS Log Noise Suppressed**:
   * Previously, the mDNS probe in `_run_low_impact_enrichment` dumped full `TimeoutError` tracebacks to the logs when hosts did not respond.
@@ -17,7 +17,7 @@ This hotfix release addresses critical log noise from mDNS probes, fixes a data 
 * **Safer SNMP Parsing**:
   * Corrected a regex syntax error in the SNMP `sysDescr` parser that could cause failures when stripping type prefixes (e.g., `STRING:`).
 
-## 🧪 Technical Improvements
+## Technical Improvements
 
 * **Increased Test Coverage**: Added targeted unit tests for `auditor_scan.py` covering failure paths for DNS, mDNS, and SNMP enrichment.
 * **Consolidated Tests**: New tests have been integrated into `test_auditor_core.py` to maintain a cleaner test architecture.

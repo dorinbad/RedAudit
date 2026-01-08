@@ -4,7 +4,7 @@
 
 Esta versión de hotfix soluciona el ruido crítico en los registros de las sondas mDNS, corrige un error de pérdida de datos en la verificación sin agentes debido a incompatibilidades de tipos, y aumenta la cobertura de pruebas para los componentes principales de escaneo.
 
-## 🐛 Correcciones
+## Correcciones
 
 * **Supresión de Ruido en Registros mDNS**:
   * Anteriormente, la sonda mDNS en `_run_low_impact_enrichment` volcaba trazas completas de `TimeoutError` en los registros cuando los hosts no respondían.
@@ -17,7 +17,7 @@ Esta versión de hotfix soluciona el ruido crítico en los registros de las sond
 * **Análisis SNMP Más Seguro**:
   * Se corrigió un error de sintaxis regex en el analizador SNMP `sysDescr` que podía causar fallos al eliminar prefijos de tipo (ej. `STRING:`).
 
-## 🧪 Mejoras Técnicas
+## Mejoras Técnicas
 
 * **Aumento de Cobertura de Pruebas**: Se añadieron pruebas unitarias específicas para `auditor_scan.py` cubriendo rutas de fallo para el enriquecimiento DNS, mDNS y SNMP.
 * **Pruebas Consolidadas**: Las nuevas pruebas se han integrado en `test_auditor_core.py` para mantener una arquitectura de pruebas más limpia.
