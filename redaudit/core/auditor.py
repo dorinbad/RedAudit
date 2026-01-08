@@ -824,9 +824,17 @@ class InteractiveNetworkAuditor:
                                 from redaudit.core.verify_vuln import filter_nuclei_false_positives
 
                                 host_agentless = {}
-                                for host in self.results.get("hosts", []) or []:
-                                    ip = host.get("ip")
-                                    agentless = host.get("agentless_fingerprint") or {}
+                                host_agentless = {}
+                                # v4.4.3 Fix: Use 'results' (local) instead of self.results['hosts'] (empty)
+                                # and handle Host objects correctly
+                                for host in results:
+                                    if isinstance(host, dict):
+                                        ip = host.get("ip")
+                                        agentless = host.get("agentless_fingerprint") or {}
+                                    else:
+                                        ip = getattr(host, "ip", None)
+                                        agentless = getattr(host, "agentless_fingerprint", {}) or {}
+
                                     if ip and agentless:
                                         host_agentless[ip] = agentless
                                 findings, suspected = filter_nuclei_false_positives(
@@ -926,14 +934,26 @@ class InteractiveNetworkAuditor:
                         # Ensure host is a dict (it might be a Pydantic model in some contexts, but usually dict here)
                         # If it's an object, we can't easily set findings unless we convert or use setattr
                         # Assuming dict based on usage in reporter.py
-                        ip = host.get("ip")
+                        # Ensure we handle both dicts and Host objects
+                        if isinstance(host, dict):
+                            ip = host.get("ip")
+                        else:
+                            ip = getattr(host, "ip", None)
+
                         if ip and ip in findings_map:
-                            host["findings"] = findings_map[ip]
+                            if isinstance(host, dict):
+                                host["findings"] = findings_map[ip]
+                            else:
+                                setattr(host, "findings", findings_map[ip])
 
                         # Recalculate and update
                         # This works because calculate_risk_score now looks at host["findings"]
                         new_risk = calculate_risk_score(host)
-                        host["risk_score"] = new_risk
+
+                        if isinstance(host, dict):
+                            host["risk_score"] = new_risk
+                        else:
+                            setattr(host, "risk_score", new_risk)
 
             except Exception as e:
                 if self.logger:
