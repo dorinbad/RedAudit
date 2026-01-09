@@ -364,10 +364,8 @@ fi
 # Create the specific source command message based on the shell
 if [[ "$RC_FILE" == *".zshrc" ]]; then
     SOURCE_CMD="source ~/.zshrc"
-    SHELL_NAME="Zsh"
 else
     SOURCE_CMD="source ~/.bashrc"
-    SHELL_NAME="Bash"
 fi
 
 echo ""
@@ -392,10 +390,14 @@ if [[ "$LANG_CODE" == "es" ]]; then
     echo "   $SOURCE_CMD"
     echo ""
     echo "(O simplemente abre una nueva terminal)"
+    echo ""
+    echo "$MSG_USAGE"
 else
     echo ""
     echo "IMPORTANT: To use 'redaudit' immediately, run:"
     echo "   $SOURCE_CMD"
     echo ""
     echo "(Or simply open a new terminal)"
+    echo ""
+    echo "$MSG_USAGE"
 fi
