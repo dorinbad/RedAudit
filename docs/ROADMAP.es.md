@@ -43,7 +43,7 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | **Web App Vuln Scan (ZAP)** | ✅ Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
 | **Parallel Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
 | **MAC Privado Indicator** | 🚧 Planificado | Detectar MACs localmente administrados (bit 2 del primer byte) y mostrar "(MAC privado)". |
-| **Separación Deep Scan** | 🚧 Planificado | Extraer Deep Scan de `scan_host_ports()` como fase independiente completa. |
+| **Separación Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan extraído de `scan_host_ports()` como fase independiente `run_deep_scans_concurrent()`. |
 | **Red Team → Agentless** | 🚧 Planificado | Pasar resultados SMB/LDAP de Red Team a Agentless Verify. |
 | **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 automáticamente. |
 | **Wizard UX: Personalizado** | 🚧 Planificado | Mejorar lógica del wizard Personalizado. |

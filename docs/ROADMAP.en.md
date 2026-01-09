@@ -50,7 +50,7 @@ Optimizations following the "fast discovery, targeted fingerprint" pattern:
 | **Web App Vuln Scan (ZAP)** | ✅ Done (v4.2.0) | Integrated OWASP ZAP for web app spidering. |
 | **Parallel Deep Scan** | ✅ Done (v4.2.0) | Decoupled Deep Scan with up to 50 threads and multi-bar UI. |
 | **Private MAC Indicator** | 🚧 Planned | Detect locally-administered MACs (bit 2 of first byte) and show "(private MAC)". |
-| **Deep Scan Separation** | 🚧 Planned | Extract Deep Scan from `scan_host_ports()` as fully independent phase. |
+| **Deep Scan Separation** | ✅ Done (v4.2.0) | Deep Scan extracted from `scan_host_ports()` as independent phase `run_deep_scans_concurrent()`. |
 | **Red Team → Agentless** | 🚧 Planned | Pass SMB/LDAP results from Red Team to Agentless Verify. |
 | **Wizard UX: Phase 0 auto** | 🚧 Planned | Auto-enable Phase 0 in Exhaustive profile. |
 | **Wizard UX: Custom** | 🚧 Planned | Improve Custom wizard logic. |
