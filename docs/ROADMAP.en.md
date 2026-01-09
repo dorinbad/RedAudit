@@ -41,6 +41,22 @@ Optimizations following the "fast discovery, targeted fingerprint" pattern:
 | **Masscan Port Reuse** | ✅ Done | Pre-scan uses masscan ports if already discovered. |
 | **CVE Lookup Reordering** | ✅ Done | CVE correlation moved after Vuln Scan + Nuclei. |
 
+### v4.2 Pipeline Optimizations ✅ (Released in v4.2.0)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Enhanced Parallel Progress UI** | ✅ Done (v4.2.0) | Multi-bar Rich progress bars for Deep Scan and parallel phases. |
+| **Web App Vuln Scan (sqlmap)** | ✅ Done (v4.1.0) | Integrated `sqlmap` with configurable level/risk in wizard. |
+| **Web App Vuln Scan (ZAP)** | ✅ Done (v4.2.0) | Integrated OWASP ZAP for web app spidering. |
+| **Parallel Deep Scan** | ✅ Done (v4.2.0) | Decoupled Deep Scan with up to 50 threads and multi-bar UI. |
+| **Private MAC Indicator** | 🚧 Planned | Detect locally-administered MACs (bit 2 of first byte) and show "(private MAC)". |
+| **Deep Scan Separation** | 🚧 Planned | Extract Deep Scan from `scan_host_ports()` as fully independent phase. |
+| **Red Team → Agentless** | 🚧 Planned | Pass SMB/LDAP results from Red Team to Agentless Verify. |
+| **Wizard UX: Phase 0 auto** | 🚧 Planned | Auto-enable Phase 0 in Exhaustive profile. |
+| **Wizard UX: Custom** | 🚧 Planned | Improve Custom wizard logic. |
+| **HyperScan naming cleanup** | 🚧 Planned | Rename functions for clearer purpose. |
+| **Session log detail** | 🚧 Planned | Session log too sparse vs cli.txt. Add more detail. |
+
 ### v4.0 Architecture Refactoring ✅ (Released in v3.10.2)
 
 Internal refactoring using Strangler Fig pattern:

@@ -34,17 +34,19 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | **Reutilización puertos masscan** | ✅ Hecho | Pre-scan usa puertos de masscan si ya estaban descubiertos. |
 | **CVE Lookup reordenado** | ✅ Hecho | CVE correlation movido después de Vuln Scan + Nuclei. |
 
-### v4.2 Optimizaciones Pipeline (Prioridad: Media)
+### v4.2 Optimizaciones Pipeline ✅ (Liberado en v4.2.0)
 
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
-| **Enhanced Parallel Progress UI** | 🚧 Planificado | Barras de progreso multi-hilo elegantes con Rich para TODAS las fases paralelas: Vuln Scan (testssl/nikto/sqlmap/whatweb), nmap fingerprinting, Nuclei, **Red Team Scan** (masscan/SMB/LDAP/Kerberos). Sin ruido innecesario, UX limpia. |
-| **MAC Privado Indicator** | 🚧 Planificado | Detectar MACs localmente administrados (bit 2 del primer byte) y mostrar "(MAC privado)" en lugar de "(guess)" para mayor claridad. |
-| **Web App Vuln Scan** | 🚧 Planificado | Integración completa de sqlmap (`--level=3 --risk=3`) para detección SQLi avanzada y ZAP para XSS en aplicaciones web (JuiceShop, DVWA, etc.). |
-| **Separación Deep Scan** | 🚧 Planificado | Extraer Deep Scan de `scan_host_ports()` como fase independiente. |
+| **Enhanced Parallel Progress UI** | ✅ Hecho (v4.2.0) | Barras de progreso multi-hilo con Rich para Deep Scan y fases paralelas. |
+| **Web App Vuln Scan (sqlmap)** | ✅ Hecho (v4.1.0) | Integración `sqlmap` con niveles configurables (level/risk) en wizard. |
+| **Web App Vuln Scan (ZAP)** | ✅ Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
+| **Parallel Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
+| **MAC Privado Indicator** | 🚧 Planificado | Detectar MACs localmente administrados (bit 2 del primer byte) y mostrar "(MAC privado)". |
+| **Separación Deep Scan** | 🚧 Planificado | Extraer Deep Scan de `scan_host_ports()` como fase independiente completa. |
 | **Red Team → Agentless** | 🚧 Planificado | Pasar resultados SMB/LDAP de Red Team a Agentless Verify. |
 | **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 automáticamente. |
-| **Wizard UX: Personalizado** | 🚧 Planificado | Mejorar lógica del wizard Personalizado. Añadir opción de estrategia de escaneo de puertos (masscan rápido vs HyperScan exhaustivo) sin redundancia. |
+| **Wizard UX: Personalizado** | 🚧 Planificado | Mejorar lógica del wizard Personalizado. |
 | **HyperScan naming cleanup** | 🚧 Planificado | Renombrar funciones para clarificar propósito. |
 | **Session log mejorado** | 🚧 Planificado | Session log muy escueto vs cli.txt manual. Añadir más detalle. |
 
@@ -77,15 +79,15 @@ herencia legacy eliminada y compatibilidad gestionada por componentes con adapta
 | **Distribución PyPI** | 🚧 Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
 | **Motor de Plugins** | 🚧 Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
 
-### Fase 6: Escalabilidad Empresarial (>50 Hosts) (Prioridad: Media)
+### Fase 6: Escalabilidad Empresarial (>50 Hosts) ✅ (Liberado en v4.4.0)
 
 Foco: Eliminar cuellos de botella en grandes redes corporativas.
 
 | Característica | Estado | Descripción |
 | :--- | :--- | :--- |
-| **Targeting basado en Generadores** | 🚧 Planificado | Cambiar de listas de IPs a streaming por generadores. Evita picos de memoria al cargar grandes subredes (/16). |
-| **Reporte JSON en Streaming** | 🚧 Planificado | Escribir el reporte a disco incrementalmente en lugar de construir un DOM masivo en memoria. Esencial para reportes >500MB. |
-| **Smart-Throttle (Control Adaptativo)** | 🚧 Planificado | Ajuste dinámico de batch size basado en AIMD (Smart-Throttle). Detecta estrés/pérdida de paquetes y auto-regula el escaneo para evitar DoS. [Ver Especificación](design/smart_throttle_spec.md) |
+| **Targeting basado en Generadores** | ✅ Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. Evita picos de memoria en subredes grandes (/16). |
+| **Reporte JSON en Streaming** | 🚧 Planificado | Escritura incremental para reportes >500MB. |
+| **Smart-Throttle (AIMD)** | ✅ Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. Ajusta batch_size dinámicamente. |
 
 ---
 
