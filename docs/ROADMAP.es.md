@@ -42,13 +42,13 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | **Web App Vuln Scan (sqlmap)** | ✅ Hecho (v4.1.0) | Integración `sqlmap` con niveles configurables (level/risk) en wizard. |
 | **Web App Vuln Scan (ZAP)** | ✅ Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
 | **Parallel Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
-| **MAC Privado Indicator** | 🚧 Planificado | Detectar MACs localmente administrados (bit 2 del primer byte) y mostrar "(MAC privado)". |
+| **MAC Privado Indicator** | ✅ Hecho (v4.2.0) | Detecta MACs localmente administrados (bit 2 del primer byte) y muestra "(MAC privado)". |
 | **Separación Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan extraído de `scan_host_ports()` como fase independiente `run_deep_scans_concurrent()`. |
-| **Red Team → Agentless** | 🚧 Planificado | Pasar resultados SMB/LDAP de Red Team a Agentless Verify. |
-| **Wizard UX: Phase 0 auto** | 🚧 Planificado | En perfil Exhaustivo, activar Phase 0 automáticamente. |
-| **Wizard UX: Personalizado** | 🚧 Planificado | Mejorar lógica del wizard Personalizado. |
-| **HyperScan naming cleanup** | 🚧 Planificado | Renombrar funciones para clarificar propósito. |
-| **Session log mejorado** | 🚧 Planificado | Session log muy escueto vs cli.txt manual. Añadir más detalle. |
+| **Red Team → Agentless** | ✅ Hecho (v4.2.0) | Hallazgos SMB/LDAP de Red Team pasan a Agentless Verify. |
+| **Wizard UX: Phase 0 auto** | ✅ Hecho (v4.2.0) | Phase 0 se activa automáticamente en perfil Exhaustivo. |
+| **Wizard UX: Personalizado** | ✅ Hecho (v4.2.0) | Lógica mejorada para elección entre Masscan vs HyperScan. |
+| **HyperScan naming cleanup** | ✅ Hecho (v4.2.0) | Funciones renombradas para clarificar propósito. |
+| **Session log mejorado** | ✅ Hecho (v4.2.0) | Session log enriquecido con más detalle que cli.txt. |
 
 ### v4.0 Refactorización Arquitectónica ✅ (Liberado en v3.10.2)
 
