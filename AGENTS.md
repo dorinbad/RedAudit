@@ -327,8 +327,6 @@ git push origin main --tags
 
 Prefer `gh` (GitHub CLI):
 
-Prefer `gh` (GitHub CLI):
-
 1. **Prepare Payload**:
    Copy the content from the English release notes (`docs/releases/RELEASE_NOTES_vX.Y.Z.md`) into a temporary file `release_payload.md`.
 
@@ -340,15 +338,14 @@ Prefer `gh` (GitHub CLI):
 
 **CRITICAL**: The GitHub Release **MUST** contain the full text body (payload), not just the title.
 
-- Copy the content from the English release notes (`docs/releases/RELEASE_NOTES_vX.Y.Z.md`).
-- **Always** include the language badge at the top pointing to the Spanish version.
-- **Verify** that the release page is not empty after publishing.
+### Release Payload Standard
 
-When the release notes include an EN->ES badge/link, point it at the tagged file, e.g.:
-
-```text
-https://github.com/dorinbadea/RedAudit/blob/vX.Y.Z/docs/releases/RELEASE_NOTES_vX.Y.Z_ES.md
-```
+- **Bilingual Badge**: Always include the "Ver en Español" / "View in English" badge at the very top.
+- **Absolute URLs**: Use absolute URLs for all badge links (relative links break on the GitHub release page).
+  - Example: `https://github.com/dorinbadea/RedAudit/blob/vX.Y.Z/docs/releases/RELEASE_NOTES_vX.Y.Z_ES.md`
+- **Emoji-Free**: No emojis in the payload. Maintain a professional tone.
+- **Structure**: Organize content into `## Summary`, `## Added`, `## Improved`, `## Fixed`, `## Testing`, and `## Upgrade`.
+- **Verify**: Ensure the release body is correctly rendered and links work before finalization.
 
 ## Sudo / Paths / Ownership (Critical for UX)
 
