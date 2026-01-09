@@ -79,9 +79,17 @@ Internal refactoring using Strangler Fig pattern:
 **Status**: Completed in v4.0.0. Composition-first orchestration via `AuditorRuntime`, with
 legacy inheritance removed and compatibility handled by adapter-backed components.
 
-### Red Team Extensions (Priority: Medium)
+### Phase 4: Authenticated Scanning (Priority: Medium)
 
-*(No medium priority items currently pending)*
+Focus: Enable deep scanning with credentials for complete internal audits.
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Secrets Management** | 🚧 Planned | Design secrets architecture (Vault/Keyring integration). Never store credentials in plaintext. |
+| **SSH Support** | 🚧 Planned | Implement SSH credentials via Paramiko/native SSH. Support key-based and interactive password auth. |
+| **SMB/WMI Support** | 🚧 Planned | Implement SMB/WMI credentials via Impacket for authenticated Windows audits. |
+| **SNMP v3 Support** | 🚧 Planned | Add SNMP community string support for v1/v2c/v3 (authPriv). |
+| **Lynis Integration** | 🚧 Planned | Integrate with lynis for remote Linux auditing (hardening checks). |
 
 ### Infrastructure (Priority: High)
 
