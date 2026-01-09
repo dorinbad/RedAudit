@@ -116,9 +116,9 @@ fi
 if $INSTALL; then
     apt update && apt install -y $EXTRA_PKGS || { echo "$MSG_APT_ERR"; exit 1; }
 
-    # Python packages for authenticated scanning (Phase 4: SSH/SMB)
+    # Python packages for authenticated scanning (Phase 4: SSH/SMB/SNMP)
     echo "[INFO] Installing Python packages for authenticated scanning..."
-    pip3 install --quiet paramiko impacket || echo "[WARN] pip install failed for paramiko/impacket (optional)"
+    pip3 install --quiet paramiko impacket pysnmp || echo "[WARN] pip install failed (optional auth packages)"
 
     # -------------------------------------------
     # 2b) Install testssl.sh from GitHub
