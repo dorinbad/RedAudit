@@ -16,7 +16,17 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 
 ### Seguridad e Integraciones (Prioridad: Alta)
 
-*(No hay elementos de prioridad alta pendientes actualmente)*
+### Fase 4: Escaneo Autenticado (Prioridad: Media)
+
+Habilitar enumeración basada en credenciales para cobertura de auditoría más profunda.
+
+| Tarea | Estado | Descripción |
+| :--- | :--- | :--- |
+| **P4.1 Arquitectura de Gestión de Secretos** | Planificado | Diseñar almacenamiento seguro de credenciales (integración Vault/Keyring). |
+| **P4.2 Soporte Credenciales SSH** | Planificado | Añadir Paramiko/SSH nativo con autenticación por clave y contraseña para auditoría remota Linux. |
+| **P4.3 Soporte Credenciales SMB/WMI** | Planificado | Integrar Impacket para enumeración autenticada en Windows. |
+| **P4.4 Soporte SNMP v3** | Planificado | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
+| **P4.5 Integración Lynis** | Planificado | Comprobaciones CIS hardening en Linux remoto vía SSH. |
 
 ### v4.3 Mejoras al Risk Score (Prioridad: Alta) ✅
 
@@ -62,9 +72,17 @@ Refactorización interna utilizando el patrón Strangler Fig:
 **Estado**: Completado en v4.0.0. Orquestación por composición vía `AuditorRuntime`, con
 herencia legacy eliminada y compatibilidad gestionada por componentes con adaptador.
 
-### Extensiones Red Team (Prioridad: Media)
+### Phase 4: Escaneo Autenticado (Prioridad: Media)
 
-*(No hay elementos de prioridad media pendientes actualmente)*
+Foco: Habilitar escaneo profundo con credenciales para auditorías internas completas.
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Gestión de Secretos** | 🚧 Planificado | Diseñar arquitectura de secretos (integración Vault/Keyring). Nunca almacenar credenciales en texto plano. |
+| **Soporte SSH** | 🚧 Planificado | Implementar credenciales SSH via Paramiko/SSH nativo. Soportar auth por clave y password interactivo. |
+| **Soporte SMB/WMI** | 🚧 Planificado | Implementar credenciales SMB/WMI via Impacket para auditorías Windows autenticadas. |
+| **Soporte SNMP v3** | 🚧 Planificado | Añadir soporte community strings SNMP v1/v2c/v3 (authPriv). |
+| **Integración Lynis** | 🚧 Planificado | Integrar con lynis para auditoría remota de Linux (hardening checks). |
 
 ### Infraestructura (Prioridad: Alta)
 
@@ -88,6 +106,16 @@ Foco: Eliminar cuellos de botella en grandes redes corporativas.
 | **Targeting basado en Generadores** | ✅ Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. Evita picos de memoria en subredes grandes (/16). |
 | **Reporte JSON en Streaming** | 🚧 Planificado | Escritura incremental para reportes >500MB. |
 | **Smart-Throttle (AIMD)** | ✅ Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. Ajusta batch_size dinámicamente. |
+
+### Fase 7: Pulido UX y Cosméticos (Prioridad: Baja)
+
+Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
+
+| Tarea | Estado | Descripción |
+| :--- | :--- | :--- |
+| **P7.1 Completitud Barras de Progreso** | Planificado | Asegurar que las barras de vuln scan lleguen al 100% incluso cuando los objetivos dan timeout. |
+| **P7.2 Visibilidad Timeout Nikto** | Planificado | Mostrar indicador "timeout" en lugar de progreso estancado cuando Nikto excede el umbral. |
+| **P7.3 Reporte JSON en Streaming** | Planificado | Escritura incremental para reportes >500MB en redes muy grandes. |
 
 ---
 

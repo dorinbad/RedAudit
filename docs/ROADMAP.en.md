@@ -16,7 +16,17 @@ These features are approved but **not yet implemented** in the codebase.
 
 ### Security & Integrations (Priority: High)
 
-*(No high priority items currently pending)*
+### Phase 4: Authenticated Scanning (Priority: Medium)
+
+Enable credential-based enumeration for deeper audit coverage.
+
+| Task | Status | Description |
+| :--- | :--- | :--- |
+| **P4.1 Secrets Management Architecture** | Planned | Design secure credential storage (Vault/Keyring integration). |
+| **P4.2 SSH Credential Support** | Planned | Add Paramiko/native SSH key-based and password auth for remote Linux auditing. |
+| **P4.3 SMB/WMI Credential Support** | Planned | Integrate Impacket for authenticated Windows enumeration. |
+| **P4.4 SNMP v3 Support** | Planned | Add SNMPv3 auth (noAuthNoPriv, authNoPriv, authPriv). |
+| **P4.5 Lynis Integration** | Planned | Remote Linux CIS hardening checks via SSH. |
 
 ### v4.3 Risk Score & Performance Improvements (Priority: High) ✅
 
@@ -97,6 +107,16 @@ Focus: Removing bottlenecks for large corporate networks.
 | **Distributed Scanning** | ✅ Done | Completed Design Document for Controller/Worker architecture. |
 | **AsyncIO Migration** | ✅ Done | Completed Feasibility Investigation. Deferred full migration to v5.0. |
 | **Smart-Throttle (Adaptive Congestion)** | ✅ Done | AIMD-based dynamic batch size adjustment (Smart-Throttle). Detects network stress/packet loss and auto-throttles scans to prevent DoS. [View Spec](design/smart_throttle_spec.md) |
+
+### Phase 7: UX Polish & Cosmetics (Priority: Low)
+
+Minor improvements identified during v4.4.0 Gold Master validation.
+
+| Task | Status | Description |
+| :--- | :--- | :--- |
+| **P7.1 Progress Bar Completion** | Planned | Ensure vuln scan progress bars reach 100% even when targets timeout. |
+| **P7.2 Nikto Timeout Visibility** | Planned | Show "timeout" indicator instead of stalled progress when Nikto exceeds threshold. |
+| **P7.3 Streaming JSON Report** | Planned | Incremental write for reports >500MB on very large networks. |
 
 ---
 
