@@ -1518,6 +1518,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
         process.poll.side_effect = [None, 0, 0, 0]
 
         process.stdout.__iter__.return_value = ["Cloning..."]
+        process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
         process.wait.return_value = 0
 
@@ -1562,6 +1563,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
         process.poll.side_effect = [None, 0, 0, 0]
 
         process.stdout.__iter__.return_value = []
+        process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
         process.wait.return_value = 0
 
@@ -1917,6 +1919,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
             process.poll.return_value = 0
 
             process.stdout.__iter__.return_value = []
+            process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
             process.wait.return_value = 0
 
@@ -1978,6 +1981,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
             process.wait.return_value = 0
 
             process.stdout.__iter__.return_value = []
+            process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
             mock_popen.return_value = process
 
@@ -2085,6 +2089,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
             process.wait.return_value = 0
 
             process.stdout.__iter__.return_value = []
+            process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
             mock_popen.return_value = process
 
@@ -2127,6 +2132,7 @@ class TestPerformGitUpdateDeep(unittest.TestCase):
             process.wait.return_value = 0
 
             process.stdout.__iter__.return_value = []
+            process.stdout.readline.return_value = ""  # CRITICAL: prevents infinite loop
 
             mock_popen.return_value = process
 
