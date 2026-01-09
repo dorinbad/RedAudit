@@ -18,7 +18,7 @@
 
 - Status: best-effort internal review (v4.4.4).
 - No known critical vulnerabilities identified in the current review.
-- Coverage is high (overall ~90%); strong confidence in core logic and most edge cases.
+- Coverage is high (overall ~87%); strong confidence in core logic and most edge cases.
 
 ## Observed Controls
 
@@ -47,4 +47,4 @@
 
 - pre-commit: passed.
 - pytest: 1465 passed, 1 skipped.
-- Coverage: ~90%.
+- Coverage: ~87%.

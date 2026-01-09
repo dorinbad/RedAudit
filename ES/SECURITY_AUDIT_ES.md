@@ -18,7 +18,7 @@
 
 - Estado: revisión interna best-effort (v4.4.4).
 - No se han identificado vulnerabilidades críticas conocidas en esta revisión.
-- La cobertura es alta (~90%); alta confianza en la lógica core y la mayoría de casos límite.
+- La cobertura es alta (~87%); alta confianza en la lógica core y la mayoría de casos límite.
 
 ## Controles Observados
 
@@ -47,4 +47,4 @@
 
 - pre-commit: passed.
 - pytest: 1465 passed, 1 skipped.
-- Cobertura: ~90%.
+- Cobertura: ~87%.
