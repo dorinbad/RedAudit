@@ -157,6 +157,22 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | `--no-agentless-verify` | Desactivar verificación sin agente (sobrescribe defaults) |
 | `--agentless-verify-max-targets N` | Límite de objetivos para verificación (1-200, defecto: 20) |
 
+### Escaneo Autenticado (Fase 4)
+
+| Flag | Descripción |
+| :--- | :--- |
+| `--auth-provider {env,keyring}` | Backend de credenciales (defecto: keyring/llavero) |
+| `--ssh-user USER` | Usuario SSH |
+| `--ssh-key PATH` | Ruta a Clave Privada |
+| `--ssh-trust-keys` | Auto-aceptar claves desconocidas de hosts (¡Precaución!) |
+| `--smb-user USER` | Usuario SMB/Windows |
+| `--smb-pass PASS` | Contraseña SMB (preferible vía asistente/env) |
+| `--smb-domain DOMAIN` | Dominio Windows |
+| `--snmp-user USER` | Usuario SNMPv3 |
+| `--snmp-auth-proto {SHA,MD5...}` | Protocolo Auth SNMPv3 |
+| `--snmp-priv-proto {AES,DES...}` | Protocolo Privacidad SNMPv3 |
+| `--lynis` | Habilitar auditoría de hardening con Lynis (requiere SSH) |
+
 ### Reportes e Integración
 
 | Flag | Descripción |

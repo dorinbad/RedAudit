@@ -375,6 +375,29 @@ TRANSLATIONS = {
         "hyperscan_auto": "Auto — Detect best method (SYN if root, else connect)",
         "hyperscan_connect": "Connect — Standard TCP (no root required, stealthier)",
         "hyperscan_syn": "SYN — Raw packets (requires root + scapy, faster)",
+        # v4.0: Authenticated Scanning
+        "auth_scan_q": "Enable authenticated scanning (SSH/SMB)?",
+        "auth_ssh_configure_q": "Configure SSH credentials?",
+        "auth_ssh_user_prompt": "SSH User",
+        "auth_method_key": "Private Key",
+        "auth_method_pass": "Password",
+        "auth_method_q": "Authentication Method",
+        "auth_ssh_key_prompt": "Private Key Path",
+        "auth_ssh_pass_hint": "Input SSH password (hidden)",
+        "auth_scan_start": "Starting authenticated scan on {0} as user {1}...",
+        "auth_scan_connected": "Authentication successful ({1})! Gathering host info...",
+        "auth_scan_failed": "Authenticated scan failed: {0}",
+        # v4.2: SMB
+        "auth_smb_configure_q": "Configure Windows/SMB credentials?",
+        "auth_smb_user_prompt": "Windows User (e.g. Administrator)",
+        "auth_smb_domain_prompt": "Windows Domain (optional, ENTER for none)",
+        "auth_smb_pass_hint": "Input Windows/SMB password (hidden)",
+        "auth_save_keyring_q": "Save credentials to system keyring for future scans?",
+        # v4.3: SNMP v3
+        "auth_snmp_configure_q": "Configure SNMP v3 credentials (network devices)?",
+        "auth_snmp_user_prompt": "SNMP v3 Username",
+        "auth_snmp_auth_proto_q": "Auth Protocol:",
+        "auth_snmp_priv_proto_q": "Privacy Protocol:",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -741,6 +764,28 @@ TRANSLATIONS = {
         "hyperscan_auto": "Auto — Detectar mejor método (SYN si root, sino connect)",
         "hyperscan_connect": "Connect — TCP estándar (no requiere root, más sigiloso)",
         "hyperscan_syn": "SYN — Paquetes raw (requiere root + scapy, más rápido)",
+        # v4.0: Authenticated Scanning
+        "auth_scan_q": "¿Activar escaneo autenticado (SSH)?",
+        "auth_ssh_user_prompt": "Usuario SSH",
+        "auth_method_key": "Clave Privada",
+        "auth_method_pass": "Contraseña",
+        "auth_method_q": "Método de autenticación",
+        "auth_ssh_key_prompt": "Ruta a la Clave Privada",
+        "auth_ssh_pass_hint": "Introduce contraseña SSH (oculta)",
+        "auth_scan_start": "Iniciando escaneo autenticado en {0} como usuario {1}...",
+        "auth_scan_connected": "¡Autenticación SSH exitosa! Recopilando información del host...",
+        "auth_scan_failed": "Fallo en escaneo autenticado: {0}",
+        # v4.2: SMB
+        "auth_smb_configure_q": "¿Configurar credenciales Windows/SMB?",
+        "auth_smb_user_prompt": "Usuario Windows (ej. Administrador)",
+        "auth_smb_domain_prompt": "Dominio Windows (opcional, ENTER para ninguno)",
+        "auth_smb_pass_hint": "Introduce contraseña Windows/SMB (oculta)",
+        "auth_save_keyring_q": "¿Guardar credenciales en el anillo de claves del sistema para futuros escaneos?",
+        # v4.3: SNMP v3
+        "auth_snmp_configure_q": "¿Configurar credenciales SNMP v3 (dispositivos de red)?",
+        "auth_snmp_user_prompt": "Nombre de usuario SNMP v3",
+        "auth_snmp_auth_proto_q": "Protocolo de Autenticación:",
+        "auth_snmp_priv_proto_q": "Protocolo de Privacidad:",
     },
 }
 

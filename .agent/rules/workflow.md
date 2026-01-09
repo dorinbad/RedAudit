@@ -1,3 +1,7 @@
+---
+trigger: manual
+---
+
 # RedAudit: Engineering Workflow (Agent Prompt)
 
 This file is reusable "initial context" for contributors working on RedAudit. The goal is a clean timeline, consistent docs, reliable releases, and no surprises in CI.

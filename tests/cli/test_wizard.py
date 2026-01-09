@@ -922,9 +922,10 @@ class TestWizardRedTeam(unittest.TestCase):
         app.print_status = lambda *_args, **_kwargs: None
         app.setup_encryption = lambda *args, **kwargs: None
 
-        app.ask_choice_with_back = Mock(side_effect=[1, 0, 0, 0, 1, 1, 0, 0, 0, 1])
-        app.ask_choice = Mock(side_effect=[3, 1])
-        app.ask_number = Mock(side_effect=["all", 6])
+        # Sequence: ScanMode(1=Normal), Hyperscan(0), Vuln(1=No), CVE(1=No), UDP(0), Topo(0), NetDisc(0=Yes), Auth(1=No), WinVerify(1=No)
+        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 1, 0, 0, 0, 1, 1] + [1] * 20)
+        app.ask_choice = Mock(side_effect=[3, 1] + [0] * 20)
+        app.ask_number = Mock(side_effect=["all", 6] + [5] * 20)
         app.ask_yes_no = Mock(
             side_effect=[
                 False,  # Rate limit
@@ -959,9 +960,10 @@ class TestWizardRedTeam(unittest.TestCase):
         app.print_status = lambda *_args, **_kwargs: None
         app.setup_encryption = lambda *args, **kwargs: None
 
-        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 1, 0, 0, 0, 1])
-        app.ask_choice = Mock(side_effect=[3, 1])
-        app.ask_number = Mock(side_effect=["all", 6])
+        # Sequence: ScanMode(1), Hyperscan(0), Vuln(1), CVE(1), UDP(0), Topo(0), NetDisc(0=Yes), Auth(1=No), WinVerify(1=No)
+        app.ask_choice_with_back = Mock(side_effect=[1, 0, 1, 1, 0, 0, 0, 1, 1] + [1] * 20)
+        app.ask_choice = Mock(side_effect=[3, 1] + [0] * 20)
+        app.ask_number = Mock(side_effect=["all", 6] + [5] * 20)
         app.ask_yes_no = Mock(
             side_effect=[
                 False,  # Rate limit

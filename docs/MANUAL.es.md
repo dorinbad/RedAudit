@@ -103,51 +103,103 @@ RedAudit verifica actualizaciones al iniciar (modo interactivo). Para omitir: `-
 
 ---
 
-## 4. Selector de Perfil del Wizard (v3.9.0+)
+## 4. Guía Completa del Asistente Interactivo (The Wizard)
 
-Al ejecutar `sudo redaudit` en modo interactivo, el asistente pregunta qué perfil de escaneo usar. Los perfiles preconfigurados son:
+El asistente interactivo es la forma recomendada de usar RedAudit. Le guía paso a paso para configurar el escaneo perfecto según sus necesidades.
 
-### Express
+### Flujo de Trabajo
 
-**Caso de uso**: Reconocimiento rápido de hosts vivos.
+1. **Inicio y Actualizaciones:** Al ejecutar `sudo redaudit`, la herramienta verifica automáticamente si hay nuevas versiones (a menos que use `--skip-update-check`).
+2. **Selección de Perfil:** Elija un preset o configure manualmente.
+3. **Configuración de Autenticación:** (Nuevo en v4.0) Configure credenciales SSH/SMB/SNMP para auditorías profundas.
+4. **Confirmación:** Revise el resumen antes de iniciar.
 
-- **Modo**: `fast` (solo descubrimiento de hosts, sin escaneo de puertos)
-- **Features deshabilitadas**: Escaneos de vulnerabilidades, Nuclei, correlación CVE, verificación sin agente
-- **Descubrimiento habilitado**: Topología + Net Discovery
-- **Timing**: Rápido
-- **Preguntas**: Mínimas (prompt de Fase 0, nombre auditor, directorio salida)
-- **Ideal para**: Reconocimiento inicial, contar hosts vivos
+### Perfiles de Escaneo
 
-### Standard
+Los perfiles preconfigurados ajustan docenas de parámetros automáticamente:
 
-**Caso de uso**: Evaluación balanceada de vulnerabilidades.
+#### 1. Express (Rápido / Inventario)
 
-- **Modo**: `normal` (nmap `-F` / top 100 puertos + detección de versiones)
-- **Features**: escaneo web habilitado (whatweb; nikto/testssl solo en full), searchsploit si está disponible, topología + discovery de red
-- **Timing**: Elegido por preset (Stealth/Normal/Agresivo)
-- **Preguntas**: Selección de perfil + timing + prompt de Fase 0 + prompts de auditor/salida
-- **Ideal para**: La mayoría de auditorías de seguridad
+**Objetivo:** Obtener una lista de hosts vivos y sus fabricantes en segundos.
 
-### Exhaustive
+- **Técnica:** Ping Sweep (ICMP/ARP), sin escaneo de puertos.
+- **Ideal para:** Inventario de activos inicial, verificar conectividad.
+- **Tiempo estimado:** < 30s para /24.
 
-**Caso de uso**: Máximo descubrimiento y correlación para evaluaciones exhaustivas.
+#### 2. Standard (Equilibrado / Auditoría General)
 
-- **Modo**: `completo` (todos los 65535 puertos + scripts/detección de SO)
-- **Threads**: MAX (16) o reducido en preset Stealth (2)
-- **UDP**: top 500 puertos para deep scan (solo cuando se activa)
-- **Features habilitadas**: Vulnerabilidades, Topología, Net Discovery, Red Team, Verificación sin agente; Nuclei si está instalado
-- **Correlación CVE**: Habilitada si hay API key de NVD configurada
-- **Timing**: Elegido por preset (Stealth/Normal/Agresivo)
-- **Preguntas**: Prompt de Fase 0 + nombre auditor y directorio (todo lo demás auto-configurado)
-- **Ideal para**: Pentesting, auditorías de cumplimiento, validación pre-producción
+**Objetivo:** Identificar servicios comunes y vulnerabilidades obvias.
 
-### Custom
+- **Técnica:** Top 1000 puertos TCP, detección de versiones y SO.
+- **Web:** Revisa cabeceras y tecnologías básicas (WhatWeb).
+- **Ideal para:** Auditorías regulares, validación de políticas.
 
-**Caso de uso:** Control total sobre todas las opciones de configuración.
+#### 3. Exhaustive (Profundo / Cumplimiento)
 
-- **Comportamiento**: Wizard completo de 8 pasos con navegación atrás
-- **Preguntas**: Modo de escaneo, hilos/retardo + prompt de Fase 0, vulnerabilidades (incl. SQLMap/ZAP), CVE, salida/auditor, UDP/topología, discovery/red team, verificación sin agente + webhook
-- **Ideal para**: Escaneos personalizados con requisitos específicos
+**Objetivo:** Encontrar TODO.
+
+- **Técnica:** 65535 puertos TCP, escaneo UDP, scripts de vulnerabilidad (NSE).
+- **Web:** Escaneo completo (Nikto, Nuclei, SSL).
+- **Ideal para:** Pentesting, compliance (PCI-DSS, ISO 27001), validación pre-producción.
+
+#### 4. Custom (A Medida)
+
+**Objetivo:** Control total.
+
+- **Permite configurar:**
+  - **Modo Nmap:** Fast/Normal/Full/Stealth.
+  - **Rendimiento:** Hilos (1-16) y Rate Limit (segundos entre peticiones).
+  - **Topología & Discovery:** Activar/desactivar mapeo L2 y protocolos de descubrimiento (mDNS, UPnP, etc.).
+  - **UDP:** Activar escaneo UDP (lento pero exhaustivo).
+  - **Autenticación:** Configurar credenciales para escaneo autenticado.
+  - **Verificación Sin Agente:** Habilitar/deshabilitar comprobaciones ligeras.
+  - **Web & Vulnerabilidades:** Activar/desactivar Nikto, Nuclei, CVE lookup.
+
+### Menú de Autenticación (Fase 4)
+
+Si selecciona un perfil que lo permita (o Custom), el asistente le preguntará:
+`¿Desea configurar escaneo autenticado? [s/n]`
+
+Si responde **Sí**, accederá al sub-menú de credenciales:
+
+1. **SSH (Linux/Unix):**
+    - Usuario y Contraseña O Clave Privada.
+    - Permite auditoría de paquetes, hardening (Lynis) y configuraciones internas.
+2. **SMB (Windows):**
+    - Usuario, Contraseña y Dominio (opcional).
+    - Permite enumerar usuarios, recursos compartidos y políticas de contraseña.
+3. **SNMP v3 (Red):**
+    - Usuario, Protocolos de Autenticación (MD5/SHA) y Privacidad (DES/AES).
+    - Permite extraer tablas de enrutamiento y configuraciones de dispositivos de red.
+
+**Nota:** Las credenciales se pueden guardar de forma segura en el anillo de claves del sistema (Keyring) para futuros usos.
+
+### Ejemplos de Escenarios (Tutorial)
+
+#### Escenario A: Auditoría Rápida de Inventario
+
+1. Ejecute `sudo redaudit`.
+2. Seleccione **Express**.
+3. Introduzca el rango IP del cliente (ej. `192.168.10.0/24`).
+4. Resultado: En minutos tendrá un `assets.jsonl` con todos los dispositivos vivos y sus fabricantes.
+
+#### Escenario B: Auditoría de Hardening de Servidores Linux
+
+1. Ejecute `sudo redaudit`.
+2. Seleccione **Custom**.
+3. Modo: **Normal**.
+4. Autenticación habilitada: **Sí**.
+    - Configure usuario `root` (o sudoer) y clave SSH.
+5. Habilitar Lynis: **Sí** (si se pregunta o vía flag `--lynis`).
+6. Resultado: El informe incluirá el "Hardening Index" de Lynis y detalles internos de los servidores.
+
+#### Escenario C: Red Team / Stealth
+
+1. Ejecute `sudo redaudit`.
+2. Seleccione **Custom**.
+3. Modo: **Stealth** (reduce velocidad, evita detección IDS simple).
+4. Topología: **Pasiva** (solo escucha, sin ARP agresivo).
+5. Resultado: Mapeo de red con mínima huella de ruido.
 
 ---
 
@@ -234,7 +286,52 @@ controlado.
 
 ---
 
-## 5. Referencia CLI (Completa)
+## 6. Escaneo Autenticado (Fase 4)
+
+RedAudit v4.0+ soporta el escaneo autenticado para obtener datos de alta fidelidad de los hosts objetivo, incluyendo versiones de SO, paquetes instalados y configuraciones.
+
+### Protocolos Soportados
+
+| Protocolo | SO Objetivo | Requisitos | Features de Descubrimiento |
+| :--- | :--- | :--- | :--- |
+| **SSH** | Linux/Unix | Credenciales estándar (contraseña o clave privada) | SO Preciso (kernel), Paquetes Instalados, Hostname, Uptime |
+| **SMB/WMI** | Windows | librería `impacket`, credenciales de Administrador | Versión SO, Dominio/Grupo de Trabajo, Recursos Compartidos, Usuarios |
+
+### Prerrequisitos
+
+- **SSH**: Sin dependencias extra.
+- **SMB/WMI**: Requiere `impacket`.
+
+  ```bash
+  pip install impacket
+  # o
+  sudo apt install python3-impacket
+  ```
+
+### Configuración
+
+#### Interactivo (Wizard)
+
+Cuando se pregunte "¿Habilitar escaneo autenticado (SSH/SMB)?", seleccione Sí. Podrá configurar credenciales SSH y/o SMB. Los ajustes se pueden guardar en un anillo de claves seguro o archivo de configuración.
+
+#### Argumentos CLI
+
+```bash
+# SSH
+sudo redaudit -t 192.168.1.10 --ssh-user root --ssh-key ~/.ssh/id_rsa
+sudo redaudit -t 192.168.1.10 --ssh-user admin --ssh-pass "S3cr3t"
+
+# SMB (Windows)
+sudo redaudit -t 192.168.1.50 --smb-user Administrator --smb-pass "WinPass123" --smb-domain WORKGROUP
+```
+
+### Nota de Seguridad
+
+Las credenciales se usan ÚNICAMENTE para el escaneo y no se almacenan en los reportes. Si se usa la integración con `keyring`, se almacenan en el anillo de claves del sistema.
+
+---
+
+## 7. Referencia CLI (Completa)
 
 Flags verificadas contra `redaudit --help` (v4.3.0):
 
@@ -345,7 +442,7 @@ Flags verificadas contra `redaudit --help` (v4.3.0):
 
 ---
 
-## 6. Artefactos de Salida
+## 8. Artefactos de Salida
 
 Ruta de salida por defecto: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/` o `~/Documentos/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/`
 
@@ -381,7 +478,7 @@ python3 redaudit_decrypt.py /ruta/a/reporte.json.enc
 
 ---
 
-## 7. Modelo de Seguridad
+## 9. Modelo de Seguridad
 
 ### Cifrado
 
@@ -403,7 +500,7 @@ python3 redaudit_decrypt.py /ruta/a/reporte.json.enc
 
 ---
 
-## 8. Integración
+## 10. Integración
 
 ### Ingesta SIEM
 
@@ -430,7 +527,7 @@ done
 
 ---
 
-## 9. Solución de Problemas
+## 11. Solución de Problemas
 
 | Síntoma | Causa | Solución |
 | :--- | :--- | :--- |
@@ -444,7 +541,7 @@ Ver [TROUBLESHOOTING.es.md](TROUBLESHOOTING.es.md) para referencia completa de e
 
 ---
 
-## 10. Herramientas Externas
+## 12. Herramientas Externas
 
 RedAudit orquesta (no modifica ni instala):
 

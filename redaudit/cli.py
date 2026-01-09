@@ -460,6 +460,92 @@ Examples:
         help="Enable additional L2-focused checks that may be noisier (bettercap/scapy sniff; requires root)",
     )
 
+    # v4.0: Authenticated Scanning (Phase 4)
+    auth_group = parser.add_argument_group("Authenticated Scanning")
+    auth_group.add_argument(
+        "--auth-provider",
+        choices=["env", "keyring"],
+        default="keyring",
+        help="Credential provider backend: env (environment vars) or keyring (OS keychain)",
+    )
+    auth_group.add_argument(
+        "--ssh-user",
+        type=str,
+        metavar="USER",
+        help="Default SSH username for authenticated scanning",
+    )
+    auth_group.add_argument(
+        "--ssh-key",
+        type=str,
+        metavar="PATH",
+        help="Path to default SSH private key",
+    )
+    auth_group.add_argument(
+        "--ssh-key-pass",
+        type=str,
+        metavar="PASSPHRASE",
+        help="Passphrase for SSH private key (if encrypted)",
+    )
+    auth_group.add_argument(
+        "--ssh-trust-keys",
+        action="store_true",
+        help="Auto-accept unknown SSH host keys (WARNING: susceptible to MITM)",
+    )
+    # Note: passwords should be passed via env vars or keyring for security
+    auth_group.add_argument(
+        "--smb-user",
+        type=str,
+        metavar="USER",
+        help="Default SMB/Windows username (format: User or DOMAIN\\\\User)",
+    )
+    auth_group.add_argument(
+        "--smb-pass",
+        type=str,
+        metavar="PASSWORD",
+        help="Default SMB/Windows password",
+    )
+    auth_group.add_argument(
+        "--smb-domain",
+        type=str,
+        metavar="DOMAIN",
+        help="Default SMB/Windows domain (overrides DOMAIN\\\\User format)",
+    )
+    auth_group.add_argument(
+        "--snmp-user",
+        type=str,
+        metavar="USER",
+        help="Default SNMP v3 Username",
+    )
+    auth_group.add_argument(
+        "--snmp-auth-proto",
+        choices=["SHA", "MD5", "SHA224", "SHA256", "SHA384", "SHA512"],
+        help="SNMP v3 Auth Protocol",
+    )
+    auth_group.add_argument(
+        "--snmp-auth-pass",
+        type=str,
+        metavar="PASSWORD",
+        help="SNMP v3 Auth Password",
+    )
+    auth_group.add_argument(
+        "--snmp-priv-proto",
+        choices=["AES", "DES", "AES192", "AES256", "3DES"],
+        help="SNMP v3 Privacy Protocol",
+    )
+    auth_group.add_argument(
+        "--snmp-priv-pass",
+        type=str,
+        metavar="PASSWORD",
+        help="SNMP v3 Privacy Password",
+    )
+
+    # v4.3: Lynis Integration
+    parser.add_argument(
+        "--lynis",
+        action="store_true",
+        help="Enable Lynis hardening audit on authenticaticated Linux hosts (requires SSH)",
+    )
+
     # v4.3: HyperScan mode selection
     parser.add_argument(
         "--hyperscan-mode",
@@ -623,6 +709,29 @@ def configure_from_args(app, args) -> bool:
     app.config["net_discovery_kerberos_userlist"] = args.kerberos_userlist
     app.config["net_discovery_active_l2"] = bool(args.redteam_active_l2)
     app.config["nuclei_enabled"] = bool(getattr(args, "nuclei", False))
+
+    # v4.0: Authenticated Scanning
+    app.config["auth_provider"] = getattr(args, "auth_provider", "keyring")
+    app.config["auth_ssh_user"] = getattr(args, "ssh_user", None)
+    app.config["auth_ssh_key"] = getattr(args, "ssh_key", None)
+    app.config["auth_ssh_key_pass"] = getattr(args, "ssh_key_pass", None)
+    app.config["auth_ssh_trust_keys"] = getattr(args, "ssh_trust_keys", False)
+
+    # v4.2: SMB
+    app.config["auth_smb_user"] = getattr(args, "smb_user", None)
+    app.config["auth_smb_pass"] = getattr(args, "smb_pass", None)
+    app.config["auth_smb_domain"] = getattr(args, "smb_domain", None)
+
+    # v4.3: SNMP v3
+    app.config["auth_snmp_user"] = getattr(args, "snmp_user", None)
+    app.config["auth_snmp_auth_proto"] = getattr(args, "snmp_auth_proto", None)
+    app.config["auth_snmp_auth_pass"] = getattr(args, "snmp_auth_pass", None)
+    app.config["auth_snmp_priv_proto"] = getattr(args, "snmp_priv_proto", None)
+    app.config["auth_snmp_priv_pass"] = getattr(args, "snmp_priv_pass", None)
+
+    # v4.3: Lynis
+    app.config["lynis_enabled"] = bool(getattr(args, "lynis", False))
+
     # v4.3: HyperScan mode
     app.config["hyperscan_mode"] = getattr(args, "hyperscan_mode", "auto")
     if not isinstance(args.agentless_verify_max_targets, int) or not (

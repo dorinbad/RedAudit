@@ -50,16 +50,19 @@ class SSHScanner:
     Supports both key-based and password authentication.
     """
 
-    def __init__(self, credential: Credential, timeout: int = 30):
+    def __init__(self, credential: Credential, timeout: int = 30, trust_unknown_keys: bool = False):
         """
         Initialize SSH scanner with credentials.
 
         Args:
             credential: Credential object with SSH authentication details.
             timeout: Connection and command timeout in seconds.
+            trust_unknown_keys: If True, auto-accept unknown host keys (AutoAddPolicy).
+                                If False, reject unknown keys (RejectPolicy). Default: False.
         """
         self.credential = credential
         self.timeout = timeout
+        self.trust_unknown_keys = trust_unknown_keys
         self._client = None
         self._connected = False
         self._paramiko = None
@@ -94,7 +97,12 @@ class SSHScanner:
             self.close()
 
         self._client = self._paramiko.SSHClient()  # type: ignore
-        self._client.set_missing_host_key_policy(self._paramiko.AutoAddPolicy())  # type: ignore
+        self._client.load_system_host_keys()  # type: ignore
+
+        if self.trust_unknown_keys:
+            self._client.set_missing_host_key_policy(self._paramiko.AutoAddPolicy())  # type: ignore
+        else:
+            self._client.set_missing_host_key_policy(self._paramiko.RejectPolicy())  # type: ignore
 
         try:
             connect_kwargs = {

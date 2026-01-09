@@ -58,6 +58,8 @@ dev = [
 auth = [
     "paramiko>=3.0.0",
     "keyring>=24.0.0",
+    "impacket>=0.11.0",
+    "pysnmp>=6.0.0",
 ]
 
 [project.urls]

@@ -49,6 +49,7 @@ class TestSSHScanner(unittest.TestCase):
         scanner = SSHScanner.__new__(SSHScanner)
         scanner.credential = credential or self.credential
         scanner.timeout = 30
+        scanner.trust_unknown_keys = False
         scanner._connected = False
         scanner._client = None
         scanner._paramiko = MagicMock()

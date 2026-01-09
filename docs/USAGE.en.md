@@ -149,6 +149,22 @@ Grouped by operational function. Verified against the current codebase.
 | `--no-agentless-verify` | Disable agentless verification (overrides defaults) |
 | `--agentless-verify-max-targets N` | Cap agentless verification targets (1-200, default: 20) |
 
+### Authenticated Scanning (Phase 4)
+
+| Flag | Description |
+| :--- | :--- |
+| `--auth-provider {env,keyring}` | Credential backend (default: keyring) |
+| `--ssh-user USER` | SSH Username |
+| `--ssh-key PATH` | Private Key path |
+| `--ssh-trust-keys` | Auto-accept unknown host keys (Caution!) |
+| `--smb-user USER` | SMB/Windows Username |
+| `--smb-pass PASS` | SMB Password (preferred via wizard/env) |
+| `--smb-domain DOMAIN` | Windows Domain |
+| `--snmp-user USER` | SNMPv3 Username |
+| `--snmp-auth-proto {SHA,MD5...}` | SNMPv3 Auth Protocol |
+| `--snmp-priv-proto {AES,DES...}` | SNMPv3 Privacy Protocol |
+| `--lynis` | Enable Lynis hardening audit (requires SSH) |
+
 ### Reporting & Integration
 
 | Flag | Description |

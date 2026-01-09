@@ -464,7 +464,7 @@ async def _udp_probe(
             sock.setblocking(False)
             sock.settimeout(timeout)
 
-            await loop.sock_sendto(sock, payload, (ip, port))
+            await loop.sock_sendto(sock, payload, (ip, port))  # type: ignore[attr-defined]
 
             try:
                 data = await asyncio.wait_for(loop.sock_recv(sock, 1024), timeout=timeout)

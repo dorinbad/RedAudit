@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Optional
 import os
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,13 @@ class Credential:
     password: Optional[str] = None
     private_key: Optional[str] = None
     private_key_passphrase: Optional[str] = None
-    domain: Optional[str] = None
+    domain: Optional[str] = None  # For SMB/Windows
+
+    # SNMP v3 Fields
+    snmp_auth_proto: Optional[str] = None  # SHA, MD5, etc.
+    snmp_auth_pass: Optional[str] = None  # Auth Key
+    snmp_priv_proto: Optional[str] = None  # AES, DES, etc.
+    snmp_priv_pass: Optional[str] = None  # Privacy Key
 
     def __repr__(self) -> str:
         """Redact sensitive fields in repr."""
@@ -162,10 +169,35 @@ class KeyringCredentialProvider(CredentialProvider):
             logger.debug("No keyring credential found for %s/%s", protocol, target)
             return None
 
-        # Get associated password/key
-        password = self._keyring.get_password(service_name, f"{target}:password")
-        if not password:
-            password = self._keyring.get_password(service_name, "default:password")
+        # Get associated data (stored as JSON blob in password field for v4.1+)
+        # For backward compatibility, we check if it's JSON; if not, treat as password.
+
+        # We use a single 'secret' entry for all fields to handle passphrase properly.
+        secret_blob = self._keyring.get_password(service_name, f"{target}:secret")
+        if not secret_blob:
+            secret_blob = self._keyring.get_password(service_name, "default:secret")
+
+        # Legacy fallback (v4.0 MVP stored fields separately, but password was just password)
+        legacy_password = None
+        if not secret_blob:
+            legacy_password = self._keyring.get_password(service_name, f"{target}:password")
+            if not legacy_password:
+                legacy_password = self._keyring.get_password(service_name, "default:password")
+
+        # Parse secret
+        password = legacy_password
+        key_passphrase = None
+
+        if secret_blob:
+            try:
+                data = json.loads(secret_blob)
+                if isinstance(data, dict):
+                    password = data.get("password")
+                    key_passphrase = data.get("key_passphrase")
+                    # We can also store other fields here if needed
+            except json.JSONDecodeError:
+                # If not JSON, assume it's a raw password (migration)
+                password = secret_blob
 
         private_key = self._keyring.get_password(service_name, f"{target}:key")
         if not private_key:
@@ -181,6 +213,7 @@ class KeyringCredentialProvider(CredentialProvider):
             username=username,
             password=password,
             private_key=private_key,
+            private_key_passphrase=key_passphrase,
             domain=domain,
         )
 
@@ -195,10 +228,19 @@ class KeyringCredentialProvider(CredentialProvider):
         try:
             self._keyring.set_password(service_name, f"{key_prefix}:username", credential.username)
 
+            # Store secret data as JSON
+            secret_data = {}
             if credential.password:
-                self._keyring.set_password(
-                    service_name, f"{key_prefix}:password", credential.password
-                )
+                secret_data["password"] = credential.password
+            if credential.private_key_passphrase:
+                secret_data["key_passphrase"] = credential.private_key_passphrase
+
+            if secret_data:
+                secret_blob = json.dumps(secret_data)
+                self._keyring.set_password(service_name, f"{key_prefix}:secret", secret_blob)
+                # v4.1: Also set legacy password for compatibility if needed? No, Phase 4 is new.
+                # But to avoid confusion, maybe clear old password field if exists to prefer secret.
+                # For now just set secret.
 
             if credential.private_key:
                 self._keyring.set_password(

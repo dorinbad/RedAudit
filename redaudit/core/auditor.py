@@ -1288,6 +1288,11 @@ class InteractiveNetworkAuditor:
             )
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
+
+            # v4.5.0: Ask for Authentication (Phase 4)
+            auth_config = self.ask_auth_config()
+            self.config.update(auth_config)
+
             # v3.9.0: Apply timing settings
             self.config["nmap_timing"] = timing_nmap_template
             if timing_threads_boost:
@@ -1373,6 +1378,10 @@ class InteractiveNetworkAuditor:
             # v3.9.0: Ask auditor name and output dir for all profiles
             self._ask_auditor_and_output_dir(defaults_for_run)
 
+            # v4.5.0: Ask for Authentication (Phase 4)
+            auth_config = self.ask_auth_config()
+            self.config.update(auth_config)
+
             # Rate limiting - already asked in profile selection loop
             self.rate_limit_delay = timing_delay
             # v4.3: HyperScan mode based on timing (Stealth = connect, else auto)
@@ -1384,7 +1393,7 @@ class InteractiveNetworkAuditor:
 
         # PROFILE 3: Custom - Full wizard with 8 steps (original behavior)
         # v3.8.1: Wizard step machine for "< Volver" / "< Go Back" navigation
-        TOTAL_STEPS = 8
+        TOTAL_STEPS = 9
         step = 1
 
         # Store choices for navigation (allows going back and reusing previous values)
@@ -1904,9 +1913,108 @@ class InteractiveNetworkAuditor:
                 continue
 
             # ═══════════════════════════════════════════════════════════════════
-            # STEP 8: Windows Verification & Webhook
+            # STEP 8: Authenticated Scanning (Phase 4)
             # ═══════════════════════════════════════════════════════════════════
             elif step == 8:
+                auth_options = [
+                    self.ui.t("yes_option") + " — SSH",
+                    self.ui.t("no_option"),
+                ]
+                # Default: No, unless cli arg provided
+                has_cli_auth = bool(
+                    self.config.get("auth_ssh_user") or self.config.get("auth_ssh_key")
+                )
+                default_idx = 0 if has_cli_auth else 1
+                default_idx = wizard_state.get("auth_idx", default_idx)
+
+                choice = self.ask_choice_with_back(
+                    self.ui.t("auth_scan_q"),
+                    auth_options,
+                    default_idx,
+                    step_num=step,
+                    total_steps=TOTAL_STEPS,
+                )
+                if choice == self.WIZARD_BACK:
+                    step -= 1
+                    continue
+
+                wizard_state["auth_idx"] = choice
+
+                if choice == 0:
+                    # User
+                    default_user = self.config.get("auth_ssh_user") or "root"
+                    u = input(
+                        f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('auth_ssh_user_prompt')} [{default_user}]: "
+                    ).strip()
+                    self.config["auth_ssh_user"] = u if u else default_user
+
+                    # Method
+                    method_opts = [
+                        self.ui.t("auth_method_key"),
+                        self.ui.t("auth_method_pass"),
+                    ]
+                    # Default: key if present, else pass if present, else key
+                    def_method = 0
+                    if not self.config.get("auth_ssh_key") and self.config.get("auth_ssh_pass"):
+                        def_method = 1
+
+                    m_choice = self.ask_choice(self.ui.t("auth_method_q"), method_opts, def_method)
+
+                    if m_choice == 0:
+                        # Key
+                        default_key = self.config.get("auth_ssh_key") or expand_user_path(
+                            "~/.ssh/id_rsa"
+                        )
+                        k = input(
+                            f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('auth_ssh_key_prompt')} [{default_key}]: "
+                        ).strip()
+                        self.config["auth_ssh_key"] = expand_user_path(k if k else default_key)
+                        self.config["auth_ssh_pass"] = None
+
+                        # Passphrase for key?
+                        import getpass
+
+                        print(
+                            f"{self.ui.colors['OKBLUE']}SSH Key Passphrase (optional):{self.ui.colors['ENDC']}"
+                        )
+                        try:
+                            kp = getpass.getpass(
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} Passphrase (empty for none): "
+                            )
+                            self.config["auth_ssh_key_pass"] = kp if kp else None
+                        except Exception:
+                            pass
+
+                    else:
+                        # Password
+                        import getpass
+
+                        print(
+                            f"{self.ui.colors['OKBLUE']}{self.ui.t('auth_ssh_pass_hint')}:{self.ui.colors['ENDC']}"
+                        )
+                        try:
+                            pwd = getpass.getpass(
+                                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} Password: "
+                            )
+                            self.config["auth_ssh_pass"] = pwd
+                        except Exception:
+                            pass
+
+                    # Save to keyring?
+                    if self.ask_yes_no(self.ui.t("auth_save_keyring_q"), default="no"):
+                        self.config["auth_save_keyring"] = True
+
+                else:
+                    # Disabled
+                    self.config["auth_ssh_user"] = None
+
+                step += 1
+                continue
+
+            # ═══════════════════════════════════════════════════════════════════
+            # STEP 9: Windows Verification & Webhook
+            # ═══════════════════════════════════════════════════════════════════
+            elif step == 9:
                 win_options = [
                     self.ui.t("yes_option") + " — SMB/RDP/LDAP/SSH/HTTP",
                     self.ui.t("no_option"),

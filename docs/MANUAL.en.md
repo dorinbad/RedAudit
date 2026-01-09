@@ -103,54 +103,103 @@ RedAudit checks for updates on startup (interactive mode). To skip: `--skip-upda
 
 ---
 
-## 4. Wizard Profile Selector (v3.9.0+)
+## 4. Comprehensive Wizard Guide
 
-When running `sudo redaudit` in interactive mode, the wizard asks which **audit profile** to use:
+The interactive wizard is the recommended way to use RedAudit. It guides you step-by-step to configure the perfect scan for your needs.
 
-### Express
+### Workflow
 
-**Use case:** Quick network discovery for asset inventory.
+1. **Startup & Updates:** Upon running `sudo redaudit`, the tool automatically checks for new versions (unless `--skip-update-check` is used).
+2. **Profile Selection:** Choose a preset or configure manually.
+3. **Authentication Setup:** (New in v4.0) Configure SSH/SMB/SNMP credentials for deep audits.
+4. **Confirmation:** Review the summary before starting.
 
-- **Mode**: `fast` (host discovery only, no port scanning)
-- **Features disabled**: Vulnerability scans, Nuclei, CVE correlation, agentless verification
-- **Discovery enabled**: Topology + Network Discovery
-- **Timing**: Fast
-- **Questions**: Minimal (Phase 0 prompt, auditor name, output dir)
-- **Best for**: Initial reconnaissance, counting live hosts
-- **Detection heuristics**:
-  - **Asset type guessing**: Hints from hostname/vendor/agentless signals (e.g., router, switch, printer, media, IoT, VPN).
-  - **VPN Heuristics**: Detection based on gateway MAC-IP mismatch, VPN ports (500, 4500, 1194, 51820), and hostname patterns (`tunnel`, `ipsec`, etc.).
+### Scan Profiles
 
-### Standard
+Pre-configured profiles adjust dozens of parameters automatically:
 
-**Use case:** Balanced vulnerability assessment.
+#### 1. Express (Fast / Inventory)
 
-- **Mode**: `normal` (nmap `-F` / top 100 ports + version detection)
-- **Features**: web vuln scanning enabled (whatweb; nikto/testssl only in full), searchsploit if available, topology + network discovery enabled
-- **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
-- **Questions**: Profile selection + timing + Phase 0 prompt + auditor/output prompts
-- **Best for**: Most security audits
+**Goal:** Get a list of live hosts and their vendors in seconds.
 
-### Exhaustive
+- **Technique:** Ping Sweep (ICMP/ARP), no port scanning.
+- **Ideal for:** Initial asset inventory, connectivity checks.
+- **Estimated time:** < 30s for /24.
 
-**Use case**: Maximum discovery and correlation for comprehensive assessments.
+#### 2. Standard (Balanced / General Audit)
 
-- **Mode**: `completo` (all 65535 ports + scripts/OS detection)
-- **Threads**: MAX (16) or reduced in Stealth preset (2)
-- **UDP**: top 500 ports for deep scan (only when triggered)
-- **Features enabled**: Vulnerabilities, Topology, Net Discovery, Red Team, Agentless Verification; Nuclei if installed
-- **CVE Correlation**: Enabled if NVD API key is configured
-- **Timing**: Chosen via preset (Stealth/Normal/Aggressive)
-- **Questions**: Phase 0 prompt + auditor name and output dir (all else auto-configured)
-- **Best for**: Penetration testing, compliance audits, pre-production validation
+**Goal:** Identify common services and obvious vulnerabilities.
 
-### Custom
+- **Technique:** Top 1000 TCP ports, version and OS detection.
+- **Web:** Checks headers and basic technologies (WhatWeb).
+- **Ideal for:** Regular audits, policy validation.
 
-**Use case:** Full control over all configuration options.
+#### 3. Exhaustive (Deep / Compliance)
 
-- **Behavior**: Full 8-step wizard with back navigation
-- **Questions**: Scan mode, threads/rate + Phase 0 prompt, vulnerability scan (incl. SQLMap/ZAP), CVE lookup, output/auditor, UDP/topology, net discovery/red team, agentless verification + webhook
-- **Best for**: Tailored scans with specific requirements
+**Goal:** Find EVERYTHING.
+
+- **Technique:** 65535 TCP ports, UDP scanning, vulnerability scripts (NSE).
+- **Web:** Full scan (Nikto, Nuclei, SSL).
+- **Ideal for:** Penetration testing, compliance (PCI-DSS, ISO 27001), pre-production validation.
+
+#### 4. Custom (Tailored)
+
+**Goal:** Full control.
+
+- **Allows configuring:**
+  - **Nmap Mode:** Fast/Normal/Full/Stealth.
+  - **Performance:** Threads (1-16) and Rate Limit (seconds between requests).
+  - **Topology & Discovery:** Enable/disable L2 mapping and discovery protocols (mDNS, UPnP, etc.).
+  - **UDP:** Enable UDP scanning (slow but thorough).
+  - **Authentication:** Configure credentials for authenticated scanning.
+  - **Agentless Verification:** Enable/disable lightweight checks.
+  - **Web & Vulnerabilities:** Enable/disable Nikto, Nuclei, CVE lookup.
+
+### Authentication Menu (Phase 4)
+
+If you select a profile that supports it (or Custom), the wizard will ask:
+`Enable authenticated scanning (SSH/SMB)? [y/n]`
+
+If you answer **Yes**, you will enter the credentials sub-menu:
+
+1. **SSH (Linux/Unix):**
+    - User and Password OR Private Key.
+    - Enables packet audit, hardening (Lynis), and internal configurations.
+2. **SMB (Windows):**
+    - User, Password, and Domain (optional).
+    - Enables enumeration of users, shares, and password policies.
+3. **SNMP v3 (Network):**
+    - User, Auth Protocols (MD5/SHA), and Privacy (DES/AES).
+    - Enables extraction of routing tables and network device configurations.
+
+**Note:** Credentials can be securely saved to the system Keyring for future use.
+
+### Scenario Examples (Tutorial)
+
+#### Scenario A: Quick Inventory Audit
+
+1. Run `sudo redaudit`.
+2. Select **Express**.
+3. Enter the client IP range (e.g., `192.168.10.0/24`).
+4. Result: In minutes, you'll have an `assets.jsonl` with all live devices and vendors.
+
+#### Scenario B: Linux Server Hardening Audit
+
+1. Run `sudo redaudit`.
+2. Select **Custom**.
+3. Mode: **Normal**.
+4. Authentication enabled: **Yes**.
+    - Configure `root` user (or sudoer) and SSH key.
+5. Enable Lynis: **Yes** (if asked or via `--lynis` flag).
+6. Result: The report will include the Lynis "Hardening Index" and internal server details.
+
+#### Scenario C: Red Team / Stealth
+
+1. Run `sudo redaudit`.
+2. Select **Custom**.
+3. Mode: **Stealth** (reduces speed, avoids simple IDS detection).
+4. Topology: **Passive** (listen only, no aggressive ARP).
+5. Result: Network mapping with minimal noise footprint.
 
 ---
 
@@ -238,7 +287,52 @@ predictable.
 
 ---
 
-## 5. CLI Reference (Complete)
+## 6. Authenticated Scanning (Phase 4)
+
+RedAudit v4.0+ supports authenticated scanning to retrieve high-fidelity data from target hosts, including OS versions, installed packages, and configurations.
+
+### Supported Protocols
+
+| Protocol | Target OS | Requirements | Discovery Features |
+| :--- | :--- | :--- | :--- |
+| **SSH** | Linux/Unix | Standard credentials (password or private key) | Precise OS (kernel), Installed Packages, Hostname, Uptime |
+| **SMB/WMI** | Windows | `impacket` library, Administrator credentials | OS Version, Domain/Workgroup, Shares, Users |
+
+### Prerequisites
+
+- **SSH**: No extra dependencies.
+- **SMB/WMI**: Requires `impacket`.
+
+  ```bash
+  pip install impacket
+  # or
+  sudo apt install python3-impacket
+  ```
+
+### Configuration
+
+#### Interactive (Wizard)
+
+When prompted "Enable authenticated scanning (SSH/SMB)?", select Yes. You can then configure SSH and/or SMB credentials. The settings can be saved to a secure keyring or configuration file.
+
+#### CLI Arguments
+
+```bash
+# SSH
+sudo redaudit -t 192.168.1.10 --ssh-user root --ssh-key ~/.ssh/id_rsa
+sudo redaudit -t 192.168.1.10 --ssh-user admin --ssh-pass "S3cr3t"
+
+# SMB (Windows)
+sudo redaudit -t 192.168.1.50 --smb-user Administrator --smb-pass "WinPass123" --smb-domain WORKGROUP
+```
+
+### Security Note
+
+Credentials are used ONLY for scanning and are not stored in reports. If using `keyring` integration, they are stored in the system keyring.
+
+---
+
+## 7. CLI Reference (Complete)
 
 Flags verified against `redaudit --help` (v4.3.0):
 
@@ -349,7 +443,7 @@ Flags verified against `redaudit --help` (v4.3.0):
 
 ---
 
-## 6. Output Artifacts
+## 8. Output Artifacts
 
 Default output path: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/`
 
@@ -385,7 +479,7 @@ python3 redaudit_decrypt.py /path/to/report.json.enc
 
 ---
 
-## 7. Security Model
+## 9. Security Model
 
 ### Encryption
 
@@ -407,7 +501,7 @@ python3 redaudit_decrypt.py /path/to/report.json.enc
 
 ---
 
-## 8. Integration
+## 10. Integration
 
 ### SIEM Ingestion
 
@@ -434,7 +528,7 @@ done
 
 ---
 
-## 9. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Cause | Solution |
 | :--- | :--- | :--- |
@@ -448,7 +542,7 @@ See [TROUBLESHOOTING.en.md](TROUBLESHOOTING.en.md) for complete error reference.
 
 ---
 
-## 10. External Tools
+## 12. External Tools
 
 RedAudit orchestrates (does not modify or install):
 

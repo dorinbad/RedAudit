@@ -65,7 +65,13 @@ from redaudit.utils.constants import (
     UDP_TOP_PORTS,
 )
 from redaudit.utils.dry_run import is_dry_run
+
 from redaudit.utils.oui_lookup import get_vendor_with_fallback
+
+# v4.0: Authenticated Scanning
+from redaudit.core.auth_ssh import SSHScanner, SSHConnectionError
+from redaudit.core.credentials import Credential, get_credential_provider
+from dataclasses import asdict
 
 # Try to import nmap
 nmap = None
@@ -88,6 +94,70 @@ class AuditorScan:
         def _coerce_text(self, value: object) -> str:
             raise NotImplementedError
 
+    # v4.0: Authenticated Scanning Helpers
+    @property
+    def credential_provider(self):
+        """Lazy initialization of credential provider."""
+        if not hasattr(self, "_credential_provider_instance"):
+            auth_backend = self.config.get("auth_provider", "keyring")
+            try:
+                self._credential_provider_instance = get_credential_provider(auth_backend)
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning("Error initializing credential provider: %s", e)
+                # Fallback
+                from redaudit.core.credentials import EnvironmentCredentialProvider
+
+                self._credential_provider_instance = EnvironmentCredentialProvider()
+        return self._credential_provider_instance
+
+    def _resolve_ssh_credential(self, host: str) -> Optional[Credential]:
+        """Resolve SSH credential for host (Global Config > Provider)."""
+        # 1. Global Config (CLI/Wizard) overrides provider for now (MVP simplified)
+        # Or better: check Config, if not present, check Provider.
+        # But if user provided --ssh-user, they likely want to use it for all targets
+        # (or at least try it).
+
+        user = self.config.get("auth_ssh_user")
+        key = self.config.get("auth_ssh_key")
+        password = self.config.get("auth_ssh_pass")
+        # v4.1: Key Passphrase
+        key_pass = self.config.get("auth_ssh_key_pass")
+
+        if user and (key or password):
+            return Credential(
+                username=user, password=password, private_key=key, private_key_passphrase=key_pass
+            )
+
+        # 2. Provider
+        return self.credential_provider.get_credential(host, "ssh")
+
+    def _resolve_smb_credential(self, host: str) -> Optional[Credential]:
+        """Resolve SMB/Windows credential for host."""
+        user = self.config.get("auth_smb_user")
+        password = self.config.get("auth_smb_pass")
+        domain = self.config.get("auth_smb_domain")
+
+        if user and password:
+            # Handle DOMAIN\User in username if domain not separate?
+            # Impacket usually handles this, or we split properly.
+            # But let's pass as provided, and use domain arg if present.
+            return Credential(username=user, password=password, domain=domain)
+
+        return self.credential_provider.get_credential(host, "smb")
+
+    def _resolve_snmp_credential(self, host: str) -> Optional[Credential]:
+        """Resolve SNMP v3 credential for host."""
+        user = self.config.get("auth_snmp_user")
+        if user:
+            c = Credential(username=user)
+            c.snmp_auth_proto = self.config.get("auth_snmp_auth_proto")
+            c.snmp_auth_pass = self.config.get("auth_snmp_auth_pass")
+            c.snmp_priv_proto = self.config.get("auth_snmp_priv_proto")
+            c.snmp_priv_pass = self.config.get("auth_snmp_priv_pass")
+            return c
+        return self.credential_provider.get_credential(host, "snmp")
+
     # ---------- Dependencies ----------
 
     def check_dependencies(self):
@@ -102,6 +172,27 @@ class AuditorScan:
         try:
             nmap = importlib.import_module("nmap")
             self.ui.print_status(self.ui.t("nmap_avail"), "OKGREEN")
+
+            # v4.2: Impacket check
+            try:
+                import impacket  # noqa: F401
+
+                # self.ui.print_status(self.ui.t("impacket_avail"), "OKGREEN") # Use generic message for now
+                self.ui.print_status("Impacket available (SMB/WMI)", "OKGREEN")
+            except ImportError:
+                self.ui.print_status(
+                    "Impacket missing (pip install impacket) - SMB/WMI auth disabled", "WARN"
+                )
+
+            # v4.3: PySNMP check
+            try:
+                import pysnmp  # noqa: F401
+
+                self.ui.print_status("PySNMP available (SNMP v3)", "OKGREEN")
+            except ImportError:
+                self.ui.print_status(
+                    "PySNMP missing (pip install pysnmp) - SNMP v3 auth disabled", "WARN"
+                )
         except ImportError:
             self.ui.print_status(self.ui.t("nmap_missing"), "FAIL")
             return False
@@ -1199,6 +1290,197 @@ class AuditorScan:
                             "is_web_service": is_web,
                         }
                     )
+
+            # v4.0: Authenticated Scanning Integration (Phase 4)
+            # Check if we have credentials for this host (CLI/Wizard or stored)
+            ssh_credential = self._resolve_ssh_credential(safe_ip)
+
+            if ssh_credential:
+                # Check for open SSH port (22 or service name "ssh")
+                ssh_port = 22
+                ssh_open = False
+
+                # Check if 22 is open in discovered ports
+                for p_dict in ports:
+                    if p_dict["port"] == 22:
+                        ssh_open = True
+                        break
+
+                # If 22 wasn't found, check if any port is "ssh"
+                if not ssh_open:
+                    for p_dict in ports:
+                        if p_dict["service"] == "ssh":
+                            ssh_port = p_dict["port"]
+                            ssh_open = True
+                            break
+
+                if ssh_open:
+                    if hasattr(self, "ui") and self.ui:
+                        self.ui.print_status(
+                            self.ui.t("auth_scan_start", safe_ip, ssh_credential.username), "INFO"
+                        )
+
+                    trust_keys = self.config.get("auth_ssh_trust_keys", False)
+                    timeout = self.config.get("timeout", 30)
+
+                    ssh_scanner = SSHScanner(
+                        ssh_credential,
+                        timeout=int(timeout) if timeout else 30,
+                        trust_unknown_keys=trust_keys,
+                    )
+
+                    try:
+                        if ssh_scanner.connect(safe_ip, port=ssh_port):
+                            if hasattr(self, "ui") and self.ui:
+                                self.ui.print_status(self.ui.t("auth_scan_connected"), "OKBLUE")
+
+                            info = ssh_scanner.gather_host_info()
+                            host_obj.auth_scan = asdict(info)
+
+                            # Merge high-fidelity OS detection
+                            if info.os_name and info.os_name != "unknown":
+                                host_obj.os_detected = f"{info.os_name} {info.os_version}".strip()
+
+                            # v4.3: Lynis Integration
+                            should_run_lynis = self.config.get("lynis_enabled")
+                            is_linux = "linux" in (info.os_name or "").lower()
+
+                            if should_run_lynis and is_linux:
+                                try:
+                                    from redaudit.core.auth_lynis import LynisScanner
+
+                                    if hasattr(self, "ui") and self.ui:
+                                        self.ui.print_status(
+                                            self.ui.t("auth_scan_start", safe_ip, "Lynis"), "INFO"
+                                        )
+
+                                    lynis = LynisScanner(ssh_scanner)
+                                    l_res = lynis.run_audit(use_portable=True)
+
+                                    if l_res:
+                                        if not host_obj.auth_scan:
+                                            host_obj.auth_scan = {}
+                                        host_obj.auth_scan["lynis_hardening_index"] = (
+                                            l_res.hardening_index
+                                        )
+                                        if hasattr(self, "ui") and self.ui:
+                                            self.ui.print_status(
+                                                f"Lynis Index: {l_res.hardening_index}", "OKBLUE"
+                                            )
+
+                                except Exception as e:
+                                    if self.logger:
+                                        self.logger.error("Lynis audit failed: %s", e)
+
+                            ssh_scanner.close()
+                    except SSHConnectionError as e:
+                        if hasattr(self, "ui") and self.ui:
+                            self.ui.print_status(self.ui.t("auth_scan_failed", str(e)), "WARN")
+                        host_obj.auth_scan = {"error": str(e)}
+                    except Exception as e:
+                        if self.logger:
+                            self.logger.error(
+                                "Auth scan error on %s: %s", safe_ip, e, exc_info=True
+                            )
+                        host_obj.auth_scan = {"error": str(e)}
+
+            # v4.2: SMB/WMI Authenticated Scan (Impacket)
+            # Check port 445 (SMB) - Prefer 445 over 139 for modern Windows
+            smb_open = False
+            if host_obj.services:
+                smb_open = any(s.port == 445 and s.state == "open" for s in host_obj.services)
+
+            # Resolve credentials
+            smb_credential = self._resolve_smb_credential(safe_ip)
+
+            if smb_open and smb_credential:
+                try:
+                    from redaudit.core.auth_smb import SMBScanner
+
+                    self._set_ui_detail(self.ui.t("auth_scan_start", safe_ip, "SMB"))
+
+                    # Instantiate scanner
+                    smb_scanner = SMBScanner(smb_credential)
+
+                    # Connect
+                    # Try 445 first
+                    if smb_scanner.connect(safe_ip, 445):
+                        self._set_ui_detail(self.ui.t("auth_scan_connected", safe_ip, "SMB"))
+
+                        # Gather Info
+                        info = smb_scanner.gather_host_info()
+                        smb_scanner.close()
+
+                        smb_data = asdict(info)
+
+                        # Merge into auth_scan
+                        # We use 'smb' namespace effectively or just merge
+                        # Let's clean up 'unknown' values to avoid noise
+                        clean_data = {k: v for k, v in smb_data.items() if v and v != "unknown"}
+
+                        if not host_obj.auth_scan:
+                            host_obj.auth_scan = {}
+
+                        if isinstance(host_obj.auth_scan, dict):
+                            host_obj.auth_scan.update(clean_data)
+
+                        # Update OS detection if confident
+                        if info.os_name and info.os_name != "unknown":
+                            combined = f"{info.os_name} {info.os_version}".strip()
+                            if (
+                                not host_obj.os_detected
+                                or "unknown" in host_obj.os_detected.lower()
+                            ):
+                                host_obj.os_detected = combined
+
+                except ImportError:
+                    if self.config.get("verbose"):
+                        self.logger.warning("Impacket not installed, skipping SMB scan")
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error("SMB scan error on %s: %s", safe_ip, e)
+                    # Graceful fail
+
+            # v4.3: SNMP v3 Authenticated Scan (PySNMP)
+            snmp_open = False
+            if host_obj.services:
+                snmp_open = any(
+                    s.port == 161 and s.protocol == "udp" and "open" in s.state
+                    for s in host_obj.services
+                )
+
+            snmp_credential = self._resolve_snmp_credential(safe_ip)
+
+            if snmp_open and snmp_credential:
+                try:
+                    from redaudit.core.auth_snmp import SNMPScanner
+
+                    self._set_ui_detail(self.ui.t("auth_scan_start", safe_ip, "SNMP"))
+
+                    scanner = SNMPScanner(snmp_credential)
+                    info = scanner.get_system_info(safe_ip)
+
+                    snmp_data = asdict(info)
+                    clean_data = {k: v for k, v in snmp_data.items() if v and v != "unknown"}
+
+                    if not host_obj.auth_scan:
+                        host_obj.auth_scan = {}
+
+                    if isinstance(host_obj.auth_scan, dict):
+                        host_obj.auth_scan.update(clean_data)
+
+                    if info.sys_descr and info.sys_descr != "unknown":
+                        current = host_obj.os_detected or ""
+                        # Don't duplicate if already present
+                        if info.sys_descr not in current:
+                            host_obj.os_detected = (current + " " + info.sys_descr).strip()
+
+                except ImportError:
+                    if self.config.get("verbose"):
+                        self.logger.warning("PySNMP not installed, skipping SNMP scan")
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error("SNMP scan error on %s: %s", safe_ip, e)
 
             total_ports = len(ports)
             if total_ports > MAX_PORTS_DISPLAY:

@@ -60,11 +60,40 @@ def test_configure_scan_interactive_full_flow(monkeypatch, tmp_path):
 
     # v3.9.0: First ask_choice is for profile selection (3 = Custom)
     # Then the wizard steps follow. v4.3: Added hyperscan_mode + vulnerability scan step
-    choice_with_back = iter([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    # Sequence: ScanMode(1), Hyperscan(0), Vuln(0), SQLMap(0), ZAP(0), CVE(0), UDP(0), Topo(0), NetDisc(0), Auth(1=No) + Padding
+    choice_with_back = iter([1, 0, 0, 0, 0, 0, 0, 0, 0, 1] + [0] * 50)
     # First choice is profile (3=Custom), second is redteam mode
-    choice = iter([3, 1])
-    yes_no = iter([False, False, True, True])
-    numbers = iter(["all", 4, 10])
+    choice = iter([3, 1] + [0] * 50)
+    # yes_no sequence:
+    # 1. SSH config? (False)
+    # 2. SMB config? (False)
+    # 3. SNMP config? (False)
+    # 4. Save Keyring? (skipped if no auth)
+    # 5. RedTeam? (False) - wait, let's trace:
+    #   Audit Profile -> Custom (3)
+    #   Mode -> RedTeam (1) -> implies RedTeam enabled? No, RedTeam is separate toggle usually?
+    #   Wait, wizard flow:
+    #   1. Profile
+    #   2. Details (Name, Dir, Network)
+    #   3. Auth (SSH, SMB, SNMP - 3 questions)
+    #   4. Discovery Options (RedTeam max targets?)
+    #   5. Confirm start?
+
+    # Original iter: [False, False, True, True]
+    # Let's see what they matched.
+    # Likely: [Net Discovery?, Vuln Scan?, NVD?, Start?] depends on custom flow.
+
+    # Updated flow in wizard.py:
+    # _configure_auth_interactive called.
+    #   Ask SSH? -> No
+    #   Ask SMB? -> No
+    #   Ask SNMP? -> No
+
+    # Then standard custom flow continues.
+
+    # We need to prepend 3 False/No answers for Auth.
+    yes_no = iter([False, False, True, True] + [False] * 10)
+    numbers = iter(["all", 4, 10] + [5] * 10)
 
     monkeypatch.setattr(app, "print_status", lambda *_a, **_k: None)
     monkeypatch.setattr(app, "setup_nvd_api_key", lambda *_a, **_k: None)
