@@ -4,19 +4,19 @@
 
 Este lanzamiento se centra enteramente en la estabilidad del proyecto y la calidad del código, marcando un hito significativo en la cobertura de tests (>90%).
 
-## 🛡️ Cobertura y Calidad de Código
+## Cobertura y Calidad de Código
 
 - **Cobetura Core Topology 100%**: Alcanzada cobertura completa de tests para hol `redaudit/core/topology.py`, asegurando un parseo de rutas fiable, detección de bucles y grafado.
 - **Cobertura Updater >94%**: Endurecido `redaudit/core/updater.py` con tests robustos para operaciones Git, escenarios de rollback y fallos en casos borde.
 - **Cobertura Global >90%**: La base de código completa supera ahora el umbral del 90% de cobertura.
 - **Estabilidad de Tests Mejorada**: Resueltos tests inestables (flaky) mediante implementación de mocks dinámicos y hooks pre-commit estandarizados.
 
-## 🐛 Correcciones
+## Correcciones
 
 - Corregidos bucles infinitos potenciales en descubrimiento de topología cuando faltan gateways por defecto.
 - Resueltos varios problemas de `RuntimeWarning` y `UnboundLocalError` en rutas de excepción.
 
-## 📦 Cambios
+## Cambios
 
 - Ninguno. Este es un lanzamiento enfocado en la estabilidad.
 
