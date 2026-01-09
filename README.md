@@ -103,7 +103,7 @@ sudo redaudit
 
 **Smart-Throttle:** No more manual batch size tuning. RedAudit now "senses" network congestion using an AIMD (Additive Increase, Multiplicative Decrease) algorithm. It throttles down when packets drop and accelerates on stable links, ensuring maximum speed without breaking the target network.
 
-**Generator-based Targeting:** We've rewritten the targeting engine to use streaming generators. You can now feed a `/8` network or millions of random IPs without filling your RAM.
+**Generator-based Targeting:** The targeting engine has been rewritten to use streaming generators. You can now feed a `/8` network or millions of random IPs without filling your RAM.
 
 **Enterprise-Grade Risk Scoring (V2)**: Configuration findings (Nikto/Nuclei) now drive risk scores.
 

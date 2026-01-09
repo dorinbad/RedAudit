@@ -99,7 +99,7 @@ sudo redaudit
 
 **Smart-Throttle:** Se acabó el tuning manual. RedAudit ahora "siente" la congestión de la red usando un algoritmo AIMD (Incremento Aditivo, Decremento Multiplicativo). Frena cuando hay pérdida de paquetes y acelera en enlaces estables, asegurando la máxima velocidad sin romper la red objetivo.
 
-**Targeting basado en Generadores:** Hemos reescrito el motor de targeting para usar generadores en streaming. Ahora puedes alimentar una red `/8` o millones de IPs aleatorias sin llenar tu RAM.
+**Targeting basado en Generadores:** Se ha reescrito el motor de targeting para usar generadores en streaming. Ahora puedes alimentar una red `/8` o millones de IPs aleatorias sin llenar tu RAM.
 
 **Risk Scoring V2:** El motor de riesgos ahora integra la severidad de los hallazgos (low/med/high/crit) de Nikto y Nuclei en la puntuación final. Un host con cero CVEs pero fallos críticos de configuración (ej. falta de auth) ahora reflejará correctamente un riesgo alto.
 
