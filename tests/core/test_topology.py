@@ -304,3 +304,84 @@ def test_discover_topology_sync_lldp_socket_hint():
         ):
             res = _discover_topology_sync([], [{"interface": "eth0"}], logger=MagicMock())
             assert "Hint: try" in res["errors"][0]
+
+
+def test_extract_default_gateway_no_default():
+    """Test _extract_default_gateway with no default route."""
+    from redaudit.core.topology import _extract_default_gateway
+
+    routes = [{"dst": "10.0.0.0/8", "via": "192.168.1.1"}]
+    gw = _extract_default_gateway(routes)
+    assert gw is None
+
+
+def test_extract_default_gateway_with_default():
+    """Test _extract_default_gateway with default route."""
+    from redaudit.core.topology import _extract_default_gateway
+
+    routes = [{"dst": "default", "via": "192.168.1.1", "dev": "eth0"}]
+    gw = _extract_default_gateway(routes)
+    assert gw["ip"] == "192.168.1.1"
+    assert gw["interface"] == "eth0"
+
+
+def test_parse_arp_scan_empty():
+    """Test _parse_arp_scan with empty output."""
+    from redaudit.core.topology import _parse_arp_scan
+
+    result = _parse_arp_scan("")
+    assert result == []
+
+
+def test_parse_arp_scan_valid():
+    """Test _parse_arp_scan with valid output."""
+    from redaudit.core.topology import _parse_arp_scan
+
+    stdout = "192.168.1.1\tAA:BB:CC:DD:EE:FF\tVendor Name"
+    result = _parse_arp_scan(stdout)
+    assert len(result) == 1
+    assert result[0]["ip"] == "192.168.1.1"
+    assert result[0]["mac"] == "aa:bb:cc:dd:ee:ff"
+
+
+def test_parse_arp_scan_skip_header():
+    """Test _parse_arp_scan skips header lines."""
+    from redaudit.core.topology import _parse_arp_scan
+
+    stdout = """Interface: eth0, datalink type: EN10MB (Ethernet)
+Starting arp-scan 1.10.0
+192.168.1.1\tAA:BB:CC:DD:EE:FF\tVendor
+Ending arp-scan"""
+    result = _parse_arp_scan(stdout)
+    assert len(result) == 1
+
+
+def test_parse_vlan_ids_from_tcpdump():
+    """Test _parse_vlan_ids_from_tcpdump function."""
+    from redaudit.core.topology import _parse_vlan_ids_from_tcpdump
+
+    stdout = "12:34:56.789 vlan 10, p 0, ethertype IPv4\n12:34:57.000 vlan 20, p 0, ethertype IPv6"
+    result = _parse_vlan_ids_from_tcpdump(stdout)
+    assert 10 in result
+    assert 20 in result
+
+
+def test_parse_vlan_ids_from_tcpdump_empty():
+    """Test _parse_vlan_ids_from_tcpdump with empty output."""
+    from redaudit.core.topology import _parse_vlan_ids_from_tcpdump
+
+    result = _parse_vlan_ids_from_tcpdump("")
+    assert result == []
+
+
+def test_extract_lldp_neighbors_empty():
+    """Test _extract_lldp_neighbors with empty data."""
+    result = _extract_lldp_neighbors({}, "eth0")
+    assert result == []
+
+
+def test_extract_lldp_neighbors_no_interface():
+    """Test _extract_lldp_neighbors with missing interface."""
+    lldp_json = {"lldp": {"interface": {}}}
+    result = _extract_lldp_neighbors(lldp_json, "eth0")
+    assert result == []
