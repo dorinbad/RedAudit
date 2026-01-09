@@ -14,17 +14,17 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 Estas características están aprobadas pero **aún no implementadas** en el código base.
 
-### Fase 4: Escaneo Autenticado (Prioridad: Alta - Siguiente)
+### Fase 4: Escaneo Autenticado (Prioridad: Alta - Completado) ✅
 
 Habilitar enumeración basada en credenciales para cobertura de auditoría más profunda.
 
 | Tarea | Estado | Descripción |
 | :--- | :--- | :--- |
-| **P4.1 Arquitectura de Gestión de Secretos** | Planificado | Diseñar almacenamiento seguro de credenciales (integración Vault/Keyring). |
-| **P4.2 Soporte Credenciales SSH** | Planificado | Añadir Paramiko/SSH nativo con autenticación por clave y contraseña para auditoría remota Linux. |
-| **P4.3 Soporte Credenciales SMB/WMI** | Planificado | Integrar Impacket para enumeración autenticada en Windows. |
-| **P4.4 Soporte SNMP v3** | Planificado | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
-| **P4.5 Integración Lynis** | Planificado | Comprobaciones CIS hardening en Linux remoto vía SSH. |
+| **P4.1 Arquitectura de Gestión de Secretos** | ✅ Hecho (v4.5.0) | Diseñar almacenamiento seguro de credenciales (integración Vault/Keyring). |
+| **P4.2 Soporte Credenciales SSH** | ✅ Hecho (v4.5.0) | Añadir Paramiko/SSH nativo con autenticación por clave y contraseña para auditoría remota Linux. |
+| **P4.3 Soporte Credenciales SMB/WMI** | ✅ Hecho (v4.5.0) | Integrar Impacket para enumeración autenticada en Windows. |
+| **P4.4 Soporte SNMP v3** | ✅ Hecho (v4.5.0) | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
+| **P4.5 Integración Lynis** | ✅ Hecho (v4.5.0) | Comprobaciones CIS hardening en Linux remoto vía SSH. |
 
 ### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta) ✅
 

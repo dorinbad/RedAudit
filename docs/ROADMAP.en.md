@@ -14,17 +14,17 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 These features are approved but **not yet implemented** in the codebase.
 
-### Phase 4: Authenticated Scanning (Priority: High - Next)
+### Phase 4: Authenticated Scanning (Priority: High - Completed) ✅
 
 Enable credential-based enumeration for deeper audit coverage.
 
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **P4.1 Secrets Management Architecture** | Planned | Design secure credential storage (Vault/Keyring integration). |
-| **P4.2 SSH Credential Support** | Planned | Add Paramiko/native SSH key-based and password auth for remote Linux auditing. |
-| **P4.3 SMB/WMI Credential Support** | Planned | Integrate Impacket for authenticated Windows enumeration. |
-| **P4.4 SNMP v3 Support** | Planned | Add SNMPv3 auth (noAuthNoPriv, authNoPriv, authPriv). |
-| **P4.5 Lynis Integration** | Planned | Remote Linux CIS hardening checks via SSH. |
+| **P4.1 Secrets Management Architecture** | ✅ Done (v4.5.0) | Design secure credential storage (Vault/Keyring integration). |
+| **P4.2 SSH Credential Support** | ✅ Done (v4.5.0) | Add Paramiko/native SSH key-based and password auth for remote Linux auditing. |
+| **P4.3 SMB/WMI Credential Support** | ✅ Done (v4.5.0) | Integrate Impacket for authenticated Windows enumeration. |
+| **P4.4 SNMP v3 Support** | ✅ Done (v4.5.0) | Add SNMPv3 auth (noAuthNoPriv, authNoPriv, authPriv). |
+| **P4.5 Lynis Integration** | ✅ Done (v4.5.0) | Remote Linux CIS hardening checks via SSH. |
 
 ### v4.4 Code Coverage & Stability (Priority: High) ✅
 
