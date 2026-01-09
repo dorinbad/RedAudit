@@ -14,9 +14,7 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 These features are approved but **not yet implemented** in the codebase.
 
-### Security & Integrations (Priority: High)
-
-### Phase 4: Authenticated Scanning (Priority: Medium)
+### Phase 4: Authenticated Scanning (Priority: High - Next)
 
 Enable credential-based enumeration for deeper audit coverage.
 
@@ -27,6 +25,15 @@ Enable credential-based enumeration for deeper audit coverage.
 | **P4.3 SMB/WMI Credential Support** | Planned | Integrate Impacket for authenticated Windows enumeration. |
 | **P4.4 SNMP v3 Support** | Planned | Add SNMPv3 auth (noAuthNoPriv, authNoPriv, authPriv). |
 | **P4.5 Lynis Integration** | Planned | Remote Linux CIS hardening checks via SSH. |
+
+### v4.4 Code Coverage & Stability (Priority: High) ✅
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **100% Topology Coverage** | ✅ Done (v4.4.5) | Achieved complete test coverage for `topology.py` (route parsing, loop detection, graphing). |
+| **>94% Updater Coverage** | ✅ Done (v4.4.5) | Hardened `updater.py` with robust tests for Git operations, rollback scenarios, edge-case failures. |
+| **Project Coverage ~89%** | ✅ Done (v4.4.5) | Overall project coverage now at 88.75% (1619 tests passing). |
+| **Memory Leak Fix** | ✅ Done (v4.4.5) | Fixed infinite loop in test mocks that caused 95GB RAM spike. |
 
 ### v4.3 Risk Score & Performance Improvements (Priority: High) ✅
 
@@ -78,18 +85,6 @@ Internal refactoring using Strangler Fig pattern:
 
 **Status**: Completed in v4.0.0. Composition-first orchestration via `AuditorRuntime`, with
 legacy inheritance removed and compatibility handled by adapter-backed components.
-
-### Phase 4: Authenticated Scanning (Priority: Medium)
-
-Focus: Enable deep scanning with credentials for complete internal audits.
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Secrets Management** | 🚧 Planned | Design secrets architecture (Vault/Keyring integration). Never store credentials in plaintext. |
-| **SSH Support** | 🚧 Planned | Implement SSH credentials via Paramiko/native SSH. Support key-based and interactive password auth. |
-| **SMB/WMI Support** | 🚧 Planned | Implement SMB/WMI credentials via Impacket for authenticated Windows audits. |
-| **SNMP v3 Support** | 🚧 Planned | Add SNMP community string support for v1/v2c/v3 (authPriv). |
-| **Lynis Integration** | 🚧 Planned | Integrate with lynis for remote Linux auditing (hardening checks). |
 
 ### Infrastructure (Priority: High)
 

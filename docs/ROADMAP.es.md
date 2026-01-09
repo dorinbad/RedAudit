@@ -14,9 +14,7 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 Estas características están aprobadas pero **aún no implementadas** en el código base.
 
-### Seguridad e Integraciones (Prioridad: Alta)
-
-### Fase 4: Escaneo Autenticado (Prioridad: Media)
+### Fase 4: Escaneo Autenticado (Prioridad: Alta - Siguiente)
 
 Habilitar enumeración basada en credenciales para cobertura de auditoría más profunda.
 
@@ -27,6 +25,15 @@ Habilitar enumeración basada en credenciales para cobertura de auditoría más 
 | **P4.3 Soporte Credenciales SMB/WMI** | Planificado | Integrar Impacket para enumeración autenticada en Windows. |
 | **P4.4 Soporte SNMP v3** | Planificado | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
 | **P4.5 Integración Lynis** | Planificado | Comprobaciones CIS hardening en Linux remoto vía SSH. |
+
+### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta) ✅
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Cobertura Topology 100%** | ✅ Hecho (v4.4.5) | Alcanzada cobertura completa de tests para `topology.py` (parseo de rutas, detección de bucles, grafado). |
+| **Cobertura Updater >94%** | ✅ Hecho (v4.4.5) | Endurecido `updater.py` con tests robustos para operaciones Git, escenarios de rollback, fallos en casos borde. |
+| **Cobertura Proyecto ~89%** | ✅ Hecho (v4.4.5) | Cobertura total del proyecto ahora en 88.75% (1619 tests pasando). |
+| **Corrección Memory Leak** | ✅ Hecho (v4.4.5) | Corregido bucle infinito en mocks de tests que causaba pico de 95GB RAM. |
 
 ### v4.3 Mejoras al Risk Score (Prioridad: Alta) ✅
 
@@ -71,18 +78,6 @@ Refactorización interna utilizando el patrón Strangler Fig:
 
 **Estado**: Completado en v4.0.0. Orquestación por composición vía `AuditorRuntime`, con
 herencia legacy eliminada y compatibilidad gestionada por componentes con adaptador.
-
-### Phase 4: Escaneo Autenticado (Prioridad: Media)
-
-Foco: Habilitar escaneo profundo con credenciales para auditorías internas completas.
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Gestión de Secretos** | 🚧 Planificado | Diseñar arquitectura de secretos (integración Vault/Keyring). Nunca almacenar credenciales en texto plano. |
-| **Soporte SSH** | 🚧 Planificado | Implementar credenciales SSH via Paramiko/SSH nativo. Soportar auth por clave y password interactivo. |
-| **Soporte SMB/WMI** | 🚧 Planificado | Implementar credenciales SMB/WMI via Impacket para auditorías Windows autenticadas. |
-| **Soporte SNMP v3** | 🚧 Planificado | Añadir soporte community strings SNMP v1/v2c/v3 (authPriv). |
-| **Integración Lynis** | 🚧 Planificado | Integrar con lynis para auditoría remota de Linux (hardening checks). |
 
 ### Infraestructura (Prioridad: Alta)
 
