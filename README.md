@@ -112,12 +112,6 @@ sudo redaudit
 - **Nuclei**: Added "Low" severity findings (e.g., info leaks, exposed panels) to the decision matrix.
 - **Scapy Silence**: Suppressed low-level ARP warnings for cleaner output.
 
-| Feature | Benefit |
-|:---|:---|
-| **Risk Scoring V2** | Enterprise-grade risk calculation merging CVEs + Findings |
-| **H2 Optimization** | Deeper Docker visibility & "Low" severity insights |
-| **Warning Suppression** | Cleaner terminal output (M1.1 / M2 fixes) |
-
 See [RELEASE NOTES](docs/releases/RELEASE_NOTES_v4.4.4.md) for details.
 
 ---
@@ -141,6 +135,18 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
+│       PHASE 0: HyperScan / Masscan Reuse (Optional)         │
+│       Feeds discovered ports to Phase 1 (Speed/Stealth)     │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│       PHASE 0: HyperScan / Masscan Reuse (Optional)         │
+│       Feeds discovered ports to Phase 1 (Speed/Stealth)     │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
 │           PHASE 1: Nmap profile based on scan mode          │
 │          fast/normal/full define the base scan              │
 └─────────────────────────┬───────────────────────────────────┘
@@ -161,13 +167,13 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
             ▼                           ▼
     ┌───────────────┐          ┌────────────────┐
     │  SUFFICIENT   │          │ AMBIGUOUS HOST │
-    │  Stop scan    │          │ Continue...    │
+    │  Stop scan    │          │ Trigger Deep   │
     └───────────────┘          └───────┬────────┘
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │  PHASE 2a: Priority UDP              │
-                    │  17 common ports (DNS/DHCP/SNMP)     │
+                    │      DEEP PHASE 1: Aggressive TCP    │
+                    │      nmap -p- -A -sV --open          │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
@@ -175,14 +181,28 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
                           ▼                         ▼
                   ┌───────────────┐        ┌────────────────┐
                   │  Identity OK  │        │ Still ambiguous│
-                  │  Stop         │        │ (full mode)    │
+                  │  Stop         │        │ Continue...    │
                   └───────────────┘        └───────┬────────┘
                                                    │
                                                    ▼
-                              ┌─────────────────────────────────┐
-                              │     PHASE 2b: Extended UDP      │
-                              │  --top-ports N (configurable)   │
-                              └─────────────────────────────────┘
+                                ┌──────────────────────────────────────┐
+                                │      DEEP PHASE 2a: Priority UDP     │
+                                │      17 common ports (DNS/DHCP/etc)  │
+                                └──────────────────┬───────────────────┘
+                                                   │
+                                      ┌────────────┴────────────┐
+                                      │                         │
+                                      ▼                         ▼
+                              ┌───────────────┐        ┌────────────────┐
+                              │  Identity OK  │        │ Still ambiguous│
+                              │  Stop         │        │ (full mode)    │
+                              └───────────────┘        └───────┬────────┘
+                                                               │
+                                                               ▼
+                                          ┌─────────────────────────────────┐
+                                          │     DEEP PHASE 2b: Extended UDP │
+                                          │     --top-ports N (up to 500)   │
+                                          └─────────────────────────────────┘
 ```
 
 In **full/completo** mode, the base profile is already aggressive, so deep identity scan triggers less often and only when identity remains weak or signals are suspicious.

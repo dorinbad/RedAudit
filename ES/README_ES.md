@@ -109,13 +109,6 @@ sudo redaudit
 - **Nuclei**: Añadidos hallazgos de severidad "Low" (ej. fugas de info, paneles expuestos) a la matriz de decisión.
 - **Silencio Scapy**: Supresión de advertencias ARP de bajo nivel para una salida más limpia.
 
-| Característica | Beneficio |
-|:---|:---|
-| **Enterprise Risk Scoring (V2)** | Los hallazgos de configuración ahora impactan la puntuación. |
-| **Modo HyperScan SYN** | Escaneo de puertos 10x más rápido. |
-| **Optimizaciones H2** | Análisis profundo para entornos Docker. e insights de severidad "Low" |
-| **Supresión de Advertencias** | Salida de terminal más limpia (fixes M1.1 / M2) |
-
 Ver [NOTAS DE LANZAMIENTO](../docs/releases/RELEASE_NOTES_v4.4.4_ES.md) para más detalles.
 
 ---
@@ -139,6 +132,12 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
+│       PHASE 0: HyperScan / Masscan Reuse (Opcional)         │
+│       Alimenta puertos abiertos a Fase 1 (Velocidad)        │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
 │         FASE 1: Perfil Nmap según el modo de escaneo        │
 │        rápido/normal/completo definen el scan base          │
 └─────────────────────────┬───────────────────────────────────┘
@@ -159,28 +158,42 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
             ▼                           ▼
     ┌───────────────┐          ┌────────────────┐
     │  SUFICIENTE   │          │ HOST AMBIGUO   │
-    │  Detener scan │          │ Continuar...   │
+    │  Detener scan │          │ Trigger Deep   │
     └───────────────┘          └───────┬────────┘
                                        │
                                        ▼
                     ┌──────────────────────────────────────┐
-                    │  FASE 2a: UDP Prioritario            │
-                    │  17 puertos comunes (DNS/DHCP/SNMP)  │
+                    │      DEEP PHASE 1: TCP Agresivo      │
+                    │      nmap -p- -A -sV --open          │
                     └──────────────────┬───────────────────┘
                                        │
                           ┌────────────┴────────────┐
                           │                         │
                           ▼                         ▼
                   ┌───────────────┐        ┌────────────────┐
-                  │ Identidad OK  │        │ Aún ambiguo    │
-                  │ Detener       │        │ (modo full)    │
+                  │  Identidad OK │        │ Sigue ambiguo  │
+                  │  Stop         │        │ Continuar...   │
                   └───────────────┘        └───────┬────────┘
                                                    │
                                                    ▼
-                              ┌─────────────────────────────────┐
-                              │     FASE 2b: UDP Extendido      │
-                              │  --top-ports N (configurable)   │
-                              └─────────────────────────────────┘
+                                ┌──────────────────────────────────────┐
+                                │      DEEP PHASE 2a: UDP Prioritario  │
+                                │      17 puertos (DNS/DHCP/etc)       │
+                                └──────────────────┬───────────────────┘
+                                                   │
+                                      ┌────────────┴────────────┐
+                                      │                         │
+                                      ▼                         ▼
+                              ┌───────────────┐        ┌────────────────┐
+                              │  Identidad OK │        │ Sigue ambiguo  │
+                              │  Stop         │        │ (modo full)    │
+                              └───────────────┘        └───────┬────────┘
+                                                               │
+                                                               ▼
+                                          ┌─────────────────────────────────┐
+                                          │     DEEP PHASE 2b: UDP Extendido│
+                                          │     --top-ports N (hasta 500)   │
+                                          └─────────────────────────────────┘
 ```
 
 En modo **full/completo**, el perfil base ya es agresivo, por lo que el deep scan se activa menos y solo cuando la identidad
