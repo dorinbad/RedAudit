@@ -74,7 +74,8 @@ El cifrado de informes se gestiona mediante la librería `cryptography` para ase
 - **Rate-Limiting con Jitter**: Limitación de velocidad configurable con varianza aleatoria ±30% para reducir predictibilidad en entornos sensibles a IDS.
 - **Descubrimiento HyperScan**: Descubrimiento TCP/UDP/ARP asíncrono puede reducir invocaciones de nmap cuando está habilitado (net discovery).
 - **Heartbeat**: Monitoreo en segundo plano asegura la integridad del proceso sin requerir acceso interactivo a la shell.
-- **Ubicación del Módulo**: `redaudit/core/reporter.py` (permisos), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (descubrimiento asíncrono)
+- **Seguridad del Archivo de Credenciales**: El archivo de credenciales universales (ej. `~/.redaudit/credentials.json`) se valida estrictamente. DEBE tener permisos `0600` (lectura/escritura solo propietario); de lo contrario, RedAudit rechaza cargarlo (v4.5.2+).
+- **Ubicación del Módulo**: `redaudit/core/reporter.py` (permisos), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (descubrimiento asíncrono), `redaudit/core/credentials_manager.py` (validación de secretos)
 
 ## 4. Pista de Auditoría
 

@@ -80,7 +80,8 @@ Report encryption is handled via the `cryptography` library to ensure confidenti
 - **Jitter Rate-Limiting**: Configurable rate limiting with ±30% random variance to evade threshold-based IDS and behavioral analysis.
 - **HyperScan Discovery**: Async TCP/UDP/ARP discovery can reduce nmap invocations when enabled (net discovery).
 - **Heartbeat**: Background monitoring ensures process integrity without requiring interactive shell access.
-- **Module Location**: `redaudit/core/reporter.py` (file permissions), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (async discovery)
+- **Credentials File Security**: The universal credentials file (e.g., `~/.redaudit/credentials.json`) is strictly validated. It MUST have `0600` permissions (read/write only by owner); otherwise, RedAudit refuses to load it (v4.5.2+).
+- **Module Location**: `redaudit/core/reporter.py` (file permissions), `redaudit/core/auditor.py` (heartbeat, jitter), `redaudit/core/hyperscan.py` (async discovery), `redaudit/core/credentials_manager.py` (secrets validation)
 
 ## 4. Audit Trail
 

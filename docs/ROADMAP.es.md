@@ -26,14 +26,14 @@ Habilitar enumeración basada en credenciales para cobertura de auditoría más 
 | **P4.4 Soporte SNMP v3** | ✅ Hecho (v4.5.0) | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
 | **P4.5 Integración Lynis** | ✅ Hecho (v4.5.0) | Comprobaciones CIS hardening en Linux remoto vía SSH. |
 
-### Phase 4.1.1: Soporte Multi-Credencial (Prioridad: Alta) (En Progreso)
+### Fase 4.1.1: Soporte Multi-Credencial (Prioridad: Alta) ✅ (v4.5.2)
 
 | Tarea | Estado | Descripción |
 | :--- | :--- | :--- |
-| **CredentialsManager** | ✅ Hecho | Credenciales universales con detección automática de protocolo. |
-| **Wizard Multi-Credencial** | 🚧 En Progreso | Refactorización de ask_auth_config() con modos universal vs avanzado. |
-| **CLI --credentials-file** | 📝 Planificado | Cargar credenciales desde fichero JSON. |
-| **Generador de Plantilla** | 📝 Planificado | `--generate-credentials-template` para plantilla JSON vacía. |
+| **CredentialsManager** | ✅ Hecho (v4.5.2) | Spraying de credenciales universales con detección automática de protocolo. |
+| **Wizard Multi-Credential** | ✅ Hecho (v4.5.2) | Refactorizado ask_auth_config() con modos universal vs avanzado. |
+| **CLI --credentials-file** | ✅ Hecho (v4.5.2) | Cargar credenciales desde fichero JSON. |
+| **Generador de Plantillas** | ✅ Hecho (v4.5.2) | `--generate-credentials-template` para plantilla JSON vacía. |
 
 ### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta) ✅
 
