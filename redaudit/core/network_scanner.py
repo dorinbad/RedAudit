@@ -266,6 +266,12 @@ class NetworkScanner:
         if identity_score < threshold:
             return True, f"low_identity:{identity_score}<{threshold}"
 
+        # v4.5.14: Fix for "Ghost Identity" - If we have high identity confidence (e.g. from
+        # Phase 0 broadcast/SNMP hints) but found ZERO open ports, we likely missed the
+        # services (UDP/Filtered). Force Deep Scan to verify.
+        if total_ports == 0:
+            return True, "high_identity_zero_ports"
+
         # Deep scan suspicious services
         if suspicious:
             return True, "suspicious_service"

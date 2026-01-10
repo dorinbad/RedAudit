@@ -101,7 +101,16 @@ class SSHScanner:
 
         assert self._client is not None
         if self.trust_unknown_keys:
-            self._client.set_missing_host_key_policy(self._paramiko.AutoAddPolicy())  # nosec B507
+            # v4.5.14: Use custom policy to avoid "not found in known_hosts" errors
+            # which occur if AutoAddPolicy fails to save keys (e.g. permission denied)
+            # or if strict checking logic interferes.
+            class PermissivePolicy(self._paramiko.MissingHostKeyPolicy):  # type: ignore
+                def missing_host_key(self, client, hostname, key):
+                    # Add key to memory only (transient trust)
+                    client.get_host_keys().add(hostname, key.get_name(), key)
+                    # We do NOT save to file to prevent read-only filesystem errors
+
+            self._client.set_missing_host_key_policy(PermissivePolicy())
         else:
             self._client.set_missing_host_key_policy(self._paramiko.RejectPolicy())  # type: ignore
 

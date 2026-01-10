@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.14] - 2026-01-10
+
+### Fixed
+
+- **SSH Auth**: Implemented robust `PermissivePolicy` to prevent `Server not found in known_hosts` errors caused by strict checks or write permission issues.
+- **Smart Scan**: Fixed "Ghost Identity" issue where hosts with Phase 0 hints (e.g., SNMP) but zero open ports failed to trigger Deep Scan.
+
 ## [4.5.13] - 2026-01-10
 
 ### Fixed
