@@ -1213,6 +1213,36 @@ def perform_git_update(
         if os.geteuid() == 0 and os.path.exists(old_install_path):
             shutil.rmtree(old_install_path, ignore_errors=True)
 
+        # v4.5.4: Auto-seed keyring with lab credentials (if seeder exists)
+        seeder_script = os.path.join(home_redaudit_path, "scripts", "seed_keyring.py")
+        if os.path.isfile(seeder_script):
+            try:
+                print_fn("  → Seeding keyring with lab credentials...", "INFO")
+                # Run seeder as the target user (not root)
+                if sudo_user:
+                    result = runner.run(
+                        ["sudo", "-u", sudo_user, sys.executable, seeder_script],
+                        capture_output=True,
+                        text=True,
+                        timeout=30.0,
+                        check=False,
+                    )
+                else:
+                    result = runner.run(
+                        [sys.executable, seeder_script],
+                        capture_output=True,
+                        text=True,
+                        timeout=30.0,
+                        check=False,
+                    )
+                if result.returncode == 0:
+                    print_fn("  → Keyring seeded with lab credentials!", "OKGREEN")
+                else:
+                    print_fn("  → Keyring seeding skipped (optional)", "INFO")
+            except Exception as e:
+                if logger:
+                    logger.debug("Keyring seeding failed (optional): %s", e)
+
         # Success!
         return (True, "UPDATE_SUCCESS_RESTART")
 
