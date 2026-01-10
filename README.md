@@ -357,6 +357,13 @@ redaudit --diff ~/reports/monday.json ~/reports/friday.json
 | `--no-deep-scan` | Disable adaptive deep scan |
 | `--no-txt-report` | Skip TXT report generation |
 | `-y, --yes` | Skip confirmations (automation mode) |
+| `--webhook URL` | Webhook URL for real-time alerts |
+| `--dry-run` | Print commands without executing them |
+| `--allow-non-root` | Allow limited functionality without sudo |
+| `--save-defaults` | Save current CLI settings as persistent defaults |
+| `--auth-provider` | Credential backend (`env` or `keyring`) |
+| `--credentials-file` | Load multiple credentials from JSON file |
+| `--lynis` | Enable Lynis hardening audit (Linux/SSH) |
 
 See `redaudit --help` or [USAGE.md](docs/USAGE.en.md) for the complete option list.
 
@@ -445,20 +452,24 @@ RedAudit orchestrates these tools:
 redaudit/
 ├── core/                   # Core functionality
 │   ├── auditor.py          # Main orchestrator (composition entrypoint)
+│   ├── auditor_scan.py     # Scanning logic (Nmap/Masscan/HyperScan adapter)
+│   ├── auditor_vuln.py     # Vulnerability scanning (Nikto/Nuclei/Exploits)
 │   ├── auditor_runtime.py  # Composition adapter (auditor component bridge)
 │   ├── wizard.py           # Interactive UI (Wizard component)
-│   ├── scanner/            # Nmap scanning logic + IPv6 helpers
+│   ├── ui_manager.py       # Centralized UI/Output manager
+│   ├── scanner/            # Low-level Nmap wrapper + IPv6 helpers
 │   ├── network.py          # Network interface detection
-│   ├── hyperscan.py        # Ultra-fast parallel discovery
-│   ├── net_discovery.py    # Enhanced L2/broadcast discovery
-│   ├── topology.py         # Network topology discovery
+│   ├── hyperscan.py        # Ultra-fast parallel discovery (Phase 0)
+│   ├── net_discovery.py    # Enhanced L2/Broadcast discovery
+│   ├── topology.py         # Network topology discovery (L3/VLAN)
 │   ├── udp_probe.py        # UDP probing helpers
 │   ├── agentless_verify.py # Agentless SMB/RDP/LDAP/SSH/HTTP checks
+│   ├── auth_*.py           # Protocol-specific auth handlers (SMB, SSH, SNMP)
 │   ├── nuclei.py           # Nuclei template scanner integration
 │   ├── playbook_generator.py # Remediation playbook generator
 │   ├── nvd.py              # CVE correlation via NVD API
-│   ├── osquery.py          # Osquery verification helpers (optional)
-│   ├── entity_resolver.py  # Asset consolidation / entity resolution
+│   ├── osquery.py          # Osquery verification helpers
+│   ├── entity_resolver.py  # Asset consolidation / Smart-Check
 │   ├── evidence_parser.py  # Evidence parsing helpers
 │   ├── reporter.py         # JSON/TXT/HTML/JSONL output
 │   ├── html_reporter.py    # HTML report renderer
@@ -471,6 +482,7 @@ redaudit/
 │   ├── proxy.py            # Proxy handling
 │   ├── scanner_versions.py # External tool version detection
 │   ├── verify_vuln.py      # Smart-Check false positive filter
+│   ├── credentials_manager.py # Multi-credential management
 │   └── updater.py          # Auto-update system
 ├── templates/              # HTML report templates
 └── utils/                  # Utilities (i18n, config, constants)

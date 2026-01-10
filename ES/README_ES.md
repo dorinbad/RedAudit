@@ -355,8 +355,15 @@ redaudit --diff ~/reports/lunes.json ~/reports/viernes.json
 | `--no-deep-scan` | Deshabilitar deep scan adaptativo |
 | `--no-txt-report` | Omitir generación de informe TXT |
 | `-y, --yes` | Omitir confirmaciones (modo automatización) |
+| `--webhook URL` | URL Webhook para alertas en tiempo real |
+| `--dry-run` | Imprimir comandos en lugar de ejecutarlos |
+| `--allow-non-root` | Permitir funcionalidad limitada sin sudo |
+| `--save-defaults` | Guardar configuraciones CLI actuales como defaults |
+| `--auth-provider` | Proveedor de credenciales (`env` o `keyring`) |
+| `--credentials-file` | Cargar múltiples credenciales desde JSON |
+| `--lynis` | Habilitar auditoría de hardening Lynis (Linux/SSH) |
 
-Consulta `redaudit --help` o [USAGE.md](../docs/USAGE.es.md) para la lista completa de opciones.
+Ver `redaudit --help` o [USAGE.es.md](docs/USAGE.es.md) para la lista completa. de opciones.
 
 ---
 
@@ -441,37 +448,42 @@ RedAudit orquesta estas herramientas:
 
 ```text
 redaudit/
-├── core/                   # Funcionalidad principal
-│   ├── auditor.py          # Orquestador principal (entrypoint por composición)
-│   ├── auditor_runtime.py  # Adaptador de composición (puente de componentes)
-│   ├── wizard.py           # UI interactiva (componente Wizard)
-│   ├── scanner/            # Lógica de escaneo Nmap + helpers IPv6
-│   ├── network.py          # Detección de interfaces/red
-│   ├── hyperscan.py        # Descubrimiento paralelo ultrarrápido
-│   ├── net_discovery.py    # Descubrimiento L2/broadcast mejorado
-│   ├── topology.py         # Descubrimiento de topología de red
+├── core/                   # Funcionalidad Core
+│   ├── auditor.py          # Orquestador principal
+│   ├── auditor_scan.py     # Lógica de escaneo (Nmap/Masscan/HyperScan adapter)
+│   ├── auditor_vuln.py     # Escaneo de vulnerabilidades (Nikto/Nuclei/Exploits)
+│   ├── auditor_runtime.py  # Adaptador de composición
+│   ├── wizard.py           # Interfaz Interactiva (Wizard)
+│   ├── ui_manager.py       # Gestor centralizado de UI/Salida
+│   ├── scanner/            # Wrapper de bajo nivel Nmap + Helpers IPv6
+│   ├── network.py          # Detección de interfaces de red
+│   ├── hyperscan.py        # Descubrimiento paralelo ultra-rápido (Fase 0)
+│   ├── net_discovery.py    # Descubrimiento L2/Broadcast mejorado
+│   ├── topology.py         # Descubrimiento de topología de red (L3/VLAN)
 │   ├── udp_probe.py        # Helpers de sondeo UDP
-│   ├── agentless_verify.py # Verificación sin agente SMB/RDP/LDAP/SSH/HTTP
-│   ├── nuclei.py           # Integración del escáner de plantillas Nuclei
-│   ├── playbook_generator.py # Generador de playbooks remediación
-│   ├── nvd.py              # Correlación CVE vía NVD API
-│   ├── osquery.py          # Helpers de verificación Osquery (opcional)
-│   ├── entity_resolver.py  # Consolidación de activos / resolución de entidades
-│   ├── evidence_parser.py  # Helpers de parsing de evidencias
-│   ├── reporter.py         # Salida de informes JSON/TXT/HTML/JSONL
-│   ├── html_reporter.py    # Renderizado de informes HTML
+│   ├── agentless_verify.py # Verificaciones sin agente (SMB/RDP/LDAP/SSH/HTTP)
+│   ├── auth_*.py           # Manejadores de autenticación por protocolo
+│   ├── nuclei.py           # Integración scanner de plantillas Nuclei
+│   ├── playbook_generator.py # Generador de playbooks de remediación
+│   ├── nvd.py              # Correlación CVE vía API NVD
+│   ├── osquery.py          # Helpers de verificación Osquery
+│   ├── entity_resolver.py  # Consolidación de activos / Smart-Check
+│   ├── evidence_parser.py  # Helpers de parsing de evidencia
+│   ├── reporter.py         # Salida JSON/TXT/HTML/JSONL
+│   ├── html_reporter.py    # Renderizador de reportes HTML
 │   ├── jsonl_exporter.py   # Exportación JSONL para SIEM
-│   ├── siem.py             # Integración SIEM (alineación ECS)
+│   ├── siem.py             # Integración SIEM (Alineado a ECS)
 │   ├── diff.py             # Análisis diferencial
-│   ├── crypto.py           # Cifrado/descifrado AES-128
-│   ├── command_runner.py   # Ejecución segura comandos externos
-│   ├── power.py            # Inhibición de reposo
+│   ├── crypto.py           # Cifrado/Descifrado AES-128
+│   ├── command_runner.py   # Ejecución segura de comandos externos
+│   ├── power.py            # Inhibición de suspensión
 │   ├── proxy.py            # Manejo de proxy
-│   ├── scanner_versions.py # Detección de versiones de herramientas
-│   ├── verify_vuln.py      # Filtro Smart-Check falsos positivos
+│   ├── scanner_versions.py # Detección de versiones de herramientas externas
+│   ├── verify_vuln.py      # Filtro de falsos positivos Smart-Check
+│   ├── credentials_manager.py # Gestión de credenciales múltiples
 │   └── updater.py          # Sistema de auto-actualización
-├── templates/              # Plantillas de informes HTML
-└── utils/                  # Utilidades (i18n, config, constantes)
+├── templates/              # Plantillas de reportes HTML
+└── utils/                  # Utilidades (i18n, config, constants)
 ```
 
 ---
