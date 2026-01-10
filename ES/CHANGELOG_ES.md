@@ -10,6 +10,11 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [4.5.3] - 2026-01-10
 
+### Añadido
+
+- **Almacenamiento Seguro de Credenciales (Keyring)**: Paquete `keyring` ahora incluido como dependencia principal para almacenamiento seguro de credenciales vía keychain del SO (Linux Secret Service, macOS Keychain, Windows Credential Vault).
+  - Añadido a dependencias principales e instalador (`python3-keyring` apt + pip).
+
 ### Corregido
 
 - **Bugs de Auditoría de Escaneo (B2/B3/B4)**:

@@ -10,6 +10,11 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [4.5.3] - 2026-01-10
 
+### Added
+
+- **Secure Credential Storage (Keyring)**: `keyring` package now included as core dependency for secure credential storage via OS keychain (Linux Secret Service, macOS Keychain, Windows Credential Vault).
+  - Added to main dependencies and installer (`python3-keyring` apt + pip).
+
 ### Fixed
 
 - **Scan Audit Bugs (B2/B3/B4)**:
