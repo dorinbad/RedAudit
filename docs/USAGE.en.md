@@ -142,6 +142,7 @@ Grouped by operational function. Verified against the current codebase.
 | `--yes` | Auto-confirm all prompts |
 | `--net-discovery` | Broadcast protocols (dhcp,netbios,mdns,upnp,arp,fping) |
 | `--topology` | L2/L3 topology mapping (routes/gateways) |
+| `--hyperscan-mode MODE` | `auto`, `connect`, or `syn` (default: auto) |
 | `--udp-mode` | `quick` (priority ports) or `full` (top ports) |
 | `--redteam` | Add AD/Kerberos/SNMP recon techniques |
 | `--redteam-active-l2` | Enable noisier L2 active probing |
@@ -154,6 +155,8 @@ Grouped by operational function. Verified against the current codebase.
 | Flag | Description |
 | :--- | :--- |
 | `--auth-provider {env,keyring}` | Credential backend (default: keyring) |
+| `--credentials-file PATH` | Load universal credentials list from JSON |
+| `--generate-credentials-template` | Create template `credentials.json` and exit |
 | `--ssh-user USER` | SSH Username |
 | `--ssh-key PATH` | Private Key path |
 | `--ssh-trust-keys` | Auto-accept unknown host keys (Caution!) |

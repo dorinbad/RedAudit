@@ -150,6 +150,7 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | :--- | :--- |
 | `--net-discovery` | Protocolos broadcast (dhcp,netbios,mdns,upnp,arp,fping) |
 | `--topology` | Mapeo de topología L2/L3 (rutas/gateways) |
+| `--hyperscan-mode MODE` | `auto`, `connect`, o `syn` (defecto: auto) |
 | `--udp-mode` | `quick` (puertos prioritarios) o `full` (top ports) |
 | `--redteam` | Añade técnicas de recon AD/Kerberos/SNMP |
 | `--redteam-active-l2` | Habilita sondeo activo L2 más ruidoso |
@@ -162,6 +163,8 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | Flag | Descripción |
 | :--- | :--- |
 | `--auth-provider {env,keyring}` | Backend de credenciales (defecto: keyring/llavero) |
+| `--credentials-file PATH` | Cargar lista universal de credenciales desde JSON |
+| `--generate-credentials-template` | Crear plantilla `credentials.json` y salir |
 | `--ssh-user USER` | Usuario SSH |
 | `--ssh-key PATH` | Ruta a Clave Privada |
 | `--ssh-trust-keys` | Auto-aceptar claves desconocidas de hosts (¡Precaución!) |
