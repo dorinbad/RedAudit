@@ -29,7 +29,7 @@ SSH_CREDENTIALS = [
 # SMB/Windows Credentials (spray list)
 SMB_CREDENTIALS = [
     ("Administrator", "P@ssw0rd123", "REDAUDIT", "172.20.0.60 samba-ad"),  # nosec
-    ("docker", "", None, "172.20.0.30 target-windows"),
+    ("docker", "password123", None, "172.20.0.30 target-windows"),
     ("msfadmin", "msfadmin", None, "172.20.0.11 metasploitable"),  # nosec
 ]
 
@@ -45,9 +45,10 @@ WEB_CREDENTIALS = [
     ("admin@juice-sh.op", "pwned", "172.20.0.10 juiceshop"),
     ("admin", "password", "172.20.0.12 dvwa"),
     ("guest", "guest", "172.20.0.13 webgoat"),
+    ("admin", "admin", "172.20.0.14 hackazon"),
     ("bee", "bug", "172.20.0.15 bwapp"),
     ("admin", "admin", "172.20.0.70 iot-camera"),
-    ("admin", "1234", "172.20.0.71 iot-router"),
+    ("admin", "password", "172.20.0.71 iot-router"),
 ]
 
 # ============================================================================
