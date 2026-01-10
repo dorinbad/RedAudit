@@ -811,6 +811,12 @@ class Wizard:
 
         if mode_choice == 0:
             # Universal mode: collect simple user/pass pairs
+            # Show protocol detection hint
+            print(
+                f"\n{self.ui.colors['OKBLUE']}"
+                f"{self.ui.t('auth_protocol_hint')}"
+                f"{self.ui.colors['ENDC']}"
+            )
             auth_config["auth_credentials"] = self._collect_universal_credentials()
         else:
             # Advanced mode: per-protocol configuration
