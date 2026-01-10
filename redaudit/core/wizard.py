@@ -771,6 +771,69 @@ class Wizard:
 
     # ---------- v4.0: Authenticated Scanning ----------
 
+    def ask_multi_credentials(self) -> list:
+        """
+        Interactive multi-credential collection for Phase 4.1.
+
+        Returns list of credential dicts: [{"user": str, "pass": str}, ...]
+        The credentials are universal and will be tried against all protocols.
+        """
+        import getpass
+
+        credentials: list = []
+
+        if not self.ask_yes_no(self.ui.t("auth_universal_q"), default="no"):
+            return credentials
+
+        print(
+            f"\n{self.ui.colors['OKBLUE']}--- "
+            f"{self.ui.t('auth_cred_number') % 1} "
+            f"---{self.ui.colors['ENDC']}"
+        )
+
+        cred_num = 1
+        while True:
+            # Username
+            user = input(
+                f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
+                f"{self.ui.t('auth_cred_user_prompt')}: "
+            ).strip()
+
+            if not user:
+                break
+
+            # Password
+            try:
+                password = getpass.getpass(
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
+                    f"{self.ui.t('auth_cred_pass_prompt')}: "
+                )
+            except Exception:
+                password = ""
+
+            if user:
+                credentials.append({"user": user, "pass": password})
+
+            # Ask for another?
+            if not self.ask_yes_no(self.ui.t("auth_add_another"), default="no"):
+                break
+
+            cred_num += 1
+            print(
+                f"\n{self.ui.colors['OKBLUE']}--- "
+                f"{self.ui.t('auth_cred_number') % cred_num} "
+                f"---{self.ui.colors['ENDC']}"
+            )
+
+        if credentials:
+            print(
+                f"\n{self.ui.colors['GREEN']}"
+                f"{self.ui.t('auth_creds_summary') % len(credentials)}"
+                f"{self.ui.colors['ENDC']}"
+            )
+
+        return credentials
+
     def ask_auth_config(self) -> dict:
         """
         Interactive authentication setup for Phase 4.

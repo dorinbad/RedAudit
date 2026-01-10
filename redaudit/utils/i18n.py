@@ -403,6 +403,15 @@ TRANSLATIONS = {
         "auth_scan_starting": "Authenticated scan: {} SSH hosts with stored credentials...",
         "auth_scan_complete": "Authenticated scan complete: {} SSH, {} Lynis audits",
         "auth_ssh_configure_q": "Configure SSH credentials?",
+        # v4.5.1: Multi-credential support
+        "auth_universal_q": "Configure credentials (universal - auto-detects protocol)?",
+        "auth_cred_number": "Credential %d",
+        "auth_add_another": "Add another credential?",
+        "auth_cred_user_prompt": "Username",
+        "auth_cred_pass_prompt": "Password (hidden)",
+        "auth_creds_summary": "Configured %d credentials for automatic protocol detection.",
+        "auth_trying_creds": "Trying credentials on %s:%d (%s)...",
+        "auth_cred_success": "Credential matched: %s@%s",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -796,6 +805,15 @@ TRANSLATIONS = {
         "auth_scan_starting": "Escaneo autenticado: {} hosts SSH con credenciales guardadas...",
         "auth_scan_complete": "Escaneo autenticado completo: {} SSH, {} auditorías Lynis",
         "auth_ssh_configure_q": "¿Configurar credenciales SSH?",
+        # v4.5.1: Multi-credential support
+        "auth_universal_q": "¿Configurar credenciales (universal - detecta protocolo automáticamente)?",
+        "auth_cred_number": "Credencial %d",
+        "auth_add_another": "¿Añadir otra credencial?",
+        "auth_cred_user_prompt": "Usuario",
+        "auth_cred_pass_prompt": "Contraseña (oculta)",
+        "auth_creds_summary": "Configuradas %d credenciales para detección automática de protocolo.",
+        "auth_trying_creds": "Probando credenciales en %s:%d (%s)...",
+        "auth_cred_success": "Credencial válida: %s@%s",
     },
 }
 
