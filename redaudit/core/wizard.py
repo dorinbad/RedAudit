@@ -894,7 +894,7 @@ class Wizard:
 
         if credentials:
             print(
-                f"\n{self.ui.colors['GREEN']}"
+                f"\n{self.ui.colors['OKGREEN']}"
                 f"{self.ui.t('auth_creds_summary') % len(credentials)}"
                 f"{self.ui.colors['ENDC']}"
             )

@@ -376,7 +376,7 @@ TRANSLATIONS = {
         "hyperscan_connect": "Connect — Standard TCP (no root required, stealthier)",
         "hyperscan_syn": "SYN — Raw packets (requires root + scapy, faster)",
         # v4.0: Authenticated Scanning
-        "auth_scan_q": "Enable authenticated scanning (SSH/SMB)?",
+        "auth_scan_q": "Enable authenticated scanning?",
         "auth_ssh_configure_q": "Configure SSH credentials?",
         "auth_ssh_user_prompt": "SSH User",
         "auth_method_key": "Private Key",
@@ -783,7 +783,7 @@ TRANSLATIONS = {
         "hyperscan_connect": "Connect — TCP estándar (no requiere root, más sigiloso)",
         "hyperscan_syn": "SYN — Paquetes raw (requiere root + scapy, más rápido)",
         # v4.0: Authenticated Scanning
-        "auth_scan_q": "¿Activar escaneo autenticado (SSH)?",
+        "auth_scan_q": "¿Activar escaneo autenticado?",
         "auth_ssh_user_prompt": "Usuario SSH",
         "auth_method_key": "Clave Privada",
         "auth_method_pass": "Contraseña",
