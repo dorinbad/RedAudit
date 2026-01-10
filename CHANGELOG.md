@@ -8,6 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.8] - 2026-01-10
+
+### Fixed
+
+- **Root Keyring Support (Headless)**: Added support for `keyrings.alt` to handle credential storage when running as root without a desktop session (common in servers/Labs).
+  - **Installer**: Added `keyrings.alt` to dependencies.
+  - **Core**: `redaudit` and `seed_keyring.py` now fallback to `PlaintextKeyring` (file-based) if the system keyring is unavailable.
+
 ## [4.5.7] - 2026-01-10
 
 ### Fixed

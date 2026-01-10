@@ -118,7 +118,7 @@ if $INSTALL; then
 
     # Python packages for authenticated scanning (Phase 4: SSH/SMB/SNMP + Keyring)
     echo "[INFO] Installing Python packages for authenticated scanning..."
-    pip3 install --quiet paramiko impacket pysnmp keyring || echo "[WARN] pip install failed (optional auth packages)"
+    pip3 install --quiet paramiko impacket pysnmp keyring keyrings.alt || echo "[WARN] pip install failed (optional auth packages)"
 
     # -------------------------------------------
     # 2b) Install testssl.sh from GitHub

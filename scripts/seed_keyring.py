@@ -58,9 +58,32 @@ WEB_CREDENTIALS = [
 def main():
     try:
         import keyring
+        from keyring.errors import NoKeyringError
+
+        # v4.5.8: Configure backend fallback for root/headless
+        try:
+            # Check if default backend is usable
+            backend = keyring.get_keyring()
+            if "fail" in str(backend).lower():
+                raise NoKeyringError("Backend is 'fail'")
+        except (NoKeyringError, Exception):
+            # Fallback to PlaintextKeyring
+            try:
+                import keyrings.alt.file
+
+                keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
+                print(
+                    "[INFO] No desktop keyring found. Using PlaintextKeyring (headless/root mode)."
+                )
+            except ImportError:
+                # If keyrings.alt is missing, we can't do much but warn
+                print(
+                    "[WARN] 'keyrings.alt' not found. Credentials may not persist if no backend is available."
+                )
+                pass
     except ImportError:
         print("[ERROR] keyring package not installed.")
-        print("Run: pip3 install keyring")
+        print("Run: pip3 install keyring keyrings.alt")
         sys.exit(1)
 
     # v4.5.7: Warn if not running as root, because RedAudit usually runs as root

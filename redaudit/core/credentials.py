@@ -144,10 +144,33 @@ class KeyringCredentialProvider(CredentialProvider):
         self._keyring_available = False
         try:
             import keyring
+            from keyring.errors import NoKeyringError
 
-            self._keyring = keyring
-            self._keyring_available = True
-            logger.debug("Keyring backend: %s", keyring.get_keyring())
+            try:
+                # Test backend availability
+                current_backend = keyring.get_keyring()
+                # If backend is 'fail' check if we can switch to alt
+                if "fail" in str(current_backend).lower():
+                    raise NoKeyringError("Backend is 'fail'")
+
+                self._keyring = keyring
+                self._keyring_available = True
+                logger.debug("Keyring backend: %s", current_backend)
+
+            except (NoKeyringError, ImportError, Exception):
+                # Fallback to PlaintextKeyring (common for root/headless)
+                try:
+                    import keyrings.alt.file
+
+                    keyring.set_keyring(keyrings.alt.file.PlaintextKeyring())
+                    logger.info("Using PlaintextKeyring (headless/root mode)")
+                    self._keyring = keyring
+                    self._keyring_available = True
+                except ImportError:
+                    logger.warning(
+                        "keyring/keyrings.alt not fully available, falling back to environment"
+                    )
+                    self._fallback = EnvironmentCredentialProvider()
         except ImportError:
             logger.warning("keyring package not installed, falling back to environment")
             self._fallback = EnvironmentCredentialProvider()
