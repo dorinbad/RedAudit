@@ -14,27 +14,6 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 These features are approved but **not yet implemented** in the codebase.
 
-### Phase 4: Authenticated Scanning (Priority: High - Completed) ✅
-
-Enable credential-based enumeration for deeper audit coverage.
-
-| Task | Status | Description |
-| :--- | :--- | :--- |
-| **P4.1 Secrets Management Architecture** | ✅ Done (v4.5.0) | Design secure credential storage (Vault/Keyring integration). |
-| **P4.2 SSH Credential Support** | ✅ Done (v4.5.0) | Add Paramiko/native SSH key-based and password auth for remote Linux auditing. |
-| **P4.3 SMB/WMI Credential Support** | ✅ Done (v4.5.0) | Integrate Impacket for authenticated Windows enumeration. |
-| **P4.4 SNMP v3 Support** | ✅ Done (v4.5.0) | Add SNMPv3 auth (noAuthNoPriv, authNoPriv, authPriv). |
-| **P4.5 Lynis Integration** | ✅ Done (v4.5.0) | Remote Linux CIS hardening checks via SSH. |
-
-### Phase 4.1.1: Multi-Credential Support (Priority: High) ✅
-
-| Task | Status | Description |
-| :--- | :--- | :--- |
-| **CredentialsManager** | ✅ Done (v4.5.2) | Universal credential spraying with auto-protocol detection. |
-| **Wizard Multi-Credential** | ✅ Done (v4.5.2) | Refactored ask_auth_config() with universal vs advanced modes. |
-| **CLI --credentials-file** | ✅ Done (v4.5.2) | Load credentials from JSON file. |
-| **Template Generator** | ✅ Done (v4.5.2) | `--generate-credentials-template` for empty JSON template. |
-
 ### v4.4 Code Coverage & Stability (Priority: High) ✅
 
 | Feature | Status | Description |
@@ -135,6 +114,18 @@ Minor improvements identified during v4.4.0 Gold Master validation.
 ## 2. Implemented Capabilities (Verified)
 
 Features present in releases where `redaudit --version` >= v3.6.0, with verification paths in the codebase.
+
+### v4.5 Authenticated Scanning (Phase 4)
+
+| Feature | Version | Verification |
+| :--- | :--- | :--- |
+| **Secrets Management** | v4.5.0 | `redaudit/core/credentials.py`. Secure credential storage with Environment and Keyring backends. |
+| **SSH Scanning** | v4.5.0 | `redaudit/core/auth_ssh.py`. Authenticated Linux enumeration (OS, Packages, Services) via Paramiko. |
+| **SMB/WMI Scanning** | v4.5.0 | `redaudit/core/auth_smb.py`. Authenticated Windows enumeration (Shares, Users, OS) via Impacket. |
+| **SNMP v3** | v4.5.0 | `redaudit/core/auth_snmp.py`. Secure network device auditing with Auth/Priv protocols. |
+| **Lynis Integration** | v4.5.0 | `redaudit/core/auth_lynis.py`. Remote execution of CIS hardening audits via SSH. |
+| **Multi-Credential Support** | v4.5.2 | `redaudit/core/credentials_manager.py`. Universal credential spraying with protocol auto-detection. |
+| **Wizard Universal Auth** | v4.5.2 | `redaudit/core/wizard.py`. New `ask_auth_config` step supporting both Universal and Advanced auth modes. |
 
 ### UX & Integrations (v3.7.0+)
 

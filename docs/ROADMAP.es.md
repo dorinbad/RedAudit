@@ -14,27 +14,6 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 Estas características están aprobadas pero **aún no implementadas** en el código base.
 
-### Fase 4: Escaneo Autenticado (Prioridad: Alta - Completado) ✅
-
-Habilitar enumeración basada en credenciales para cobertura de auditoría más profunda.
-
-| Tarea | Estado | Descripción |
-| :--- | :--- | :--- |
-| **P4.1 Arquitectura de Gestión de Secretos** | ✅ Hecho (v4.5.0) | Diseñar almacenamiento seguro de credenciales (integración Vault/Keyring). |
-| **P4.2 Soporte Credenciales SSH** | ✅ Hecho (v4.5.0) | Añadir Paramiko/SSH nativo con autenticación por clave y contraseña para auditoría remota Linux. |
-| **P4.3 Soporte Credenciales SMB/WMI** | ✅ Hecho (v4.5.0) | Integrar Impacket para enumeración autenticada en Windows. |
-| **P4.4 Soporte SNMP v3** | ✅ Hecho (v4.5.0) | Añadir autenticación SNMPv3 (noAuthNoPriv, authNoPriv, authPriv). |
-| **P4.5 Integración Lynis** | ✅ Hecho (v4.5.0) | Comprobaciones CIS hardening en Linux remoto vía SSH. |
-
-### Fase 4.1.1: Soporte Multi-Credencial (Prioridad: Alta) ✅ (v4.5.2)
-
-| Tarea | Estado | Descripción |
-| :--- | :--- | :--- |
-| **CredentialsManager** | ✅ Hecho (v4.5.2) | Spraying de credenciales universales con detección automática de protocolo. |
-| **Wizard Multi-Credential** | ✅ Hecho (v4.5.2) | Refactorizado ask_auth_config() con modos universal vs avanzado. |
-| **CLI --credentials-file** | ✅ Hecho (v4.5.2) | Cargar credenciales desde fichero JSON. |
-| **Generador de Plantillas** | ✅ Hecho (v4.5.2) | `--generate-credentials-template` para plantilla JSON vacía. |
-
 ### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta) ✅
 
 | Característica | Estado | Descripción |
@@ -126,6 +105,18 @@ Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
 ## 2. Capacidades Implementadas (Verificado)
 
 Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con rutas de verificación en el código.
+
+### v4.5 Escaneo Autenticado (Fase 4)
+
+| Característica | Versión | Verificación |
+| :--- | :--- | :--- |
+| **Gestión de Secretos** | v4.5.0 | `redaudit/core/credentials.py`. Almacenamiento seguro en entorno o Keyring. |
+| **Escaneo SSH** | v4.5.0 | `redaudit/core/auth_ssh.py`. Auditoría remota Linux (OS, Paquetes, Servicios) vía Paramiko. |
+| **Escaneo SMB/WMI** | v4.5.0 | `redaudit/core/auth_smb.py`. Enumeración Windows (Shares, Usuarios, OS) vía Impacket. |
+| **SNMP v3** | v4.5.0 | `redaudit/core/auth_snmp.py`. Auditoría segura de red con protocolos Auth/Priv. |
+| **Integración Lynis** | v4.5.0 | `redaudit/core/auth_lynis.py`. Ejecución remota de auditorías de hardening CIS. |
+| **Soporte Multi-Credencial** | v4.5.2 | `redaudit/core/credentials_manager.py`. Spraying de credenciales con detección automática de protocolo. |
+| **Wizard Auth Universal** | v4.5.2 | `redaudit/core/wizard.py`. Nuevo paso `ask_auth_config` con soporte para modos Universal y Avanzado. |
 
 ### UX e Integraciones (v3.7.0+)
 
