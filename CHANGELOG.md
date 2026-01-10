@@ -8,6 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.6] - 2026-01-10
+
+### Added
+
+- **Lab Setup Automation**: Added `scripts/setup_lab.sh` to automate Docker lab provisioning.
+  - Commands: `install`, `start`, `stop`, `remove`, `status`.
+  - Provisions 11 vulnerable targets (Juice Shop, Metasploitable, Windows Sim, SCADA, AD, etc.).
+- **Lab Documentation**: Added `docs/LAB_SETUP.md` and `docs/LAB_SETUP_ES.md`.
+  - Comprehensive guide on setting up the testing environment.
+  - Linked from main README.
+
 ## [4.5.5] - 2026-01-10
 
 ### Added

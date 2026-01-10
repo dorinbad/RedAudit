@@ -41,6 +41,9 @@ Para modo interactivo (asistente guiado), simplemente ejecuta:
 sudo redaudit
 ```
 
+> **¿Quieres probar RedAudit de forma segura?**
+> Configura nuestro Laboratorio Vulnerable usando Docker: **[Guia del Laboratorio](docs/LAB_SETUP_ES.md)**
+
 ---
 
 ## Capacidades Principales

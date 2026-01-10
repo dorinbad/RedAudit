@@ -45,6 +45,9 @@ For interactive mode (wizard-guided setup), simply run:
 sudo redaudit
 ```
 
+> **Want to test RedAudit safely?**
+> Set up our Vulnerable Lab using Docker: **[Lab Setup Guide](docs/LAB_SETUP.md)**
+
 ---
 
 ## Core Capabilities

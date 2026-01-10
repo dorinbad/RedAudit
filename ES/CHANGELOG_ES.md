@@ -8,6 +8,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.6] - 2026-01-10
+
+### Anadido
+
+- **Automatizacion del Laboratorio**: Anadido `scripts/setup_lab.sh` para automatizar el provisionamiento del lab Docker.
+  - Comandos: `install`, `start`, `stop`, `remove`, `status`.
+  - Provisiona 11 objetivos vulnerables.
+- **Documentacion del Laboratorio**: Anadido `docs/LAB_SETUP.md` y `docs/LAB_SETUP_ES.md`.
+  - Guia completa sobre como configurar el entorno de pruebas.
+  - Enlazado desde el README principal.
+
 ## [4.5.5] - 2026-01-10
 
 ### Anadido
