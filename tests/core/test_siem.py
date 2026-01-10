@@ -204,7 +204,13 @@ class TestSIEM(unittest.TestCase):
 
     def test_generate_host_tags_deep_scanned(self):
         """Test tag for deep scanned hosts."""
-        host = {"ip": "192.168.1.1", "ports": [], "deep_scan": {"mac_address": "AA:BB:CC:DD:EE:FF"}}
+        # v4.5.16: deep-scanned tag requires smart_scan.deep_scan_executed=True
+        host = {
+            "ip": "192.168.1.1",
+            "ports": [],
+            "deep_scan": {"mac_address": "AA:BB:CC:DD:EE:FF"},
+            "smart_scan": {"deep_scan_executed": True},
+        }
         tags = generate_host_tags(host)
         self.assertIn("deep-scanned", tags)
         self.assertIn("mac-identified", tags)

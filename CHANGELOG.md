@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.16] - 2026-01-10
+
+### Fixed
+
+- **Smart Scan**: Preserve HyperScan-discovered ports when nmap underreports due to timing/networking issues.
+- **SIEM Tags**: `deep-scanned` tag now only added when deep scan was actually executed.
+
 ## [4.5.15] - 2026-01-10
 
 ### Fixed

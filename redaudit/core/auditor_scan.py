@@ -1296,6 +1296,32 @@ class AuditorScan:
                         }
                     )
 
+            # v4.5.16: Preserve HyperScan-discovered ports that nmap missed
+            # This handles timing issues where ports close between HyperScan and nmap
+            if discovery_ports:
+                nmap_port_nums = {p["port"] for p in ports}
+                missing_ports = [p for p in discovery_ports if p not in nmap_port_nums]
+                if missing_ports and self.logger:
+                    self.logger.info(
+                        "Preserving %d HyperScan ports not confirmed by nmap for %s: %s",
+                        len(missing_ports),
+                        safe_ip,
+                        missing_ports[:10],  # Log first 10
+                    )
+                for mp in missing_ports:
+                    ports.append(
+                        {
+                            "port": mp,
+                            "protocol": "tcp",
+                            "service": "hyperscan-discovered",
+                            "product": "",
+                            "version": "",
+                            "extrainfo": "(Port found by HyperScan, not confirmed by nmap)",
+                            "cpe": [],
+                            "is_web_service": mp in (80, 443, 8080, 8443, 3000, 8000),
+                        }
+                    )
+
             # v4.0: Authenticated Scanning Integration (Phase 4)
             # Check if we have credentials for this host (CLI/Wizard or stored)
             ssh_credential = self._resolve_ssh_credential(safe_ip)

@@ -606,10 +606,13 @@ def generate_host_tags(host_record: Dict, asset_type: Optional[str] = None) -> L
     if status == "filtered":
         tags.add("firewall-protected")
 
-    # Add deep scan tags
-    if host_record.get("deep_scan"):
+    # Add deep scan tags - v4.5.16: Only if deep scan was actually executed
+    deep_scan = host_record.get("deep_scan", {})
+    smart_scan = host_record.get("smart_scan", {})
+    deep_executed = smart_scan.get("deep_scan_executed", False)
+    if deep_scan and deep_executed:
         tags.add("deep-scanned")
-        if host_record["deep_scan"].get("mac_address"):
+        if deep_scan.get("mac_address"):
             tags.add("mac-identified")
 
     # Add vulnerability tags
