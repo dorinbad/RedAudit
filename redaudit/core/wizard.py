@@ -802,8 +802,16 @@ class Wizard:
         if skip_intro:
             # Assumed yes
             pass
-        elif not self.ask_yes_no(self.ui.t("auth_scan_q"), default="no"):
-            return auth_config
+        else:
+            # v4.5.3: Check for saved credentials in keyring
+            loaded_from_keyring = self._check_and_load_saved_credentials(auth_config)
+            if loaded_from_keyring:
+                # Credentials loaded from keyring, enable auth and skip manual setup
+                auth_config["auth_enabled"] = True
+                return auth_config
+
+            if not self.ask_yes_no(self.ui.t("auth_scan_q"), default="no"):
+                return auth_config
 
         auth_config["auth_enabled"] = True
 
@@ -849,6 +857,70 @@ class Wizard:
                 auth_config["auth_save_keyring"] = True
 
         return auth_config
+
+    def _check_and_load_saved_credentials(self, auth_config: dict) -> bool:
+        """
+        Check for saved credentials in keyring and offer to load them.
+
+        v4.5.3: Implements B5 - Credential Loading for Future Scans
+
+        Returns:
+            True if credentials were loaded, False otherwise.
+        """
+        try:
+            from redaudit.core.credentials import KeyringCredentialProvider
+
+            provider = KeyringCredentialProvider()
+            summary = provider.get_saved_credential_summary()
+
+            if not summary:
+                return False
+
+            # Show saved credentials
+            print(
+                f"\n{self.ui.colors['OKGREEN']}"
+                f"{self.ui.t('auth_saved_creds_found')}"
+                f"{self.ui.colors['ENDC']}"
+            )
+            for protocol, username in summary:
+                print(f"  - {protocol}: {username}")
+
+            # Ask to load
+            if self.ask_yes_no(self.ui.t("auth_load_saved_q"), default="yes"):
+                # Load credentials into auth_config
+                for protocol, username in summary:
+                    cred = provider.get_credential("default", protocol.lower())
+                    if cred:
+                        if protocol == "SSH":
+                            auth_config["auth_ssh_user"] = cred.username
+                            auth_config["auth_ssh_pass"] = cred.password
+                            auth_config["auth_ssh_key"] = cred.private_key
+                            auth_config["auth_ssh_key_pass"] = cred.private_key_passphrase
+                        elif protocol == "SMB":
+                            auth_config["auth_smb_user"] = cred.username
+                            auth_config["auth_smb_pass"] = cred.password
+                            auth_config["auth_smb_domain"] = cred.domain
+                        elif protocol == "SNMP":
+                            auth_config["auth_snmp_user"] = cred.username
+                            auth_config["auth_snmp_auth_proto"] = cred.snmp_auth_proto
+                            auth_config["auth_snmp_auth_pass"] = cred.snmp_auth_pass
+                            auth_config["auth_snmp_priv_proto"] = cred.snmp_priv_proto
+                            auth_config["auth_snmp_priv_pass"] = cred.snmp_priv_pass
+
+                print(
+                    f"{self.ui.colors['OKGREEN']}"
+                    f"{self.ui.t('auth_loaded_creds').format(len(summary))}"
+                    f"{self.ui.colors['ENDC']}\n"
+                )
+                return True
+
+            return False
+        except Exception as e:
+            # Keyring not available or other error - continue with manual setup
+            import logging
+
+            logging.getLogger(__name__).debug("Keyring check failed: %s", e)
+            return False
 
     def _collect_universal_credentials(self) -> list:
         """Collect universal credentials (user/pass pairs)."""

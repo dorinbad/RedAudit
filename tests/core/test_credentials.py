@@ -183,6 +183,71 @@ class TestKeyringCredentialProvider(unittest.TestCase):
         # Verify set_password was called
         self.assertTrue(provider._keyring.set_password.called)
 
+    @patch("redaudit.core.credentials.KeyringCredentialProvider.__init__")
+    def test_has_saved_credentials(self, mock_init):
+        """Test checking for saved credentials in keyring."""
+        mock_init.return_value = None
+        provider = KeyringCredentialProvider.__new__(KeyringCredentialProvider)
+        provider._keyring_available = True
+        provider._keyring = MagicMock()
+
+        # Mock: SSH and SMB have credentials, SNMP does not
+        provider._keyring.get_password.side_effect = lambda svc, key: {
+            ("redaudit-ssh", "default:username"): "sshuser",
+            ("redaudit-smb", "default:username"): "smbuser",
+            ("redaudit-snmp", "default:username"): None,
+        }.get((svc, key))
+
+        result = provider.has_saved_credentials()
+        self.assertTrue(result["ssh"])
+        self.assertTrue(result["smb"])
+        self.assertFalse(result["snmp"])
+
+    @patch("redaudit.core.credentials.KeyringCredentialProvider.__init__")
+    def test_has_saved_credentials_keyring_unavailable(self, mock_init):
+        """Test has_saved_credentials returns all False when keyring unavailable."""
+        mock_init.return_value = None
+        provider = KeyringCredentialProvider.__new__(KeyringCredentialProvider)
+        provider._keyring_available = False
+
+        result = provider.has_saved_credentials()
+        self.assertFalse(result["ssh"])
+        self.assertFalse(result["smb"])
+        self.assertFalse(result["snmp"])
+
+    @patch("redaudit.core.credentials.KeyringCredentialProvider.__init__")
+    def test_get_saved_credential_summary(self, mock_init):
+        """Test getting summary of saved credentials."""
+        mock_init.return_value = None
+        provider = KeyringCredentialProvider.__new__(KeyringCredentialProvider)
+        provider._keyring_available = True
+        provider._keyring = MagicMock()
+
+        # Mock: Only SSH has credentials
+        provider._keyring.get_password.side_effect = lambda svc, key: {
+            ("redaudit-ssh", "default:username"): "auditor",
+            ("redaudit-smb", "default:username"): None,
+            ("redaudit-snmp", "default:username"): None,
+        }.get((svc, key))
+
+        result = provider.get_saved_credential_summary()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], ("SSH", "auditor"))
+
+    @patch("redaudit.core.credentials.KeyringCredentialProvider.__init__")
+    def test_get_saved_credential_summary_empty(self, mock_init):
+        """Test summary returns empty list when no credentials saved."""
+        mock_init.return_value = None
+        provider = KeyringCredentialProvider.__new__(KeyringCredentialProvider)
+        provider._keyring_available = True
+        provider._keyring = MagicMock()
+
+        # No credentials
+        provider._keyring.get_password.return_value = None
+
+        result = provider.get_saved_credential_summary()
+        self.assertEqual(result, [])
+
 
 class TestGetCredentialProvider(unittest.TestCase):
     """Tests for the get_credential_provider factory function."""

@@ -393,6 +393,9 @@ TRANSLATIONS = {
         "auth_smb_domain_prompt": "Windows Domain (optional, ENTER for none)",
         "auth_smb_pass_hint": "Input Windows/SMB password (hidden)",
         "auth_save_keyring_q": "Save credentials to system keyring for future scans?",
+        "auth_saved_creds_found": "Saved credentials found in keyring:",
+        "auth_load_saved_q": "Load saved credentials?",
+        "auth_loaded_creds": "Loaded {0} credential(s) from keyring.",
         # v4.3: SNMP v3
         "auth_snmp_configure_q": "Configure SNMP v3 credentials (network devices)?",
         "auth_snmp_user_prompt": "SNMP v3 Username",
@@ -798,7 +801,10 @@ TRANSLATIONS = {
         "auth_smb_user_prompt": "Usuario Windows (ej. Administrador)",
         "auth_smb_domain_prompt": "Dominio Windows (opcional, ENTER para ninguno)",
         "auth_smb_pass_hint": "Introduce contraseña Windows/SMB (oculta)",
-        "auth_save_keyring_q": "¿Guardar credenciales en el anillo de claves del sistema para futuros escaneos?",
+        "auth_save_keyring_q": "¿Guardar credenciales en el keyring del sistema para futuros escaneos?",
+        "auth_saved_creds_found": "Credenciales guardadas encontradas en keyring:",
+        "auth_load_saved_q": "¿Cargar credenciales guardadas?",
+        "auth_loaded_creds": "Cargadas {0} credencial(es) desde keyring.",
         # v4.3: SNMP v3
         "auth_snmp_configure_q": "¿Configurar credenciales SNMP v3 (dispositivos de red)?",
         "auth_snmp_user_prompt": "Nombre de usuario SNMP v3",

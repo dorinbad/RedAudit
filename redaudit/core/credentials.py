@@ -217,6 +217,51 @@ class KeyringCredentialProvider(CredentialProvider):
             domain=domain,
         )
 
+    def has_saved_credentials(self) -> dict:
+        """
+        Check if there are any saved credentials in keyring.
+
+        Returns:
+            dict with protocol names as keys and bool as values indicating
+            if credentials exist for that protocol.
+            Example: {"ssh": True, "smb": False, "snmp": False}
+        """
+        if not self._keyring_available:
+            return {"ssh": False, "smb": False, "snmp": False}
+
+        result = {}
+        for protocol in ["ssh", "smb", "snmp"]:
+            service_name = f"redaudit-{protocol}"
+            try:
+                username = self._keyring.get_password(service_name, "default:username")
+                result[protocol] = username is not None
+            except Exception:
+                result[protocol] = False
+
+        return result
+
+    def get_saved_credential_summary(self) -> list:
+        """
+        Get a summary of saved credentials for display.
+
+        Returns:
+            List of tuples (protocol, username) for each saved credential.
+        """
+        if not self._keyring_available:
+            return []
+
+        summary = []
+        for protocol in ["ssh", "smb", "snmp"]:
+            service_name = f"redaudit-{protocol}"
+            try:
+                username = self._keyring.get_password(service_name, "default:username")
+                if username:
+                    summary.append((protocol.upper(), username))
+            except Exception:
+                pass
+
+        return summary
+
     def store_credential(self, target: str, protocol: str, credential: Credential) -> bool:
         """Store credential in OS keyring."""
         if not self._keyring_available:
