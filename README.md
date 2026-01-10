@@ -24,7 +24,7 @@ It orchestrates a comprehensive toolchain (nmap, nikto, nuclei, whatweb, testssl
 
 **Use cases**: Defensive hardening, penetration test scoping, change tracking between assessments.
 
-**Key differentiator**: Identity-driven escalation (TCP → UDP probes) combined with **Smart-Check** filtering (content-type, size, magic bytes, and header/vendor hints) to reduce false positives.
+**Key differentiator**: **HyperScan-First speed optimization** feeds into an identity-driven escalation engine (Deep TCP → UDP probes), combined with **Smart-Check** filtering to drastically reduce false positives without missing critical assets.
 
 ---
 

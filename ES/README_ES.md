@@ -20,7 +20,7 @@ Orquesta un toolchain completo (nmap, nikto, nuclei, whatweb, testssl.sh, sqlmap
 
 **Casos de uso**: Hardening defensivo, acotación de pentests, seguimiento de cambios entre evaluaciones.
 
-**Diferenciador clave**: Escalado por identidad (TCP → sondas UDP) combinado con **Smart-Check** (Content-Type, tamaño, magic bytes y señales de cabeceras/fabricante) para reducir falsos positivos.
+**Diferenciador clave**: Optimización de velocidad **HyperScan-First** que alimenta un motor de escalado por identidad (Deep TCP → sondas UDP), combinado con filtrado **Smart-Check** para reducir drásticamente los falsos positivos sin perder activos críticos.
 
 ---
 
