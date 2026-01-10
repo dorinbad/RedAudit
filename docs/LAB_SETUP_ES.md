@@ -1,25 +1,25 @@
-# Configuración del Laboratorio RedAudit
+# Configuracion del Laboratorio RedAudit
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](LAB_SETUP.md)
 
-Esta guía explica cómo configurar el **Laboratorio de Pruebas RedAudit** usando Docker. Este entorno imita una red real con varias máquinas vulnerables, sistemas SCADA, Active Directory y dispositivos IoT.
+Esta guia explica como configurar el **Laboratorio de Pruebas RedAudit** usando Docker. Este entorno imita una red real con varias maquinas vulnerables, sistemas SCADA, Active Directory y dispositivos IoT.
 
 El laboratorio corresponde a las credenciales proporcionadas en `scripts/seed_keyring.py`.
 
 ## Requisitos Previos
 
-### 1. El Laboratorio (Entorno Víctima)
+### 1. El Laboratorio (Entorno Victima)
 
 - **SO Host**: Linux (Ubuntu/Debian recomendado), macOS o Windows (con Docker Desktop)
-- **Docker**: Debe estar instalado y ejecutándose (`sudo systemctl start docker`)
+- **Docker**: Debe estar instalado y ejecutandose (`sudo systemctl start docker`)
 - **Python 3**: Para ejecutar el seeder de credenciales
 
 ### 2. El Auditor (RedAudit)
 
-RedAudit está diseñado para ejecutarse en una **máquina física dedicada** o **Máquina Virtual** (VMware/VirtualBox) con Linux (Kali/Debian/Ubuntu).
+RedAudit esta diseñado para ejecutarse en una **maquina fisica dedicada** o **Maquina Virtual** (VMware/VirtualBox) con Linux (Kali/Debian/Ubuntu).
 
 - **Nativo/VM (Recomendado)**: Usa el script `redaudit_install.sh` en un sistema Linux/VM (con red en modo puente/bridge) para visibilidad L2 completa.
-- **Docker (Opcional)**: RedAudit tiene una [versión Dockerizada](DOCKER.es.md), pero en Windows/macOS/Docker se limita a la red local "bridge" (sin visibilidad L2/ARP externa). Ver [DOCKER.es.md](DOCKER.es.md).
+- **Docker (Opcional)**: RedAudit tiene una [version Dockerizada](DOCKER.es.md), pero en Windows/macOS/Docker se limita a la red local "bridge" (sin visibilidad L2/ARP externa). Ver [DOCKER.es.md](DOCKER.es.md).
 
 ## Nota sobre Validacion en Mundo Real
 
@@ -27,7 +27,7 @@ RedAudit está diseñado para ejecutarse en una **máquina física dedicada** o 
 >
 > RedAudit se desarrolla y valida principalmente en un **entorno fisico complejo** que incluye routers empresariales, switches, firewalls de hardware, dispositivos IoT fisicos y diversos sistemas operativos. Este setup Docker es una simulacion ligera de ese entorno, diseñada para el uso de la comunidad.
 
-## Inicio Rápido (Automatizado)
+## Inicio Rapido (Automatizado)
 
 Proporcionamos un script de ayuda para gestionar todo el ciclo de vida del laboratorio.
 
@@ -39,14 +39,39 @@ sudo bash scripts/setup_lab.sh install
 sudo bash scripts/setup_lab.sh status
 ```
 
-## Gestión del Laboratorio
+## Gestion del Laboratorio
 
-| Acción | Comando | Descripción |
+| Accion | Comando | Descripcion |
 | :--- | :--- | :--- |
 | **Iniciar** | `sudo bash scripts/setup_lab.sh start` | Inicia todos los contenedores detenidos |
 | **Parar** | `sudo bash scripts/setup_lab.sh stop` | Detiene todos los contenedores (libera recursos) |
 | **Eliminar** | `sudo bash scripts/setup_lab.sh remove` | BORRA todos los contenedores y la red |
 | **Estado** | `sudo bash scripts/setup_lab.sh status` | Lista contenedores y hace ping a IPs |
+
+## Gestion del Servicio Docker
+
+```bash
+# Habilitar e iniciar Docker (persistente)
+sudo systemctl enable --now docker
+
+# Deshabilitar y detener Docker (liberar recursos)
+sudo systemctl disable --now docker.socket && sudo systemctl stop docker
+```
+
+## Comandos de Orquestacion
+
+```bash
+# Arrancar todos los contenedores del lab
+docker start $(docker ps -aq --filter "network=lab_seguridad")
+
+# Parar todos los contenedores del lab
+docker stop $(docker ps -q --filter "network=lab_seguridad")
+
+# Check de salud (ping a todos)
+for i in 10 11 12 13 14 15 20 30 40 50 51 60 70 71; do
+  ping -c1 -W1 172.20.0.$i &>/dev/null && echo "172.20.0.$i [UP]" || echo "172.20.0.$i [DOWN]"
+done
+```
 
 ## Estructura de Red
 
@@ -56,25 +81,74 @@ sudo bash scripts/setup_lab.sh status
 
 ### Objetivos
 
-| IP | hostname | Rol | Vulnerabilidades Clave |
-| :--- | :--- | :--- | :--- |
-| **.10** | `juiceshop` | Web (Node.js) | OWASP Top 10 |
-| **.11** | `metasploitable` | Linux Legacy | Credenciales débiles SSH/SMB/Telnet |
-| **.12** | `dvwa` | Web (PHP) | SQLi, XSS, Inyección de Comandos |
-| **.13** | `webgoat` | Web (Java) | Vulnerabilidades de entrenamiento |
-| **.15** | `bwapp` | Web | Aplicación Web con Bugs |
-| **.20** | `target-ssh-lynis` | Ubuntu Hardened | Pruebas de Cumplimiento SSH |
-| **.30** | `target-windows` | Simulación Windows | SMB NULL Session |
-| **.40** | `target-snmp` | SNMP v3 | Configuración Auth/Priv débil |
-| **.50** | `openplc-scada` | SCADA | Modbus TCP (502) |
-| **.51** | `conpot-ics` | ICS Honeypot | Siemens S7, Modbus |
-| **.60** | `samba-ad` | Active Directory | LDAP, SMB, Kerberos (`REDAUDIT.LOCAL`) |
-| **.70** | `iot-camera` | Cámara IoT | Credenciales por defecto |
-| **.71** | `iot-router` | Router IoT | Administración web débil |
+| IP | Hostname | Rol | Usuario | Contrasena | Notas |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **.10** | `juiceshop` | Web (Node.js) | `admin@juice-sh.op` | `pwned` | OWASP Top 10 |
+| **.11** | `metasploitable` | Linux Legacy | `msfadmin` | `msfadmin` | SSH/SMB/Telnet |
+| **.12** | `dvwa` | Web (PHP) | `admin` | `password` | SQLi, XSS |
+| **.13** | `webgoat` | Web (Java) | `guest` | `guest` | Entrenamiento |
+| **.14** | `hackazon` | E-commerce | `admin` | `admin` | SQLi, XSS |
+| **.15** | `bwapp` | Web | `bee` | `bug` | App con Bugs |
+| **.20** | `target-ssh-lynis` | Ubuntu Hardened | `auditor` | `redaudit` | SSH Compliance |
+| **.30** | `target-windows` | Simulador SMB | `docker` | `password123` | Puerto 445 |
+| **.40** | `target-snmp` | SNMP v3 | `admin-snmp` | `auth_pass_123` | SHA/AES |
+| **.50** | `openplc-scada` | SCADA | `openplc` | `openplc` | Modbus TCP |
+| **.51** | `conpot-ics` | ICS Honeypot | *(anon)* | *(anon)* | S7/Modbus |
+| **.60** | `samba-ad` | Active Directory | `Administrator` | `P@ssw0rd123` | `AD.LAB.LOCAL` |
+| **.70** | `iot-camera` | Camara IoT | `admin` | `admin` | GoAhead RCE |
+| **.71** | `iot-router` | Router IoT | `admin` | `password` | Web/IoT |
+
+## Comandos de Instalacion (Verificados)
+
+### Grupo Core (Web y Legacy)
+
+```bash
+docker run -d --name juiceshop --net lab_seguridad --ip 172.20.0.10 bkimminich/juice-shop
+docker run -d --name metasploitable --net lab_seguridad --ip 172.20.0.11 -t tleemcjr/metasploitable2
+docker run -d --name dvwa --net lab_seguridad --ip 172.20.0.12 vulnerables/web-dvwa
+docker run -d --name webgoat --net lab_seguridad --ip 172.20.0.13 webgoat/webgoat
+docker run -d --name hackazon --net lab_seguridad --ip 172.20.0.14 ianwijaya/hackazon
+docker run -d --name bwapp --net lab_seguridad --ip 172.20.0.15 raesene/bwapp
+```
+
+### Grupo Phase 4 (SSH, SMB, SNMP, AD, SCADA)
+
+```bash
+# .20 SSH con contrasena sincronizada
+docker run -d --name target-ssh-lynis --net lab_seguridad --ip 172.20.0.20 \
+  -e SSH_ENABLE=true -e USER_PASSWORD=redaudit -e USER_NAME=auditor \
+  rastasheep/ubuntu-sshd
+
+# .30 Simulador SMB (reemplaza Windows 11 pesado)
+docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \
+  -e USER="docker" -e PASS="password123" \
+  dperson/samba -u "docker;password123" -s "Public;/tmp;yes;no;yes;all;none"
+
+# .40 SNMP v3
+docker run -d --name target-snmp --net lab_seguridad --ip 172.20.0.40 polinux/snmpd
+
+# .50-.51 Industrial y Honeypot
+docker run -d --name openplc-scada --net lab_seguridad --ip 172.20.0.50 \
+  -p 8443:8443 ghcr.io/autonomy-logic/openplc-runtime:latest
+docker run -d --name conpot-ics --net lab_seguridad --ip 172.20.0.51 honeynet/conpot:latest
+
+# .60 Samba AD (realm/domain unicos para evitar errores de aprovisionamiento)
+docker run -d --name samba-ad --net lab_seguridad --ip 172.20.0.60 \
+  --hostname dc1 --privileged \
+  -e REALM=AD.LAB.LOCAL -e DOMAIN=REDAUDITAD \
+  -e ADMIN_PASSWORD=P@ssw0rd123 -e DNS_FORWARDER=8.8.8.8 \
+  nowsci/samba-domain
+
+# .70-.71 IoT
+docker run -d --name iot-camera --net lab_seguridad --ip 172.20.0.70 vulhub/goahead:3.6.4
+docker run -d --name iot-router --net lab_seguridad --ip 172.20.0.71 webgoat/webgoat
+```
+
+> **Nota**: El controlador de dominio Samba AD (`.60`) tarda 3-5 minutos en su primer arranque para aprovisionar el directorio.
 
 ## Escaneando con RedAudit
 
-Una vez que el laboratorio esté funcionando (`status` muestra UP):
+Una vez que el laboratorio este funcionando (`status` muestra UP):
 
 1. **Cargar Credenciales** (opcional, una vez):
 
@@ -82,10 +156,17 @@ Una vez que el laboratorio esté funcionando (`status` muestra UP):
    python3 scripts/seed_keyring.py
    ```
 
-2. **Ejecutar Escaneo**:
+2. **Sincronizar Contrasena SSH** (si es necesario):
+
+   ```bash
+   keyring set redaudit ssh_auditor
+   # Introduce: redaudit
+   ```
+
+3. **Ejecutar Escaneo**:
 
    ```bash
    sudo redaudit -t 172.20.0.0/24
    ```
 
-3. **Asistente**: Detectará la red y ofrecerá cargar las credenciales guardadas.
+4. **Asistente**: El asistente detectara la red y ofrecera cargar las credenciales guardadas.

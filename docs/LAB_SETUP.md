@@ -48,6 +48,31 @@ sudo bash scripts/setup_lab.sh status
 | **Remove** | `sudo bash scripts/setup_lab.sh remove` | DELETEs all containers and the network |
 | **Status** | `sudo bash scripts/setup_lab.sh status` | Lists containers and pings IPs |
 
+## Docker Service Management
+
+```bash
+# Enable and start Docker (persistent)
+sudo systemctl enable --now docker
+
+# Disable and stop Docker (free resources)
+sudo systemctl disable --now docker.socket && sudo systemctl stop docker
+```
+
+## Orchestration Commands
+
+```bash
+# Start all lab containers
+docker start $(docker ps -aq --filter "network=lab_seguridad")
+
+# Stop all lab containers
+docker stop $(docker ps -q --filter "network=lab_seguridad")
+
+# Health check (ping all)
+for i in 10 11 12 13 14 15 20 30 40 50 51 60 70 71; do
+  ping -c1 -W1 172.20.0.$i &>/dev/null && echo "172.20.0.$i [UP]" || echo "172.20.0.$i [DOWN]"
+done
+```
+
 ## Network Layout
 
 - **Network**: `lab_seguridad`
@@ -56,21 +81,70 @@ sudo bash scripts/setup_lab.sh status
 
 ### Targets
 
-| IP | hostname | Role | Key Known Vulnerabilities |
-| :--- | :--- | :--- | :--- |
-| **.10** | `juiceshop` | Web (Node.js) | OWASP Top 10 |
-| **.11** | `metasploitable` | Linux Legacy | SSH/SMB/Telnet weak creds |
-| **.12** | `dvwa` | Web (PHP) | SQLi, XSS, Command Injection |
-| **.13** | `webgoat` | Web (Java) | Training Vulnerabilities |
-| **.15** | `bwapp` | Web | Buggy Web Application |
-| **.20** | `target-ssh-lynis` | Ubuntu Hardened | SSH Compliance Testing |
-| **.30** | `target-windows` | Windows Sim | SMB NULL Session |
-| **.40** | `target-snmp` | SNMP v3 | Auth/Priv weak settings |
-| **.50** | `openplc-scada` | SCADA | Modbus TCP (502) |
-| **.51** | `conpot-ics` | ICS Honeypot | Siemens S7, Modbus |
-| **.60** | `samba-ad` | Active Directory | LDAP, SMB, Kerberos (`REDAUDIT.LOCAL`) |
-| **.70** | `iot-camera` | IoT Camera | Default credentials |
-| **.71** | `iot-router` | IoT Router | Weak web administration |
+| IP | Hostname | Role | User | Password | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **.10** | `juiceshop` | Web (Node.js) | `admin@juice-sh.op` | `pwned` | OWASP Top 10 |
+| **.11** | `metasploitable` | Linux Legacy | `msfadmin` | `msfadmin` | SSH/SMB/Telnet |
+| **.12** | `dvwa` | Web (PHP) | `admin` | `password` | SQLi, XSS |
+| **.13** | `webgoat` | Web (Java) | `guest` | `guest` | Training |
+| **.14** | `hackazon` | E-commerce | `admin` | `admin` | SQLi, XSS |
+| **.15** | `bwapp` | Web | `bee` | `bug` | Buggy App |
+| **.20** | `target-ssh-lynis` | Ubuntu Hardened | `auditor` | `redaudit` | SSH Compliance |
+| **.30** | `target-windows` | SMB Simulator | `docker` | `password123` | Port 445 |
+| **.40** | `target-snmp` | SNMP v3 | `admin-snmp` | `auth_pass_123` | SHA/AES |
+| **.50** | `openplc-scada` | SCADA | `openplc` | `openplc` | Modbus TCP |
+| **.51** | `conpot-ics` | ICS Honeypot | *(anon)* | *(anon)* | S7/Modbus |
+| **.60** | `samba-ad` | Active Directory | `Administrator` | `P@ssw0rd123` | `AD.LAB.LOCAL` |
+| **.70** | `iot-camera` | IoT Camera | `admin` | `admin` | GoAhead RCE |
+| **.71** | `iot-router` | IoT Router | `admin` | `password` | Web/IoT |
+
+## Installation Commands (Verified)
+
+### Core Group (Web and Legacy)
+
+```bash
+docker run -d --name juiceshop --net lab_seguridad --ip 172.20.0.10 bkimminich/juice-shop
+docker run -d --name metasploitable --net lab_seguridad --ip 172.20.0.11 -t tleemcjr/metasploitable2
+docker run -d --name dvwa --net lab_seguridad --ip 172.20.0.12 vulnerables/web-dvwa
+docker run -d --name webgoat --net lab_seguridad --ip 172.20.0.13 webgoat/webgoat
+docker run -d --name hackazon --net lab_seguridad --ip 172.20.0.14 ianwijaya/hackazon
+docker run -d --name bwapp --net lab_seguridad --ip 172.20.0.15 raesene/bwapp
+```
+
+### Phase 4 Group (SSH, SMB, SNMP, AD, SCADA)
+
+```bash
+# .20 SSH with synced password
+docker run -d --name target-ssh-lynis --net lab_seguridad --ip 172.20.0.20 \
+  -e SSH_ENABLE=true -e USER_PASSWORD=redaudit -e USER_NAME=auditor \
+  rastasheep/ubuntu-sshd
+
+# .30 SMB Simulator (replaces heavy Windows 11)
+docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \
+  -e USER="docker" -e PASS="password123" \
+  dperson/samba -u "docker;password123" -s "Public;/tmp;yes;no;yes;all;none"
+
+# .40 SNMP v3
+docker run -d --name target-snmp --net lab_seguridad --ip 172.20.0.40 polinux/snmpd
+
+# .50-.51 Industrial and Honeypot
+docker run -d --name openplc-scada --net lab_seguridad --ip 172.20.0.50 \
+  -p 8443:8443 ghcr.io/autonomy-logic/openplc-runtime:latest
+docker run -d --name conpot-ics --net lab_seguridad --ip 172.20.0.51 honeynet/conpot:latest
+
+# .60 Samba AD (unique realm/domain to avoid provisioning errors)
+docker run -d --name samba-ad --net lab_seguridad --ip 172.20.0.60 \
+  --hostname dc1 --privileged \
+  -e REALM=AD.LAB.LOCAL -e DOMAIN=REDAUDITAD \
+  -e ADMIN_PASSWORD=P@ssw0rd123 -e DNS_FORWARDER=8.8.8.8 \
+  nowsci/samba-domain
+
+# .70-.71 IoT
+docker run -d --name iot-camera --net lab_seguridad --ip 172.20.0.70 vulhub/goahead:3.6.4
+docker run -d --name iot-router --net lab_seguridad --ip 172.20.0.71 webgoat/webgoat
+```
+
+> **Note**: The Samba AD controller (`.60`) takes 3-5 minutes on first boot to provision the directory.
 
 ## Scanning with RedAudit
 
@@ -82,10 +156,17 @@ Once the lab is running (`status` shows UP):
    python3 scripts/seed_keyring.py
    ```
 
-2. **Run Scan**:
+2. **Sync SSH Password** (if needed):
+
+   ```bash
+   keyring set redaudit ssh_auditor
+   # Enter: redaudit
+   ```
+
+3. **Run Scan**:
 
    ```bash
    sudo redaudit -t 172.20.0.0/24
    ```
 
-3. **Wizard**: The wizard will detect the network and offer to load the saved credentials.
+4. **Wizard**: The wizard will detect the network and offer to load the saved credentials.
