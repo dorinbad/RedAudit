@@ -8,7 +8,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
-## [4.5.0] - 2026-01-09
+## [4.5.2] - 2026-01-09
 
 ### Añadido
 

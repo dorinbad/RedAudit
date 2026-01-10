@@ -335,7 +335,7 @@ Las credenciales se usan ÚNICAMENTE para el escaneo y no se almacenan en los re
 
 ## 7. Referencia CLI (Completa)
 
-Flags verificadas contra `redaudit --help` (v4.5.0):
+Flags verificadas contra `redaudit --help` (v4.5.2):
 
 ### Core
 

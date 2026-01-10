@@ -336,7 +336,7 @@ Credentials are used ONLY for scanning and are not stored in reports. If using `
 
 ## 7. CLI Reference (Complete)
 
-Flags verified against `redaudit --help` (v4.5.0):
+Flags verified against `redaudit --help` (v4.5.2):
 
 ### Core
 
