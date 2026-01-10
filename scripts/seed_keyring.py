@@ -21,24 +21,24 @@ import sys
 
 # SSH Credentials (spray list)
 SSH_CREDENTIALS = [
-    ("auditor", "redaudit", "172.20.0.20 target-ssh-lynis"),
-    ("msfadmin", "msfadmin", "172.20.0.11 metasploitable"),
-    ("openplc", "openplc", "172.20.0.50 openplc-scada"),
+    ("auditor", "redaudit", "172.20.0.20 target-ssh-lynis"),  # nosec
+    ("msfadmin", "msfadmin", "172.20.0.11 metasploitable"),  # nosec
+    ("openplc", "openplc", "172.20.0.50 openplc-scada"),  # nosec
 ]
 
 # SMB/Windows Credentials (spray list)
 SMB_CREDENTIALS = [
-    ("Administrator", "P@ssw0rd123", "REDAUDIT", "172.20.0.60 samba-ad"),
+    ("Administrator", "P@ssw0rd123", "REDAUDIT", "172.20.0.60 samba-ad"),  # nosec
     ("docker", "", None, "172.20.0.30 target-windows"),
-    ("msfadmin", "msfadmin", None, "172.20.0.11 metasploitable"),
+    ("msfadmin", "msfadmin", None, "172.20.0.11 metasploitable"),  # nosec
 ]
 
 # SNMP v3 Credentials
 SNMP_USER = "admin-snmp"
 SNMP_AUTH_PROTO = "SHA"
-SNMP_AUTH_PASS = "auth_pass_123"
+SNMP_AUTH_PASS = "auth_pass_123"  # nosec
 SNMP_PRIV_PROTO = "AES"
-SNMP_PRIV_PASS = "priv_pass_456"
+SNMP_PRIV_PASS = "priv_pass_456"  # nosec
 
 # Web/HTTP Credentials (for reference - not stored in keyring)
 WEB_CREDENTIALS = [

@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.9] - 2026-01-10
+
+### Fixed
+
+- **CI/Linting**: Suppressed false positive security warnings (Bandit) in `scripts/seed_keyring.py` for hardcoded lab credentials.
+
 ## [4.5.8] - 2026-01-10
 
 ### Fixed
