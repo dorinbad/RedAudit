@@ -110,3 +110,13 @@ exclude_dirs = ["tests", ".venv", "build", "dist"]
 # B603: subprocess without shell (secure pattern)
 # B605/B606/B607: process execution (core functionality)
 skips = ["B101", "B103", "B110", "B112", "B310", "B311", "B324", "B404", "B603", "B605", "B606", "B607"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "integration: real tool output checks (opt-in)"
+]
