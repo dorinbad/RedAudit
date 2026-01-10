@@ -412,6 +412,9 @@ TRANSLATIONS = {
         "auth_creds_summary": "Configured %d credentials for automatic protocol detection.",
         "auth_trying_creds": "Trying credentials on %s:%d (%s)...",
         "auth_cred_success": "Credential matched: %s@%s",
+        "auth_mode_q": "Credential configuration mode:",
+        "auth_mode_universal": "Universal (simple): auto-detect protocol",
+        "auth_mode_advanced": "Advanced: configure SSH/SMB/SNMP separately",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -814,6 +817,9 @@ TRANSLATIONS = {
         "auth_creds_summary": "Configuradas %d credenciales para detección automática de protocolo.",
         "auth_trying_creds": "Probando credenciales en %s:%d (%s)...",
         "auth_cred_success": "Credencial válida: %s@%s",
+        "auth_mode_q": "Modo de configuración de credenciales:",
+        "auth_mode_universal": "Universal (simple): detectar protocolo automáticamente",
+        "auth_mode_advanced": "Avanzado: configurar SSH/SMB/SNMP por separado",
     },
 }
 
