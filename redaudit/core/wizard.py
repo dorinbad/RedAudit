@@ -901,8 +901,8 @@ class Wizard:
 
         return credentials
 
-    def _collect_advanced_credentials(self, auth_config: dict) -> None:
-        """Collect per-protocol credentials (SSH, SMB, SNMP v3)."""
+    def _collect_advanced_credentials(self, auth_config: Dict) -> None:
+        """Collect advanced credentials."""
         import getpass
 
         # 1. SSH
