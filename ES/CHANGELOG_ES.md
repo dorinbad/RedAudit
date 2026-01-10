@@ -8,6 +8,13 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.12] - 2026-01-10
+
+### Corregido
+
+- **Instalación Inteligente de Pip (Soporte PEP 668)**:
+  - El instalador ahora detecta automáticamente fallos debidos a "entornos gestionados externamente" (común en Ubuntu 24.04 y Kali reciente) y reintenta la instalación con el flag `--break-system-packages` si es compatible. Esto asegura que dependencias como `pysnmp` e `impacket` se instalen correctamente incluso cuando faltan en los repositorios APT.
+
 ## [4.5.11] - 2026-01-10
 
 ### Corregido

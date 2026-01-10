@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.12] - 2026-01-10
+
+### Fixed
+
+- **Smart Pip Installation (PEP 668 Support)**:
+  - The installer now automatically detects failures due to "externally managed environments" (common in Ubuntu 24.04 and recent Kali versions) and retries installation with the `--break-system-packages` flag if supported. This ensures dependencies like `pysnmp` and `impacket` are correctly installed even when absent from APT repositories.
+
 ## [4.5.11] - 2026-01-10
 
 ### Fixed

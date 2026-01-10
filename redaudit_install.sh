@@ -128,7 +128,20 @@ if $INSTALL; then
 
     # Python packages for authenticated scanning (Phase 4: SSH/SMB/SNMP + Keyring)
     echo "[INFO] Installing Python packages for authenticated scanning..."
-    pip3 install paramiko impacket pysnmp keyring keyrings.alt || echo "[WARN] pip install failed (optional auth packages)"
+
+    PIP_PKGS="paramiko impacket pysnmp keyring keyrings.alt"
+    if pip3 install $PIP_PKGS; then
+        echo "[OK] Python packages installed via pip"
+    else
+        echo "[WARN] Standard pip3 install failed. Checking for PEP 668 managed environment..."
+        # Retry with --break-system-packages if relevant (modern Kali/Ubuntu/Debian)
+        if pip3 install --help | grep -q "\-\-break\-system\-packages"; then
+             echo "[INFO] Retrying with --break-system-packages (required for system-wide install on modern distros)..."
+             pip3 install $PIP_PKGS --break-system-packages || echo "[WARN] pip install failed even with break-system-packages"
+        else
+             echo "[WARN] pip install failed and --break-system-packages flag is not supported."
+        fi
+    fi
 
     # -------------------------------------------
     # 2b) Install testssl.sh from GitHub
