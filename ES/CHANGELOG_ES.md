@@ -8,6 +8,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.3] - 2026-01-10
+
+### Corregido
+
+- **Bugs de Auditoría de Escaneo (B2/B3/B4)**:
+  - **B2**: Las barras de progreso de vulnerabilidades ahora siempre llegan al 100% (añadido bucle final en `auditor_vuln.py`).
+  - **B3**: Tag INFO del heartbeat cambiado de `[grey50]` a `[cyan]` para visibilidad adecuada.
+  - **B4**: La detección SSH en escaneos autenticados ahora maneja objetos `Host` (no solo dicts), corrigiendo falsos negativos "No se encontraron hosts con SSH".
+
 ## [4.5.2] - 2026-01-10
 
 ### Añadido

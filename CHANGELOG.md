@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.3] - 2026-01-10
+
+### Fixed
+
+- **Scan Audit Bugs (B2/B3/B4)**:
+  - **B2**: Vuln progress bars now always reach 100% (added final loop in `auditor_vuln.py`).
+  - **B3**: Heartbeat INFO tag changed from `[grey50]` to `[cyan]` for proper visibility.
+  - **B4**: SSH detection in authenticated scans now handles `Host` objects (not just dicts), fixing "No SSH-enabled hosts found" false negatives.
+
 ## [4.5.2] - 2026-01-10
 
 ### Added
