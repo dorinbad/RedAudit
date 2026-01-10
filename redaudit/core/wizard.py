@@ -878,7 +878,7 @@ class Wizard:
                     f"{self.ui.t('auth_cred_pass_prompt')}: "
                 )
             except Exception:
-                password = ""
+                password = ""  # nosec
 
             credentials.append({"user": user, "pass": password})
 
