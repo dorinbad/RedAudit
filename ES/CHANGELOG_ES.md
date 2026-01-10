@@ -30,6 +30,27 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 - **Tests**: Varias correcciones para iteradores Mock en pruebas del asistente.
 - **Mypy**: Mejoras de seguridad de tipos en módulos de autenticación.
 
+## [4.5.2] - 2026-01-10
+
+### Añadido
+
+- **Soporte Multi-Credencial (Fase 4.1.1)**:
+  - Añadido modo `Universal` en el asistente y soporte para flag `--credentials-file`.
+  - Detección automática de protocolo (SSH/SMB/SNMP/RDP/WinRM).
+  - Añadido `CredentialsManager` y generación de plantillas.
+  - Fixes de "Auditoría Zero-Context": navegación segura y lógica unificada.
+
+### Cambiado
+
+- **Asistente**:
+  - Refactorizado flujo de autenticación para modos `Universal` vs `Avanzado`.
+  - Añadido soporte para "Volver" (`<`).
+  - Añadidas pistas de UI para la estrategia de detección.
+
+### Arreglado
+
+- **Autenticación**: Corregida lógica legada en `auditor.py` que ignoraba la configuración del asistente.
+
 ## [4.4.5] - 2026-01-09
 
 ### Mejorado
