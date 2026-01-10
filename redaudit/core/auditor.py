@@ -1016,6 +1016,10 @@ class InteractiveNetworkAuditor:
         """
         Execute authenticated scans on eligible hosts using SSH/Lynis.
 
+        Supports:
+        - Universal credentials (auth_credentials list) via CredentialsManager
+        - Legacy single credential (auth_ssh_user/pass/key)
+
         Args:
             hosts: List of host dictionaries from the scan results.
         """
@@ -1023,23 +1027,43 @@ class InteractiveNetworkAuditor:
         from redaudit.core.auth_lynis import LynisScanner
         from redaudit.core.credentials import Credential
 
+        # v4.5.1: Check for universal credentials first
+        auth_credentials = self.config.get("auth_credentials", [])
+        use_multi_cred = bool(auth_credentials)
+
+        # Legacy single credential fallback
         ssh_user = self.config.get("auth_ssh_user")
         ssh_pass = self.config.get("auth_ssh_pass")
         ssh_key = self.config.get("auth_ssh_key")
         ssh_key_pass = self.config.get("auth_ssh_key_pass")
 
-        if not ssh_user:
+        if not auth_credentials and not ssh_user:
             if self.logger:
-                self.logger.debug("Authenticated scan skipped: no SSH user configured")
+                self.logger.debug("Authenticated scan skipped: no credentials configured")
             return
 
-        # Build credential object
-        cred = Credential(
-            username=ssh_user,
-            password=ssh_pass,
-            private_key=ssh_key,
-            private_key_passphrase=ssh_key_pass,
-        )
+        # Build credential list
+        credentials: list = []
+
+        if use_multi_cred:
+            # v4.5.1: Universal credentials from wizard/CLI
+            for cred_dict in auth_credentials:
+                credentials.append(
+                    Credential(
+                        username=cred_dict.get("user", ""),
+                        password=cred_dict.get("pass"),
+                    )
+                )
+        else:
+            # Legacy single credential
+            credentials.append(
+                Credential(
+                    username=ssh_user,
+                    password=ssh_pass,
+                    private_key=ssh_key,
+                    private_key_passphrase=ssh_key_pass,
+                )
+            )
 
         # Find hosts with SSH port (22) open
         def has_ssh_port(host: dict) -> bool:
@@ -1077,10 +1101,29 @@ class InteractiveNetworkAuditor:
             if not ip:
                 continue
 
-            try:
-                scanner = SSHScanner(cred, timeout=30, trust_unknown_keys=True)
-                scanner.connect(ip)
+            # Try each credential until one succeeds
+            connected = False
+            scanner = None
+            working_cred = None
 
+            for cred in credentials:
+                try:
+                    scanner = SSHScanner(cred, timeout=30, trust_unknown_keys=True)
+                    scanner.connect(ip)
+                    connected = True
+                    working_cred = cred
+                    break
+                except SSHConnectionError:
+                    continue
+                except Exception:
+                    continue
+
+            if not connected or not scanner:
+                auth_summary["errors"].append({"ip": ip, "error": "All credentials failed"})
+                self.ui.print_status(f"[WARN] {ip}: SSH auth failed (all creds)", "WARNING")
+                continue
+
+            try:
                 # Gather basic host info via SSH
                 host_info = scanner.gather_host_info()
                 host["auth_ssh"] = {
@@ -1091,6 +1134,7 @@ class InteractiveNetworkAuditor:
                     "packages_count": len(host_info.packages),
                     "services_count": len(host_info.services),
                     "users_count": len(host_info.users),
+                    "credential_user": working_cred.username if working_cred else None,
                 }
                 auth_summary["ssh_success"] += 1
 
