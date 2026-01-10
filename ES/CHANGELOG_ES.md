@@ -8,6 +8,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.5] - 2026-01-10
+
+### Anadido
+
+- **Script de Credenciales de Lab (Modo Spray)**: Anadido `scripts/seed_keyring.py` conteniendo TODAS las credenciales del laboratorio.
+  - Pre-puebla el keyring con credenciales SSH (3), SMB (3) y SNMP (1).
+  - Incluye referencia a credenciales web.
+
+- **Updater Auto-Seed**: La actualizacion desde el asistente (Opcion 2) ahora ejecuta `seed_keyring.py` automaticamente si existe.
+  - Asegura una configuracion de credenciales fluida tras la actualizacion.
+
 ## [4.5.4] - 2026-01-10
 
 ### Anadido

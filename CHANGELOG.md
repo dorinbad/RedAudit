@@ -8,6 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.5.5] - 2026-01-10
+
+### Added
+
+- **Lab Credentials Script (Spray Mode)**: Added `scripts/seed_keyring.py` containing ALL lab credentials.
+  - Pre-populates keyring with SSH (3), SMB (3), and SNMP (1) credentials.
+  - Includes reference to web credentials.
+
+- **Updater Auto-Seed**: Setup wizard update (Option 2) now automatically runs `seed_keyring.py` if present.
+  - Ensures seamless credential setup after update.
+
 ## [4.5.4] - 2026-01-10
 
 ### Added
