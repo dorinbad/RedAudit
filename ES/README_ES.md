@@ -281,15 +281,23 @@ bash redaudit_verify.sh   # Verificacion completa de integridad
 
 ### Actualizar RedAudit
 
-Despues de descargar nuevo codigo, vuelve a ejecutar el instalador:
+RedAudit incluye **deteccion automatica de actualizaciones**. Al ejecutar `sudo redaudit`, comprueba si hay nuevas versiones y pregunta:
 
-```bash
-cd RedAudit
-git pull origin main
-sudo bash redaudit_install.sh -y   # -y para modo no interactivo
+```
+Buscar actualizaciones? [s/N]:
 ```
 
-> **Nota para Ubuntu 24.04+ (Noble):** El instalador usa paquetes del sistema (`python3-*`) en lugar de pip, evitando errores de `externally-managed-environment`. **No** uses `pip install` directamente en estos sistemas.
+Si aceptas, RedAudit realiza una **actualizacion atomica escalonada** con rollback automatico en caso de fallo. No requiere pasos manuales.
+
+> **Nota para Ubuntu 24.04+ (Noble):** **No** uses `pip install` directamente. El instalador usa paquetes del sistema (`python3-*`) para evitar errores de `externally-managed-environment`.
+
+**Actualizacion manual (solo desarrolladores):**
+
+```bash
+cd ~/RedAudit
+git pull origin main
+sudo bash redaudit_install.sh -y
+```
 
 ---
 
