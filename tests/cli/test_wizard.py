@@ -930,6 +930,7 @@ class TestWizardRedTeam(unittest.TestCase):
             side_effect=[
                 False,  # Rate limit
                 False,  # Low impact
+                True,  # Trust HyperScan (NEW)
                 True,  # Masscan
                 True,  # Active L2
                 True,  # Kerberos
@@ -968,6 +969,7 @@ class TestWizardRedTeam(unittest.TestCase):
             side_effect=[
                 False,  # Rate limit
                 False,  # Low impact
+                True,  # Trust HyperScan (NEW)
                 False,  # Webhook
                 True,  # Save defaults
                 True,  # Start audit
