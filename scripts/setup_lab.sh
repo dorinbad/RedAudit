@@ -84,16 +84,18 @@ install_targets() {
         -e PASSWORD_ACCESS=true \
         linuxserver/openssh-server >/dev/null 2>&1 || echo "target-ssh-lynis exists"
 
-    # .30 SMB Server (elswork/samba with correct syntax)
+    # .30 SMB Server (RedAudit v4.5.18 Hotfix: Force recreate with correct Samba config)
     echo -e "${YELLOW}[*] Installing target-windows (.30) - SMB Server...${NC}"
-    sudo mkdir -p /srv/lab_smb/Public 2>/dev/null
-    sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb 2>/dev/null
+    docker rm -f target-windows 2>/dev/null
+
+    sudo mkdir -p /srv/lab_smb/Public
+    sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb
+
     docker run -d --name target-windows --net "$LAB_NET" --ip 172.20.0.30 \
         -v /srv/lab_smb/Public:/share/public \
         elswork/samba \
         -u "$(id -u):$(id -g):docker:docker:password123" \
-        -s "Public:/share/public:rw:docker" \
-        >/dev/null 2>&1 || echo "target-windows exists"
+        -s "Public:/share/public:rw:docker"
 
     # .40 SNMP v3 Target
     echo -e "${YELLOW}[*] Installing target-snmp (.40)...${NC}"

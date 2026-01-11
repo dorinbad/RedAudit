@@ -8,6 +8,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.18] - 2026-01-11
+
+### Corregido
+
+- **Configuración Lab (Hotfix)**: `setup_lab.sh` ahora fuerza la recreación del contenedor `target-windows` (.30) usando la configuración correcta de `elswork/samba`, arreglando el uso de imágenes rotas u obsoletas.
+
 ## [4.5.17] - 2026-01-11
 
 ### Corregido
