@@ -1500,7 +1500,10 @@ class InteractiveNetworkAuditor:
                 self.config["hyperscan_mode"] = "connect"  # Connect is stealthier than SYN
             else:
                 self.config["hyperscan_mode"] = "auto"  # Let it auto-detect
-            self.config["trust_hyperscan"] = True  # v4.6.0: Trust discovery for efficiency
+            self.config["trust_hyperscan"] = self.ask_yes_no(
+                self.ui.t("trust_hyperscan_q"),
+                default="yes",
+            )
             return
 
         # PROFILE 2: Exhaustive - Maximum discovery (auto-configures everything)

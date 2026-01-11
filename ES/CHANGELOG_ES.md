@@ -13,6 +13,10 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 - **UX**: Añadido prompt "Trust HyperScan" faltante en el Asistente (Paso 2).
 - **UX**: Activado Trust HyperScan por defecto en perfiles "Express" y "Standard".
 
+## [v4.6.4] - 2026-01-11
+
+- **UX**: Prompt "Trust HyperScan" visible en perfil Estándar (antes oculto/auto-true).
+
 ## [v4.6.2] - 2026-01-11
 
 ### Añadido
