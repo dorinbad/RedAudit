@@ -184,3 +184,22 @@ Once the lab is running (`status` shows UP):
    ```
 
 4. **Wizard**: The wizard will detect the network and offer to load the saved credentials.
+
+## Troubleshooting
+
+### Target Windows (.30) Not Starting / Samba Error
+
+If the SMB server at `172.20.0.30` fails to start cleanly or is unreachable, use this manual refresh command to force a clean deployment:
+
+```bash
+docker rm -f target-windows 2>/dev/null
+
+sudo mkdir -p /srv/lab_smb/Public
+sudo chown -R "$(id -u)":"$(id -g)" /srv/lab_smb
+
+docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \
+  -v /srv/lab_smb/Public:/share/public \
+  elswork/samba \
+  -u "$(id -u):$(id -g):docker:docker:password123" \
+  -s "Public:/share/public:rw:docker"
+```
