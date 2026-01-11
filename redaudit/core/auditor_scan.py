@@ -804,7 +804,7 @@ class AuditorScan:
             return float(val) * 3600.0
         return None
 
-    def deep_scan_host(self, host_ip):
+    def deep_scan_host(self, host_ip, trusted_ports: List[int] = None):
         """
         Adaptive Deep Scan v2.8.0
 
@@ -847,12 +847,41 @@ class AuditorScan:
                 "nmap",
                 "-A",
                 "-Pn",
-                "-p-",
-                "--open",
-                "--version-intensity",
-                "9",
                 safe_ip,
             ]
+
+            # v4.6.0: Trust HyperScan Optimization
+            # If enabled and we have discovery ports, use them instead of -p-
+            if self.config.get("trust_hyperscan") and trusted_ports and len(trusted_ports) > 0:
+                port_list = ",".join(map(str, trusted_ports))
+                # Replace -p- with specific ports
+                cmd_p1[1] = "-p"
+                cmd_p1.insert(2, port_list)  # Insert port list after -p
+                # We need to remove the original -p- (which was index 1) - wait,
+                # cmd_p1 was ["nmap", "-p-", "--open", ...]
+                # Wait, original construction:
+                # cmd_p1 = ["nmap", "-A", "-Pn", "-p-", "--open", ...]
+                # Actually, looking at lines 846-855:
+                # cmd_p1 = ["nmap", "-A", "-Pn", "-p-", "--open", "--version-intensity", "9", safe_ip]
+                # Index of -p- is 3
+                cmd_p1[3] = (
+                    f"-p{port_list}"  # nmap allows -p80,443 without space if we want, or separate args
+                )
+                # Let's rebuild cleanly
+                cmd_p1 = [
+                    "nmap",
+                    "-A",
+                    "-Pn",
+                    f"-p{port_list}",
+                    "--open",
+                    "--version-intensity",
+                    "9",
+                    safe_ip,
+                ]
+                self.ui.print_status(
+                    f"⚡ Trust HyperScan active: Scanning {len(trusted_ports)} ports instead of 65k",
+                    "OKBLUE",
+                )
             self.ui.print_status(
                 self.ui.t("deep_identity_cmd", safe_ip, " ".join(cmd_p1), "120-180"), "WARNING"
             )
@@ -1771,6 +1800,7 @@ class AuditorScan:
             if trigger_deep:
                 # v4.2: Deep scan is now decoupled. Just mark passing the signal.
                 # The orchestrator will run deep_scan_host later.
+
                 if isinstance(host_record.get("smart_scan"), dict):
                     host_record["smart_scan"]["deep_scan_suggested"] = True
 
@@ -2041,7 +2071,9 @@ class AuditorScan:
                                 self.logger.info(f"Deep scan budget exhausted for {ip}")
                             return
 
-                        deep = self.deep_scan_host(ip)
+                        # v4.6.0: Pass discovery ports
+                        disc_ports = self._hyperscan_discovery_ports.get(ip, [])
+                        deep = self.deep_scan_host(ip, trusted_ports=disc_ports)
                         if deep and host_obj:
                             host_obj.deep_scan = deep
                             if deep.get("os_detected"):

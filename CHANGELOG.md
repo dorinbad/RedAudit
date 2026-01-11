@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.6.0] - 2026-01-11
+
+### Added
+
+- **Trust HyperScan Optimization**: New ability to reuse HyperScan discovery results for the Deep Scan phase, bypassing the slow `-p-` scan.
+  - Added CLI flag `--trust-hyperscan` / `--trust-discovery`.
+  - Added interactive prompt in the setup Wizard.
+  - Drastically reduces scan time for identified hosts by scanning only known ports.
+
 ## [4.5.18] - 2026-01-11
 
 ### Fixed

@@ -405,6 +405,15 @@ Examples:
         help="Ignore persisted defaults (factory values for this run)",
     )
 
+    # v4.6.0: Trust HyperScan Optimization
+    parser.add_argument(
+        "--trust-hyperscan",
+        "--trust-discovery",
+        dest="trust_hyperscan",
+        action="store_true",
+        help="Trust HyperScan/Discovery results for Deep Scan (scan found ports only, skip -p-)",
+    )
+
     # v3.2+: Enhanced network discovery
     parser.add_argument(
         "--net-discovery",
