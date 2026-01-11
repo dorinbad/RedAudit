@@ -230,6 +230,13 @@ Examples:
         action="store_true",
         help="Print commands that would be executed without running them",
     )
+    # v4.5.17: Verbose output
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose logging output",
+    )
     parser.add_argument(
         "--no-prevent-sleep",
         action="store_true",
@@ -962,11 +969,16 @@ def main():
                 sys.exit(0)
 
             elif choice == 1:  # Start scan (wizard)
-                if app.interactive_setup():
-                    ok = app.run_complete_scan()
-                    sys.exit(0 if ok else 1)
-                else:
-                    print(app.t("config_cancel"))
+                try:
+                    if app.interactive_setup():
+                        ok = app.run_complete_scan()
+                        sys.exit(0 if ok else 1)
+                    else:
+                        print(app.t("config_cancel"))
+                        sys.exit(0)
+                except KeyboardInterrupt:
+                    print("\n")
+                    app.print_status(app.t("config_cancel"), "WARNING")
                     sys.exit(0)
 
             elif choice == 2:  # Check for updates

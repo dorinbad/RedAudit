@@ -803,14 +803,16 @@ class Wizard:
             # Assumed yes
             pass
         else:
-            # v4.5.3: Check for saved credentials in keyring
+            # v4.5.17: Ask about auth scanning FIRST, before keyring access
+            # This avoids unnecessary keyring password prompts when user doesn't want auth scanning
+            if not self.ask_yes_no(self.ui.t("auth_scan_q"), default="no"):
+                return auth_config
+
+            # v4.5.3: Check for saved credentials in keyring (only if user wants auth)
             loaded_from_keyring = self._check_and_load_saved_credentials(auth_config)
             if loaded_from_keyring:
                 # Credentials loaded from keyring, enable auth and skip manual setup
                 auth_config["auth_enabled"] = True
-                return auth_config
-
-            if not self.ask_yes_no(self.ui.t("auth_scan_q"), default="no"):
                 return auth_config
 
         auth_config["auth_enabled"] = True
