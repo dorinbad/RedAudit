@@ -1323,6 +1323,13 @@ class AuditorScan:
 
             # v4.5.16: Preserve HyperScan-discovered ports that nmap missed
             # This handles timing issues where ports close between HyperScan and nmap
+            if self.logger:
+                self.logger.info(
+                    "[PORT-PRESERVE] %s: discovery_ports=%s, nmap_ports=%d",
+                    safe_ip,
+                    discovery_ports[:5] if discovery_ports else [],
+                    len(ports),
+                )
             if discovery_ports:
                 nmap_port_nums = {p["port"] for p in ports}
                 missing_ports = [p for p in discovery_ports if p not in nmap_port_nums]
