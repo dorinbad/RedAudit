@@ -375,6 +375,7 @@ TRANSLATIONS = {
         "hyperscan_auto": "Auto — Detect best method (SYN if root, else connect)",
         "hyperscan_connect": "Connect — Standard TCP (no root required, stealthier)",
         "hyperscan_syn": "SYN — Raw packets (requires root + scapy, faster)",
+        "trust_hyperscan_q": "Trust discovery results to speed up deep scans? (Skips deep scan if 0 ports found)",
         # v4.0: Authenticated Scanning
         "auth_scan_q": "Enable authenticated scanning?",
         "auth_ssh_configure_q": "Configure SSH credentials?",
@@ -785,6 +786,7 @@ TRANSLATIONS = {
         "hyperscan_auto": "Auto — Detectar mejor método (SYN si root, sino connect)",
         "hyperscan_connect": "Connect — TCP estándar (no requiere root, más sigiloso)",
         "hyperscan_syn": "SYN — Paquetes raw (requiere root + scapy, más rápido)",
+        "trust_hyperscan_q": "¿Confiar en los resultados del descubrimiento para acelerar? (Omite deep scan si 0 puertos)",
         # v4.0: Authenticated Scanning
         "auth_scan_q": "¿Activar escaneo autenticado?",
         "auth_ssh_user_prompt": "Usuario SSH",
