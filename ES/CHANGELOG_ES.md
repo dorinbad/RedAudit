@@ -8,6 +8,23 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.5.17] - 2026-01-11
+
+### Corregido
+
+- **Lógica de Escaneo (BUG-01)**: Los puertos de HyperScan ahora se preservan estrictamente incluso si la fase de deep scan falla o devuelve cero puertos debido a timeouts.
+- **Escaneo de Routers (UX-03)**: Lógica de deep scan optimizada para dispositivos de infraestructura:
+  - Routers bien identificados (identidad fuerte, fabricante conocido, <= 20 puertos) ahora omiten el Deep Scan redundante.
+  - Hosts sospechosos o ambiguos SIEMPRE reciben el barrido completo de 65k puertos.
+  - Resuelve el problema de escaneos de router de 25+ minutos respetando estrictamente el diagrama de seguridad.
+- **Manejo de Entrada**: Corregido crash por `Ctrl+C` en el asistente (salida elegante).
+- **CLI**: Añadido argumento faltante `--verbose` / `-v`.
+
+### Documentación
+
+- **Instalación**: Actualizado README para aclarar que RedAudit tiene un mecanismo de actualización automática nativo vía asistente (`sudo redaudit`).
+- **Compatibilidad**: Añadida guía específica para Ubuntu 24.04+ (Noble) sobre restricciones de pip.
+
 ## [4.5.16] - 2026-01-10
 
 ### Corregido
