@@ -14,7 +14,7 @@
 
 </div>
 
-## RedAudit v4.6.12 - Advanced Security Auditing Framework
+## What is RedAudit?
 
 RedAudit is an **automated network auditing framework** for authorized assessments. It coordinates discovery, identity resolution, and vulnerability checks with evidence-driven escalation, then consolidates results into structured reports (JSON, TXT, HTML, plus JSONL exports).
 

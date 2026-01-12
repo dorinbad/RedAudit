@@ -12,7 +12,7 @@
 
 ## ¿Qué es RedAudit?
 
-RedAudit v4.6.12 - Framework de Auditoría de Seguridad Avanzada automatizada** para evaluaciones autorizadas. Coordina descubrimiento, resolución de identidad y comprobaciones de vulnerabilidades con escalado basado en evidencias, y consolida resultados en informes estructurados (JSON, TXT, HTML y exportaciones JSONL).
+RedAudit es un **framework de auditoría de red automatizado** para evaluaciones autorizadas. Coordina descubrimiento, resolución de identidad y comprobaciones de vulnerabilidades con escalado basado en evidencias, y consolida resultados en informes estructurados (JSON, TXT, HTML y exportaciones JSONL).
 
 En lugar de ejecutar todas las herramientas contra todos los hosts, RedAudit escala solo cuando la identidad es débil o las señales son ambiguas, reduciendo ruido sin perder cobertura en entornos complejos. Las pistas HTTP (título/servidor) y el tipo de dispositivo ayudan a evitar deep scans innecesarios y escáneres web pesados en infraestructura.
 
