@@ -10,6 +10,21 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.11] - 2026-01-12
+
+### Added
+
+- **Agentless HTTP Source**: Track HTTP identity origin (`http_source`, `upnp_device_name`) to distinguish UPnP hints from real HTTP signals.
+
+### Changed
+
+- **Nuclei Progress**: Emit heartbeat updates during long batches to show ongoing activity and elapsed time.
+
+### Fixed
+
+- **HTTP Identity Gating**: Ignore UPnP-only titles for web scan gating and identity scoring; allow HTTP probes to override UPnP hints.
+- **Web Enrichment**: Propagate HTTP server headers from web vuln enrichment into agentless fingerprints.
+
 ## [v4.6.10] - 2026-01-12
 
 ### Added
