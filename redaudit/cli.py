@@ -10,7 +10,6 @@ Command-line interface and argument parsing.
 import os
 import sys
 import argparse
-import ipaddress
 
 from redaudit.utils.constants import (
     VERSION,
@@ -25,6 +24,7 @@ from redaudit.utils.constants import (
 )
 from redaudit.utils.i18n import TRANSLATIONS, detect_preferred_language
 from redaudit.utils.paths import expand_user_path, get_default_reports_base_dir
+from redaudit.utils.targets import parse_target_tokens
 
 
 def parse_arguments():
@@ -136,8 +136,8 @@ Examples:
         "--target",
         "-t",
         type=str,
-        metavar="CIDR",
-        help="Target network(s) in CIDR notation (comma-separated for multiple)",
+        metavar="TARGETS",
+        help="Targets in CIDR/IP/range notation (comma-separated for multiple)",
     )
     parser.add_argument(
         "--mode",
@@ -615,17 +615,14 @@ def configure_from_args(app, args) -> bool:
 
     # Parse targets
     if args.target:
-        targets = [t.strip() for t in args.target.split(",")]
-        valid_targets = []
-        for t in targets:
-            if len(t) > MAX_CIDR_LENGTH:
-                app.print_status(app.t("invalid_target_too_long", t), "FAIL")
-                continue
-            try:
-                ipaddress.ip_network(t, strict=False)
-                valid_targets.append(t)
-            except ValueError:
-                app.print_status(app.t("invalid_cidr_target", t), "FAIL")
+        targets = [t.strip() for t in args.target.split(",") if t.strip()]
+        valid_targets, invalid = parse_target_tokens(targets, MAX_CIDR_LENGTH)
+        if invalid:
+            for bad in invalid:
+                if len(bad) > MAX_CIDR_LENGTH:
+                    app.print_status(app.t("invalid_target_too_long", bad), "FAIL")
+                else:
+                    app.print_status(app.t("invalid_cidr_target", bad), "FAIL")
         if not valid_targets:
             app.print_status(app.t("no_valid_targets"), "FAIL")
             return False

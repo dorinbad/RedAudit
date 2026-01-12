@@ -312,10 +312,14 @@ TRANSLATIONS = {
         "topology_only_mode": "Topology only (skip host/port scan)",
         # v3.2.2+: Hardcoded strings → i18n
         "target_prompt": "Target (CIDR/IP/range). Example: 192.168.1.0/24:",
+        "manual_cidr_prompt": (
+            "Targets (CIDR/IP/range, comma-separated). Example: 192.168.1.0/24, "
+            "192.168.1.10-192.168.1.20:"
+        ),
         "confirm_prompt": "Confirm:",
         "legal_warning_skipped": "⚠️  Legal warning skipped (--yes flag)",
         "invalid_target_too_long": "Invalid target (too long): {}",
-        "invalid_cidr_target": "Invalid CIDR: {}",
+        "invalid_cidr_target": "Invalid target: {}",
         "no_valid_targets": "No valid targets provided",
         "target_required_non_interactive": "Error: --target is required in non-interactive mode",
         "invalid_proxy_url": "Invalid proxy URL: {}",
@@ -728,10 +732,14 @@ TRANSLATIONS = {
         "topology_only_mode": "Solo topología (omitir hosts/puertos)",
         # v3.2.2+: Strings hardcoded → i18n
         "target_prompt": "Objetivo (CIDR/IP/rango). Ejemplo: 192.168.1.0/24:",
+        "manual_cidr_prompt": (
+            "Objetivos (CIDR/IP/rango, separados por comas). Ejemplo: 192.168.1.0/24, "
+            "192.168.1.10-192.168.1.20:"
+        ),
         "confirm_prompt": "Confirmar:",
         "legal_warning_skipped": "⚠️  Advertencia legal omitida (flag --yes)",
         "invalid_target_too_long": "Objetivo inválido (demasiado largo): {}",
-        "invalid_cidr_target": "CIDR inválido: {}",
+        "invalid_cidr_target": "Objetivo inválido: {}",
         "no_valid_targets": "No se proporcionaron objetivos válidos",
         "target_required_non_interactive": "Error: --target es requerido en modo no interactivo",
         "invalid_proxy_url": "URL de proxy inválida: {}",

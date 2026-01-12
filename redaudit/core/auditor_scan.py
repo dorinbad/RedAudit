@@ -338,7 +338,7 @@ class AuditorScan:
             opts.append(self.ui.t("scan_all"))
             choice = self.ask_choice(self.ui.t("select_net"), opts)
             if choice == len(opts) - 2:
-                return [self.ask_manual_network()]
+                return self.ask_manual_network()
             if choice == len(opts) - 1:
                 # v3.2.3: Deduplicate networks (same CIDR on multiple
                 # interfaces)
@@ -353,7 +353,7 @@ class AuditorScan:
             return [nets[choice]["network"]]
         else:
             self.ui.print_status(self.ui.t("no_nets_auto"), "WARNING")
-            return [self.ask_manual_network()]
+            return self.ask_manual_network()
 
     def _select_net_discovery_interface(self) -> Optional[str]:
         explicit = self.config.get("net_discovery_interface")
