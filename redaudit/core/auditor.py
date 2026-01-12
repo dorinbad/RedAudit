@@ -946,7 +946,10 @@ class InteractiveNetworkAuditor:
 
                         # Recalculate and update
                         # This works because calculate_risk_score now looks at host["findings"]
-                        new_risk = calculate_risk_score(host)
+                        host_record = host
+                        if not isinstance(host, dict) and hasattr(host, "to_dict"):
+                            host_record = host.to_dict()
+                        new_risk = calculate_risk_score(host_record)
 
                         if isinstance(host, dict):
                             host["risk_score"] = new_risk
