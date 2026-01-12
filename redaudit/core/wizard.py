@@ -11,7 +11,6 @@ Contains interactive UI methods: prompts, menus, input utilities.
 
 import os
 import sys
-import ipaddress
 import platform
 import re
 import shutil
@@ -28,6 +27,7 @@ from redaudit.utils.constants import (
 )
 from redaudit.utils.paths import expand_user_path, get_default_reports_base_dir
 from redaudit.utils.dry_run import is_dry_run
+from redaudit.utils.targets import parse_target_tokens
 
 
 class Wizard:
@@ -534,21 +534,26 @@ class Wizard:
                 self.signal_handler(None, None)
                 sys.exit(0)
 
-    def ask_manual_network(self) -> str:
-        """Ask for manual network CIDR input."""
+    def ask_manual_network(self) -> list[str]:
+        """Ask for one or more manual network CIDRs."""
         while True:
             try:
-                net = input(
-                    f"\n{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} CIDR (e.g. 192.168.1.0/24): "
+                raw = input(
+                    f"\n{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
+                    f"{self.ui.t('manual_cidr_prompt')}"
                 ).strip()
-                if len(net) > MAX_CIDR_LENGTH:
+                tokens = [token.strip() for token in raw.split(",") if token.strip()]
+                if not tokens:
                     self.ui.print_status(self.ui.t("invalid_cidr"), "WARNING")
                     continue
-                try:
-                    ipaddress.ip_network(net, strict=False)
-                    return net
-                except ValueError:
+                parsed, invalid = parse_target_tokens(tokens, MAX_CIDR_LENGTH)
+                if invalid:
+                    self.ui.print_status(self.ui.t("invalid_cidr_target", invalid[0]), "WARNING")
+                    continue
+                if not parsed:
                     self.ui.print_status(self.ui.t("invalid_cidr"), "WARNING")
+                    continue
+                return parsed
             except KeyboardInterrupt:
                 print("")
                 self.signal_handler(None, None)

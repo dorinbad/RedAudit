@@ -373,14 +373,14 @@ def test_ask_number_keyboard_interrupt(monkeypatch):
 def test_ask_manual_network_validation(monkeypatch):
     wiz = _TextWizard()
     _set_inputs(monkeypatch, ["bad", "10.0.0.0/24"])
-    assert wiz.ask_manual_network() == "10.0.0.0/24"
+    assert wiz.ask_manual_network() == ["10.0.0.0/24"]
 
 
 def test_ask_manual_network_too_long(monkeypatch):
     wiz = _TextWizard()
     long_input = "a" * (MAX_CIDR_LENGTH + 1)
     _set_inputs(monkeypatch, [long_input, "10.0.0.0/24"])
-    assert wiz.ask_manual_network() == "10.0.0.0/24"
+    assert wiz.ask_manual_network() == ["10.0.0.0/24"]
 
 
 def test_apply_run_defaults():
@@ -874,7 +874,25 @@ def test_ask_manual_network(monkeypatch):
     wiz = _UIWizard()
     inputs = iter(["bad", "10.0.0.0/24"])
     monkeypatch.setattr("builtins.input", lambda *_args, **_kwargs: next(inputs))
-    assert wiz.ask_manual_network() == "10.0.0.0/24"
+    assert wiz.ask_manual_network() == ["10.0.0.0/24"]
+
+
+def test_ask_manual_network_multiple(monkeypatch):
+    wiz = _TextWizard()
+    _set_inputs(monkeypatch, ["10.0.0.0/24, 192.168.0.0/24,10.0.0.0/24"])
+    assert wiz.ask_manual_network() == ["10.0.0.0/24", "192.168.0.0/24"]
+
+
+def test_ask_manual_network_ips(monkeypatch):
+    wiz = _TextWizard()
+    _set_inputs(monkeypatch, ["192.168.0.10, 192.168.0.11"])
+    assert wiz.ask_manual_network() == ["192.168.0.10/32", "192.168.0.11/32"]
+
+
+def test_ask_manual_network_range(monkeypatch):
+    wiz = _TextWizard()
+    _set_inputs(monkeypatch, ["192.168.1.8-192.168.1.15"])
+    assert wiz.ask_manual_network() == ["192.168.1.8/29"]
 
 
 def test_ask_manual_network_keyboard_interrupt(monkeypatch):

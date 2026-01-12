@@ -1947,7 +1947,7 @@ class TestAskNetworkRange:
     def test_ask_network_range_no_networks(self):
         """Test network range when no networks detected."""
         auditor = MockAuditorScan()
-        auditor.ask_manual_network = MagicMock(return_value="172.16.0.0/16")
+        auditor.ask_manual_network = MagicMock(return_value=["172.16.0.0/16"])
 
         with patch("redaudit.core.network.detect_all_networks", return_value=[]):
             result = auditor.ask_network_range()

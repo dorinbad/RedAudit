@@ -12,7 +12,7 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 ## 1. Active Roadmap (Upcoming Features)
 
-These features are approved but **not yet implemented** in the codebase.
+These items are ordered chronologically and include delivered, planned, and deferred work.
 
 ### v4.6 Scan Fidelity & Time Control (Done)
 
@@ -22,91 +22,6 @@ These features are approved but **not yet implemented** in the codebase.
 | **Deep Scan Identity Evidence** | Done | HTTP title/server and device-type hints suppress deep scan when identity is already strong. |
 | **Quick HTTP Identity Probe** | Done | Short HTTP/HTTPS probe on quiet hosts to resolve identity early. |
 | **Nuclei Partial Reporting** | Done | Mark partial runs and record timeout/failed batch indexes in reports. |
-
-### v4.4 Code Coverage & Stability (Priority: High) ✅
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **100% Topology Coverage** | ✅ Done (v4.4.5) | Achieved complete test coverage for `topology.py` (route parsing, loop detection, graphing). |
-| **>94% Updater Coverage** | ✅ Done (v4.4.5) | Hardened `updater.py` with robust tests for Git operations, rollback scenarios, edge-case failures. |
-| **Project Coverage ~89%** | ✅ Done (v4.4.5) | Overall project coverage now at 88.75% (1619 tests passing). |
-| **Memory Leak Fix** | ✅ Done (v4.4.5) | Fixed infinite loop in test mocks that caused 95GB RAM spike. |
-
-### v4.3 Risk Score & Performance Improvements (Priority: High) ✅
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Weighted Maximum Gravity Algorithm** | ✅ Done | Refactored `calculate_risk_score()` to use CVSS scores from NVD data as primary factor. Formula: Base (max CVSS * 10) + Density bonus (log10) + Exposure multiplier (1.15x for external ports). |
-| **Risk Score Breakdown Tooltip** | ✅ Done | HTML reports show detailed risk score components on hover (Max CVSS, Base Score, Density Bonus, Exposure Multiplier). |
-| **Identity Score Visualization** | ✅ Done | HTML reports display color-coded identity_score with tooltip showing identity signals. |
-| **Smart-Check CPE Validation** | ✅ Done | Enhanced Nuclei false positive detection using host CPE data before HTTP header checks. |
-| **HyperScan SYN Mode** | ✅ Done | Optional scapy-based SYN scanning (`--hyperscan-mode syn`) for ~10x faster discovery. Auto-detection with fallback to connect mode. |
-| **PCAP Management Utilities** | ✅ Done | `merge_pcap_files()`, `organize_pcap_files()`, `finalize_pcap_artifacts()` for post-scan cleanup. |
-
-### v4.1 Performance Optimizations (Priority: High) ✅
-
-Optimizations following the "fast discovery, targeted fingerprint" pattern:
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **HyperScan-First Sequential** | ✅ Done | Pre-scan all 65,535 ports per host sequentially before nmap. Avoids FD exhaustion. batch_size=2000. |
-| **Parallel Vuln Scanning** | ✅ Done | Run nikto/testssl/whatweb concurrently per host. |
-| **Pre-filter Nikto CDN** | ✅ Done | Skip Nikto on Cloudflare/Akamai/AWS CloudFront. |
-| **Masscan Port Reuse** | ✅ Done | Pre-scan uses masscan ports if already discovered. |
-| **CVE Lookup Reordering** | ✅ Done | CVE correlation moved after Vuln Scan + Nuclei. |
-
-### v4.2 Pipeline Optimizations ✅ (Released in v4.2.0)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Enhanced Parallel Progress UI** | ✅ Done (v4.2.0) | Multi-bar Rich progress bars for Deep Scan and parallel phases. |
-| **Web App Vuln Scan (sqlmap)** | ✅ Done (v4.1.0) | Integrated `sqlmap` with configurable level/risk in wizard. |
-| **Web App Vuln Scan (ZAP)** | ✅ Done (v4.2.0) | Integrated OWASP ZAP for web app spidering. |
-| **Parallel Deep Scan** | ✅ Done (v4.2.0) | Decoupled Deep Scan with up to 50 threads and multi-bar UI. |
-| **Private MAC Indicator** | ✅ Done (v4.2.0) | Detects locally-administered MACs (bit 2 of first byte) and shows "(private MAC)". |
-| **Deep Scan Separation** | ✅ Done (v4.2.0) | Deep Scan extracted from `scan_host_ports()` as independent phase `run_deep_scans_concurrent()`. |
-| **Red Team → Agentless** | ✅ Done (v4.2.0) | SMB/LDAP findings from Red Team passed to Agentless Verify. |
-| **Wizard UX: Phase 0 auto** | ✅ Done (v4.2.0) | Phase 0 auto-enabled in Exhaustive profile. |
-| **Wizard UX: Custom** | ✅ Done (v4.2.0) | Improved Custom wizard with Masscan vs HyperScan choice. |
-| **HyperScan naming cleanup** | ✅ Done (v4.2.0) | Functions renamed for clearer purpose. |
-| **Session log detail** | ✅ Done (v4.2.0) | Session log enriched with more detail than cli.txt. |
-
-### v4.0 Architecture Refactoring ✅ (Released in v3.10.2)
-
-Internal refactoring using Strangler Fig pattern:
-
-1. ✅ **Phase 1**: UIManager - Standalone UI operations class
-2. ✅ **Phase 2**: ConfigurationContext - Typed configuration wrapper
-3. ✅ **Phase 3**: NetworkScanner - Identity scoring utilities
-4. ✅ **Phase 4**: Adapter properties for gradual migration
-
-**Status**: Completed in v4.0.0. Composition-first orchestration via `AuditorRuntime`, with
-legacy inheritance removed and compatibility handled by adapter-backed components.
-
-### Infrastructure (Priority: High)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Test Suite Consolidation** | ✅ Done | Refactored 199 test files → 123 files. Created `conftest.py`. Removed 76 coverage-gaming artifacts. 1130 tests at 85% coverage. |
-
-### Infrastructure (Priority: Low)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **PyPI Distribution** | 🚧 Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
-| **Plugin Engine** | 🚧 Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
-
-### Phase 6: Enterprise Scalability (>50 Hosts) (Priority: Medium) ✅
-
-Focus: Removing bottlenecks for large corporate networks.
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Generator-based Targeting** | ✅ Done | Switch from list-based targeting to generator-based streaming. prevents memory spike when loading large subnets (/16). |
-| **Streaming JSON Report** | ✅ Done | Optimized `auditor_scan.py` host collection to avoid list materialization on large networks. |
-
-| **AsyncIO Migration** | 🚧 Deferred | Full migration to AsyncIO deferred to v5.0 based on feasibility study. |
-| **Smart-Throttle (Adaptive Congestion)** | ✅ Done | AIMD-based dynamic batch size adjustment (Smart-Throttle). Detects network stress/packet loss and auto-throttles scans to prevent DoS. [View Spec](design/smart_throttle_spec.md) |
 
 ### Phase 7: UX Polish & Cosmetics (Priority: Low)
 
@@ -118,6 +33,90 @@ Minor improvements identified during v4.4.0 Gold Master validation.
 | **P7.2 Nikto Timeout Visibility** | Planned | Show "timeout" indicator instead of stalled progress when Nikto exceeds threshold. |
 | **P7.3 Streaming JSON Report** | Planned | Incremental write for reports >500MB on very large networks. |
 | **P7.4 Web Tag Backfill** | Done (v4.6.8) | Add the `web` tag when `web_ports_count` is present even if port flags are missing. |
+
+### v4.4 Code Coverage & Stability (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **100% Topology Coverage** | Done (v4.4.5) | Achieved complete test coverage for `topology.py` (route parsing, loop detection, graphing). |
+| **>94% Updater Coverage** | Done (v4.4.5) | Hardened `updater.py` with robust tests for Git operations, rollback scenarios, edge-case failures. |
+| **Project Coverage ~89%** | Done (v4.4.5) | Overall project coverage now at 88.75% (1619 tests passing). |
+| **Memory Leak Fix** | Done (v4.4.5) | Fixed infinite loop in test mocks that caused 95GB RAM spike. |
+
+### Phase 6: Enterprise Scalability (>50 Hosts) (Priority: Medium)
+
+Focus: Removing bottlenecks for large corporate networks.
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Generator-based Targeting** | Done | Switch from list-based targeting to generator-based streaming. Prevents memory spikes when loading large subnets (/16). |
+| **Streaming JSON Report** | Done | Optimized `auditor_scan.py` host collection to avoid list materialization on large networks. |
+| **AsyncIO Migration** | Deferred | Full migration to AsyncIO deferred to v5.0 based on feasibility study. |
+| **Smart-Throttle (Adaptive Congestion)** | Done | AIMD-based dynamic batch size adjustment (Smart-Throttle). Detects network stress/packet loss and auto-throttles scans to prevent DoS. [View Spec](design/smart_throttle_spec.md) |
+
+### v4.3 Risk Score & Performance Improvements (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Weighted Maximum Gravity Algorithm** | Done | Refactored `calculate_risk_score()` to use CVSS scores from NVD data as primary factor. Formula: Base (max CVSS * 10) + Density bonus (log10) + Exposure multiplier (1.15x for external ports). |
+| **Risk Score Breakdown Tooltip** | Done | HTML reports show detailed risk score components on hover (Max CVSS, Base Score, Density Bonus, Exposure Multiplier). |
+| **Identity Score Visualization** | Done | HTML reports display color-coded identity_score with tooltip showing identity signals. |
+| **Smart-Check CPE Validation** | Done | Enhanced Nuclei false positive detection using host CPE data before HTTP header checks. |
+| **HyperScan SYN Mode** | Done | Optional scapy-based SYN scanning (`--hyperscan-mode syn`) for ~10x faster discovery. Auto-detection with fallback to connect mode. |
+| **PCAP Management Utilities** | Done | `merge_pcap_files()`, `organize_pcap_files()`, `finalize_pcap_artifacts()` for post-scan cleanup. |
+
+### v4.2 Pipeline Optimizations (Released in v4.2.0)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Enhanced Parallel Progress UI** | Done (v4.2.0) | Multi-bar Rich progress bars for Deep Scan and parallel phases. |
+| **Web App Vuln Scan (sqlmap)** | Done (v4.1.0) | Integrated `sqlmap` with configurable level/risk in wizard. |
+| **Web App Vuln Scan (ZAP)** | Done (v4.2.0) | Integrated OWASP ZAP for web app spidering. |
+| **Parallel Deep Scan** | Done (v4.2.0) | Decoupled Deep Scan with up to 50 threads and multi-bar UI. |
+| **Private MAC Indicator** | Done (v4.2.0) | Detects locally-administered MACs (bit 2 of first byte) and shows "(private MAC)". |
+| **Deep Scan Separation** | Done (v4.2.0) | Deep Scan extracted from `scan_host_ports()` as independent phase `run_deep_scans_concurrent()`. |
+| **Red Team → Agentless** | Done (v4.2.0) | SMB/LDAP findings from Red Team passed to Agentless Verify. |
+| **Wizard UX: Phase 0 auto** | Done (v4.2.0) | Phase 0 auto-enabled in Exhaustive profile. |
+| **Wizard UX: Custom** | Done (v4.2.0) | Improved Custom wizard with Masscan vs HyperScan choice. |
+| **HyperScan naming cleanup** | Done (v4.2.0) | Functions renamed for clearer purpose. |
+| **Session log detail** | Done (v4.2.0) | Session log enriched with more detail than cli.txt. |
+
+### v4.1 Performance Optimizations (Priority: High)
+
+Optimizations following the "fast discovery, targeted fingerprint" pattern:
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **HyperScan-First Sequential** | Done | Pre-scan all 65,535 ports per host sequentially before nmap. Avoids FD exhaustion. batch_size=2000. |
+| **Parallel Vuln Scanning** | Done | Run nikto/testssl/whatweb concurrently per host. |
+| **Pre-filter Nikto CDN** | Done | Skip Nikto on Cloudflare/Akamai/AWS CloudFront. |
+| **Masscan Port Reuse** | Done | Pre-scan uses masscan ports if already discovered. |
+| **CVE Lookup Reordering** | Done | CVE correlation moved after Vuln Scan + Nuclei. |
+
+### v4.0 Architecture Refactoring (Released in v3.10.2)
+
+Internal refactoring using Strangler Fig pattern:
+
+1. **Phase 1**: UIManager - Standalone UI operations class
+2. **Phase 2**: ConfigurationContext - Typed configuration wrapper
+3. **Phase 3**: NetworkScanner - Identity scoring utilities
+4. **Phase 4**: Adapter properties for gradual migration
+
+**Status**: Completed in v4.0.0. Composition-first orchestration via `AuditorRuntime`, with
+legacy inheritance removed and compatibility handled by adapter-backed components.
+
+### Infrastructure (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Test Suite Consolidation** | Done | Refactored 199 test files → 123 files. Created `conftest.py`. Removed 76 coverage-gaming artifacts. 1130 tests at 85% coverage. |
+
+### Infrastructure (Priority: Low)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **PyPI Distribution** | Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
+| **Plugin Engine** | Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
 
 ---
 

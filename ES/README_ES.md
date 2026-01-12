@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](../README.md)
 
-[![Version](https://img.shields.io/badge/version-4.6.9-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
+[![Version](https://img.shields.io/badge/version-4.6.10-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://imgshields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -12,7 +12,7 @@
 
 ## ¿Qué es RedAudit?
 
-RedAudit v4.6.9 - Framework de Auditoría de Seguridad Avanzada automatizada** para evaluaciones autorizadas. Coordina descubrimiento, resolución de identidad y comprobaciones de vulnerabilidades con escalado basado en evidencias, y consolida resultados en informes estructurados (JSON, TXT, HTML y exportaciones JSONL).
+RedAudit v4.6.10 - Framework de Auditoría de Seguridad Avanzada automatizada** para evaluaciones autorizadas. Coordina descubrimiento, resolución de identidad y comprobaciones de vulnerabilidades con escalado basado en evidencias, y consolida resultados en informes estructurados (JSON, TXT, HTML y exportaciones JSONL).
 
 En lugar de ejecutar todas las herramientas contra todos los hosts, RedAudit escala solo cuando la identidad es débil o las señales son ambiguas, reduciendo ruido sin perder cobertura en entornos complejos. Las pistas HTTP (título/servidor) y el tipo de dispositivo ayudan a evitar deep scans innecesarios y escáneres web pesados en infraestructura.
 
@@ -322,7 +322,7 @@ La Fase 0 de enriquecimiento de bajo impacto es un prompt opt-in en todos los pe
 
 El asistente cubre:
 
-1. **Selección de objetivo**: Elige una subred local o introduce CIDR manual
+1. **Selección de objetivo**: Elige una subred local o introduce objetivos CIDR/IP/rango
 2. **Preset de temporización**: Stealth (T1), Normal (T4) o Agresivo (T5) en Estándar/Exhaustivo
 3. **Opciones**: Hilos, rate limiting, Fase 0 de bajo impacto, UDP/topología/descubrimiento, verificación sin agente (según perfil)
 4. **Autorización**: Confirma que tienes permiso para escanear
