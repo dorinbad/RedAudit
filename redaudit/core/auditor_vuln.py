@@ -201,7 +201,7 @@ class AuditorVuln:
 
         return max(5.0, budget)
 
-    def scan_vulnerabilities_web(self, host_info, status_callback=None):
+    def scan_vulnerabilities_web(self, host_info, status_callback=None, *, host_obj=None):
         """Scan web vulnerabilities on a host.
 
         v4.1: Parallelizes testssl, whatweb, and nikto execution per port
@@ -220,6 +220,27 @@ class AuditorVuln:
                 status_callback(msg)
             else:
                 self._set_ui_detail(msg)
+
+        def _update_agentless_http(target, title: str, server: str) -> None:
+            if not target or not (title or server):
+                return
+            if hasattr(target, "agentless_fingerprint"):
+                fp = target.agentless_fingerprint or {}
+                target.agentless_fingerprint = fp
+            elif isinstance(target, dict):
+                fp = target.setdefault("agentless_fingerprint", {})
+            else:
+                return
+            http_source = str(fp.get("http_source") or "")
+            can_override = http_source in ("", "upnp")
+            if http_source == "upnp" and fp.get("http_title"):
+                fp.setdefault("upnp_device_name", str(fp["http_title"])[:80])
+            if title and (not fp.get("http_title") or can_override):
+                fp["http_title"] = title[:256]
+            if server and (not fp.get("http_server") or can_override):
+                fp["http_server"] = server[:256]
+            if (title or server) and can_override:
+                fp["http_source"] = "enrichment"
 
         for p in web_ports:
             port = p["port"]
@@ -251,6 +272,9 @@ class AuditorVuln:
                 server_header = self._extract_server_header(headers_raw)
                 if server_header:
                     finding["server"] = server_header[:200]
+                    _update_agentless_http(host_info, "", server_header)
+                    if host_obj is not host_info:
+                        _update_agentless_http(host_obj, "", server_header)
 
             app_scan_allowed, app_scan_reason = self._should_run_app_scans(host_info, finding)
 
@@ -703,13 +727,15 @@ class AuditorVuln:
 
         normalized_hosts = [self._normalize_host_info(h) for h in (host_results or [])]
         # v4.0.4: Include hosts with HTTP fingerprint even if web_ports_count == 0
-        web_hosts = [
-            h
-            for h in normalized_hosts
-            if h.get("web_ports_count", 0) > 0
-            or (h.get("agentless_fingerprint") or {}).get("http_title")
-            or (h.get("agentless_fingerprint") or {}).get("http_server")
-        ]
+        web_hosts = []
+        for h in normalized_hosts:
+            agentless = h.get("agentless_fingerprint") or {}
+            http_source = str(agentless.get("http_source") or "")
+            has_http_identity = (
+                agentless.get("http_title") or agentless.get("http_server")
+            ) and http_source != "upnp"
+            if h.get("web_ports_count", 0) > 0 or has_http_identity:
+                web_hosts.append(h)
         if not web_hosts:
             return
 
@@ -731,7 +757,9 @@ class AuditorVuln:
             def _cb(msg):
                 host_status_map[h["ip"]] = msg
 
-            return self.scan_vulnerabilities_web(h, status_callback=_cb)
+            return self.scan_vulnerabilities_web(
+                h, status_callback=_cb, host_obj=ip_to_host.get(h["ip"])
+            )
 
         with self._progress_ui():
             with ThreadPoolExecutor(max_workers=workers) as executor:

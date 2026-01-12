@@ -226,7 +226,8 @@ class NetworkScanner:
                 device_type_hints.append("hypervisor")
 
         agentless = host_record.get("agentless_fingerprint") or {}
-        if agentless.get("http_title") or agentless.get("http_server"):
+        http_source = str(agentless.get("http_source") or "")
+        if (agentless.get("http_title") or agentless.get("http_server")) and http_source != "upnp":
             score += 1
             signals.append("http_probe")
         agentless_type = str(agentless.get("device_type") or "").strip().lower()

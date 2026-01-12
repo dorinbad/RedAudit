@@ -11,6 +11,7 @@ import os
 import json
 import shutil
 import tempfile
+import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
 
@@ -57,7 +58,7 @@ def run_nuclei_scan(
     rate_limit: int = 150,
     timeout: int = 300,
     batch_size: int = 25,
-    progress_callback: Optional[Callable[[int, int, str], None]] = None,
+    progress_callback: Optional[Callable[[int, int, str, str], None]] = None,
     use_internal_progress: bool = True,
     logger=None,
     dry_run: bool = False,
@@ -175,6 +176,19 @@ def run_nuclei_scan(
             s = sec % 60
             return f"{h:d}:{m:02d}:{s:02d}" if h else f"{m:d}:{s:02d}"
 
+        def _emit_progress(completed: int, total: int, eta: str, detail: str = "") -> None:
+            if progress_callback is None:
+                return
+            try:
+                progress_callback(completed, total, eta, detail)
+            except TypeError:
+                try:
+                    progress_callback(completed, total, eta)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
         if print_status:
             print_status(
                 f"[nuclei] scanning {len(targets)} targets in {total_batches} batch(es)...",
@@ -211,7 +225,47 @@ def run_nuclei_scan(
                         f_targets.write(f"{t}\n")
 
                 cmd = _build_cmd(batch_targets_file, batch_output_file, rate_limit_override)
-                res = runner.run(cmd, capture_output=True, text=True, timeout=float(timeout))
+                res_holder: Dict[str, Any] = {}
+                err_holder: Dict[str, BaseException] = {}
+
+                def _execute() -> None:
+                    try:
+                        res_holder["res"] = runner.run(
+                            cmd, capture_output=True, text=True, timeout=float(timeout)
+                        )
+                    except BaseException as exc:
+                        err_holder["exc"] = exc
+
+                if progress_callback is not None:
+                    done = threading.Event()
+
+                    def _execute_with_flag() -> None:
+                        try:
+                            _execute()
+                        finally:
+                            done.set()
+
+                    worker = threading.Thread(target=_execute_with_flag, daemon=True)
+                    worker.start()
+                    heartbeat_s = 10.0
+                    while not done.wait(timeout=heartbeat_s):
+                        elapsed = time.time() - batch_start
+                        detail = (
+                            f"batch {batch_idx}/{total_batches} running "
+                            f"{_format_eta(elapsed)} elapsed"
+                        )
+                        _emit_progress(batch_idx - 1, total_batches, "", detail)
+                    if err_holder.get("exc"):
+                        raise err_holder["exc"]
+                    res = res_holder.get("res")
+                else:
+                    _execute()
+                    if err_holder.get("exc"):
+                        raise err_holder["exc"]
+                    res = res_holder.get("res")
+
+                if res is None:
+                    raise RuntimeError("Nuclei batch did not return a result")
                 timed_out = bool(getattr(res, "timed_out", False))
                 if timed_out:
                     timed_out_batches.add(batch_idx)
@@ -255,10 +309,7 @@ def run_nuclei_scan(
                 avg = (sum(batch_durations) / len(batch_durations)) if batch_durations else 0.0
                 remaining = max(0, total_batches - idx)
                 eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
-                try:
-                    progress_callback(idx, total_batches, f"ETA≈ {eta}")
-                except Exception:
-                    pass
+                _emit_progress(idx, total_batches, f"ETA≈ {eta}", f"batch {idx}/{total_batches}")
         elif use_internal_progress:
             # Rich progress UI (best-effort)
             try:

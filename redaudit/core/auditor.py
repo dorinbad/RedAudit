@@ -16,7 +16,7 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from redaudit.utils.constants import (
     COLORS,
@@ -784,7 +784,7 @@ class InteractiveNetworkAuditor:
                                     severity="low,medium,high,critical",
                                     timeout=nuclei_timeout_s,
                                     batch_size=batch_size,
-                                    progress_callback=lambda c, t, e: self._nuclei_progress_callback(
+                                    progress_callback=lambda c, t, e, d=None: self._nuclei_progress_callback(
                                         c,
                                         t,
                                         e,
@@ -792,6 +792,7 @@ class InteractiveNetworkAuditor:
                                         task,
                                         progress_start_t,
                                         nuclei_timeout_s,
+                                        detail=d,
                                     ),
                                     use_internal_progress=False,
                                     logger=self.logger,
@@ -2374,6 +2375,8 @@ class InteractiveNetworkAuditor:
         task: Any,
         start_time: float,
         timeout: int,
+        *,
+        detail: Optional[str] = None,
     ) -> None:
         """Callback for Nuclei scan progress updates."""
         try:
@@ -2384,13 +2387,14 @@ class InteractiveNetworkAuditor:
             ela_s = max(0.001, time.time() - start_time)
             rate = completed / ela_s if completed else 0.0
             eta_est_v = self._format_eta(rem / rate) if rate > 0.0 and rem else ""
+            detail_text = detail or f"batch {completed}/{total}"
             progress.update(
                 task,
                 completed=completed,
                 description=f"[cyan]Nuclei ({completed}/{total})",
                 eta_upper=self._format_eta(rem * timeout if rem else 0),
                 eta_est=f"ETA≈ {eta_est_v}" if eta_est_v else "",
-                detail=f"batch {completed}/{total}",
+                detail=detail_text,
             )
         except Exception:
             pass
