@@ -12,7 +12,7 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 ## 1. Roadmap Activo (Próximas Funcionalidades)
 
-Estas características están aprobadas pero **aún no implementadas** en el código base.
+Estos elementos están ordenados cronológicamente e incluyen trabajo entregado, planificado y aplazado.
 
 ### v4.6 Fidelidad de Escaneo y Control de Tiempo (Hecho)
 
@@ -22,83 +22,6 @@ Estas características están aprobadas pero **aún no implementadas** en el có
 | **Evidencia de Identidad en Deep Scan** | Hecho | Título/servidor HTTP y tipo de dispositivo evitan deep scan cuando la identidad ya es fuerte. |
 | **Sonda HTTP Rápida de Identidad** | Hecho | Sonda HTTP/HTTPS breve en hosts silenciosos para resolver identidad antes. |
 | **Reporte Parcial de Nuclei** | Hecho | Marcar ejecuciones parciales y registrar lotes con timeout/fallidos en el informe. |
-
-### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta) ✅
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Cobertura Topology 100%** | ✅ Hecho (v4.4.5) | Alcanzada cobertura completa de tests para `topology.py` (parseo de rutas, detección de bucles, grafado). |
-| **Cobertura Updater >94%** | ✅ Hecho (v4.4.5) | Endurecido `updater.py` con tests robustos para operaciones Git, escenarios de rollback, fallos en casos borde. |
-| **Cobertura Proyecto ~89%** | ✅ Hecho (v4.4.5) | Cobertura total del proyecto ahora en 88.75% (1619 tests pasando). |
-| **Corrección Memory Leak** | ✅ Hecho (v4.4.5) | Corregido bucle infinito en mocks de tests que causaba pico de 95GB RAM. |
-
-### v4.3 Mejoras al Risk Score (Prioridad: Alta) ✅
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Algoritmo Weighted Maximum Gravity** | ✅ Hecho | Refactorizado `calculate_risk_score()` para usar scores CVSS de datos NVD como factor principal. Fórmula: Base (max CVSS * 10) + Bonus densidad (log10) + Multiplicador exposición (1.15x para puertos externos). |
-
-### v4.1 Optimizaciones de Rendimiento ✅ (En desarrollo)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **HyperScan-First Secuencial** | ✅ Hecho | Pre-escaneo de 65.535 puertos por host secuencialmente antes de nmap. Evita agotamiento de file descriptors. batch_size=2000. |
-| **Escaneo Vulns Paralelo** | ✅ Hecho | nikto/testssl/whatweb concurrentemente por host. |
-| **Pre-filtrado Nikto CDN** | ✅ Hecho | Omitir Nikto en Cloudflare/Akamai/AWS CloudFront. |
-| **Reutilización puertos masscan** | ✅ Hecho | Pre-scan usa puertos de masscan si ya estaban descubiertos. |
-| **CVE Lookup reordenado** | ✅ Hecho | CVE correlation movido después de Vuln Scan + Nuclei. |
-
-### v4.2 Optimizaciones Pipeline ✅ (Liberado en v4.2.0)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Enhanced Parallel Progress UI** | ✅ Hecho (v4.2.0) | Barras de progreso multi-hilo con Rich para Deep Scan y fases paralelas. |
-| **Web App Vuln Scan (sqlmap)** | ✅ Hecho (v4.1.0) | Integración `sqlmap` con niveles configurables (level/risk) en wizard. |
-| **Web App Vuln Scan (ZAP)** | ✅ Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
-| **Parallel Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
-| **MAC Privado Indicator** | ✅ Hecho (v4.2.0) | Detecta MACs localmente administrados (bit 2 del primer byte) y muestra "(MAC privado)". |
-| **Separación Deep Scan** | ✅ Hecho (v4.2.0) | Deep Scan extraído de `scan_host_ports()` como fase independiente `run_deep_scans_concurrent()`. |
-| **Red Team → Agentless** | ✅ Hecho (v4.2.0) | Hallazgos SMB/LDAP de Red Team pasan a Agentless Verify. |
-| **Wizard UX: Phase 0 auto** | ✅ Hecho (v4.2.0) | Phase 0 se activa automáticamente en perfil Exhaustivo. |
-| **Wizard UX: Personalizado** | ✅ Hecho (v4.2.0) | Lógica mejorada para elección entre Masscan vs HyperScan. |
-| **HyperScan naming cleanup** | ✅ Hecho (v4.2.0) | Funciones renombradas para clarificar propósito. |
-| **Session log mejorado** | ✅ Hecho (v4.2.0) | Session log enriquecido con más detalle que cli.txt. |
-
-### v4.0 Refactorización Arquitectónica ✅ (Liberado en v3.10.2)
-
-Refactorización interna utilizando el patrón Strangler Fig:
-
-1. ✅ **Fase 1**: UIManager - Clase de operaciones UI independiente
-2. ✅ **Fase 2**: ConfigurationContext - Wrapper tipado de configuración
-3. ✅ **Fase 3**: NetworkScanner - Utilidades de puntuación de identidad
-4. ✅ **Fase 4**: Propiedades adaptador para migración gradual
-
-**Estado**: Completado en v4.0.0. Orquestación por composición vía `AuditorRuntime`, con
-herencia legacy eliminada y compatibilidad gestionada por componentes con adaptador.
-
-### Infraestructura (Prioridad: Alta)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Consolidación Suite Tests** | ✅ Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 85%. |
-
-### Infraestructura (Prioridad: Baja)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Distribución PyPI** | 🚧 Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
-| **Motor de Plugins** | 🚧 Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
-
-### Fase 6: Escalabilidad Empresarial (>50 Hosts) ✅ (Liberado en v4.4.0)
-
-Foco: Eliminar cuellos de botella en grandes redes corporativas.
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Targeting basado en Generadores** | ✅ Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. Evita picos de memoria en subredes grandes (/16). |
-| **Reporte JSON en Streaming** | 🚧 Planificado | Escritura incremental para reportes >500MB. |
-| **Migración AsyncIO** | 🚧 Aplazado | Migración completa a AsyncIO aplazada a v5.0 tras estudio de viabilidad. |
-| **Smart-Throttle (AIMD)** | ✅ Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. Ajusta batch_size dinámicamente. |
 
 ### Fase 7: Pulido UX y Cosméticos (Prioridad: Baja)
 
@@ -110,6 +33,83 @@ Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
 | **P7.2 Visibilidad Timeout Nikto** | Planificado | Mostrar indicador "timeout" en lugar de progreso estancado cuando Nikto excede el umbral. |
 | **P7.3 Reporte JSON en Streaming** | Planificado | Escritura incremental para reportes >500MB en redes muy grandes. |
 | **P7.4 Backfill de Tag Web** | Hecho (v4.6.8) | Añadir la etiqueta `web` cuando existe `web_ports_count` aunque falten flags de puerto. |
+
+### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Cobertura Topology 100%** | Hecho (v4.4.5) | Alcanzada cobertura completa de tests para `topology.py` (parseo de rutas, detección de bucles, grafado). |
+| **Cobertura Updater >94%** | Hecho (v4.4.5) | Endurecido `updater.py` con tests robustos para operaciones Git, escenarios de rollback, fallos en casos borde. |
+| **Cobertura Proyecto ~89%** | Hecho (v4.4.5) | Cobertura total del proyecto ahora en 88.75% (1619 tests pasando). |
+| **Corrección Memory Leak** | Hecho (v4.4.5) | Corregido bucle infinito en mocks de tests que causaba pico de 95GB RAM. |
+
+### Fase 6: Escalabilidad Empresarial (>50 Hosts) (Prioridad: Media)
+
+Foco: Eliminar cuellos de botella en grandes redes corporativas.
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Targeting basado en Generadores** | Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. Evita picos de memoria en subredes grandes (/16). |
+| **Reporte JSON en Streaming** | Hecho | Optimizado `auditor_scan.py` para evitar materializar listas en redes grandes. |
+| **Migración AsyncIO** | Aplazado | Migración completa a AsyncIO aplazada a v5.0 tras estudio de viabilidad. |
+| **Smart-Throttle (AIMD)** | Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. Ajusta batch_size dinámicamente. |
+
+### v4.3 Mejoras al Risk Score (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Algoritmo Weighted Maximum Gravity** | Hecho | Refactorizado `calculate_risk_score()` para usar scores CVSS de datos NVD como factor principal. Fórmula: Base (max CVSS * 10) + Bonus densidad (log10) + Multiplicador exposición (1.15x para puertos externos). |
+
+### v4.2 Optimizaciones Pipeline (Liberado en v4.2.0)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Enhanced Parallel Progress UI** | Hecho (v4.2.0) | Barras de progreso multi-hilo con Rich para Deep Scan y fases paralelas. |
+| **Web App Vuln Scan (sqlmap)** | Hecho (v4.1.0) | Integración `sqlmap` con niveles configurables (level/risk) en wizard. |
+| **Web App Vuln Scan (ZAP)** | Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
+| **Parallel Deep Scan** | Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
+| **MAC Privado Indicator** | Hecho (v4.2.0) | Detecta MACs localmente administrados (bit 2 del primer byte) y muestra "(MAC privado)". |
+| **Separación Deep Scan** | Hecho (v4.2.0) | Deep Scan extraído de `scan_host_ports()` como fase independiente `run_deep_scans_concurrent()`. |
+| **Red Team → Agentless** | Hecho (v4.2.0) | Hallazgos SMB/LDAP de Red Team pasan a Agentless Verify. |
+| **Wizard UX: Phase 0 auto** | Hecho (v4.2.0) | Phase 0 se activa automáticamente en perfil Exhaustivo. |
+| **Wizard UX: Personalizado** | Hecho (v4.2.0) | Lógica mejorada para elección entre Masscan vs HyperScan. |
+| **HyperScan naming cleanup** | Hecho (v4.2.0) | Funciones renombradas para clarificar propósito. |
+| **Session log mejorado** | Hecho (v4.2.0) | Session log enriquecido con más detalle que cli.txt. |
+
+### v4.1 Optimizaciones de Rendimiento (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **HyperScan-First Secuencial** | Hecho | Pre-escaneo de 65.535 puertos por host secuencialmente antes de nmap. Evita agotamiento de file descriptors. batch_size=2000. |
+| **Escaneo Vulns Paralelo** | Hecho | nikto/testssl/whatweb concurrentemente por host. |
+| **Pre-filtrado Nikto CDN** | Hecho | Omitir Nikto en Cloudflare/Akamai/AWS CloudFront. |
+| **Reutilización puertos masscan** | Hecho | Pre-scan usa puertos de masscan si ya estaban descubiertos. |
+| **CVE Lookup reordenado** | Hecho | CVE correlation movido después de Vuln Scan + Nuclei. |
+
+### v4.0 Refactorización Arquitectónica (Liberado en v3.10.2)
+
+Refactorización interna utilizando el patrón Strangler Fig:
+
+1. **Fase 1**: UIManager - Clase de operaciones UI independiente
+2. **Fase 2**: ConfigurationContext - Wrapper tipado de configuración
+3. **Fase 3**: NetworkScanner - Utilidades de puntuación de identidad
+4. **Fase 4**: Propiedades adaptador para migración gradual
+
+**Estado**: Completado en v4.0.0. Orquestación por composición vía `AuditorRuntime`, con
+herencia legacy eliminada y compatibilidad gestionada por componentes con adaptador.
+
+### Infraestructura (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Consolidación Suite Tests** | Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 85%. |
+
+### Infraestructura (Prioridad: Baja)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Distribución PyPI** | Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
+| **Motor de Plugins** | Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
 
 ---
 

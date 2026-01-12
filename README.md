@@ -324,7 +324,7 @@ Phase 0 low-impact enrichment is an opt-in wizard prompt across all profiles (de
 
 The wizard covers:
 
-1. **Target Selection**: Choose a local subnet or enter manual CIDR
+1. **Target Selection**: Choose a local subnet or enter manual CIDR/IP/range targets
 2. **Timing Preset**: Stealth (T1), Normal (T4), or Aggressive (T5) for Standard/Exhaustive profiles
 3. **Options**: Threads, rate limiting, Phase 0 low-impact enrichment, UDP/topology/net discovery, agentless verification (varies by profile)
 4. **Authorization**: Confirm you have permission to scan

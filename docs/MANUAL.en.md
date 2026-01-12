@@ -348,7 +348,7 @@ Flags verified against `redaudit --help` (v4.5.2):
 
 | Flag | Description |
 | :--- | :--- |
-| `-t, --target CIDR` | Target network(s), comma-separated |
+| `-t, --target CIDR` | Targets (CIDR/IP/range), comma-separated |
 | `-m, --mode {fast,normal,full}` | Scan intensity (default: normal) |
 | `-o, --output DIR` | Output directory (default: `~/Documents/RedAuditReports`) |
 | `-y, --yes` | Skip confirmation prompts |

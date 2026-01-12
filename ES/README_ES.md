@@ -322,7 +322,7 @@ La Fase 0 de enriquecimiento de bajo impacto es un prompt opt-in en todos los pe
 
 El asistente cubre:
 
-1. **Selección de objetivo**: Elige una subred local o introduce CIDR manual
+1. **Selección de objetivo**: Elige una subred local o introduce objetivos CIDR/IP/rango
 2. **Preset de temporización**: Stealth (T1), Normal (T4) o Agresivo (T5) en Estándar/Exhaustivo
 3. **Opciones**: Hilos, rate limiting, Fase 0 de bajo impacto, UDP/topología/descubrimiento, verificación sin agente (según perfil)
 4. **Autorización**: Confirma que tienes permiso para escanear

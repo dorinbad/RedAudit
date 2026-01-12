@@ -347,7 +347,7 @@ Flags verificadas contra `redaudit --help` (v4.5.2):
 
 | Flag | Descripción |
 | :--- | :--- |
-| `-t, --target CIDR` | Red(es) objetivo, separadas por comas |
+| `-t, --target CIDR` | Objetivos (CIDR/IP/rango), separados por comas |
 | `-m, --mode {fast,normal,full}` | Intensidad del escaneo (defecto: normal) |
 | `-o, --output DIR` | Directorio de salida (defecto: `~/Documents/RedAuditReports` o `~/Documentos/RedAuditReports`) |
 | `-y, --yes` | Omitir prompts de confirmación |
