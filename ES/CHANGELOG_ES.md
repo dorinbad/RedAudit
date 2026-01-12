@@ -10,6 +10,21 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [v4.6.11] - 2026-01-12
+
+### Añadido
+
+- **Origen HTTP sin agente**: Se registra el origen de identidad HTTP (`http_source`, `upnp_device_name`) para distinguir pistas UPnP de señales HTTP reales.
+
+### Cambiado
+
+- **Progreso de Nuclei**: Emite actualizaciones de latido durante lotes largos para mostrar actividad y tiempo transcurrido.
+
+### Corregido
+
+- **Gating de Identidad HTTP**: Ignora títulos solo UPnP para el gating de escaneo web y el score de identidad; permite que el probe HTTP sobrescriba pistas UPnP.
+- **Enriquecimiento Web**: Propaga cabeceras HTTP server desde el enriquecimiento de vulnerabilidades a los fingerprints sin agente.
+
 ## [v4.6.10] - 2026-01-12
 
 ### Añadido

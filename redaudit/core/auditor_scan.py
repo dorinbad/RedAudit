@@ -510,8 +510,11 @@ class AuditorScan:
                 device_name = str(device.get("device") or "").strip()
                 if device_name:
                     agentless = host_record.setdefault("agentless_fingerprint", {})
+                    if not agentless.get("upnp_device_name"):
+                        agentless["upnp_device_name"] = device_name[:80]
                     if not agentless.get("http_title"):
                         agentless["http_title"] = device_name[:80]
+                        agentless.setdefault("http_source", "upnp")
                 break
 
     def _run_low_impact_enrichment(self, host: str) -> Dict[str, Any]:
@@ -1851,11 +1854,14 @@ class AuditorScan:
                                 port_info["ssl_cert"] = extra["ssl_cert"]
 
             agentless_fp = host_record.get("agentless_fingerprint") or {}
+            http_source = str(agentless_fp.get("http_source") or "")
+            has_http_identity = bool(
+                agentless_fp.get("http_title") or agentless_fp.get("http_server")
+            ) and http_source != "upnp"
             if (
                 web_count > 0
                 and self.config.get("deep_id_scan", True)
-                and not agentless_fp.get("http_title")
-                and not agentless_fp.get("http_server")
+                and not has_http_identity
                 and not any_version
             ):
                 web_ports = [p.get("port") for p in ports if p.get("is_web_service")]
@@ -1871,10 +1877,21 @@ class AuditorScan:
                     )
                     if http_probe:
                         agentless_fp = host_record.setdefault("agentless_fingerprint", {})
-                        if http_probe.get("http_title") and not agentless_fp.get("http_title"):
+                        http_source = str(agentless_fp.get("http_source") or "")
+                        if http_source == "upnp" and agentless_fp.get("http_title"):
+                            agentless_fp.setdefault(
+                                "upnp_device_name", str(agentless_fp["http_title"])[:80]
+                            )
+                        if http_probe.get("http_title") and (
+                            not agentless_fp.get("http_title") or http_source == "upnp"
+                        ):
                             agentless_fp["http_title"] = str(http_probe["http_title"])[:256]
-                        if http_probe.get("http_server") and not agentless_fp.get("http_server"):
+                        if http_probe.get("http_server") and (
+                            not agentless_fp.get("http_server") or http_source == "upnp"
+                        ):
                             agentless_fp["http_server"] = str(http_probe["http_server"])[:256]
+                        if http_probe.get("http_title") or http_probe.get("http_server"):
+                            agentless_fp["http_source"] = "probe"
                         title = str(agentless_fp.get("http_title") or "")
                         server = str(agentless_fp.get("http_server") or "")
                         if title or server:
@@ -1886,9 +1903,12 @@ class AuditorScan:
             identity_score, identity_signals = self._compute_identity_score(host_record)
             device_type_hints = host_record.get("device_type_hints") or []
             agentless_fp = host_record.get("agentless_fingerprint") or {}
+            http_source = str(agentless_fp.get("http_source") or "")
+            has_http_identity = bool(
+                agentless_fp.get("http_title") or agentless_fp.get("http_server")
+            ) and http_source != "upnp"
             identity_evidence = bool(
-                agentless_fp.get("http_title")
-                or agentless_fp.get("http_server")
+                has_http_identity
                 or agentless_fp.get("device_type")
                 or agentless_fp.get("device_vendor")
             )
@@ -1954,7 +1974,11 @@ class AuditorScan:
             # v4.0.4: Force web vuln scan for hosts with HTTP fingerprint from net_discovery
             # This fixes the detection gap where hosts passing identity threshold skip vuln scan
             agentless_fp = host_record.get("agentless_fingerprint") or {}
-            if agentless_fp.get("http_title") or agentless_fp.get("http_server"):
+            http_source = str(agentless_fp.get("http_source") or "")
+            has_http_identity = bool(
+                agentless_fp.get("http_title") or agentless_fp.get("http_server")
+            ) and http_source != "upnp"
+            if has_http_identity:
                 if web_count == 0:
                     web_count = 1  # Ensure host is included in web vulnerability scanning
                     host_record["web_ports_count"] = web_count

@@ -22,6 +22,30 @@ These items are ordered chronologically and include delivered, planned, and defe
 | **Deep Scan Identity Evidence** | Done | HTTP title/server and device-type hints suppress deep scan when identity is already strong. |
 | **Quick HTTP Identity Probe** | Done | Short HTTP/HTTPS probe on quiet hosts to resolve identity early. |
 | **Nuclei Partial Reporting** | Done | Mark partial runs and record timeout/failed batch indexes in reports. |
+| **Nuclei Batch Heartbeat** | Done (v4.6.11) | Keep progress updates during long batches to show activity and elapsed time. |
+| **HTTP Identity Source Guard** | Done (v4.6.11) | Treat UPnP-only titles as hints and avoid forcing web scans or identity scoring. |
+
+### v4.7 Audit Follow-ups (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Wizard Target Normalization Summary** | Planned | Show the normalized target list (CIDR/IP/range expansions) before execution. |
+| **Escalation Reason Counters** | Planned | Report why deep scans triggered (identity score, ambiguity, manual override). |
+| **Smart-Check Documentation Clarification** | Planned | Align docs with the actual signal cross-checking behavior. |
+
+### v4.7 Audit Follow-ups (Priority: Medium)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Dependency Pinning Mode** | Planned | Optional pinned tags/commits for external tools installed from git. |
+| **Phase Transition Diagram** | Planned | Add a concise state diagram for phase 1-3 escalation logic. |
+| **No-Response Classification Tagging** | Planned | Distinguish transient errors from silent hosts in reporting. |
+
+### v4.7 Audit Follow-ups (Deferred)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **auditor.py Refactor** | Deferred | Split orchestration and decision logic only if it unlocks testing or fixes defects. |
 
 ### Phase 7: UX Polish & Cosmetics (Priority: Low)
 
