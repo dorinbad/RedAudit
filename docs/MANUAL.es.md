@@ -322,7 +322,7 @@ RedAudit v4.0+ soporta el escaneo autenticado para obtener datos de alta fidelid
 
 #### Interactivo (Wizard)
 
-Cuando se pregunte "¿Habilitar escaneo autenticado (SSH/SMB)?", seleccione Sí. Podrá configurar credenciales SSH y/o SMB. Los ajustes se pueden guardar en un anillo de claves seguro o archivo de configuración.
+Cuando se pregunte "¿Habilitar escaneo autenticado (SSH/SMB)?", seleccione Sí. Si hay credenciales guardadas, el asistente ofrece cargarlas primero y luego pregunta si deseas añadir más. Los ajustes se pueden guardar en un anillo de claves seguro o archivo de configuración.
 
 #### Argumentos CLI
 

@@ -316,7 +316,7 @@ El asistente te guía por la selección de objetivo y el perfil de auditoría. O
 - **Express**: Descubrimiento rápido (solo hosts). Topología + descubrimiento de red activados; escaneo de vulnerabilidades desactivado.
 - **Estándar**: Auditoría equilibrada (nmap `-F`/top 100 puertos + comprobaciones web). El preset de temporización se elige al inicio.
 - **Exhaustivo**: Escaneo completo con más profundidad. UDP top-ports (500) se activa en hosts ambiguos; Red Team y verificación sin agente activadas. La correlación CVE solo se habilita si ya hay API key NVD configurada.
-- **Custom**: Wizard completo de 8 pasos con navegación atrás para control granular.
+- **Custom**: Wizard completo de 9 pasos con navegación atrás para control granular.
 
 La Fase 0 de enriquecimiento de bajo impacto es un prompt opt-in en todos los perfiles (por defecto desactivada).
 

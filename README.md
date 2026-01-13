@@ -318,7 +318,7 @@ The wizard offers 4 audit profiles:
 - **Express**: Fast discovery (host discovery only). Topology + network discovery enabled; vulnerability scanning disabled.
 - **Standard**: Balanced audit (nmap `-F`/top 100 ports + web vuln checks). Timing preset is selected up front.
 - **Exhaustive**: Full port scan with deeper discovery. UDP top-ports (500) is enabled for ambiguous hosts; Red Team discovery and agentless verification are enabled. CVE correlation is enabled only if an NVD API key is already configured.
-- **Custom**: Full 8-step wizard with back navigation for granular control.
+- **Custom**: Full 9-step wizard with back navigation for granular control.
 
 Phase 0 low-impact enrichment is an opt-in wizard prompt across all profiles (default off).
 

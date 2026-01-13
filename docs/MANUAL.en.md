@@ -323,7 +323,7 @@ RedAudit v4.0+ supports authenticated scanning to retrieve high-fidelity data fr
 
 #### Interactive (Wizard)
 
-When prompted "Enable authenticated scanning (SSH/SMB)?", select Yes. You can then configure SSH and/or SMB credentials. The settings can be saved to a secure keyring or configuration file.
+When prompted "Enable authenticated scanning (SSH/SMB)?", select Yes. If saved credentials are detected, the wizard offers to load them first and then asks if you want to add more. The settings can be saved to a secure keyring or configuration file.
 
 #### CLI Arguments
 
