@@ -1649,13 +1649,14 @@ class InteractiveNetworkAuditor:
             )
             return
 
-        # PROFILE 3: Custom - Full wizard with 8 steps (original behavior)
+        # PROFILE 3: Custom - Full wizard with 9 steps (original behavior)
         # v3.8.1: Wizard step machine for "Cancel" navigation
         TOTAL_STEPS = 9
         step = 1
 
         # Store choices for navigation (allows going back and reusing previous values)
         wizard_state: Dict = {}
+        self.ui.print_status(self.ui.t("wizard_custom_intro"), "INFO")
 
         while step <= TOTAL_STEPS:
             # ═══════════════════════════════════════════════════════════════════
@@ -2182,7 +2183,7 @@ class InteractiveNetworkAuditor:
             # ═══════════════════════════════════════════════════════════════════
             elif step == 8:
                 auth_options = [
-                    self.ui.t("yes_option") + " — SSH",
+                    self.ui.t("yes_option") + " — " + self.ui.t("auth_scan_opt"),
                     self.ui.t("no_option"),
                 ]
                 # Default: No, unless cli arg provided

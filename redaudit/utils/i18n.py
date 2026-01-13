@@ -434,6 +434,8 @@ TRANSLATIONS = {
         "auth_mode_universal": "Universal (simple): auto-detect protocol",
         "auth_mode_advanced": "Advanced: configure SSH/SMB/SNMP separately",
         "auth_protocol_hint": "Credentials will be tried on: SSH (22), SMB (445), SNMP (161), RDP (3389)",
+        "auth_scan_opt": "Authenticated (SSH/SMB/SNMP)",
+        "wizard_custom_intro": "Custom wizard: 9 steps. Use Cancel to go back.",
     },
     "es": {
         "interrupted": "\n⚠️  Interrupción recibida. Guardando estado actual...",
@@ -858,6 +860,8 @@ TRANSLATIONS = {
         "auth_mode_universal": "Universal (simple): detectar protocolo automáticamente",
         "auth_mode_advanced": "Avanzado: configurar SSH/SMB/SNMP por separado",
         "auth_protocol_hint": "Las credenciales se probarán en: SSH (22), SMB (445), SNMP (161), RDP (3389)",
+        "auth_scan_opt": "Autenticado (SSH/SMB/SNMP)",
+        "wizard_custom_intro": "Wizard personalizado: 9 pasos. Usa Cancelar para volver.",
     },
 }
 
