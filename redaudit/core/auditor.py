@@ -1916,55 +1916,9 @@ class InteractiveNetworkAuditor:
                 continue
 
             # ═══════════════════════════════════════════════════════════════════
-            # STEP 5: Output Directory
+            # STEP 5: UDP & Topology
             # ═══════════════════════════════════════════════════════════════════
             elif step == 5:
-                self.ui.print_status(f"[{step}/{TOTAL_STEPS}] " + self.ui.t("output_dir"), "INFO")
-
-                auditor_default = wizard_state.get(
-                    "auditor_name",
-                    (
-                        defaults_for_run.get("auditor_name")
-                        if isinstance(defaults_for_run, dict)
-                        else ""
-                    ),
-                )
-                auditor_default = auditor_default or ""
-                auditor_prompt = self.ui.t("auditor_name_q")
-                auditor_name = input(
-                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
-                    f"[{auditor_default}]: "
-                ).strip()
-                if not auditor_name:
-                    auditor_name = auditor_default
-                auditor_name = auditor_name.strip()
-                self.config["auditor_name"] = auditor_name if auditor_name else None
-                wizard_state["auditor_name"] = self.config["auditor_name"] or ""
-
-                default_reports = get_default_reports_base_dir()
-                persisted_output = defaults_for_run.get("output_dir")
-                if isinstance(persisted_output, str) and persisted_output.strip():
-                    default_reports = expand_user_path(persisted_output.strip())
-
-                out_dir = input(
-                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('output_dir')} "
-                    f"[{default_reports}]: "
-                ).strip()
-                if not out_dir:
-                    out_dir = default_reports
-                self.config["output_dir"] = expand_user_path(out_dir)
-
-                # TXT and HTML always on
-                self.config["save_txt_report"] = True
-                self.config["save_html_report"] = True
-
-                step += 1
-                continue
-
-            # ═══════════════════════════════════════════════════════════════════
-            # STEP 6: UDP & Topology
-            # ═══════════════════════════════════════════════════════════════════
-            elif step == 6:
                 # UDP configuration (only for non-rapido modes with deep scan)
                 if self.config["scan_mode"] != "rapido" and self.config.get("deep_id_scan"):
                     udp_modes = [self.ui.t("udp_mode_quick"), self.ui.t("udp_mode_full")]
@@ -2055,9 +2009,9 @@ class InteractiveNetworkAuditor:
                 continue
 
             # ═══════════════════════════════════════════════════════════════════
-            # STEP 7: Net Discovery & Red Team
+            # STEP 6: Net Discovery & Red Team
             # ═══════════════════════════════════════════════════════════════════
-            elif step == 7:
+            elif step == 6:
                 nd_options = [
                     self.ui.t("yes_option") + " — DHCP/NetBIOS/mDNS/UPNP",
                     self.ui.t("no_option"),
@@ -2179,9 +2133,9 @@ class InteractiveNetworkAuditor:
                 continue
 
             # ═══════════════════════════════════════════════════════════════════
-            # STEP 8: Authenticated Scanning (Phase 4)
+            # STEP 7: Authenticated Scanning (Phase 4)
             # ═══════════════════════════════════════════════════════════════════
-            elif step == 8:
+            elif step == 7:
                 auth_options = [
                     self.ui.t("yes_option") + " — " + self.ui.t("auth_scan_opt"),
                     self.ui.t("no_option"),
@@ -2212,7 +2166,7 @@ class InteractiveNetworkAuditor:
                     auth_cfg = self.ask_auth_config(skip_intro=True)
 
                     if not auth_cfg.get("auth_enabled"):
-                        # User backed out of configuration details -> re-ask Step 8
+                        # User backed out of configuration details -> re-ask Step 7
                         continue
 
                     self.config.update(auth_cfg)
@@ -2227,9 +2181,9 @@ class InteractiveNetworkAuditor:
                 continue
 
             # ═══════════════════════════════════════════════════════════════════
-            # STEP 9: Windows Verification & Webhook
+            # STEP 8: Windows Verification
             # ═══════════════════════════════════════════════════════════════════
-            elif step == 9:
+            elif step == 8:
                 win_options = [
                     self.ui.t("yes_option") + " — SMB/RDP/LDAP/SSH/HTTP",
                     self.ui.t("no_option"),
@@ -2265,6 +2219,52 @@ class InteractiveNetworkAuditor:
                     )
                 else:
                     self.config["windows_verify_enabled"] = False
+
+                step += 1
+                continue
+
+            # ═══════════════════════════════════════════════════════════════════
+            # STEP 9: Output Directory & Webhook
+            # ═══════════════════════════════════════════════════════════════════
+            elif step == 9:
+                self.ui.print_status(f"[{step}/{TOTAL_STEPS}] " + self.ui.t("output_dir"), "INFO")
+
+                auditor_default = wizard_state.get(
+                    "auditor_name",
+                    (
+                        defaults_for_run.get("auditor_name")
+                        if isinstance(defaults_for_run, dict)
+                        else ""
+                    ),
+                )
+                auditor_default = auditor_default or ""
+                auditor_prompt = self.ui.t("auditor_name_q")
+                auditor_name = input(
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
+                    f"[{auditor_default}]: "
+                ).strip()
+                if not auditor_name:
+                    auditor_name = auditor_default
+                auditor_name = auditor_name.strip()
+                self.config["auditor_name"] = auditor_name if auditor_name else None
+                wizard_state["auditor_name"] = self.config["auditor_name"] or ""
+
+                default_reports = get_default_reports_base_dir()
+                persisted_output = defaults_for_run.get("output_dir")
+                if isinstance(persisted_output, str) and persisted_output.strip():
+                    default_reports = expand_user_path(persisted_output.strip())
+
+                out_dir = input(
+                    f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {self.ui.t('output_dir')} "
+                    f"[{default_reports}]: "
+                ).strip()
+                if not out_dir:
+                    out_dir = default_reports
+                self.config["output_dir"] = expand_user_path(out_dir)
+
+                # TXT and HTML always on
+                self.config["save_txt_report"] = True
+                self.config["save_html_report"] = True
 
                 # Webhook configuration
                 webhook_url = self.ask_webhook_url()
