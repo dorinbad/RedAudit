@@ -763,6 +763,10 @@ class InteractiveNetworkAuditor:
                             total_targets = len(nuclei_targets)
                             total_batches = max(1, int(math.ceil(total_targets / batch_size)))
                             progress_start_t = time.time()
+                            self._nuclei_progress_state = {
+                                "total_targets": int(total_targets),
+                                "max_targets": 0,
+                            }
 
                             # v4.4.4: Prevent UI duplication - Progress manages its own Live display
                             with Progress(
@@ -2417,7 +2421,23 @@ class InteractiveNetworkAuditor:
             self._touch_activity()
 
             approx_targets = int(round(float(completed) * max(1, int(batch_size))))
-            approx_targets = max(0, min(int(total_targets), approx_targets))
+            total_targets_i = max(0, int(total_targets))
+            approx_targets = max(0, min(total_targets_i, approx_targets))
+            detail_text = detail or f"batch {completed}/{total}"
+            is_running = isinstance(detail_text, str) and "running" in detail_text
+            if is_running and total_targets_i > 0:
+                approx_targets = min(approx_targets, total_targets_i - 1)
+
+            # Prevent regressions when batches are retried/split (timeouts can reset progress).
+            state = getattr(self, "_nuclei_progress_state", None)
+            if not isinstance(state, dict) or state.get("total_targets") != total_targets_i:
+                state = {"total_targets": total_targets_i, "max_targets": 0}
+                self._nuclei_progress_state = state
+            max_seen = int(state.get("max_targets") or 0)
+            if approx_targets < max_seen:
+                approx_targets = max_seen
+            else:
+                state["max_targets"] = approx_targets
             remaining_batches = max(0.0, float(total) - float(completed))
             remaining_targets = max(0, int(total_targets) - approx_targets)
             ela_s = max(0.001, time.time() - start_time)
@@ -2427,7 +2447,6 @@ class InteractiveNetworkAuditor:
                 if rate > 0.0 and remaining_targets
                 else ""
             )
-            detail_text = detail or f"batch {completed}/{total}"
             progress.update(
                 task,
                 completed=approx_targets,
