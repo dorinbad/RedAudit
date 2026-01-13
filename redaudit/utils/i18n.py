@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RedAudit - Internationalization (i18n)
-Copyright (C) 2025  Dorin Badea
+Copyright (C) 2026  Dorin Badea
 GPLv3 License
 
 Translation strings for English and Spanish.
@@ -459,7 +459,7 @@ TRANSLATIONS = {
             "Aviso de versión: no se pudo detectar la versión de {} (se espera {}); "
             "la compatibilidad de parseo puede verse afectada."
         ),
-        "crypto_missing": "Librería cryptography no disponible. El cifrado de reportes queda deshabilitado.",
+        "crypto_missing": "Librería cryptography no disponible. El cifrado de informes queda deshabilitado.",
         "avail_at": "✓ {} disponible en {}",
         "not_found": "{} no encontrado (se omitirá su uso automático)",
         "ask_yes_no_opts": " (S/n)",
@@ -496,8 +496,8 @@ TRANSLATIONS = {
         "threads_suggested": "Hilos concurrentes (más alto = más rápido/ruidoso) [sugerido: {} según {} cores]:",
         "vuln_scan_q": "¿Ejecutar análisis de vulnerabilidades web?",
         "cve_lookup_q": "¿Activar correlación CVE vía NVD? (más lento, enriquece con datos CVE)",
-        "gen_txt": "¿Generar reporte TXT adicional?",
-        "gen_html": "¿Generar reporte HTML interactivo?",
+        "gen_txt": "¿Generar informe TXT adicional?",
+        "gen_html": "¿Generar informe HTML interactivo?",
         "output_dir": "Directorio de salida:",
         "start_audit": "¿Iniciar auditoría?",
         "scan_start": "Escaneando {} hosts...",
@@ -530,23 +530,23 @@ TRANSLATIONS = {
         "vulns_web_detail": "  Vulns web:   {} (raw: {})",
         "duration": "  Duración:    {}",
         "pcaps": "  PCAPs:       {}",
-        "reports_gen": "\n✓ Reportes generados en {}",
+        "reports_gen": "\n✓ Informes generados en {}",
         "legal_warn": "\nADVERTENCIA LEGAL: Solo para uso en redes autorizadas.",
         "legal_ask": "¿Confirmas que tienes autorización para escanear estas redes?",
-        "json_report": "Reporte JSON: {}",
-        "txt_report": "Reporte TXT: {}",
-        "html_report": "Reporte HTML: {}",
-        "html_report_es": "Reporte HTML (ES): {}",
+        "json_report": "Informe JSON: {}",
+        "txt_report": "Informe TXT: {}",
+        "html_report": "Informe HTML: {}",
+        "html_report_es": "Informe HTML (ES): {}",
         "playbooks_generated": "Playbooks de remediación generados: {}",
         "summary": "RESUMEN",
-        "save_err": "Error guardando reporte: {}",
+        "save_err": "Error guardando informe: {}",
         "root_req": "Error: se requieren privilegios de root (sudo).",
         "config_cancel": "Configuración cancelada.",
         "banner_subtitle": "   AUDITORÍA DE RED INTERACTIVA  ::  {}",
         "selection_target": "SELECCIÓN DE OBJETIVO",
         "interface_detected": "✓ Interfaces detectadas:",
-        "encrypt_reports": "¿Cifrar reportes con contraseña?",
-        "encryption_password": "Contraseña para cifrar reportes",
+        "encrypt_reports": "¿Cifrar informes con contraseña?",
+        "encryption_password": "Contraseña para cifrar informes",
         "encryption_enabled": "✓ Cifrado activado",
         "cryptography_required": "Error: El cifrado requiere python3-cryptography. Instala con: sudo apt install python3-cryptography",
         "rate_limiting": "¿Activar limitación de velocidad (más lento pero más sigiloso)?",
@@ -594,8 +594,8 @@ TRANSLATIONS = {
         "defaults_summary_active_l2": "L2 activo",
         "defaults_summary_kerbrute": "Enum usuarios Kerberos (kerbrute)",
         "defaults_summary_cve_lookup": "Correlación CVE",
-        "defaults_summary_txt_report": "Reporte TXT",
-        "defaults_summary_html_report": "Reporte HTML",
+        "defaults_summary_txt_report": "Informe TXT",
+        "defaults_summary_html_report": "Informe HTML",
         "defaults_summary_windows_verify": "Verificación sin agente",
         "defaults_ignore_confirm": "OK. Los defaults guardados se ignorarán en esta ejecución.",
         "jsonl_exports": "Exportaciones JSONL: {} hallazgos, {} activos",
@@ -718,7 +718,7 @@ TRANSLATIONS = {
         # v3.2.2+: Menú principal
         "menu_option_scan": "Iniciar escaneo (wizard)",
         "menu_option_update": "Buscar actualizaciones",
-        "menu_option_diff": "Comparar reportes (JSON)",
+        "menu_option_diff": "Comparar informes (JSON)",
         "menu_option_exit": "Salir",
         "menu_prompt": "Selecciona una opción [0-3]:",
         "menu_nav_hint": "Usa ↑/↓/←/→ y Enter para seleccionar.",
@@ -729,8 +729,8 @@ TRANSLATIONS = {
         "no_option": "No",
         "no_default": "No (por defecto)",
         "vuln_scan_opt": "Escaneo de vulnerabilidades web",
-        "diff_enter_old_path": "Ruta al reporte ANTERIOR (JSON):",
-        "diff_enter_new_path": "Ruta al reporte NUEVO (JSON):",
+        "diff_enter_old_path": "Ruta al informe ANTERIOR (JSON):",
+        "diff_enter_new_path": "Ruta al informe NUEVO (JSON):",
         # v3.2.2+: Prompt de topología simplificado
         "topology_discovery_q": "Descubrimiento de topología:",
         "topology_disabled": "Desactivado",
