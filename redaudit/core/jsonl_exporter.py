@@ -14,6 +14,7 @@ from typing import Any, Dict
 from datetime import datetime
 
 from redaudit.utils.constants import SECURE_FILE_MODE
+from redaudit.core.siem import extract_finding_title
 
 
 def export_findings_jsonl(results: Dict, output_path: str) -> int:
@@ -65,7 +66,8 @@ def export_findings_jsonl(results: Dict, output_path: str) -> int:
                 ):
                     if candidate and candidate not in sources:
                         sources.append(candidate)
-                descriptive_title = vuln.get("descriptive_title") or _extract_title(vuln)
+                # v4.6.20: Use unified extract_finding_title from siem
+                descriptive_title = extract_finding_title(vuln)
                 finding = {
                     "finding_id": vuln.get("finding_id", ""),
                     "asset_id": asset_id,
@@ -322,88 +324,5 @@ def export_all(results: Dict, output_dir: str) -> Dict[str, Any]:
     }
 
 
-def _extract_title(vuln: Dict) -> str:
-    """
-    Extract a descriptive title from vulnerability record.
-
-    v3.1.4: Generate human-readable titles based on finding type
-    instead of generic "Finding on URL" messages.
-    v4.6.19: Improved title generation with more patterns and better fallbacks.
-    """
-    import re
-
-    obs = vuln.get("parsed_observations", [])
-    port = vuln.get("port", 0)
-
-    # 1. If we have a template_id from Nuclei, use it
-    template_id = vuln.get("template_id", "")
-    if template_id:
-        # Clean up template ID for display
-        if template_id.upper().startswith("CVE-"):
-            return f"Nuclei: {template_id.upper()}"
-        nice_name = template_id.replace("-", " ").replace("_", " ").title()
-        return f"Nuclei: {nice_name}"
-
-    # 2. If we have CVE IDs, prioritize them
-    cve_ids = vuln.get("cve_ids", [])
-    if cve_ids and isinstance(cve_ids, list) and cve_ids[0]:
-        return f"Known Vulnerability: {cve_ids[0].upper()}"
-
-    # 3. Generate descriptive title based on observations
-    for observation in obs:
-        obs_lower = observation.lower()
-
-        # Security headers
-        if "missing hsts" in obs_lower or "strict-transport-security" in obs_lower:
-            return "Missing HTTP Strict Transport Security Header"
-        if "x-frame-options" in obs_lower and (
-            "missing" in obs_lower or "not present" in obs_lower
-        ):
-            return "Missing X-Frame-Options Header (Clickjacking Risk)"
-        if "x-content-type" in obs_lower and ("missing" in obs_lower or "not set" in obs_lower):
-            return "Missing X-Content-Type-Options Header"
-
-        # SSL/TLS issues
-        if "ssl hostname mismatch" in obs_lower or "does not match certificate" in obs_lower:
-            return "SSL Certificate Hostname Mismatch"
-        if "certificate expired" in obs_lower or ("expired" in obs_lower and "ssl" in obs_lower):
-            return "SSL Certificate Expired"
-        if "self-signed" in obs_lower or "self signed" in obs_lower:
-            return "Self-Signed SSL Certificate"
-        if "beast" in obs_lower:
-            return "BEAST Vulnerability (SSL/TLS)"
-        if "poodle" in obs_lower:
-            return "POODLE Vulnerability (SSL 3.0)"
-
-        # CVE references in observations
-        if "cve-" in obs_lower:
-            match = re.search(r"(cve-\d{4}-\d+)", obs_lower)
-            if match:
-                return f"Known Vulnerability: {match.group(1).upper()}"
-
-        # Information disclosure
-        if "rfc-1918" in obs_lower or "private ip" in obs_lower:
-            return "Internal IP Address Disclosed in Headers"
-        if "server banner" in obs_lower and "no banner" not in obs_lower:
-            return "Server Version Disclosed in Banner"
-        if "directory listing" in obs_lower or "index of" in obs_lower:
-            return "Directory Listing Enabled"
-        if "etag" in obs_lower and "inode" in obs_lower:
-            return "ETag Inode Disclosure"
-
-        # HTTP methods
-        if "put method" in obs_lower or "delete method" in obs_lower:
-            return "Dangerous HTTP Methods Enabled"
-
-    # 4. Improved fallback based on available info
-    source = vuln.get("source", "") or (vuln.get("original_severity", {}) or {}).get("tool", "")
-    url = vuln.get("url", "")
-
-    if source == "testssl":
-        return f"SSL/TLS Configuration Issue on Port {port}"
-    if source == "nikto" and url:
-        return f"Web Security Finding on Port {port}"
-    if url:
-        return f"HTTP Service Finding on Port {port}"
-
-    return f"Service Finding on Port {port}"
+# v4.6.20: _extract_title moved to redaudit.core.siem.extract_finding_title
+# for unified title generation across HTML and JSONL exporters

@@ -268,6 +268,110 @@ def detect_known_vulnerable_services(banner: str) -> List[Dict]:
     return detected
 
 
+def extract_finding_title(vuln: Dict) -> str:
+    """
+    Extract a descriptive title from vulnerability record.
+
+    v4.6.20: Unified function for HTML and JSONL exporters.
+    Previously duplicated in jsonl_exporter._extract_title and html_reporter._extract_finding_title.
+
+    Priority:
+    1. Use existing descriptive_title if available
+    2. Use Nuclei template_id
+    3. Use CVE IDs
+    4. Generate from parsed_observations
+    5. Fallback based on source/port
+
+    Args:
+        vuln: Vulnerability dictionary
+
+    Returns:
+        Human-readable title string
+    """
+    import re
+
+    # 1. Use existing descriptive_title if set
+    if vuln.get("descriptive_title"):
+        return vuln["descriptive_title"]
+
+    obs = vuln.get("parsed_observations", [])
+    port = vuln.get("port", 0)
+
+    # 2. If we have a template_id from Nuclei, use it
+    template_id = vuln.get("template_id", "")
+    if template_id:
+        if template_id.upper().startswith("CVE-"):
+            return f"Nuclei: {template_id.upper()}"
+        nice_name = template_id.replace("-", " ").replace("_", " ").title()
+        return f"Nuclei: {nice_name}"
+
+    # 3. If we have CVE IDs, prioritize them
+    cve_ids = vuln.get("cve_ids", [])
+    if cve_ids and isinstance(cve_ids, list) and cve_ids[0]:
+        return f"Known Vulnerability: {cve_ids[0].upper()}"
+
+    # 4. Generate descriptive title based on observations
+    for observation in obs:
+        if not isinstance(observation, str):
+            continue
+        obs_lower = observation.lower()
+
+        # Security headers
+        if "missing hsts" in obs_lower or "strict-transport-security" in obs_lower:
+            return "Missing HTTP Strict Transport Security Header"
+        if "x-frame-options" in obs_lower and (
+            "missing" in obs_lower or "not present" in obs_lower
+        ):
+            return "Missing X-Frame-Options Header (Clickjacking Risk)"
+        if "x-content-type" in obs_lower and ("missing" in obs_lower or "not set" in obs_lower):
+            return "Missing X-Content-Type-Options Header"
+
+        # SSL/TLS issues
+        if "ssl hostname mismatch" in obs_lower or "does not match certificate" in obs_lower:
+            return "SSL Certificate Hostname Mismatch"
+        if "certificate expired" in obs_lower or ("expired" in obs_lower and "ssl" in obs_lower):
+            return "SSL Certificate Expired"
+        if "self-signed" in obs_lower or "self signed" in obs_lower:
+            return "Self-Signed SSL Certificate"
+        if "beast" in obs_lower:
+            return "BEAST Vulnerability (SSL/TLS)"
+        if "poodle" in obs_lower:
+            return "POODLE Vulnerability (SSL 3.0)"
+
+        # CVE references in observations
+        if "cve-" in obs_lower:
+            match = re.search(r"(cve-\d{4}-\d+)", obs_lower)
+            if match:
+                return f"Known Vulnerability: {match.group(1).upper()}"
+
+        # Information disclosure
+        if "rfc-1918" in obs_lower or "private ip" in obs_lower:
+            return "Internal IP Address Disclosed in Headers"
+        if "server banner" in obs_lower and "no banner" not in obs_lower:
+            return "Server Version Disclosed in Banner"
+        if "directory listing" in obs_lower or "index of" in obs_lower:
+            return "Directory Listing Enabled"
+        if "etag" in obs_lower and "inode" in obs_lower:
+            return "ETag Inode Disclosure"
+
+        # HTTP methods
+        if "put method" in obs_lower or "delete method" in obs_lower:
+            return "Dangerous HTTP Methods Enabled"
+
+    # 5. Improved fallback based on available info
+    source = vuln.get("source", "") or (vuln.get("original_severity", {}) or {}).get("tool", "")
+    url = vuln.get("url", "")
+
+    if source == "testssl":
+        return f"SSL/TLS Configuration Issue on Port {port}"
+    if source == "nikto" and url:
+        return f"Web Security Finding on Port {port}"
+    if url:
+        return f"HTTP Service Finding on Port {port}"
+
+    return f"Service Finding on Port {port}"
+
+
 def generate_finding_id(
     asset_id: str, scanner: str, port: int, protocol: str, signature: str, title: str
 ) -> str:

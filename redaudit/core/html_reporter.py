@@ -14,6 +14,7 @@ from typing import Dict, Optional
 
 from redaudit.utils.constants import SECURE_FILE_MODE, VERSION
 from redaudit.utils.vendor_hints import get_best_vendor
+from redaudit.core.siem import extract_finding_title
 
 
 def _get_reverse_dns(host: Dict) -> str:
@@ -235,35 +236,13 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
 
 
 def _extract_finding_title(vuln: Dict) -> str:
-    """Extract a readable title from a vulnerability finding."""
-    # Use descriptive_title if available (v3.1.4+)
-    if vuln.get("descriptive_title"):
-        return vuln["descriptive_title"]
+    """
+    Extract a readable title from a vulnerability finding.
 
-    observations = vuln.get("parsed_observations") or []
-    if observations:
-        try:
-            from redaudit.core.evidence_parser import _derive_descriptive_title
-
-            derived = _derive_descriptive_title(observations)
-            if derived:
-                return derived
-        except Exception:
-            pass
-
-    # Fallback: first nikto finding or URL
-    nikto = vuln.get("nikto_findings", [])
-    if nikto and isinstance(nikto, list) and len(nikto) > 0:
-        first = nikto[0]
-        # Skip metadata lines
-        if not any(x in first.lower() for x in ["target ip:", "start time:", "end time:"]):
-            return first[:80] + ("..." if len(first) > 80 else "")
-
-    port = vuln.get("port")
-    if port:
-        return f"Web Service Finding on Port {port}"
-
-    return vuln.get("url", "Finding")[:60]
+    v4.6.20: Now delegates to unified extract_finding_title from siem.py.
+    """
+    # Use unified function from siem module
+    return extract_finding_title(vuln)
 
 
 def _translate_finding_title(title: str, lang: str) -> str:

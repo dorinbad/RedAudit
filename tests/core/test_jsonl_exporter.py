@@ -14,7 +14,10 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from redaudit.core.jsonl_exporter import export_all, export_summary_json, _extract_title
+from redaudit.core.jsonl_exporter import export_all, export_summary_json
+
+# v4.6.20: _extract_title moved to siem.py as extract_finding_title
+from redaudit.core.siem import extract_finding_title as _extract_title
 
 
 class TestJsonlExporter(unittest.TestCase):
