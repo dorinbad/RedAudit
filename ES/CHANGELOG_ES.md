@@ -10,6 +10,21 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [v4.6.19] - 2026-01-14
+
+### Anadido
+
+- **Priorizacion de Hallazgos**: Nuevos campos `priority_score` (0-100) y `confirmed_exploitable` para clasificar mejor las vulnerabilidades.
+- **Deteccion Clasica de Vulnerabilidades**: Deteccion automatica de servicios con backdoors conocidos (vsftpd 2.3.4, UnrealIRCd 3.2.8.1, etc.) basada en analisis de banners.
+- **Calidad de Reporte**: Nuevo `confidence_score` (0.0-1.0) para hallazgos basado en senales de verificacion.
+- **Titulos Mejorados**: Mejor generacion de titulos para hallazgos, detectando vulnerabilidades especificas (BEAST, POODLE) y titulos fallback mas claros (ej. "HTTP Service Finding").
+- **Exportacion JSONL**: Anadidos campos de calidad (`confidence_score`, `priority_score`, `confirmed_exploitable`) a la salida JSONL para ingestion por SIEM.
+
+### Mejorado
+
+- **Interfaz Wizard**: El resumen de credenciales ahora muestra el conteo de entradas en listas de spray (ej. `(+5 spray)`).
+- **Mapeo de Severidad**: Mapeo refinado para hallazgos genericos de escaneres para reducir ruido (ej. bajando severidad para revelacion de versiones).
+
 ## [v4.6.18] - 2026-01-13
 
 ### Anadido

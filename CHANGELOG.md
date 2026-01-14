@@ -10,6 +10,21 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.19] - 2026-01-14
+
+### Added
+
+- **Finding Prioritization**: New `priority_score` (0-100) and `confirmed_exploitable` fields to better rank vulnerabilities.
+- **Classic Vulnerability Detection**: Automatic detection of known backdoored services (vsftpd 2.3.4, UnrealIRCd 3.2.8.1, etc.) from banner analysis.
+- **Report Quality**: New `confidence_score` (0.0-1.0) for findings based on verification signals.
+- **Improved Titles**: Better title generation for findings, detecting specific vulnerabilities (BEAST, POODLE) and providing clearer fallback titles (e.g., "HTTP Service Finding").
+- **JSONL Export**: Added quality fields (`confidence_score`, `priority_score`, `confirmed_exploitable`) to JSONL output for SIEM ingestion.
+
+### Improved
+
+- **Wizard UI**: Credential summary now displays the count of spray list entries (e.g., `(+5 spray)`).
+- **Severity Mapping**: Refined mapping for generic scanner findings to reduce noise (e.g., lowering severity for version disclosures).
+
 ## [v4.6.18] - 2026-01-13
 
 ### Added
