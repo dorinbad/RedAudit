@@ -48,6 +48,8 @@ These items are ordered chronologically and include delivered, planned, and defe
 
 | Feature | Status | Description |
 | :--- | :--- | :--- |
+| **Abort Budget for Dead Hosts** | Planned | Configurable time/retry limit for unresponsive hosts. Avoids hangs on unreachable hosts. |
+| **Honeypot Detection** | Planned | Heuristic to detect hosts responding to all ports (honeypot behavior). Flag as suspicious and limit scanning. |
 | **Dependency Pinning Mode** | Planned | Optional pinned tags/commits for external tools installed from git. |
 | **Phase Transition Diagram** | Planned | Add a concise state diagram for phase 1-3 escalation logic. |
 | **No-Response Classification Tagging** | Planned | Distinguish transient errors from silent hosts in reporting. |

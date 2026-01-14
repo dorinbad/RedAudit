@@ -45,12 +45,14 @@ Estos elementos están ordenados cronológicamente e incluyen trabajo entregado,
 | **Contadores de motivos de escalado** | Planificado | Reportar por qué se disparó el deep scan (identity score, ambigüedad, override manual). |
 | **Aclaración documental de Smart-Check** | Planificado | Alinear la documentación con el comportamiento real de verificación por señales. |
 
-### v4.7 Seguimiento de Auditoría (Prioridad: Media)
+### v4.7 Seguimiento de Auditoria (Prioridad: Media)
 
-| Característica | Estado | Descripción |
+| Caracteristica | Estado | Descripcion |
 | :--- | :--- | :--- |
+| **Abort Budget para Hosts Muertos** | Planificado | Limite configurable de tiempo/intentos para hosts que no responden. Evita cuelgues en hosts inalcanzables. |
+| **Deteccion de Honeypots** | Planificado | Heuristica para detectar hosts que responden a todos los puertos (caracteristica de honeypots). Marcar como sospechoso y limitar escaneo. |
 | **Modo de pinning de dependencias** | Planificado | Opcional: tags/commits fijados para herramientas externas instaladas desde git. |
-| **Diagrama de transiciones de fase** | Planificado | Diagrama conciso de la lógica de escalado en fases 1-3. |
+| **Diagrama de transiciones de fase** | Planificado | Diagrama conciso de la logica de escalado en fases 1-3. |
 | **Etiquetado de no-respuesta** | Planificado | Distinguir errores transitorios de hosts silenciosos en informes. |
 
 ### v4.7 Seguimiento de Auditoría (Aplazado)
