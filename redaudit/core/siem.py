@@ -628,6 +628,25 @@ def calculate_risk_score(host_record: Dict) -> int:
                     port["detected_backdoors"] = []
                 port["detected_backdoors"].extend(backdoors)
 
+                # v4.6.22: Also inject CVE into port cves list for JSONL propagation
+                if "cves" not in port:
+                    port["cves"] = []
+                for bd in backdoors:
+                    cve_id = bd.get("cve_id", "")
+                    # Only add if it's a real CVE and not already present
+                    if cve_id.upper().startswith("CVE-"):
+                        existing_cves = {c.get("cve_id", "").upper() for c in port["cves"]}
+                        if cve_id.upper() not in existing_cves:
+                            port["cves"].append(
+                                {
+                                    "cve_id": cve_id.upper(),
+                                    "cvss_score": 9.8,
+                                    "cvss_severity": "CRITICAL",
+                                    "description": bd.get("description", ""),
+                                    "source": "banner_analysis",
+                                }
+                            )
+
     # v4.3.1: Include vulnerabilities from Nikto/Nuclei finding dumps
     # These findings may not be attached to specific ports
     findings = host_record.get("findings", [])

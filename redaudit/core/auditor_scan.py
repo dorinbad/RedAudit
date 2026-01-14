@@ -187,6 +187,33 @@ class AuditorScan:
 
         return self.credential_provider.get_credential(host, "smb")
 
+    def _resolve_all_smb_credentials(self, host: str) -> list:
+        """
+        Resolve ALL SMB credentials for spray mode.
+
+        v4.6.22: Added for credential spraying support, mirroring SSH pattern.
+
+        Returns list of Credential objects to try in order.
+        If CLI provides explicit credential, that is returned as single-item list.
+        Otherwise, returns all credentials from keyring spray list.
+        """
+        # 1. CLI override - return as single credential
+        user = self.config.get("auth_smb_user")
+        password = self.config.get("auth_smb_pass")
+        domain = self.config.get("auth_smb_domain")
+
+        if user and password:
+            return [Credential(username=user, password=password, domain=domain)]
+
+        # 2. Provider - get all credentials from spray list
+        provider = self.credential_provider
+        if hasattr(provider, "get_all_credentials"):
+            return provider.get_all_credentials("smb")
+
+        # Fallback: single credential from provider
+        cred = provider.get_credential(host, "smb")
+        return [cred] if cred else []
+
     def _resolve_snmp_credential(self, host: str) -> Optional[Credential]:
         """Resolve SNMP v3 credential for host."""
         user = self.config.get("auth_snmp_user")
@@ -1750,59 +1777,79 @@ class AuditorScan:
             smb_open = False
             if host_obj.services:
                 smb_open = any(s.port == 445 and s.state == "open" for s in host_obj.services)
-
-            # Resolve credentials
-            smb_credential = None
+            # v4.6.22: SMB Credential Spray - try all SMB credentials
+            smb_credentials = []
             if auth_enabled:
-                smb_credential = self._resolve_smb_credential(safe_ip)
+                smb_credentials = self._resolve_all_smb_credentials(safe_ip)
 
-            if auth_enabled and smb_open and smb_credential:
-                try:
-                    from redaudit.core.auth_smb import SMBScanner
+            if auth_enabled and smb_open and smb_credentials:
+                from redaudit.core.auth_smb import SMBScanner, SMBConnectionError
 
-                    self._set_ui_detail(self.ui.t("auth_scan_start", safe_ip, "SMB"))
+                smb_auth_success = False
+                last_error = ""
+                successful_user = ""
 
-                    # Instantiate scanner
-                    smb_scanner = SMBScanner(smb_credential)
+                # v4.6.22: Spray through all SMB credentials
+                for smb_idx, smb_cred in enumerate(smb_credentials):
+                    if smb_auth_success:
+                        break
+                    if smb_cred is None:
+                        continue
 
-                    # Connect
-                    # Try 445 first
-                    if smb_scanner.connect(safe_ip, 445):
-                        self._set_ui_detail(self.ui.t("auth_scan_connected", safe_ip, "SMB"))
+                    try:
+                        self._set_ui_detail(
+                            f"[SMB] {safe_ip} ({smb_idx + 1}/{len(smb_credentials)}) {smb_cred.username}"
+                        )
 
-                        # Gather Info
-                        info = smb_scanner.gather_host_info()
-                        smb_scanner.close()
+                        smb_scanner = SMBScanner(smb_cred)
 
-                        smb_data = asdict(info)
+                        if smb_scanner.connect(safe_ip, 445):
+                            self._set_ui_detail(self.ui.t("auth_scan_connected", safe_ip, "SMB"))
+                            smb_auth_success = True
+                            successful_user = smb_cred.username
 
-                        # Merge into auth_scan
-                        # We use 'smb' namespace effectively or just merge
-                        # Let's clean up 'unknown' values to avoid noise
-                        clean_data = {k: v for k, v in smb_data.items() if v and v != "unknown"}
+                            # Gather Info
+                            info = smb_scanner.gather_host_info()
+                            smb_scanner.close()
 
-                        if not host_obj.auth_scan:
-                            host_obj.auth_scan = {}
+                            smb_data = asdict(info)
+                            clean_data = {k: v for k, v in smb_data.items() if v and v != "unknown"}
 
-                        if isinstance(host_obj.auth_scan, dict):
-                            host_obj.auth_scan.update(clean_data)
+                            if not host_obj.auth_scan:
+                                host_obj.auth_scan = {}
+                            if isinstance(host_obj.auth_scan, dict):
+                                host_obj.auth_scan.update(clean_data)
+                                host_obj.auth_scan["smb_user"] = successful_user
 
-                        # Update OS detection if confident
-                        if info.os_name and info.os_name != "unknown":
-                            combined = f"{info.os_name} {info.os_version}".strip()
-                            if (
-                                not host_obj.os_detected
-                                or "unknown" in host_obj.os_detected.lower()
-                            ):
-                                host_obj.os_detected = combined
+                            # Update OS detection if confident
+                            if info.os_name and info.os_name != "unknown":
+                                combined = f"{info.os_name} {info.os_version}".strip()
+                                if (
+                                    not host_obj.os_detected
+                                    or "unknown" in host_obj.os_detected.lower()
+                                ):
+                                    host_obj.os_detected = combined
+                            break
 
-                except ImportError:
-                    if self.config.get("verbose"):
-                        self.logger.warning("Impacket not installed, skipping SMB scan")
-                except Exception as e:
-                    if self.logger:
-                        self.logger.error("SMB scan error on %s: %s", safe_ip, e)
-                    # Graceful fail
+                    except SMBConnectionError as e:
+                        last_error = str(e)
+                        if self.logger:
+                            self.logger.debug(
+                                "SMB auth failed for %s@%s: %s", smb_cred.username, safe_ip, e
+                            )
+                    except ImportError:
+                        if self.config.get("verbose"):
+                            self.logger.warning("Impacket not installed, skipping SMB scan")
+                        break
+                    except Exception as e:
+                        last_error = str(e)
+                        if self.logger:
+                            self.logger.debug("SMB scan error on %s: %s", safe_ip, e)
+
+                # Report failure if all credentials failed
+                if not smb_auth_success and smb_credentials and last_error:
+                    if hasattr(self, "ui") and self.ui:
+                        self.ui.print_status(f"{safe_ip}: SMB auth failed (all creds)", "WARN")
 
             # v4.3: SNMP v3 Authenticated Scan (PySNMP)
             snmp_open = False
