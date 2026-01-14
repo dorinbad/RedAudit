@@ -79,6 +79,8 @@ SEVERITY_KEYWORDS = {
 SEVERITY_OVERRIDES = {
     "low": [
         r"missing.*x-frame-options",
+        r"anti-clickjacking.*x-frame-options",  # v4.6.21: Nikto wording
+        r"x-frame-options.*not present",  # v4.6.21: Alternative Nikto wording
         r"missing.*x-content-type",
         r"missing.*strict-transport-security",
         r"missing.*content-security-policy",
@@ -535,6 +537,17 @@ def calculate_risk_score(host_record: Dict) -> int:
     findings = host_record.get("findings", [])
     if not ports and not findings:
         return 0
+
+    # v4.6.21: IoT lwIP false positive detection
+    # lwIP TCP/IP stack (common in cheap IoT) responds SYN-ACK to all SYN probes,
+    # making Nmap report many "open" ports that aren't real services.
+    # Heuristic: IoT device with >20 ports is likely a false positive.
+    asset_type = str(host_record.get("asset_type") or "").lower()
+    os_detected = str(host_record.get("os_detected") or "").lower()
+    is_iot = asset_type == "iot" or "lwip" in os_detected
+    if is_iot and len(ports) > 20:
+        # Cap risk score for IoT with suspiciously many ports
+        return 30  # Low-medium risk, flag for manual review
 
     max_cvss = 0.0
     total_vulns = 0
