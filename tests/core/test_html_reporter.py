@@ -17,15 +17,16 @@ def test_extract_finding_title_variants():
         html_reporter._extract_finding_title({"nikto_findings": ["Interesting finding here"]})
         == "Interesting finding here"
     )
+    # v4.6.20: When nikto has only metadata, fall back to structured title (not raw URL)
     assert (
         html_reporter._extract_finding_title(
             {"nikto_findings": ["Target IP: 10.0.0.1"], "url": "http://x"}
         )
-        == "http://x"
+        == "HTTP Service Finding on Port 0"
     )
     assert (
         html_reporter._extract_finding_title({"url": "https://example.com", "port": 443})
-        == "Web Service Finding on Port 443"
+        == "HTTP Service Finding on Port 443"
     )
 
 

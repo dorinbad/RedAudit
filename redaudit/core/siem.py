@@ -294,7 +294,7 @@ def extract_finding_title(vuln: Dict) -> str:
     if vuln.get("descriptive_title"):
         return vuln["descriptive_title"]
 
-    obs = vuln.get("parsed_observations", [])
+    obs = vuln.get("parsed_observations") or []
     port = vuln.get("port", 0)
 
     # 2. If we have a template_id from Nuclei, use it
@@ -358,7 +358,21 @@ def extract_finding_title(vuln: Dict) -> str:
         if "put method" in obs_lower or "delete method" in obs_lower:
             return "Dangerous HTTP Methods Enabled"
 
-    # 5. Improved fallback based on available info
+    # 5. Fallback: first nikto finding (v4.6.20: backward compat with old html_reporter)
+    nikto = vuln.get("nikto_findings") or []
+    if nikto and isinstance(nikto, list):
+        for finding in nikto:
+            if not isinstance(finding, str):
+                continue
+            # Skip metadata lines
+            finding_lower = finding.lower()
+            if any(x in finding_lower for x in ["target ip:", "start time:", "end time:"]):
+                continue
+            if finding.strip():
+                text = finding.strip()
+                return text[:80] + ("..." if len(text) > 80 else "")
+
+    # 6. Improved fallback based on available info
     source = vuln.get("source", "") or (vuln.get("original_severity", {}) or {}).get("tool", "")
     url = vuln.get("url", "")
 
