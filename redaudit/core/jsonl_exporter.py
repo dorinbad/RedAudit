@@ -83,7 +83,8 @@ def export_findings_jsonl(results: Dict, output_path: str) -> int:
                     "priority_score": vuln.get("priority_score", 0),
                     "confirmed_exploitable": vuln.get("confirmed_exploitable", False),
                     "category": vuln.get("category", "surface"),
-                    "title": _extract_title(vuln),
+                    # v4.6.20: Use descriptive_title for both fields for consistency with HTML
+                    "title": descriptive_title,
                     "descriptive_title": descriptive_title,
                     "source": source,
                     "sources": sources,

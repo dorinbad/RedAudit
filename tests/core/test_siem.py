@@ -976,5 +976,40 @@ class TestConfidenceScore(unittest.TestCase):
         self.assertEqual(result.get("confidence_score", 0), 0.5)
 
 
+class TestBackdoorIntegration(unittest.TestCase):
+    """v4.6.20: Tests for backdoor detection in calculate_risk_score."""
+
+    def test_vsftpd_backdoor_detected_from_port_data(self):
+        """vsftpd 2.3.4 backdoor should be detected from port version field."""
+        from redaudit.core.siem import calculate_risk_score
+
+        port = {
+            "port": 21,
+            "service": "ftp",
+            "product": "vsftpd",
+            "version": "2.3.4",
+        }
+        host = {"ports": [port]}
+        score = calculate_risk_score(host)
+        self.assertEqual(score, 100)
+        self.assertIn("detected_backdoors", port)
+        self.assertEqual(len(port["detected_backdoors"]), 1)
+        self.assertEqual(port["detected_backdoors"][0]["cve_id"], "CVE-2011-2523")
+
+    def test_safe_vsftpd_not_flagged(self):
+        """vsftpd 3.0.x should NOT be flagged as backdoor."""
+        from redaudit.core.siem import calculate_risk_score
+
+        port = {
+            "port": 21,
+            "service": "ftp",
+            "product": "vsftpd",
+            "version": "3.0.5",
+        }
+        host = {"ports": [port]}
+        calculate_risk_score(host)
+        self.assertNotIn("detected_backdoors", port)
+
+
 if __name__ == "__main__":
     unittest.main()

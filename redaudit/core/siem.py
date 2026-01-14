@@ -479,6 +479,24 @@ def calculate_risk_score(host_record: Dict) -> int:
             # SSL on non-standard port = medium concern
             max_cvss = max(max_cvss, 5.0)
 
+        # v4.6.20: Check for known backdoored services using service+version
+        # nmap reports version in 'version' field, not just in banner text
+        version = port.get("version") or ""
+        product = port.get("product") or ""
+        banner = port.get("banner") or ""
+        # Build a combined string for pattern matching
+        service_info = f"{service} {product} {version} {banner}".strip()
+        if service_info:
+            backdoors = detect_known_vulnerable_services(service_info)
+            if backdoors:
+                # Known backdoor = critical (10.0)
+                max_cvss = max(max_cvss, 10.0)
+                total_vulns += len(backdoors)
+                # Store detected backdoors on the port for downstream use
+                if "detected_backdoors" not in port:
+                    port["detected_backdoors"] = []
+                port["detected_backdoors"].extend(backdoors)
+
     # v4.3.1: Include vulnerabilities from Nikto/Nuclei finding dumps
     # These findings may not be attached to specific ports
     findings = host_record.get("findings", [])
