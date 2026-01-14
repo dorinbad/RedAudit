@@ -970,6 +970,34 @@ def enrich_vulnerability_severity(vuln_record: Dict, asset_id: str = "") -> Dict
         title=primary_finding[:100] if primary_finding else url,
     )
 
+    # v4.6.19: Add confirmed_exploitable flag for findings with CVE or Nuclei validation
+    has_cve = bool(cve_ids) or "cve-" in primary_finding.lower()
+    has_nuclei = source == "nuclei" or bool(template_id)
+    has_known_exploit = bool(vuln_record.get("known_exploits"))
+    enriched["confirmed_exploitable"] = has_cve or has_nuclei or has_known_exploit
+
+    # v4.6.19: Calculate priority_score for finding ordering
+    # Higher = more critical (0-100 scale)
+    priority = enriched["severity_score"]  # Base from severity
+
+    # Boost for confirmed exploitable findings
+    if enriched["confirmed_exploitable"]:
+        priority += 20
+
+    # Boost for CVE findings (evidence of real vulnerability)
+    if has_cve:
+        priority += 10
+
+    # Penalty for likely false positives
+    if enriched.get("potential_false_positives"):
+        priority -= 30
+
+    # Penalty for low-value header findings
+    if enriched.get("category") == "misconfig":
+        priority -= 10
+
+    enriched["priority_score"] = max(0, min(100, priority))
+
     return enriched
 
 
@@ -1227,3 +1255,34 @@ def consolidate_findings(vulnerabilities: List[Dict]) -> List[Dict]:
         for host in host_order
         if host in consolidated
     ]
+
+
+def get_top_critical_findings(findings: List[Dict], limit: int = 5) -> List[Dict]:
+    """
+    Get the top N most critical findings sorted by priority_score.
+
+    v4.6.19: Used for "Top Critical Findings" summary in reports.
+
+    Args:
+        findings: List of enriched finding dictionaries
+        limit: Maximum number of findings to return (default 5)
+
+    Returns:
+        List of top findings sorted by priority_score descending
+    """
+    if not findings:
+        return []
+
+    # Filter to only confirmed exploitable or high-severity findings
+    critical = [
+        f for f in findings if f.get("confirmed_exploitable") or f.get("severity_score", 0) >= 70
+    ]
+
+    # Sort by priority_score descending, then severity_score
+    sorted_findings = sorted(
+        critical,
+        key=lambda f: (f.get("priority_score", 0), f.get("severity_score", 0)),
+        reverse=True,
+    )
+
+    return sorted_findings[:limit]

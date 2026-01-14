@@ -776,5 +776,115 @@ class TestGenerateFindingId(unittest.TestCase):
         self.assertNotEqual(id1, id2)
 
 
+class TestFindingPrioritization(unittest.TestCase):
+    """v4.6.19: Tests for finding prioritization fields."""
+
+    def test_confirmed_exploitable_with_cve(self):
+        """Findings with CVE IDs should be marked as confirmed_exploitable."""
+        vuln = {
+            "url": "http://192.168.1.1/",
+            "cve_ids": ["CVE-2021-1234"],
+            "nikto_findings": ["Some finding"],
+        }
+        result = enrich_vulnerability_severity(vuln)
+        self.assertTrue(result.get("confirmed_exploitable"))
+
+    def test_confirmed_exploitable_with_nuclei(self):
+        """Nuclei findings should be marked as confirmed_exploitable."""
+        vuln = {
+            "source": "nuclei",
+            "severity": "high",
+            "template_id": "CVE-2012-1823",
+        }
+        result = enrich_vulnerability_severity(vuln)
+        self.assertTrue(result.get("confirmed_exploitable"))
+
+    def test_not_confirmed_exploitable_for_header_finding(self):
+        """Header findings without CVE should not be confirmed_exploitable."""
+        vuln = {
+            "url": "http://192.168.1.1/",
+            "nikto_findings": ["Missing X-Frame-Options header"],
+        }
+        result = enrich_vulnerability_severity(vuln)
+        self.assertFalse(result.get("confirmed_exploitable"))
+
+    def test_priority_score_cve_higher_than_header(self):
+        """CVE finding should have higher priority than header finding."""
+        cve_vuln = {
+            "url": "http://192.168.1.1/",
+            "cve_ids": ["CVE-2021-1234"],
+            "nikto_findings": ["SQL injection CVE-2021-1234"],
+        }
+        header_vuln = {
+            "url": "http://192.168.1.1/",
+            "nikto_findings": ["Missing X-Frame-Options header"],
+        }
+        cve_result = enrich_vulnerability_severity(cve_vuln)
+        header_result = enrich_vulnerability_severity(header_vuln)
+        self.assertGreater(
+            cve_result.get("priority_score", 0),
+            header_result.get("priority_score", 0),
+        )
+
+    def test_priority_score_penalizes_false_positives(self):
+        """Findings with false positives should have reduced priority."""
+        fp_vuln = {
+            "url": "http://192.168.1.1/",
+            "nikto_findings": ["X-Frame-Options header not present"],
+            "curl_headers": "X-Frame-Options: DENY",  # Cross-validation proves FP
+        }
+        result = enrich_vulnerability_severity(fp_vuln)
+        # Should have low priority due to false positive detection
+        self.assertLess(result.get("priority_score", 100), 50)
+
+
+class TestGetTopCriticalFindings(unittest.TestCase):
+    """v4.6.19: Tests for get_top_critical_findings function."""
+
+    def test_returns_empty_for_empty_list(self):
+        """Empty input returns empty list."""
+        from redaudit.core.siem import get_top_critical_findings
+
+        result = get_top_critical_findings([])
+        self.assertEqual(result, [])
+
+    def test_returns_top_5_by_default(self):
+        """Returns at most 5 findings by default."""
+        from redaudit.core.siem import get_top_critical_findings
+
+        findings = [
+            {"confirmed_exploitable": True, "priority_score": 90, "severity_score": 80}
+            for _ in range(10)
+        ]
+        result = get_top_critical_findings(findings)
+        self.assertEqual(len(result), 5)
+
+    def test_sorts_by_priority_score(self):
+        """Findings are sorted by priority_score descending."""
+        from redaudit.core.siem import get_top_critical_findings
+
+        findings = [
+            {"confirmed_exploitable": True, "priority_score": 50, "severity_score": 70},
+            {"confirmed_exploitable": True, "priority_score": 90, "severity_score": 70},
+            {"confirmed_exploitable": True, "priority_score": 70, "severity_score": 70},
+        ]
+        result = get_top_critical_findings(findings, limit=3)
+        self.assertEqual(result[0]["priority_score"], 90)
+        self.assertEqual(result[1]["priority_score"], 70)
+        self.assertEqual(result[2]["priority_score"], 50)
+
+    def test_filters_low_severity(self):
+        """Only includes high-severity or confirmed_exploitable findings."""
+        from redaudit.core.siem import get_top_critical_findings
+
+        findings = [
+            {"confirmed_exploitable": False, "priority_score": 30, "severity_score": 30},
+            {"confirmed_exploitable": True, "priority_score": 80, "severity_score": 80},
+        ]
+        result = get_top_critical_findings(findings)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0]["confirmed_exploitable"])
+
+
 if __name__ == "__main__":
     unittest.main()
