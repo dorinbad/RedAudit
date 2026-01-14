@@ -270,6 +270,14 @@ Examples:
         action="store_false",
         help="Disable Nuclei template scanner (override persisted defaults)",
     )
+    # v4.6.20: Nuclei timeout (useful for Docker/slow networks)
+    parser.add_argument(
+        "--nuclei-timeout",
+        type=int,
+        default=300,
+        metavar="SECONDS",
+        help="Nuclei batch timeout in seconds (default: 300). Increase for slow networks.",
+    )
     windows_verify_group = parser.add_mutually_exclusive_group()
     windows_verify_group.add_argument(
         "--agentless-verify",
@@ -735,6 +743,11 @@ def configure_from_args(app, args) -> bool:
     app.config["net_discovery_kerberos_userlist"] = args.kerberos_userlist
     app.config["net_discovery_active_l2"] = bool(args.redteam_active_l2)
     app.config["nuclei_enabled"] = bool(getattr(args, "nuclei", False))
+    # v4.6.20: Nuclei timeout for slow/Docker networks
+    nuclei_timeout = getattr(args, "nuclei_timeout", 300)
+    if not isinstance(nuclei_timeout, int) or nuclei_timeout < 60:
+        nuclei_timeout = 300  # Minimum 60s, default 300s
+    app.config["nuclei_timeout"] = nuclei_timeout
 
     # v4.0: Authenticated Scanning
     app.config["auth_provider"] = getattr(args, "auth_provider", "keyring")

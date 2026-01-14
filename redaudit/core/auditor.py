@@ -759,7 +759,8 @@ class InteractiveNetworkAuditor:
                             from rich.progress import Progress
 
                             batch_size = 25
-                            nuclei_timeout_s = 300
+                            # v4.6.20: Use configurable timeout from CLI
+                            nuclei_timeout_s = self.config.get("nuclei_timeout", 300)
                             nuclei_request_timeout_s = 10
                             nuclei_retries = 1
                             total_targets = len(nuclei_targets)
@@ -843,7 +844,7 @@ class InteractiveNetworkAuditor:
                                 targets=nuclei_targets,
                                 output_dir=output_dir,
                                 severity="medium,high,critical",
-                                timeout=300,
+                                timeout=self.config.get("nuclei_timeout", 300),
                                 request_timeout=10,
                                 retries=1,
                                 logger=self.logger,
