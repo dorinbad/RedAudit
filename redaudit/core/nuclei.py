@@ -294,9 +294,11 @@ def run_nuclei_scan(
         ) -> None:
             nonlocal completed_targets, max_progress_targets
             batch_start = time.time()
-            base_timeout = float(timeout) if isinstance(timeout, (int, float)) else 300.0
+            # v4.7.2: Increased default timeout to 600s and minimum from 60s to 300s
+            # 60s was causing 100% batch timeout rate on medium-sized networks
+            base_timeout = float(timeout) if isinstance(timeout, (int, float)) else 600.0
             target_budget = float(request_timeout_s) * len(batch_targets) * 2
-            batch_timeout_s = max(60.0, target_budget)
+            batch_timeout_s = max(300.0, target_budget)  # v4.7.2: 300s min (was 60s)
             # v4.6.23: Extend timeout on retry attempt
             if retry_attempt > 0:
                 batch_timeout_s = batch_timeout_s * 1.5
