@@ -203,3 +203,21 @@ docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \
   -u "$(id -u):$(id -g):docker:docker:password123" \
   -s "Public:/share/public:rw:docker"
 ```
+
+### Masscan and Docker Bridge Networks (v4.7.1+)
+
+> **Note**: When scanning the Docker lab (172.20.0.0/24), masscan may not detect open ports due to known limitations with Docker bridge networks.
+
+**What happens**:
+
+- Masscan uses raw sockets (libpcap) which don't route correctly through Docker's virtual bridge
+- RedAudit automatically falls back to Scapy when masscan returns 0 ports
+- Scapy works correctly with Docker networks
+
+**Expected behavior**:
+
+- Scan times: ~1 minute per Docker host (instead of seconds with masscan)
+- Port detection: Accurate (via Scapy fallback)
+- No action required - the fallback is automatic
+
+**For faster lab scans**, consider using `--hyperscan-mode full` which uses the asyncio TCP connect scanner directly.
