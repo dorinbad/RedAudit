@@ -343,7 +343,8 @@ def test_reverse_dns_handles_error(monkeypatch):
     monkeypatch.setattr(socket, "gethostbyaddr", fake_gethostbyaddr)
 
     assert NetworkScanner.reverse_dns("1.2.3.4", timeout=1.5) == ""
-    assert calls == [1.5, None]
+    # v4.6.28: Global timeout should NOT be touched
+    assert calls == []
 
 
 class TestHostHelpers:
