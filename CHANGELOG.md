@@ -10,6 +10,12 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.27] - 2026-01-15
+
+### Fixed
+
+- **HyperScan Performance**: Fixed a critical logic flaw where closed ports (RST) were treated as "timeouts" by the adaptive throttler. This caused the scan speed to throttle down to minimum (100 batch) instead of accelerating (20k batch), explaining the "1 minute per host" delay. Scans are now substantially faster.
+
 ## [v4.6.26] - 2026-01-15
 
 ### Fixed

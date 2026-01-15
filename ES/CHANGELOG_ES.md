@@ -10,6 +10,12 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [v4.6.27] - 2026-01-15
+
+### Corregido
+
+- **Rendimiento HyperScan**: Corregido fallo logico donde puertos cerrados (RST) eran tratados como "timeouts" por el control de congestion adaptativo. Esto causaba que la velocidad bajara al minimo (lote 100) en lugar de acelerar (lote 20k), explicando la demora de "1 minuto por host". Los escaneos son ahora sustancialmente mas rapidos.
+
 ## [v4.6.26] - 2026-01-15
 
 ### Corregido

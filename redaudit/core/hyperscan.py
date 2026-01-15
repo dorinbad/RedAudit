@@ -154,11 +154,11 @@ async def _tcp_connect(
     port: int,
     timeout: float,
     semaphore: Optional[asyncio.Semaphore] = None,
-) -> Optional[Tuple[str, int]]:
+) -> Optional[Any]:
     """
     Attempt single TCP connection (semaphore optional).
 
-    Returns (ip, port) if open, None otherwise.
+    Returns (ip, port) if open, "CLOSED" if refused, None otherwise.
     """
     if semaphore:
         async with semaphore:
@@ -167,7 +167,7 @@ async def _tcp_connect(
         return await _do_connect(ip, port, timeout)
 
 
-async def _do_connect(ip: str, port: int, timeout: float) -> Optional[Tuple[str, int]]:
+async def _do_connect(ip: str, port: int, timeout: float) -> Optional[Any]:
     try:
         _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
         try:
@@ -176,7 +176,10 @@ async def _do_connect(ip: str, port: int, timeout: float) -> Optional[Tuple[str,
         except Exception:
             pass
         return (ip, port)
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+    except ConnectionRefusedError:
+        # v4.6.27: Explicitly return "CLOSED" so it's not counted as a timeout
+        return "CLOSED"
+    except (asyncio.TimeoutError, OSError):
         return None
 
 
@@ -295,6 +298,9 @@ async def hyperscan_tcp_sweep(
         for res in batch_results:
             if res is None:
                 timeouts += 1
+            elif res == "CLOSED":
+                # Host is responsive but port closed - do not count as timeout
+                pass
             elif isinstance(res, tuple):
                 ip, port = res
                 results[ip].append(port)
