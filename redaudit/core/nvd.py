@@ -15,7 +15,7 @@ import json
 import time
 import hashlib
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
@@ -223,6 +223,7 @@ def query_nvd(
     if api_key:
         req.add_header("apiKey", api_key)
 
+    cves: List[Dict[str, Any]] = []  # Initialize before loop to prevent UnboundLocalError
     for attempt in range(1, NVD_MAX_RETRIES + 1):
         try:
             with urlopen(req, timeout=NVD_API_TIMEOUT) as response:
