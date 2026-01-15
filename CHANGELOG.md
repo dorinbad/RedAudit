@@ -10,6 +10,12 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.28] - 2026-01-15
+
+### Fixed
+
+- **Critical Stability**: Removed global `socket.setdefaulttimeout()` usage in `network_scanner.py`. Previously, reverse DNS lookups could inadvertently set a timeout for ALL active threads and sockets in the application, causing random timeouts in Nuclei, SSH, and HTTP connections.
+
 ## [v4.6.27] - 2026-01-15
 
 ### Fixed

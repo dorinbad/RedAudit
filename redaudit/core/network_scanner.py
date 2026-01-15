@@ -15,6 +15,7 @@ import re
 import shlex
 import shutil
 import socket
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
@@ -379,14 +380,19 @@ class NetworkScanner:
         Returns:
             Hostname or empty string
         """
+        # v4.6.28: Replaced global socket.setdefaulttimeout with ThreadPoolExecutor
+        # to avoid polluting global socket state and causing race conditions in other threads.
         try:
-            socket.setdefaulttimeout(timeout)
-            hostname, _, _ = socket.gethostbyaddr(ip)
-            return hostname
-        except (socket.herror, socket.gaierror, socket.timeout, OSError):
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(socket.gethostbyaddr, ip)
+                try:
+                    hostname, _, _ = future.result(timeout=timeout)
+                    return hostname
+                except Exception:
+                    # Timeout or lookup failure
+                    return ""
+        except Exception:
             return ""
-        finally:
-            socket.setdefaulttimeout(None)
 
     # -------------------------------------------------------------------------
     # Host Status Helpers
