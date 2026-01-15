@@ -16,6 +16,7 @@ Esta versión hotfix soluciona cuellos de botella críticos en Net Discovery, me
 
 - **Aumento de Timeout**: El timeout de `HyperScan-First` se ha incrementado de **0.5s** a **1.5s**. Esto evita falsos negativos (reportar 0 puertos) en hosts con ligera latencia o alta carga.
 - **Logging Paralelo**: Corregidos mensajes de log engañosos que indicaban ejecución "secuencial" cuando realmente se ejecutaba en paralelo.
+- **Estabilidad Paralela**: Corregido un bug crítico de condición de carrera en `HyperScan-First` que podía sobrescribir resultados de hosts al usar variables de bucle estale.
 
 ### 🌍 Localización (Español)
 

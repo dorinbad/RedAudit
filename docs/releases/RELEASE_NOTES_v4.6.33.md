@@ -16,6 +16,7 @@ This hotfix release addresses critical performance bottlenecks in Net Discovery,
 
 - **Increased Timeout**: `HyperScan-First` timeout increased from **0.5s** to **1.5s**. This prevents false negatives (reporting 0 ports) on hosts with slight network latency or high load.
 - **Parallel Logging**: Corrected misleading log messages that stated execution was "sequential" when it was actually running in parallel.
+- **Parallel Stability**: Fixed a critical race condition bug in `HyperScan-First` that could overwrite host results due to stale loop variable usage.
 
 ### 🌍 Localization (Spanish)
 

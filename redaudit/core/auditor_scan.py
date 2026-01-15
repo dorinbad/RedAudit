@@ -2407,7 +2407,6 @@ class AuditorScan:
                 w_ports = hyperscan_full_port_sweep(
                     w_ip,
                     batch_size=hs_batch_size,
-                    timeout=0.5,
                     logger=self.logger,
                 )
                 self._hyperscan_discovery_ports[w_ip] = w_ports
@@ -2436,8 +2435,6 @@ class AuditorScan:
                 if self.interrupted:
                     executor.shutdown(wait=False, cancel_futures=True)
                     break
-
-                self._hyperscan_discovery_ports[ip] = []  # Empty = fallback to nmap
 
         duration = time.time() - start_time
         total_ports = sum(len(p) for p in self._hyperscan_discovery_ports.values())
