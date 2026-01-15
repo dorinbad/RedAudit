@@ -635,6 +635,11 @@ class InteractiveNetworkAuditor:
                             f"⚠️  {len(backdoors)} puertos sospechosos (backdoor) detectados",
                             "WARNING",
                         )
+
+                    # v4.6.32: L2 Warnings moved here for UI safety
+                    l2_note = self.results["net_discovery"].get("l2_warning_note")
+                    if l2_note:
+                        self.ui.print_status(f"⚠️  {l2_note}", "WARNING")
                 except Exception as exc:
                     if self.logger:
                         self.logger.warning("Net discovery failed: %s", exc)

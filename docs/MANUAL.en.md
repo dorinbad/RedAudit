@@ -268,8 +268,12 @@ SmartScan uses an identity score (default threshold: 3; full mode uses 4) to dec
 
 ### Smart-Throttle (Adaptive Congestion Control)
 
-RedAudit v4.4+ introduces **Smart-Throttle**, an adaptive rate limiting system for HyperScan operations.
+RedAudit v4.4+ introduces:
 
+- **Smart-Check Technology**: Correlates open ports (Nmap) with vulnerabilities (Nuclei) to eliminate false positives.
+- **Parallel Discovery (v4.6.32)**: Executed DHCP, ARP, mDNS, UPnP, and Fping simultaneously for ultra-fast network mapping.
+- **HyperScan**: Uses asynchronous TCP/SYN packets to scan 65,535 ports in seconds (Masscan algorithm).
+- **Smart-Throttle**: An adaptive rate limiting system for HyperScan operations.
 - **Algorithm**: Uses an Additive Increase, Multiplicative Decrease (AIMD) algorithm similar to TCP congestion control.
 - **Behavior**:
   - Starts with a conservative batch size (500 packets).

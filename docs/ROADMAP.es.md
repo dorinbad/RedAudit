@@ -185,6 +185,8 @@ Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con r
 | **Navegación del Asistente** | v3.8.1 | `redaudit/core/wizard.py`. Opción "Cancelar" en menús del asistente para navegación paso a paso. |
 | **Watermark HTML** | v3.8.2 | `redaudit/templates/report.html.j2`. Footer profesional con GPLv3, autor y enlace a GitHub. |
 | **Webhooks Interactivos** | v3.7.0 | `redaudit/core/wizard.py`. Configura Slack/Teams directamente en el asistente. |
+| **Net Discovery Paralelo** | v4.6.32 | Ejecución concurrente de DHCP, ARP, mDNS, UPnP. |
+| **HyperScan Paralelo** | v4.6.31 | Pre-escaneo multi-hilo. |
 | **Asistente: Net Discovery Avanzado** | v3.7.0 | `redaudit/core/wizard.py`. Configura SNMP/DNS/Targets interactivamente. |
 | **Pipeline SIEM Nativo** | v3.7.0 | `siem/`. Configs para Filebeat/Logstash + reglas Sigma. |
 | **Logging de Sesión** | v3.7.0 | `redaudit/utils/session_log.py`. Captura salida de terminal a `.log` y `.txt`. |

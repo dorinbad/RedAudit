@@ -23,6 +23,7 @@ import threading
 import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from redaudit.core.command_runner import CommandRunner
 from redaudit.utils.dry_run import is_dry_run
@@ -741,120 +742,163 @@ def discover_networks(
         "errors": errors,
     }
 
-    for step_index, protocol in enumerate(protocols_norm, start=1):
-        if protocol == "dhcp":
-            _progress("DHCP discovery", step_index)
-            dhcp_result = dhcp_discover(interface=interface, logger=logger)
-            if dhcp_result.get("servers"):
-                result["dhcp_servers"] = dhcp_result["servers"]
-            if dhcp_result.get("error"):
-                errors.append(f"dhcp: {dhcp_result['error']}")
+    # v4.6.32: Parallel execution of discovery protocols
 
-        elif protocol == "fping":
-            _progress("ICMP sweep (fping)", step_index)
-            all_alive = []
-            for idx, target in enumerate(target_networks, start=1):
-                if len(target_networks) > 1:
-                    _progress(f"ICMP sweep (fping) {idx}/{len(target_networks)}", step_index)
-                fping_result = fping_sweep(target, logger=logger)
-                all_alive.extend(fping_result.get("alive_hosts", []))
-                if fping_result.get("error"):
-                    errors.append(f"fping ({target}): {fping_result['error']}")
-            result["alive_hosts"] = list(set(all_alive))
+    # Shared counter for monotonic progress updates
+    _progress_lock = threading.Lock()
+    _started_tasks = 0
 
-        elif protocol == "netbios":
-            _progress("NetBIOS discovery", step_index)
-            all_netbios = []
-            for idx, target in enumerate(target_networks, start=1):
-                if len(target_networks) > 1:
-                    _progress(f"NetBIOS discovery {idx}/{len(target_networks)}", step_index)
-                netbios_result = netbios_discover(target, logger=logger)
-                all_netbios.extend(netbios_result.get("hosts", []))
-                if netbios_result.get("error"):
-                    errors.append(f"netbios ({target}): {netbios_result['error']}")
-            result["netbios_hosts"] = all_netbios
+    # Define a worker function to run one protocol and return its result key/value
+    def _run_protocol(proto: str) -> Tuple[str, Dict[str, Any], List[str]]:
+        nonlocal _started_tasks
+        local_errors = []
+        local_res = {}
 
-        elif protocol == "arp":
-            _progress("ARP discovery", step_index)
-            all_arp = []
-            seen_ips = set()
+        # Monotonic progress update
+        with _progress_lock:
+            _started_tasks += 1
+            current_idx = _started_tasks
 
-            if tools.get("arp-scan") or shutil.which("arp-scan"):
-                total_l2_warnings = 0
+        try:
+            if proto == "dhcp":
+                _progress("DHCP discovery", current_idx)
+                dhcp_res = dhcp_discover(interface=interface, logger=logger)
+                local_res["dhcp_servers"] = dhcp_res.get("servers", [])
+                if dhcp_res.get("error"):
+                    local_errors.append(f"dhcp: {dhcp_res['error']}")
+
+            elif proto == "fping":
+                _progress("ICMP sweep (fping)", current_idx)
+                all_alive = []
                 for idx, target in enumerate(target_networks, start=1):
-                    if len(target_networks) > 1:
-                        _progress(
-                            f"ARP discovery (arp-scan) {idx}/{len(target_networks)}", step_index
-                        )
-                    arp_result = arp_scan_active(target=target, interface=interface, logger=logger)
-                    for host in arp_result.get("hosts", []):
-                        ip = host.get("ip")
-                        if ip and ip not in seen_ips:
-                            seen_ips.add(ip)
-                            all_arp.append(host)
-                    if arp_result.get("error"):
-                        errors.append(f"arp-scan ({target}): {arp_result['error']}")
-                    # v4.3: Accumulate L2 warnings
-                    total_l2_warnings += arp_result.get("l2_warnings", 0)
+                    fp_res = fping_sweep(target, logger=logger)
+                    all_alive.extend(fp_res.get("alive_hosts", []))
+                    if fp_res.get("error"):
+                        local_errors.append(f"fping ({target}): {fp_res['error']}")
+                local_res["alive_hosts"] = list(set(all_alive))
 
-                # v4.3: Show consolidated L2 warning (didactic)
-                if total_l2_warnings > 0:
-                    warning_msg = (
-                        f"⚠️  ARP Discovery: {total_l2_warnings} hosts detectados fuera de tu red local "
-                        "(subred/VLAN diferente).\n"
-                        "   → Esto es normal si escaneas rangos que incluyen otras redes o el gateway.\n"
-                        "   → El escaneo TCP/UDP funcionará normalmente para estos hosts."
+            elif proto == "netbios":
+                _progress("NetBIOS discovery", current_idx)
+                all_nb = []
+                for idx, target in enumerate(target_networks, start=1):
+                    nb_res = netbios_discover(target, logger=logger)
+                    all_nb.extend(nb_res.get("hosts", []))
+                    if nb_res.get("error"):
+                        local_errors.append(f"netbios ({target}): {nb_res['error']}")
+                local_res["netbios_hosts"] = all_nb
+
+            elif proto == "arp":
+                _progress("ARP discovery", current_idx)
+                all_arp_h = []
+                # Use a local seen set, will be merged later
+                seen_ips_local = set()
+
+                if tools.get("arp-scan") or shutil.which("arp-scan"):
+                    tot_l2_warn = 0
+                    for idx, target in enumerate(target_networks, start=1):
+                        arp_res = arp_scan_active(target=target, interface=interface, logger=logger)
+                        for h in arp_res.get("hosts", []):
+                            ip = h.get("ip")
+                            if ip and ip not in seen_ips_local:
+                                seen_ips_local.add(ip)
+                                all_arp_h.append(h)
+                        if arp_res.get("error"):
+                            local_errors.append(f"arp-scan ({target}): {arp_res['error']}")
+                        tot_l2_warn += arp_res.get("l2_warnings", 0)
+
+                    # Store L2 warning separately to avoid UI races (will print in main thread)
+                    if tot_l2_warn > 0:
+                        local_res["_l2_warning_count"] = tot_l2_warn
+
+                for idx, target in enumerate(target_networks, start=1):
+                    nd_res = netdiscover_scan(
+                        target, active=True, interface=interface, logger=logger
                     )
-                    # Print to terminal (logger.warning only goes to log file)
-                    from datetime import datetime as dt
+                    for h in nd_res.get("hosts", []):
+                        ip = h.get("ip")
+                        if ip and ip not in seen_ips_local:
+                            seen_ips_local.add(ip)
+                            all_arp_h.append(h)
+                    if nd_res.get("error"):
+                        local_errors.append(f"netdiscover ({target}): {nd_res['error']}")
 
-                    ts = dt.now().strftime("%H:%M:%S")
-                    print(f"\033[93m[{ts}] [WARN]\033[0m {warning_msg}", flush=True)
-                    if logger:
-                        logger.warning(
-                            "ARP Discovery: %d hosts outside local L2 segment. TCP/UDP will work normally.",
-                            total_l2_warnings,
-                        )
-                    result["l2_warning_note"] = (
-                        f"{total_l2_warnings} hosts detected outside your local network. "
-                        "TCP/UDP scanning will work normally for these hosts."
-                    )
+                local_res["arp_hosts"] = all_arp_h
 
-            for idx, target in enumerate(target_networks, start=1):
-                if len(target_networks) > 1:
-                    _progress(
-                        f"ARP discovery (netdiscover) {idx}/{len(target_networks)}", step_index
-                    )
-                arp_result = netdiscover_scan(
-                    target, active=True, interface=interface, logger=logger
-                )
-                for host in arp_result.get("hosts", []):
-                    ip = host.get("ip")
-                    if ip and ip not in seen_ips:
-                        seen_ips.add(ip)
-                        all_arp.append(host)
-                if arp_result.get("error"):
-                    errors.append(f"netdiscover ({target}): {arp_result['error']}")
+            elif proto == "mdns":
+                _progress("mDNS discovery", current_idx)
+                md_res = mdns_discover(logger=logger)
+                local_res["mdns_services"] = md_res.get("services", [])
+                if md_res.get("error"):
+                    local_errors.append(f"mdns: {md_res['error']}")
 
-            result["arp_hosts"] = all_arp
+            elif proto == "upnp":
+                _progress("UPnP discovery", current_idx)
+                up_res = upnp_discover(logger=logger)
+                local_res["upnp_devices"] = up_res.get("devices", [])
+                if up_res.get("error"):
+                    local_errors.append(f"upnp: {up_res['error']}")
 
-        elif protocol == "mdns":
-            _progress("mDNS discovery", step_index)
-            mdns_result = mdns_discover(logger=logger)
-            if mdns_result.get("services"):
-                result["mdns_services"] = mdns_result["services"]
-            if mdns_result.get("error"):
-                errors.append(f"mdns: {mdns_result['error']}")
+            # Additional protocols (hyperscan/redteam) could be added here
 
-        elif protocol == "upnp":
-            _progress("UPnP discovery", step_index)
-            upnp_result = upnp_discover(logger=logger)
-            if upnp_result.get("devices"):
-                result["upnp_devices"] = upnp_result["devices"]
-            if upnp_result.get("error"):
-                errors.append(f"upnp: {upnp_result['error']}")
+        except Exception as e:
+            if logger:
+                logger.error(f"Protocol {proto} failed: {e}", exc_info=True)
+            local_errors.append(f"{proto}: {e}")
 
-        elif protocol == "hyperscan":
+        return proto, local_res, local_errors
+
+    # Execute all enabled protocols in parallel
+    # Max workers = number of protocols (usually ~6-8)
+    max_workers = len(protocols_norm)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_run_protocol, p): p
+            for p in protocols_norm
+            if p not in ["hyperscan"]  # Hyperscan is handled separately
+        }
+
+        for future in as_completed(futures):
+            p_name = futures[future]
+            try:
+                _, p_res, p_errs = future.result()
+
+                # Merge results into main result dict
+                for k, v in p_res.items():
+                    if k == "_l2_warning_count":
+                        # Pass warning to caller via result dict; do NOT print here to avoid UI overlap
+                        warn_count = v
+                        if warn_count > 0:
+                            if logger:
+                                logger.warning(
+                                    "ARP Discovery: %d hosts outside local L2 segment.", warn_count
+                                )
+                            result["l2_warning_note"] = (
+                                f"{warn_count} hosts detected outside your local network."
+                            )
+                        continue
+
+                    if k in result:
+                        # Append or replace? Lists are empty initially, so direct assignment or extend is fine.
+                        # For safety, we extend lists, replace others.
+                        if isinstance(result[k], list) and isinstance(v, list):
+                            # Special case: don't double-add if multiple protocols returned same key (unlikely here)
+                            result[k].extend(v)
+                        else:
+                            result[k] = v
+                    else:
+                        result[k] = v
+
+                if p_errs:
+                    errors.extend(p_errs)
+
+            except Exception as e:
+                errors.append(f"{p_name} worker failed: {e}")
+                if logger:
+                    logger.error(f"Worker for {p_name} crashed: {e}", exc_info=True)
+
+    # Handle hyperscan separately as it's a more complex, potentially longer-running step
+    for step_index, protocol in enumerate(protocols_norm, start=1):
+        if protocol == "hyperscan":
             _progress("HyperScan (parallel discovery)", step_index)
             try:
                 from redaudit.core.hyperscan import hyperscan_full_discovery

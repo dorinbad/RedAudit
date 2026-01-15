@@ -191,6 +191,8 @@ Features present in releases where `redaudit --version` >= v3.6.0, with verifica
 | **Wizard Navigation** | v3.8.1 | `redaudit/core/wizard.py`. "Cancel" option in wizard menus for step-by-step navigation. |
 | **HTML Report Watermark** | v3.8.2 | `redaudit/templates/report.html.j2`. Professional footer with GPLv3, author, and GitHub link. |
 | **Interactive Webhooks** | v3.7.0 | `redaudit/core/wizard.py`. Configure Slack/Teams directly in wizard. |
+| **Parallel Net Discovery** | v4.6.32 | Concurrent execution of DHCP, ARP, mDNS, UPnP. |
+| **HyperScan Parallelization** | v4.6.31 | Multi-threaded pre-scan. |
 | **Advanced Net Discovery Wizard** | v3.7.0 | `redaudit/core/wizard.py`. Configure SNMP/DNS/Targets interactively. |
 | **Native SIEM Pipeline** | v3.7.0 | `siem/`. Configs for Filebeat/Logstash + Sigma rules. |
 | **Session Logging** | v3.7.0 | `redaudit/utils/session_log.py`. Captures terminal output to `.log` and `.txt`. |

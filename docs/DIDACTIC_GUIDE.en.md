@@ -140,7 +140,7 @@ Why use different scaling models?
 **Where in code:**
 
 - Threading: `scan_hosts_concurrent()` in `auditor_scan.py`
-- Async: `hyperscan.py` modules
+- Async: `hyperscan.py` modules and `net_discovery.py` (concurrent ThreadPool)
 
 ---
 
@@ -279,7 +279,7 @@ These are the most pedagogically useful code locations. Use them for advanced st
 |:---|:---|:---|
 | Main orchestration | `core/auditor.py` | `run_complete_scan()` |
 | Deep Scan triggers | `core/auditor_scan.py` | `scan_host_ports()` (look for `trigger_deep`) |
-| Parallel execution | `core/auditor_scan.py` | `scan_hosts_concurrent()` with `ThreadPoolExecutor` |
+| Parallel execution | `core/auditor_scan.py` & `core/net_discovery.py` | `scan_hosts_concurrent()` & `discover_networks()` (ThreadPool) |
 | Progress UI + ETA | `core/auditor_components.py` | `_progress_columns()` |
 | Timeout-safe host scans | `core/auditor_scan.py` | `_run_nmap_xml_scan()` |
 | Async discovery | `core/hyperscan.py` | Async TCP/UDP/ARP discovery using `asyncio` |

@@ -10,6 +10,12 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [v4.6.32] - 2026-01-15
+
+### Rendimiento
+
+- **Net Discovery Paralelo**: Todos los protocolos de descubrimiento (DHCP, ARP, mDNS, etc.) ahora corren concurrentemente.
+
 ## [v4.6.31] - 2026-01-15
 
 ### Rendimiento

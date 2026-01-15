@@ -10,6 +10,12 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.32] - 2026-01-15
+
+### Performance
+
+- **Parallel Net Discovery**: All discovery protocols (DHCP, ARP, mDNS, etc.) now run concurrently.
+
 ## [v4.6.31] - 2026-01-15
 
 ### Performance
