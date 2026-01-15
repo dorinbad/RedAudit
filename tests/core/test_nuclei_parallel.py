@@ -115,3 +115,45 @@ class TestNucleiParallel(unittest.TestCase):
         duration = time.time() - start_time
         self.assertTrue(res["success"])
         self.assertLess(duration, 1.0)
+
+    def test_parallel_progress_is_monotonic(self):
+        """
+        Verify that progress updates are monotonic (never go backwards).
+        This ensures the 'jitter' bug (threads overwriting global progress with local low values) is gone.
+        """
+        targets = [f"http://127.0.0.{i}:80" for i in range(40)]
+        progress_values = []
+
+        def _cb(completed, total, eta, detail=""):
+            progress_values.append(completed)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("redaudit.core.nuclei.shutil.which", return_value="/usr/bin/nuclei"):
+                with patch("redaudit.core.nuclei.is_nuclei_available", return_value=True):
+                    with patch("redaudit.core.nuclei.CommandRunner", _FakeCommandRunnerParallel):
+                        res = run_nuclei_scan(
+                            targets=targets,
+                            output_dir=tmpdir,
+                            batch_size=10,
+                            progress_callback=_cb,
+                            use_internal_progress=False,  # Use external callback logic
+                        )
+
+        self.assertTrue(res["success"])
+        self.assertTrue(len(progress_values) > 0, "Should have received progress updates")
+
+        # Check monotony: each value must be >= max of previous values (approx)
+        # Actually, since threads update referencing a shared 'completed_targets',
+        # providing we lock effectively, the reported 'current' should never decrease significantly.
+        # It might stay same, or increase.
+
+        max_seen = -1.0
+        for val in progress_values:
+            # Allow tiny float precision error, but essentially explicit decreases are bad.
+            # The bug caused jumps like 10 -> 2. So we check for gross violations.
+            if val < max_seen - 0.1:
+                self.fail(f"Progress went backwards! Seen {max_seen}, got {val}")
+            if val > max_seen:
+                max_seen = val
+
+        self.assertEqual(max_seen, 40.0, "Should have reached 100% (40 targets)")
