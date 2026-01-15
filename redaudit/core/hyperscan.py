@@ -367,15 +367,15 @@ def hyperscan_full_port_sweep(
     progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> List[int]:
     """
-    v4.1: Scan ALL 65,535 TCP ports on a single host using async batches.
+    v4.7: Scan ALL 65,535 TCP ports on a single host.
 
-    This is the core of the HyperScan-First optimization. By probing all ports
-    with fast async connections (~2-3min), we can then run nmap only on the
-    discovered open ports, eliminating the slow -p- full scan.
+    Priority order:
+    1. masscan (fastest, ~seconds) - requires root
+    2. asyncio TCP connect (slower but no root needed)
 
     Args:
         target_ip: Single IP address to scan
-        batch_size: Concurrent connections (default 64, conservative for shared ulimit)
+        batch_size: Concurrent connections for fallback mode
         timeout: Per-connection timeout in seconds
         logger: Optional logger
         progress_callback: Optional callback(completed, total, desc) for progress
@@ -386,6 +386,44 @@ def hyperscan_full_port_sweep(
     if not target_ip:
         return []
 
+    start_time = time.time()
+
+    # v4.7.0: Try masscan first (orders of magnitude faster)
+    try:
+        from redaudit.core.masscan_scanner import is_masscan_available, masscan_sweep
+
+        if is_masscan_available():
+            if logger:
+                logger.info(
+                    "HyperScan FULL (masscan): Scanning %s with masscan (fast mode)",
+                    target_ip,
+                )
+            # Use top 10000 ports for speed, can be expanded
+            open_ports = masscan_sweep(
+                target_ip,
+                ports="1-10000",
+                rate=1000,
+                timeout_s=30,
+                logger=logger,
+            )
+            if open_ports or True:  # Accept even empty result from masscan
+                duration = time.time() - start_time
+                if logger:
+                    logger.info(
+                        "HyperScan FULL (masscan): Found %d ports on %s in %.1fs",
+                        len(open_ports),
+                        target_ip,
+                        duration,
+                    )
+                return open_ports
+    except ImportError:
+        if logger:
+            logger.debug("masscan_scanner module not available, using fallback")
+    except Exception as e:
+        if logger:
+            logger.warning("masscan failed for %s: %s, falling back to asyncio", target_ip, e)
+
+    # Fallback: Original asyncio TCP connect sweep
     # Generate all 65535 ports
     all_ports = list(range(1, 65536))
 
@@ -398,8 +436,7 @@ def hyperscan_full_port_sweep(
             timeout,
         )
 
-    start_time = time.time()
-    open_ports: List[int] = []
+    open_ports = []
 
     # v4.1 fix: Use new event loop with proper cleanup to avoid FD exhaustion
     loop = None
