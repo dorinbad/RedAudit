@@ -228,7 +228,7 @@ def dhcp_discover(
 
 def fping_sweep(
     target: str,
-    timeout_s: int = 30,
+    timeout_s: int = 15,
     logger=None,
 ) -> Dict[str, Any]:
     """
@@ -275,7 +275,7 @@ def fping_sweep(
 
 def netbios_discover(
     target: str,
-    timeout_s: int = 30,
+    timeout_s: int = 15,
     logger=None,
 ) -> Dict[str, Any]:
     """
@@ -420,7 +420,7 @@ def netdiscover_scan(
 def arp_scan_active(
     target: Optional[str] = None,
     interface: Optional[str] = None,
-    timeout_s: int = 30,
+    timeout_s: int = 15,
     logger=None,
 ) -> Dict[str, Any]:
     """
@@ -760,6 +760,10 @@ def discover_networks(
             current_idx = _started_tasks
 
         try:
+            # v4.6.33: Added debug logging to identify slow protocols
+            if logger:
+                logger.debug(f"NetDiscovery: Starting {proto} on task #{current_idx}")
+
             if proto == "dhcp":
                 _progress("DHCP discovery", current_idx)
                 dhcp_res = dhcp_discover(interface=interface, logger=logger)
@@ -839,6 +843,9 @@ def discover_networks(
                     local_errors.append(f"upnp: {up_res['error']}")
 
             # Additional protocols (hyperscan/redteam) could be added here
+
+            if logger:
+                logger.debug(f"NetDiscovery: Finished {proto} on task #{current_idx}")
 
         except Exception as e:
             if logger:

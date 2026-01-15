@@ -10,6 +10,13 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.33] - 2026-01-15
+
+### Fixed
+
+- **Net Discovery**: Fixed Net Discovery duration (timeouts reduced), HyperScan accuracy (timeout increased), and "UDP probes" localization.
+- **Parallel Discovery**: Fixed thread safety in parallel discovery progress bars and removed unsafe CLI printing.
+
 ## [v4.6.32] - 2026-01-15
 
 ### Performance

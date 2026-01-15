@@ -20,6 +20,7 @@ from datetime import datetime
 from redaudit.core.command_runner import CommandRunner
 from redaudit.utils.dry_run import is_dry_run
 from redaudit.core.udp_probe import UDP_PROBE_PAYLOADS
+from redaudit.utils.i18n import get_text, detect_preferred_language
 
 
 _REDAUDIT_REDACT_ENV_KEYS = {"NVD_API_KEY", "GITHUB_TOKEN"}
@@ -361,7 +362,7 @@ def hyperscan_tcp_sweep_sync(
 def hyperscan_full_port_sweep(
     target_ip: str,
     batch_size: int = 64,  # Very conservative to work with default ulimit (1024 FDs)
-    timeout: float = 0.5,
+    timeout: float = 1.5,
     logger=None,
     progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> List[int]:
@@ -1039,7 +1040,8 @@ def hyperscan_full_discovery(
         if include_udp:
             udp_off = net_span * stage_weights["arp"]
             udp_span = net_span * stage_weights["udp"]
-            _net_progress(udp_off, udp_span, 0.0, f"UDP probes ({network})")
+            lang = detect_preferred_language()
+            _net_progress(udp_off, udp_span, 0.0, get_text("udp_probes_progress", lang, network))
             udp_results = hyperscan_udp_broadcast(network, logger=logger)
             results["udp_devices"].extend(udp_results)
             _net_progress(udp_off, udp_span, 1.0, f"UDP done ({network})")
