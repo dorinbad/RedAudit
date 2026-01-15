@@ -10,6 +10,12 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.6.31] - 2026-01-15
+
+### Performance
+
+- **HyperScan Parallelism**: Converted sequential pre-scan to parallel (up to 8 workers) with adaptive FD batching.
+
 ## [v4.6.30] - 2026-01-15
 
 ### Safety

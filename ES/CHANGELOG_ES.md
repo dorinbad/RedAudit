@@ -10,6 +10,12 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Unreleased]
 
+## [v4.6.31] - 2026-01-15
+
+### Rendimiento
+
+- **HyperScan Paralelo**: Convertido pre-escaneo secuencial a paralelo (hasta 8 workers) con batching adaptativo de FDs.
+
 ## [v4.6.30] - 2026-01-15
 
 ### Seguridad

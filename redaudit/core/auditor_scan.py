@@ -2358,46 +2358,85 @@ class AuditorScan:
             "INFO",
         )
 
+        # v4.6.31: Parallel HyperScan-First
         start_time = time.time()
-        # Run HyperScan sequentially (one at a time to avoid FD exhaustion)
-        for idx, ip in enumerate(host_ips, 1):
-            if self.interrupted:
-                break
+        # Calculate safe concurrency based on estimated FD usage
+        # We aim for ~1000 concurrent sockets max to stay safe on macOS/default limits
+        try:
+            import resource
 
-            # Check if masscan already has ports for this host
-            if ip in masscan_ports:
-                self._hyperscan_discovery_ports[ip] = sorted(set(masscan_ports[ip]))
+            soft, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+            safe_limit = max(800, soft - 200)  # Reserve 200 for system/logs
+        except (ImportError, Exception):
+            safe_limit = 800
+
+        # Heuristic:
+        # If we use 10 workers, max batch size per worker = safe_limit / 10
+        # But small batch size increases scan time per host.
+        # Sweet spot: 4-8 parallel hosts, batch size 200-500.
+
+        # Max 8 workers for this phase (balance between parallelism and per-host speed)
+        hs_workers = min(8, len(host_ips))
+        hs_batch_size = max(100, int(safe_limit / max(1, hs_workers)))
+
+        if self.logger:
+            self.logger.info(
+                "HyperScan-First Parallel Mode: %d workers, batch_size=%d (FD limit: %d)",
+                hs_workers,
+                hs_batch_size,
+                safe_limit,
+            )
+
+        def _hs_worker(w_idx: int, w_ip: str) -> None:
+            if self.interrupted:
+                return
+
+            # Check masscan reuse inside worker (thread-safe check, strict local usage)
+            if w_ip in masscan_ports:
+                self._hyperscan_discovery_ports[w_ip] = sorted(set(masscan_ports[w_ip]))
                 self.ui.print_status(
                     self.ui.t("hyperscan_masscan_reuse").format(
-                        idx, discovery_count, ip, len(masscan_ports[ip])
+                        w_idx, discovery_count, w_ip, len(masscan_ports[w_ip])
                     ),
                     "OKGREEN",
                 )
-                continue
+                return
 
-            # Run HyperScan for this host
+            # Run HyperScan
             try:
-                ports = hyperscan_full_port_sweep(
-                    ip,
-                    batch_size=2000,  # High batch_size is safe with sequential execution
+                w_ports = hyperscan_full_port_sweep(
+                    w_ip,
+                    batch_size=hs_batch_size,
                     timeout=0.5,
                     logger=self.logger,
                 )
-                self._hyperscan_discovery_ports[ip] = ports
-                if ports:
+                self._hyperscan_discovery_ports[w_ip] = w_ports
+                if w_ports:
                     self.ui.print_status(
                         self.ui.t("hyperscan_ports_found").format(
-                            idx, discovery_count, ip, len(ports)
+                            w_idx, discovery_count, w_ip, len(w_ports)
                         ),
                         "OKGREEN",
                     )
                 else:
                     self.ui.print_status(
-                        self.ui.t("hyperscan_no_ports").format(idx, discovery_count, ip),
+                        self.ui.t("hyperscan_no_ports").format(w_idx, discovery_count, w_ip),
                         "WARNING",
                     )
             except Exception as e:
-                self.logger.warning("HyperScan discovery failed for %s: %s", ip, e)
+                self.logger.warning("HyperScan discovery failed for %s: %s", w_ip, e)
+
+        # Execute parallel scan
+        with ThreadPoolExecutor(max_workers=hs_workers) as executor:
+            futures = {
+                executor.submit(_hs_worker, idx, ip): ip for idx, ip in enumerate(host_ips, 1)
+            }
+            # Wait for all to complete (this phase is blocking before Nmap anyway)
+            for _ in as_completed(futures):
+                if self.interrupted:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    break
+
                 self._hyperscan_discovery_ports[ip] = []  # Empty = fallback to nmap
 
         duration = time.time() - start_time
