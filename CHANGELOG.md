@@ -10,6 +10,16 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.7.1] - 2026-01-15
+
+### Fixed
+
+- **Critical**: Fixed masscan fallback regression in v4.7.0 where `or True` prevented scapy fallback when masscan returned 0 ports. Docker networks (172.x.x.x) now correctly fall back to scapy for accurate port detection.
+
+### Documentation
+
+- Added "Masscan and Docker Bridge Networks" troubleshooting section to `DOCKER.md` and `DOCKER.es.md` explaining the automatic scapy fallback behavior.
+
 ## [v4.7.0] - 2026-01-15
 
 ### Added

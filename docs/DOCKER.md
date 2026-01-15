@@ -391,6 +391,22 @@ docker pull ghcr.io/dorinbadea/redaudit:latest
 
 You're probably scanning Docker's internal network (172.17.x.x) instead of your real network. Use `--target` with your actual network CIDR.
 
+## Masscan and Docker Bridge Networks (v4.7.1+)
+
+> **Note**: Masscan uses its own network stack (libpcap raw sockets) which has known issues with Docker bridge networks (172.x.x.x). When scanning Docker containers from a host, masscan may return 0 ports even when services are running.
+
+**RedAudit handles this automatically**:
+
+- If masscan finds 0 ports, RedAudit falls back to Scapy for accurate detection
+- Physical networks (192.168.x.x, 10.x.x.x) work normally with masscan
+- Docker networks are scanned via Scapy fallback (slightly slower but reliable)
+
+**If you're testing RedAudit against Docker containers**:
+
+- Expect the scan to use Scapy instead of masscan for Docker subnets
+- Scan times will be ~1 min/host instead of seconds for Docker networks
+- Results are accurate; only the speed differs
+
 ## Permission denied
 
 On Linux, run with `sudo` or add your user to the docker group:
