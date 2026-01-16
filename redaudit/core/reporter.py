@@ -112,7 +112,10 @@ def _summarize_net_discovery(net_discovery: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(redteam, dict) and redteam:
         summary["redteam"] = {
             "targets_considered": redteam.get("targets_considered", 0),
-            "masscan_open_ports": len((redteam.get("masscan") or {}).get("open_ports", []) or []),
+            "masscan_open_ports": len(
+                (redteam.get("rustscan") or redteam.get("masscan") or {}).get("open_ports", [])
+                or []
+            ),
             "snmp_hosts": len((redteam.get("snmp") or {}).get("hosts", []) or []),
             "smb_hosts": len((redteam.get("smb") or {}).get("hosts", []) or []),
             "rpc_hosts": len((redteam.get("rpc") or {}).get("hosts", []) or []),
