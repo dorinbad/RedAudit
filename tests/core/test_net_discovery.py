@@ -32,7 +32,7 @@ from redaudit.core.net_discovery import (
     _redteam_kerberos_enum,
     _redteam_ldap_enum,
     _redteam_llmnr_nbtns_capture,
-    _redteam_masscan_sweep,
+    _redteam_rustscan_sweep,
     _redteam_router_discovery,
     _redteam_rpc_enum,
     _redteam_scapy_custom,
@@ -564,7 +564,9 @@ def test_redteam_discovery_ticker_and_cleanup():
                 time.sleep(4)
                 return {}
 
-            with patch("redaudit.core.net_discovery._redteam_masscan_sweep", side_effect=slow_task):
+            with patch(
+                "redaudit.core.net_discovery._redteam_rustscan_sweep", side_effect=slow_task
+            ):
                 _run_redteam_discovery(
                     {}, [], progress_callback=mock_cb, redteam_options={"max_targets": 10}
                 )
@@ -607,21 +609,17 @@ def test_redteam_smb_enum_nmap_fallback():
             assert "raw" in res["hosts"][0]
 
 
-def test_redteam_masscan_sweep_safety():
-    """Test _redteam_masscan_sweep root check and size check (lines 1386, 1401)."""
-    with patch("shutil.which", return_value="masscan"):
-        # 1386: Not root
-        with patch("redaudit.core.net_discovery._is_root", return_value=False):
-            assert (
-                _redteam_masscan_sweep(["1.1.1.1"], {"masscan": True})["status"]
-                == "skipped_requires_root"
-            )
-        # 1401: Too large
-        with patch("redaudit.core.net_discovery._is_root", return_value=True):
-            assert (
-                _redteam_masscan_sweep(["0.0.0.0/8"], {"masscan": True})["status"]
-                == "skipped_too_large"
-            )
+def test_redteam_rustscan_sweep_errors():
+    """Test _redteam_rustscan_sweep tool check and error handling."""
+    # Tool missing
+    assert _redteam_rustscan_sweep(["1.1.1.1"], {"rustscan": False})["status"] == "tool_missing"
+
+    # Execution error
+    with patch("redaudit.core.net_discovery.run_rustscan_multi") as mock_run:
+        mock_run.return_value = ({}, "Fatal Error")
+        res = _redteam_rustscan_sweep(["1.1.1.0/24"], {"rustscan": True})
+        assert res["status"] == "error"
+        assert "Fatal Error" in res["error"]
 
 
 def test_redteam_rpc_enum_parsing():

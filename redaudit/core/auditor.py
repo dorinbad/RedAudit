@@ -1616,9 +1616,12 @@ class InteractiveNetworkAuditor:
             self.config["udp_mode"] = UDP_SCAN_MODE_FULL
             self.config["udp_top_ports"] = 500  # ~98% coverage (was 200)
 
-            # Vulnerability scanning - all enabled
+            # Vulnerability scanning - enabled (nikto, whatweb, etc.)
             self.config["scan_vulnerabilities"] = True
-            self.config["nuclei_enabled"] = is_nuclei_available()
+
+            # v4.8.0: Nuclei OFF by default (use --nuclei to enable)
+            # Reason: Slow on web-dense networks, marginal value for network audits
+            self.config["nuclei_enabled"] = False
 
             # NVD/CVE - enable if API key is configured, otherwise show reminder
             if is_nvd_api_key_configured():
@@ -1845,16 +1848,17 @@ class InteractiveNetworkAuditor:
                 wizard_state["vuln_idx"] = choice
                 self.config["scan_vulnerabilities"] = choice == 0
 
-                # Nuclei (conditional)
+                # Nuclei (conditional) - v4.8.0: OFF by default due to slow scans
                 self.config["nuclei_enabled"] = False
                 if (
                     self.config.get("scan_vulnerabilities")
                     and self.config.get("scan_mode") == "completo"
                     and is_nuclei_available()
                 ):
+                    # v4.8.0: Default to "no" - Nuclei is slow on web-dense networks
                     self.config["nuclei_enabled"] = self.ask_yes_no(
                         self.ui.t("nuclei_q"),
-                        default="yes" if defaults_for_run.get("nuclei_enabled") else "no",
+                        default="no",
                     )
 
                 # v4.2: SQLMap Intensity (Custom profile)

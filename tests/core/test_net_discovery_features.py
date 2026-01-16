@@ -334,29 +334,23 @@ class TestRedTeamFeatures(unittest.TestCase):
         self.assertEqual(res["hosts"][0]["sysDescr"], "Linux server 5.10")
         self.assertEqual(res["hosts"][0]["sysName"], "srv01")
 
-    @patch("redaudit.core.net_discovery._run_cmd")
-    @patch("shutil.which")
-    def test_redteam_masscan_sweep(self, mock_which, mock_run_cmd):
-        """Test masscan parsing."""
-        from redaudit.core.net_discovery import _redteam_masscan_sweep
+    @patch("redaudit.core.net_discovery.run_rustscan_multi")
+    def test_redteam_rustscan_sweep(self, mock_run_rustscan):
+        """Test rustscan integration."""
+        from redaudit.core.net_discovery import _redteam_rustscan_sweep
 
-        mock_which.return_value = "/usr/bin/masscan"
-        # Mock root
-        with patch("redaudit.core.net_discovery._is_root", return_value=True):
-            mock_run_cmd.return_value = (
-                0,
-                """
-Discovered open port 80/tcp on 192.168.1.50
-Discovered open port 443/tcp on 192.168.1.51
-            """,
-                "",
-            )
+        # Mock RustScan output
+        # run_rustscan_multi returns (found_map, error)
+        # found_map = {"192.168.1.50": [80], "192.168.1.51": [443]}
+        mock_run_rustscan.return_value = ({"192.168.1.50": [80], "192.168.1.51": [443]}, None)
 
-            res = _redteam_masscan_sweep(["192.168.1.0/24"], tools={"masscan": True})
-            self.assertEqual(res["status"], "ok")
-            self.assertEqual(len(res["open_ports"]), 2)
-            self.assertEqual(res["open_ports"][0]["port"], 80)
-            self.assertEqual(res["open_ports"][1]["port"], 443)
+        res = _redteam_rustscan_sweep(["192.168.1.0/24"], tools={"rustscan": True})
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(len(res["open_ports"]), 2)
+        # Sort or find
+        ports = sorted(res["open_ports"], key=lambda x: x["port"])
+        self.assertEqual(ports[0]["port"], 80)
+        self.assertEqual(ports[1]["port"], 443)
 
     @patch("redaudit.core.net_discovery._run_cmd")
     @patch("shutil.which")

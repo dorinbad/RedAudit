@@ -257,7 +257,8 @@ El descubrimiento de red es **best-effort**: herramientas faltantes reducirán l
 | `ldap` | object | Resumen RootDSE LDAP (best-effort) |
 | `kerberos` | object | Descubrimiento de realm Kerberos + userenum opcional (best-effort) |
 | `dns_zone_transfer` | object | Resumen de intento AXFR DNS (best-effort; requiere pista de zona) |
-| `masscan` | object | Resumen opcional de masscan (requiere root; se omite en rangos grandes) |
+| `rustscan` | object | Resumen opcional de RustScan (v4.8.0) |
+| `masscan` | object | (Obsoleto) Alias para `rustscan` |
 | `vlan_enum` | object | Pistas de VLAN/DTP (pasivo; requiere tcpdump + root) |
 | `stp_topology` | object | Pistas BPDU STP (pasivo; requiere tcpdump + root) |
 | `hsrp_vrrp` | object | Pistas presencia HSRP/VRRP (pasivo; requiere tcpdump + root) |

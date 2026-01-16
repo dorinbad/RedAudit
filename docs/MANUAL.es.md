@@ -14,7 +14,7 @@
 
 ## 1. Qué Es (y Qué No Es) RedAudit
 
-RedAudit es un **framework de auditoría de red automatizado** para Linux (familia Debian). Orquesta un toolchain completo (`nmap`, `nikto`, `nuclei`, `whatweb`, `testssl.sh`, `sqlmap`, `masscan` y más) en un pipeline unificado y produce informes estructurados.
+RedAudit es un **framework de auditoría de red automatizado** para Linux (familia Debian). Orquesta un toolchain completo (`nmap`, `nikto`, `nuclei`, `whatweb`, `testssl.sh`, `sqlmap`, `rustscan` y más) en un pipeline unificado y produce informes estructurados.
 
 **Es:**
 
@@ -241,7 +241,7 @@ La velocidad controla la agresividad del scheduling (timing de nmap y comportami
 - **Sigiloso**: El más lento y con menos ruido. Útil en redes sensibles a la detección.
 - **Tecnología Smart-Check**: Correlaciona puertos abiertos (Nmap) con vulnerabilidades (Nuclei) para eliminar falsos positivos.
 - **Descubrimiento Paralelo (v4.6.32)**: Ejecuta DHCP, ARP, mDNS, UPnP y Fping simultáneamente para un mapeo ultra-rápido.
-- **HyperScan**: Utiliza paquetes asíncronos TCP/SYN para escanear 65,535 puertos en segundos. y aumentar falsos negativos en enlaces ruidosos.
+- **HyperScan**: Utiliza paquetes asíncronos TCP/SYN para escanear 65,535 puertos en segundos (integración RustScan).
 
 ### Deep Scan Adaptativo
 
@@ -459,7 +459,7 @@ Si necesitas utilizar una clave SSH específica o un par de credenciales único 
 
 **Usando el asistente (recomendado):**
 
-```
+```text
 ? ¿Habilitar escaneo autenticado? [s/n]: s
 Modo de configuración de credenciales:
   [0] Universal (simple): detectar protocolo automáticamente

@@ -79,41 +79,39 @@ def test_redteam_smb_enum_parses_nmap(monkeypatch):
     assert host["domain"] == "EXAMPLE"
 
 
-def test_redteam_masscan_sweep_parses_ports(monkeypatch):
-    tools = {"masscan": True}
+def test_redteam_rustscan_sweep_parses_ports(monkeypatch):
+    tools = {"rustscan": True}
 
-    def _which(name):
-        return "/usr/bin/masscan" if name == "masscan" else None
+    def _run_multi(*args, **kwargs):
+        return {"10.0.0.10": [445]}, None
 
-    def _run_cmd(_args, _timeout_s=None, logger=None, **_kwargs):
-        output = "Discovered open port 445/tcp on 10.0.0.10\n"
-        return 0, output, ""
+    monkeypatch.setattr(net_discovery, "run_rustscan_multi", _run_multi)
 
-    monkeypatch.setattr(net_discovery.shutil, "which", _which)
-    monkeypatch.setattr(net_discovery, "_run_cmd", _run_cmd)
-    monkeypatch.setattr(net_discovery, "_is_root", lambda: True)
-
-    result = net_discovery._redteam_masscan_sweep(["10.0.0.0/30"], tools)
+    result = net_discovery._redteam_rustscan_sweep(["10.0.0.0/30"], tools)
     assert result["status"] == "ok"
     assert result["open_ports"][0]["port"] == 445
 
 
-def test_redteam_masscan_requires_root(monkeypatch):
-    tools = {"masscan": True}
-    monkeypatch.setattr(net_discovery.shutil, "which", lambda _name: "/usr/bin/masscan")
-    monkeypatch.setattr(net_discovery, "_is_root", lambda: False)
+def test_redteam_rustscan_returns_error(monkeypatch):
+    tools = {"rustscan": True}
 
-    result = net_discovery._redteam_masscan_sweep(["10.0.0.0/30"], tools)
-    assert result["status"] == "skipped_requires_root"
+    def _run_multi(*args, **kwargs):
+        return {}, "Rustscan failed"
+
+    monkeypatch.setattr(net_discovery, "run_rustscan_multi", _run_multi)
+
+    result = net_discovery._redteam_rustscan_sweep(["10.0.0.0/30"], tools)
+    assert result["status"] == "error"
+    assert "Rustscan failed" in result["error"]
 
 
-def test_redteam_masscan_sweep_skips_large(monkeypatch):
-    tools = {"masscan": True}
-    monkeypatch.setattr(net_discovery.shutil, "which", lambda _name: "/usr/bin/masscan")
-    monkeypatch.setattr(net_discovery, "_is_root", lambda: True)
-
-    result = net_discovery._redteam_masscan_sweep(["10.0.0.0/16"], tools)
-    assert result["status"] == "skipped_too_large"
+def test_redteam_rustscan_no_results(monkeypatch):
+    tools = {"rustscan": True}
+    monkeypatch.setattr(net_discovery, "run_rustscan_multi", lambda *a, **k: ({}, None))
+    # If no ports found, returns 'no_data' status?
+    # Let's check implementation behavior
+    result = net_discovery._redteam_rustscan_sweep(["10.0.0.0/16"], tools)
+    assert result["status"] == "no_data"
 
 
 def test_tcpdump_capture_paths(monkeypatch):

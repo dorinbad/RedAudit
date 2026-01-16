@@ -14,7 +14,7 @@
 
 ## 1. What RedAudit Is (and Is Not)
 
-RedAudit is an **automated network auditing framework** for Linux (Debian-family). It orchestrates a comprehensive toolchain (`nmap`, `nikto`, `nuclei`, `whatweb`, `testssl.sh`, `sqlmap`, `masscan`, and more) into a unified pipeline and produces structured reports.
+RedAudit is an **automated network auditing framework** for Linux (Debian-family). It orchestrates a comprehensive toolchain (`nmap`, `nikto`, `nuclei`, `whatweb`, `testssl.sh`, `sqlmap`, `rustscan`, and more) into a unified pipeline and produces structured reports.
 
 **It is:**
 
@@ -272,7 +272,7 @@ RedAudit v4.4+ introduces:
 
 - **Smart-Check Technology**: Correlates open ports (Nmap) with vulnerabilities (Nuclei) to eliminate false positives.
 - **Parallel Discovery (v4.6.32)**: Executed DHCP, ARP, mDNS, UPnP, and Fping simultaneously for ultra-fast network mapping.
-- **HyperScan**: Uses asynchronous TCP/SYN packets to scan 65,535 ports in seconds (Masscan algorithm).
+- **HyperScan**: Uses asynchronous TCP/SYN packets to scan 65,535 ports in seconds (RustScan integration).
 - **Smart-Throttle**: An adaptive rate limiting system for HyperScan operations.
 - **Algorithm**: Uses an Additive Increase, Multiplicative Decrease (AIMD) algorithm similar to TCP congestion control.
 - **Behavior**:
@@ -463,7 +463,7 @@ If you need to use a specific SSH key or a single credential pair for a specific
 
 **Using the wizard (recommended):**
 
-```
+```text
 ? Enable authenticated scanning? [y/n]: y
 Credential configuration mode:
   [0] Universal (simple): auto-detect protocol
