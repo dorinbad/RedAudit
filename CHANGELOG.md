@@ -8,6 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [v4.9.1] - 2026-01-16
+
+### Fixed
+
+- **Nuclei Wizard Prompt**: Fixed i18n key `nuclei_enable_q` to use existing `nuclei_q` key, displaying translated text instead of raw key.
+
+### Changed
+
+- **Code Cleanup**: Removed dead code `masscan_scanner.py` (replaced by RustScan in v4.8.0).
+
+### Documentation
+
+- **VLAN Limitations**: Added 802.1Q VLAN detection limitations to USAGE docs (EN/ES).
+
 ## [v4.9.0] - 2026-01-16
 
 ### Added

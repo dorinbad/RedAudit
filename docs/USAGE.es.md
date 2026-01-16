@@ -280,7 +280,16 @@ Los checks TLS profundos se omiten en modo full.
 
 **`Decryption failed`**
 Falta el archivo `.salt` o contraseña incorrecta.
-**Solución:** Asegurar que el archivo `.salt` está en el mismo directorio que el `.enc`.
+**Solucion:** Asegurar que el archivo `.salt` esta en el mismo directorio que el `.enc`.
+
+**VLANs ocultas no detectadas (802.1Q)**
+RedAudit descubre redes mediante tablas de enrutamiento (`ip route`) y vecinos ARP.
+Las VLANs aisladas en Capa 2 (ej: VLANs IPTV del ISP taggeadas por switches gestionados) **no son descubribles** desde el host auditor.
+**Soluciones alternativas:**
+
+- Consultar router/switch via SNMP (`--redteam` con SNMP habilitado)
+- Anadir VLANs conocidas manualmente a la lista de objetivos
+- En entornos Cisco, usar `--net-discovery` con CDP/LLDP si los switches emiten topologia
 
 ---
 

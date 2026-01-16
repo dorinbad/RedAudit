@@ -275,6 +275,15 @@ TLS deep checks are skipped in full mode.
 Missing `.salt` file or wrong password.
 **Fix:** Ensure the `.salt` file is in the same directory as the `.enc` file.
 
+**Hidden VLANs not detected (802.1Q)**
+RedAudit discovers networks via routing tables (`ip route`) and ARP neighbors.
+VLANs isolated at Layer 2 (e.g., ISP IPTV VLANs tagged by managed switches) are **not discoverable** from the audit host.
+**Workarounds:**
+
+- Query router/switch via SNMP (`--redteam` with SNMP enabled)
+- Manually add known VLANs to target list
+- For Cisco environments, use `--net-discovery` with CDP/LLDP if switches broadcast topology
+
 ---
 
 [Back to README](../README.md) | [Documentation Index](INDEX.md)
