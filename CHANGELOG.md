@@ -14,6 +14,14 @@ Release notes live under `docs/releases/` for additional context.
 
 - Restore interactive Nuclei enable prompt in Exhaustive profile (wizard).
 
+## [v4.8.3] - 2026-01-16
+
+### Fixed
+
+- **Installer Architecture**: Added ARM64/aarch64 architecture detection to support Raspberry Pi and Apple Silicon VMs.
+  - Previously attempted to download amd64 .deb on all platforms.
+  - Now gracefully falls back to nmap/apt if RustScan release asset is missing for the architecture.
+
 ## [v4.8.2] - 2026-01-16
 
 ### Fixed

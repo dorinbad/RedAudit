@@ -212,35 +212,57 @@ fi
 RUSTSCAN_VERSION="2.3.0"
 
 if ! command -v rustscan &> /dev/null; then
+    # Detect Architecture
+    ARCH=$(uname -m)
+    case $ARCH in
+        x86_64)
+            DEB_ARCH="amd64"
+            ;;
+        aarch64|arm64)
+            # RustScan 2.3.0 does not consistently provide a .deb for aarch64 on the main release page.
+            # However, for robustness, we will try to fetch if available or fallback.
+            # IMPORTANT: For v2.3.0, only amd64 .deb is standard.
+            # If we are on ARM, we might need to skip or warn if no .deb exists.
+            DEB_ARCH="aarch64"
+            ;;
+        *)
+            DEB_ARCH="unknown"
+            ;;
+    esac
+
     if [[ "$LANG_CODE" == "es" ]]; then
-        echo "[INFO] Instalando RustScan v${RUSTSCAN_VERSION} (escáner de puertos rápido)..."
+        echo "[INFO] Instalando RustScan v${RUSTSCAN_VERSION}..."
     else
-        echo "[INFO] Installing RustScan v${RUSTSCAN_VERSION} (fast port scanner)..."
+        echo "[INFO] Installing RustScan v${RUSTSCAN_VERSION}..."
     fi
 
-    RUSTSCAN_DEB="/tmp/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
-    RUSTSCAN_URL="https://github.com/RustScan/RustScan/releases/download/${RUSTSCAN_VERSION}/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
+    # NOTE: As of 2024/2025, RustScan release assets for ARM .deb are not always guaranteed
+    # compatible or consistent in naming (sometimes zip).
+    # For now, we only support amd64 officially via .deb.
+    # For ARM/Kali-ARM/Pi, we fallback to nmap to avoid breaking the install.
 
-    if wget -q -O "$RUSTSCAN_DEB" "$RUSTSCAN_URL" 2>/dev/null; then
-        if dpkg -i "$RUSTSCAN_DEB" 2>/dev/null; then
-            if [[ "$LANG_CODE" == "es" ]]; then
-                echo "[OK] RustScan instalado correctamente"
+    if [[ "$DEB_ARCH" == "amd64" ]]; then
+        RUSTSCAN_DEB="/tmp/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
+        RUSTSCAN_URL="https://github.com/RustScan/RustScan/releases/download/${RUSTSCAN_VERSION}/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
+
+        if wget -q -O "$RUSTSCAN_DEB" "$RUSTSCAN_URL" 2>/dev/null; then
+            if dpkg -i "$RUSTSCAN_DEB" 2>/dev/null; then
+                 if [[ "$LANG_CODE" == "es" ]]; then echo "[OK] RustScan instalado"; else echo "[OK] RustScan installed"; fi
             else
-                echo "[OK] RustScan installed successfully"
+                 if [[ "$LANG_CODE" == "es" ]]; then echo "[WARN] Falló la instalación del .deb. Usando nmap."; else echo "[WARN] .deb install failed. Using nmap."; fi
             fi
+            rm -f "$RUSTSCAN_DEB" 2>/dev/null
         else
-            if [[ "$LANG_CODE" == "es" ]]; then
-                echo "[WARN] No se pudo instalar RustScan. Usando nmap como fallback."
-            else
-                echo "[WARN] Could not install RustScan. Using nmap as fallback."
-            fi
+            if [[ "$LANG_CODE" == "es" ]]; then echo "[WARN] Falló descarga. Usando nmap."; else echo "[WARN] Download failed. Using nmap."; fi
         fi
-        rm -f "$RUSTSCAN_DEB" 2>/dev/null
     else
+        # Non-amd64 architecture
         if [[ "$LANG_CODE" == "es" ]]; then
-            echo "[WARN] No se pudo descargar RustScan. Usando nmap como fallback."
+            echo "[WARN] Arquitectura $ARCH detectada. RustScan .deb solo disponible para amd64."
+            echo "       Usando nmap como fallback (más lento pero compatible)."
         else
-            echo "[WARN] Could not download RustScan. Using nmap as fallback."
+            echo "[WARN] Architecture $ARCH detected. RustScan .deb checks only support amd64."
+            echo "       Using nmap as fallback (slower but compatible)."
         fi
     fi
 else

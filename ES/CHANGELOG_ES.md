@@ -14,6 +14,14 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 - Restaurar pregunta interactiva para activar Nuclei en perfil Exhaustivo (asistente).
 
+## [v4.8.3] - 2026-01-16
+
+### Corregido
+
+- **Arquitectura del Instalador**: Añadida detección de arquitectura ARM64/aarch64 para soporte de Raspberry Pi y VMs Apple Silicon.
+  - Anteriormente intentaba descargar el .deb de amd64 en todas las plataformas.
+  - Ahora hace fallback elegante a nmap/apt si el asset de RustScan no está disponible para la arquitectura.
+
 ## [v4.8.2] - 2026-01-16
 
 ### Corregido
