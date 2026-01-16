@@ -41,7 +41,8 @@ These items are ordered chronologically and include delivered, planned, and defe
 
 | Feature | Status | Description |
 | :--- | :--- | :--- |
-| **Masscan Backend** | Done (v4.7.0) | New `masscan_scanner.py` for orders-of-magnitude faster port discovery. Scans top 10,000 ports in seconds. |
+| **Masscan Backend** | Replaced (v4.8.0) | `masscan_scanner.py` replaced by `RustScan` for higher speed and accuracy. |
+| **RustScan Integration** | Done (v4.8.0) | New primary module for HyperScan. Scans all ports in ~3s. |
 | **Docker Network Fallback** | Done (v4.7.1) | Automatic Scapy fallback when Masscan returns 0 ports (Docker bridge networks). |
 | **Nuclei Timeout Fix** | Done (v4.7.2) | Increased command_runner timeout to 600s for Nuclei (was 60s, causing batch timeouts). |
 | **NVD API 404 Skip** | Done (v4.7.2) | Skip retries on 404 responses (CPE not found). Reduces log spam. |

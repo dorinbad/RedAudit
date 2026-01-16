@@ -367,11 +367,11 @@ def hyperscan_full_port_sweep(
     progress_callback: Optional[HyperScanProgressCallback] = None,
 ) -> List[int]:
     """
-    v4.7: Scan ALL 65,535 TCP ports on a single host.
+    v4.8: Scan ALL 65,535 TCP ports on a single host.
 
     Priority order:
-    1. masscan (fastest, ~seconds) - requires root
-    2. asyncio TCP connect (slower but no root needed)
+    1. RustScan (fastest, ~3 seconds) - requires rustscan installed
+    2. asyncio TCP connect (fallback, no external deps)
 
     Args:
         target_ip: Single IP address to scan
@@ -388,49 +388,51 @@ def hyperscan_full_port_sweep(
 
     start_time = time.time()
 
-    # v4.7.0: Try masscan first (orders of magnitude faster)
+    # v4.8.0: Try RustScan first (fastest, integrates with nmap)
     try:
-        from redaudit.core.masscan_scanner import is_masscan_available, masscan_sweep
+        from redaudit.core.rustscan import is_rustscan_available, run_rustscan_discovery_only
 
-        if is_masscan_available():
+        if is_rustscan_available():
             if logger:
                 logger.info(
-                    "HyperScan FULL (masscan): Scanning %s with masscan (fast mode)",
+                    "HyperScan FULL (RustScan): Fast port discovery on %s",
                     target_ip,
                 )
-            # Use top 10000 ports for speed, can be expanded
-            open_ports = masscan_sweep(
+            open_ports, error = run_rustscan_discovery_only(
                 target_ip,
-                ports="1-10000",
-                rate=1000,
-                timeout_s=30,
+                ulimit=5000,
+                timeout=120.0,
                 logger=logger,
             )
-            # v4.7.1: Only return early if masscan found ports
-            # If masscan returns empty (e.g., Docker bridge network issues),
-            # fall back to scapy for accurate detection
-            if open_ports:
+            if not error and open_ports:
                 duration = time.time() - start_time
                 if logger:
                     logger.info(
-                        "HyperScan FULL (masscan): Found %d ports on %s in %.1fs",
+                        "HyperScan FULL (RustScan): Found %d ports on %s in %.1fs",
                         len(open_ports),
                         target_ip,
                         duration,
                     )
                 return open_ports
+            elif error:
+                if logger:
+                    logger.debug(
+                        "RustScan failed on %s: %s, falling back to asyncio",
+                        target_ip,
+                        error,
+                    )
             else:
                 if logger:
                     logger.debug(
-                        "masscan found 0 ports on %s, falling back to scapy",
+                        "RustScan found 0 ports on %s, falling back to asyncio",
                         target_ip,
                     )
     except ImportError:
         if logger:
-            logger.debug("masscan_scanner module not available, using fallback")
+            logger.debug("rustscan module not available, using fallback")
     except Exception as e:
         if logger:
-            logger.warning("masscan failed for %s: %s, falling back to asyncio", target_ip, e)
+            logger.warning("RustScan failed for %s: %s, falling back to asyncio", target_ip, e)
 
     # Fallback: Original asyncio TCP connect sweep
     # Generate all 65535 ports

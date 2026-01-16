@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from redaudit.core.command_runner import CommandRunner
+from redaudit.core.rustscan import run_rustscan_multi, is_rustscan_available
 from redaudit.utils.dry_run import is_dry_run
 from redaudit.utils.oui_lookup import lookup_vendor_online
 
@@ -1124,13 +1125,13 @@ def _run_redteam_discovery(
 
     target_ips = _gather_redteam_targets(result, max_targets=max_targets)
 
-    masscan = {}
+    rustscan_res = {}
     if options.get("use_masscan", True):
-        masscan = _run_step(
-            "masscan sweep",
-            lambda: _redteam_masscan_sweep(target_networks, tools=tools, logger=logger),
+        rustscan_res = _run_step(
+            "rustscan sweep",
+            lambda: _redteam_rustscan_sweep(target_networks, tools=tools, logger=logger),
         )
-    open_tcp = _index_open_tcp_ports(masscan)
+    open_tcp = _index_open_tcp_ports(rustscan_res)
 
     smb_targets = _filter_targets_by_port(target_ips, open_tcp, port=445, fallback_max=15)
     rpc_targets = _filter_targets_by_any_port(
@@ -1213,7 +1214,8 @@ def _run_redteam_discovery(
         "interface": iface,
         "targets_considered": len(target_ips),
         "targets_sample": target_ips[:10],
-        "masscan": masscan,
+        "masscan": rustscan_res,  # Legacy key for schema compatibility
+        "rustscan": rustscan_res,
         "snmp": snmp,
         "smb": smb,
         "rpc": rpc,
@@ -1572,79 +1574,50 @@ def _is_root() -> bool:
         return False
 
 
-def _redteam_masscan_sweep(
+def _redteam_rustscan_sweep(
     target_networks: List[str],
     tools: Dict[str, bool],
     logger=None,
 ) -> Dict[str, Any]:
     """
-    Optional fast port discovery using masscan.
+    Optional fast port discovery using RustScan.
 
-    Safety defaults:
-    - Requires root
-    - Skips if targets are too large (to avoid accidental large-scale scans)
-    - Scans only a small port set used by redteam discovery
+    Replaces legacy Masscan sweep.
     """
     if not target_networks:
         return {"status": "no_targets"}
-    if not tools.get("masscan") or not shutil.which("masscan"):
-        return {"status": "tool_missing", "tool": "masscan"}
-    if not _is_root():
-        return {"status": "skipped_requires_root"}
+    if not tools.get("rustscan") and not is_rustscan_available():
+        return {"status": "tool_missing", "tool": "rustscan"}
 
-    nets: List[ipaddress.IPv4Network] = []
-    total_addrs = 0
-    for token in target_networks:
-        try:
-            net = ipaddress.ip_network(token, strict=False)
-        except ValueError:
-            continue
-        if net.version != 4:
-            continue
-        nets.append(net)
-        total_addrs += int(net.num_addresses)
+    # Red Team specific ports
+    ports_to_scan = [53, 88, 135, 389, 445, 636, 161]
 
-    if total_addrs > 4096:
-        return {"status": "skipped_too_large", "total_addresses": total_addrs}
+    # Start scan
+    found_map, error = run_rustscan_multi(
+        target_networks,  # run_rustscan_multi handles list
+        ports=ports_to_scan,
+        ulimit=5000,
+        timeout=30.0,
+        logger=logger,
+    )
 
-    port_spec = "T:53,T:88,T:135,T:389,T:445,T:636,U:161"
-    cmd = [
-        "masscan",
-        "-p",
-        port_spec,
-        "--rate",
-        "500",
-        "--wait",
-        "0",
-        "--open-only",
-    ] + [str(n) for n in nets]
+    if error:
+        return {"status": "error", "error": str(error)[:200]}
 
-    rc, out, err = _run_cmd(cmd, timeout_s=25, logger=logger)
-    text = (out or "") + "\n" + (err or "")
+    # Flatten map to list of dicts for reporting
+    open_ports = []
+    for ip_addr, ports in found_map.items():
+        for p in ports:
+            open_ports.append(
+                {"ip": ip_addr, "port": p, "protocol": "tcp"}  # RustScan is TCP only roughly
+            )
 
-    open_ports: List[Dict[str, Any]] = []
-    for line in text.splitlines():
-        m = re.search(
-            r"Discovered open port (\d+)/(tcp|udp) on (\d{1,3}(?:\.\d{1,3}){3})",
-            line,
-            re.IGNORECASE,
-        )
-        if not m:
-            continue
-        port = int(m.group(1))
-        proto = m.group(2).lower()
-        ip_str = m.group(3)
-        open_ports.append({"ip": ip_str, "port": port, "protocol": proto})
-
-    payload: Dict[str, Any] = {
+    return {
         "status": "ok" if open_ports else "no_data",
-        "ports_scanned": [53, 88, 135, 389, 445, 636, 161],
-        "ports_scanned_spec": port_spec,
-        "open_ports": open_ports[:200],
+        "ports_scanned": ports_to_scan,
+        "ports_scanned_spec": ",".join(str(p) for p in ports_to_scan),
+        "open_ports": open_ports,
     }
-    if rc != 0 and err.strip():
-        payload["error"] = err.strip()[:200]
-    return payload
 
 
 def _safe_truncate(text: str, limit: int) -> str:

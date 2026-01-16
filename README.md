@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](ES/README_ES.md)
 
-[![Version](https://img.shields.io/badge/version-4.7.0-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
+[![Version](https://img.shields.io/badge/version-4.8.0-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -20,7 +20,7 @@ RedAudit is an **automated network auditing framework** for authorized assessmen
 
 Instead of running every tool against every host, RedAudit escalates scanning only when identity remains weak or signals are ambiguous, reducing noise while preserving coverage for hard-to-identify devices. HTTP title/server hints and device-type fingerprints help avoid unnecessary deep scans and heavy web-app scanners on infrastructure devices.
 
-It orchestrates a comprehensive toolchain (nmap, nikto, nuclei, whatweb, testssl.sh, sqlmap, masscan, and more) and applies **Smart-Check** verification to reduce false positives before reporting.
+It orchestrates a comprehensive toolchain (nmap, nikto, nuclei, whatweb, testssl.sh, sqlmap, rustscan, and more) and applies **Smart-Check** verification to reduce false positives before reporting.
 
 **Use cases**: Defensive hardening, penetration test scoping, change tracking between assessments.
 
@@ -138,7 +138,7 @@ RedAudit does not apply a fixed scan profile to all hosts. Instead, it uses runt
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│       PHASE 0: HyperScan / Masscan Reuse (Optional)         │
+│       PHASE 0: HyperScan / RustScan Discovery (Optional)    │
 │       Feeds discovered ports to Phase 1 (Speed/Stealth)     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
@@ -468,7 +468,7 @@ RedAudit orchestrates these tools:
 | **DNS/Whois** | `dig`, `whois` | Reverse DNS and ownership lookup |
 | **Topology** | `arp-scan`, `ip route` | L2 discovery, VLAN detection, gateway mapping |
 | **Net Discovery** | `nbtscan`, `netdiscover`, `fping`, `avahi` | Broadcast/L2 discovery |
-| **Red Team Recon** | `snmpwalk`, `enum4linux`, `masscan`, `kerbrute` | Optional active enumeration (opt-in) |
+| **Red Team Recon** | `snmpwalk`, `enum4linux`, `rustscan`, `kerbrute` | Optional active enumeration (opt-in) |
 | **Encryption** | `python3-cryptography` | AES-128 encryption for reports |
 
 ### Project Structure
@@ -485,6 +485,7 @@ redaudit/
 │   ├── scanner/            # Low-level Nmap wrapper + IPv6 helpers
 │   ├── network.py          # Network interface detection
 │   ├── hyperscan.py        # Ultra-fast parallel discovery (Phase 0)
+│   ├── rustscan.py         # RustScan integration for port discovery (v4.8+)
 │   ├── net_discovery.py    # Enhanced L2/Broadcast discovery
 │   ├── topology.py         # Network topology discovery (L3/VLAN)
 │   ├── udp_probe.py        # UDP probing helpers
@@ -563,6 +564,15 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 ## License
 
 RedAudit is released under the **GNU General Public License v3.0 (GPLv3)**. See [LICENSE](LICENSE).
+
+---
+
+## Acknowledgements
+
+RedAudit integrates the following open source projects:
+
+- **[RustScan](https://github.com/RustScan/RustScan)** - Ultra-fast port scanner by [@bee-san](https://github.com/bee-san). Licensed under GPLv3.
+- **[Nmap](https://nmap.org/)** - The network mapper by Gordon Lyon (Fyodor). Licensed under Nmap Public Source License.
 
 ---
 

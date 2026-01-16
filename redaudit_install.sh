@@ -205,6 +205,56 @@ fi
 # 2d) Install OWASP ZAP (apt for Kali/Debian, snap for Ubuntu)
 # -------------------------------------------
 
+# -------------------------------------------
+# 2e) Install RustScan (fast port scanner)
+# -------------------------------------------
+
+RUSTSCAN_VERSION="2.3.0"
+
+if ! command -v rustscan &> /dev/null; then
+    if [[ "$LANG_CODE" == "es" ]]; then
+        echo "[INFO] Instalando RustScan v${RUSTSCAN_VERSION} (escáner de puertos rápido)..."
+    else
+        echo "[INFO] Installing RustScan v${RUSTSCAN_VERSION} (fast port scanner)..."
+    fi
+
+    RUSTSCAN_DEB="/tmp/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
+    RUSTSCAN_URL="https://github.com/RustScan/RustScan/releases/download/${RUSTSCAN_VERSION}/rustscan_${RUSTSCAN_VERSION}_amd64.deb"
+
+    if wget -q -O "$RUSTSCAN_DEB" "$RUSTSCAN_URL" 2>/dev/null; then
+        if dpkg -i "$RUSTSCAN_DEB" 2>/dev/null; then
+            if [[ "$LANG_CODE" == "es" ]]; then
+                echo "[OK] RustScan instalado correctamente"
+            else
+                echo "[OK] RustScan installed successfully"
+            fi
+        else
+            if [[ "$LANG_CODE" == "es" ]]; then
+                echo "[WARN] No se pudo instalar RustScan. Usando nmap como fallback."
+            else
+                echo "[WARN] Could not install RustScan. Using nmap as fallback."
+            fi
+        fi
+        rm -f "$RUSTSCAN_DEB" 2>/dev/null
+    else
+        if [[ "$LANG_CODE" == "es" ]]; then
+            echo "[WARN] No se pudo descargar RustScan. Usando nmap como fallback."
+        else
+            echo "[WARN] Could not download RustScan. Using nmap as fallback."
+        fi
+    fi
+else
+    if [[ "$LANG_CODE" == "es" ]]; then
+        echo "[OK] RustScan ya instalado ($(rustscan --version 2>/dev/null | head -1 || echo 'version unknown'))"
+    else
+        echo "[OK] RustScan already installed ($(rustscan --version 2>/dev/null | head -1 || echo 'version unknown'))"
+    fi
+fi
+
+# -------------------------------------------
+# 2f) Install OWASP ZAP (apt for Kali/Debian, snap for Ubuntu)
+# -------------------------------------------
+
 if ! command -v zap.sh >/dev/null 2>&1 && ! command -v zaproxy >/dev/null 2>&1; then
     ZAP_INSTALLED=false
 

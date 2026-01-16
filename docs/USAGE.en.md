@@ -157,6 +157,7 @@ Grouped by operational function. Verified against the current codebase.
 | `--net-discovery` | Broadcast protocols (dhcp,netbios,mdns,upnp,arp,fping) |
 | `--topology` | L2/L3 topology mapping (routes/gateways) |
 | `--hyperscan-mode MODE` | `auto`, `connect`, or `syn` (default: auto) |
+| `--trust-hyperscan` | Trust HyperScan results for Deep Scan (skip -p- check) |
 | `--udp-mode` | `quick` (priority ports) or `full` (top ports) |
 | `--redteam` | Add AD/Kerberos/SNMP recon techniques |
 | `--redteam-active-l2` | Enable noisier L2 active probing |
@@ -190,8 +191,9 @@ Grouped by operational function. Verified against the current codebase.
 | `--lang` | Interface/report language (en/es) |
 | `--html-report` | Generate interactive dashboard (HTML) |
 | `--webhook URL` | Send webhook alerts (JSON) for high/critical findings |
-| `--nuclei` | Enable Nuclei template scanning (requires `nuclei`; runs in full mode only) |
-| `--no-nuclei` | Disable Nuclei template scanning (overrides persisted defaults) |
+| `--nuclei` | Enable Nuclei template scanning (requires `nuclei`; runs in full mode only; OFF by default) |
+| `--nuclei-timeout S` | Nuclei batch timeout in seconds (default: 300) |
+| `--no-nuclei` | Disable Nuclei template scanning (default) |
 | `--no-vuln-scan` | Skip Nikto/Web vulnerability scanning |
 | `--cve-lookup` | Correlate services with NVD CVE data |
 

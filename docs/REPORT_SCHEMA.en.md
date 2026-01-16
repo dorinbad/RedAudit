@@ -263,7 +263,8 @@ Network discovery is **best-effort**: missing tools will reduce visibility but s
 | `ldap` | object | LDAP RootDSE summary (best-effort) |
 | `kerberos` | object | Kerberos realm discovery + optional userenum (best-effort) |
 | `dns_zone_transfer` | object | DNS AXFR attempt summary (best-effort; requires zone hint) |
-| `masscan` | object | Optional masscan summary (requires root; skipped on large ranges) |
+| `rustscan` | object | Optional RustScan summary (v4.8.0) |
+| `masscan` | object | (Deprecated) Alias for `rustscan` |
 | `vlan_enum` | object | VLAN ID/DTP hints (passive; requires tcpdump + root) |
 | `stp_topology` | object | STP BPDU hints (passive; requires tcpdump + root) |
 | `hsrp_vrrp` | object | HSRP/VRRP presence hints (passive; requires tcpdump + root) |

@@ -10,6 +10,30 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [v4.8.0] - 2026-01-16
+
+### Added
+
+- **RustScan Integration**: New `rustscan.py` module for ultra-fast port discovery.
+  - RustScan finds all 65535 ports in ~3 seconds (vs 142s masscan, 6s nmap).
+  - Automatic nmap fallback if RustScan not installed.
+  - Added to installer (`redaudit_install.sh`) as optional but recommended dependency.
+
+### Changed
+
+- **HyperScan-First Architecture**: Replaced masscan with RustScan as primary port scanner.
+  - Based on benchmark: RustScan+nmap (38s) vs masscan (142s) vs nmap-only (43s).
+  - Full port range discovery now significantly faster on physical networks.
+
+- **Nuclei OFF by Default**: Nuclei template scanner now disabled by default.
+  - Use `--nuclei` flag to enable explicitly.
+  - Reason: Slow on web-dense networks with marginal value for network audits.
+  - Still available via `--nuclei` flag when needed for specific web security testing.
+
+### Documentation
+
+- Added `scan_results_private/HYPERSCAN_INVESTIGATION_2026-01-16.md` with full benchmark data.
+
 ## [v4.7.2] - 2026-01-15
 
 ### Fixed

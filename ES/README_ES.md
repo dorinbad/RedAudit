@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](../README.md)
 
-[![Versión](https://img.shields.io/badge/versión-4.7.0-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
+[![Versión](https://img.shields.io/badge/versión-4.8.0-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -16,7 +16,7 @@ RedAudit es un **framework de auditoría de red automatizado** para evaluaciones
 
 En lugar de ejecutar todas las herramientas contra todos los hosts, RedAudit escala solo cuando la identidad es débil o las señales son ambiguas, reduciendo ruido sin perder cobertura en entornos complejos. Las pistas HTTP (título/servidor) y el tipo de dispositivo ayudan a evitar deep scans innecesarios y escáneres web pesados en infraestructura.
 
-Orquesta un toolchain completo (nmap, nikto, nuclei, whatweb, testssl.sh, sqlmap, masscan y más) y aplica verificación **Smart-Check** para reducir falsos positivos antes de reportar.
+Orquesta un toolchain completo (nmap, nikto, nuclei, whatweb, testssl.sh, sqlmap, rustscan y más) y aplica verificación **Smart-Check** para reducir falsos positivos antes de reportar.
 
 **Casos de uso**: Hardening defensivo, acotación de pentests, seguimiento de cambios entre evaluaciones.
 
@@ -135,7 +135,7 @@ RedAudit no aplica un perfil de escaneo fijo a todos los hosts. En su lugar, usa
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│       PHASE 0: HyperScan / Masscan Reuse (Opcional)         │
+│       PHASE 0: HyperScan / RustScan Discovery (Opcional)    │
 │       Alimenta puertos abiertos a Fase 1 (Velocidad)        │
 └─────────────────────────┬───────────────────────────────────┘
                           │
@@ -561,6 +561,17 @@ Consulta [CHANGELOG_ES.md](CHANGELOG_ES.md) para el historial completo de versio
 ## Licencia
 
 RedAudit se distribuye bajo la **GNU General Public License v3.0 (GPLv3)**. Consulta [LICENSE](../LICENSE).
+
+---
+
+---
+
+## Agradecimientos
+
+RedAudit integra los siguientes proyectos de código abierto:
+
+- **[RustScan](https://github.com/RustScan/RustScan)** - Escáner de puertos ultra-rápido por [@bee-san](https://github.com/bee-san). Licenciado bajo GPLv3.
+- **[Nmap](https://nmap.org/)** - El mapeador de red por Gordon Lyon (Fyodor). Licenciado bajo Nmap Public Source License.
 
 ---
 
