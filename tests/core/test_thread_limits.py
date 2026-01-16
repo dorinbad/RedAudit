@@ -4,7 +4,7 @@ Tests for Thread Limit Logic (v4.6.29).
 """
 
 from unittest.mock import MagicMock
-import pytest
+
 from redaudit.core.auditor_scan import AuditorScan
 from redaudit.utils.constants import MAX_THREADS
 
@@ -55,6 +55,12 @@ class TestThreadLimits:
             return fs, []  # completed=fs, pending=[]
 
         monkeypatch.setattr("redaudit.core.auditor_scan.wait", mock_wait)
+
+        # Mock as_completed to return immediately (v4.10.1 fix for fallback path)
+        def mock_as_completed(fs, timeout=None):
+            return list(fs)
+
+        monkeypatch.setattr("redaudit.core.auditor_scan.as_completed", mock_as_completed)
 
         # Fake hosts
         class MockHost:
