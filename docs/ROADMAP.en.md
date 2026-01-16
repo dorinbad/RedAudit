@@ -47,6 +47,32 @@ These items are ordered chronologically and include delivered, planned, and defe
 | **Nuclei Timeout Fix** | Done (v4.7.2) | Increased command_runner timeout to 600s for Nuclei (was 60s, causing batch timeouts). |
 | **NVD API 404 Skip** | Done (v4.7.2) | Skip retries on 404 responses (CPE not found). Reduces log spam. |
 
+### v4.8.x RustScan and Installer Fixes (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **RustScan Full Port Range** | Done (v4.8.2) | Force `-r 1-65535` to scan all ports instead of RustScan's default top 1000. |
+| **ARM64 Installer Support** | Done (v4.8.3) | Added ARM64/aarch64 detection for Raspberry Pi and Apple Silicon VMs. |
+| **Nuclei Wizard Toggle** | Done (v4.8.1) | Restore interactive Nuclei enable prompt in Exhaustive profile. |
+
+### v4.9.0 Hidden Network Detection (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Routed Network Discovery** | Done (v4.9.0) | `detect_routed_networks()` parses `ip route` and `ip neigh` for hidden networks. |
+| **Wizard Hidden Network Prompt** | Done (v4.9.0) | Interactive prompt to include discovered routed networks in scan scope. |
+| **`--scan-routed` CLI Flag** | Done (v4.9.0) | Non-interactive flag to auto-add routed networks to targets. |
+| **VLAN Limitation Docs** | Done (v4.9.0) | Documented that 802.1Q L2-isolated VLANs are not discoverable without SNMP/switch access. |
+
+### v4.10 Advanced Discovery (Planned)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **SNMP Router Query** | Planned | Query router interfaces and remote ARP tables via `snmpwalk`. |
+| **LLDP Discovery** | Planned | Discover switch topology on managed networks via `lldpctl`. |
+| **CDP Discovery** | Planned | Cisco Discovery Protocol parsing for Cisco-based topologies. |
+| **VLAN Tagging Detection** | Planned | Detect 802.1Q tagged VLANs on the audit host interfaces. |
+
 ### v4.7 Audit Follow-ups (Priority: High)
 
 | Feature | Status | Description |

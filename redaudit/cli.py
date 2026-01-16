@@ -434,7 +434,7 @@ Examples:
     parser.add_argument(
         "--scan-routed",
         action="store_true",
-        help="Automatically include discovered discovered routed networks (via local gateways) in scan scope",
+        help="Automatically include discovered routed networks (via local gateways) in scan scope",
     )
     parser.add_argument(
         "--redteam",

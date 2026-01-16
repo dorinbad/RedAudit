@@ -42,11 +42,37 @@ Estos elementos están ordenados cronológicamente e incluyen trabajo entregado,
 
 | Caracteristica | Estado | Descripcion |
 | :--- | :--- | :--- |
-| **Backend Masscan** | Reemplazado (v4.8.0) | `masscan_scanner.py` reemplazado por `RustScan` para mayor velocidad y precisión. |
-| **Integración RustScan** | Hecho (v4.8.0) | Nuevo módulo primario para HyperScan. Escaneo de todos los puertos en ~3s. |
+| **Backend Masscan** | Reemplazado (v4.8.0) | `masscan_scanner.py` reemplazado por `RustScan` para mayor velocidad y precision. |
+| **Integracion RustScan** | Hecho (v4.8.0) | Nuevo modulo primario para HyperScan. Escaneo de todos los puertos en ~3s. |
 | **Fallback Redes Docker** | Hecho (v4.7.1) | Fallback automatico a Scapy cuando Masscan retorna 0 puertos (redes bridge Docker). |
 | **Fix Timeout Nuclei** | Hecho (v4.7.2) | Timeout de command_runner aumentado a 600s para Nuclei (era 60s, causando timeouts de batch). |
 | **Skip 404 API NVD** | Hecho (v4.7.2) | Omitir reintentos en respuestas 404 (CPE no encontrado). Reduce spam de logs. |
+
+### v4.8.x RustScan y Correcciones Instalador (Hecho)
+
+| Caracteristica | Estado | Descripcion |
+| :--- | :--- | :--- |
+| **RustScan Rango Completo** | Hecho (v4.8.2) | Forzar `-r 1-65535` para escanear todos los puertos en vez del top 1000 por defecto. |
+| **Soporte ARM64 Instalador** | Hecho (v4.8.3) | Deteccion ARM64/aarch64 para Raspberry Pi y VMs Apple Silicon. |
+| **Toggle Nuclei en Wizard** | Hecho (v4.8.1) | Restaurar prompt interactivo para activar Nuclei en perfil Exhaustivo. |
+
+### v4.9.0 Deteccion de Redes Ocultas (Hecho)
+
+| Caracteristica | Estado | Descripcion |
+| :--- | :--- | :--- |
+| **Descubrimiento Redes Enrutadas** | Hecho (v4.9.0) | `detect_routed_networks()` parsea `ip route` e `ip neigh` para redes ocultas. |
+| **Prompt Wizard Redes Ocultas** | Hecho (v4.9.0) | Prompt interactivo para incluir redes enrutadas descubiertas en el alcance. |
+| **Flag CLI `--scan-routed`** | Hecho (v4.9.0) | Flag no interactivo para anadir automaticamente redes enrutadas a objetivos. |
+| **Documentacion Limitacion VLAN** | Hecho (v4.9.0) | Documentado que VLANs 802.1Q aisladas a L2 no son descubribles sin SNMP/acceso al switch. |
+
+### v4.10 Descubrimiento Avanzado (Planificado)
+
+| Caracteristica | Estado | Descripcion |
+| :--- | :--- | :--- |
+| **Query SNMP a Router** | Planificado | Consultar interfaces del router y tablas ARP remotas via `snmpwalk`. |
+| **Descubrimiento LLDP** | Planificado | Topologia de switches en redes gestionadas via `lldpctl`. |
+| **Descubrimiento CDP** | Planificado | Parseo de Cisco Discovery Protocol para topologias Cisco. |
+| **Deteccion VLAN Tagging** | Planificado | Detectar VLANs taggeadas 802.1Q en las interfaces del host auditor. |
 
 ### v4.7 Seguimiento de Auditoria (Prioridad: Alta)
 
