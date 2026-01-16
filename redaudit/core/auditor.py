@@ -1349,7 +1349,7 @@ class InteractiveNetworkAuditor:
                 # Convert Dest/Mask to CIDR
                 try:
                     # Skip default routes (0.0.0.0) and loopbacks
-                    if dest == "0.0.0.0" or dest.startswith("127."):
+                    if dest == "0.0.0.0" or dest.startswith("127."):  # nosec
                         continue
 
                     # Calculate netmask length

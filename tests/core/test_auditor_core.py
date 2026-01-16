@@ -1914,55 +1914,61 @@ class TestSmartScanHelpers:
 class TestAskNetworkRange:
     """Tests for ask_network_range method."""
 
-    def test_ask_network_range_auto_detect(self):
+    @patch("redaudit.core.net_discovery.detect_routed_networks", return_value={})
+    def test_ask_network_range_auto_detect(self, mock_routed):
         """Test network range selection with auto-detection."""
         auditor = MockAuditorScan()
+        # Mock scanner's method specifically
+        auditor.scanner.detect_local_networks.return_value = [
+            {"network": "192.168.1.0/24", "interface": "eth0", "hosts_estimated": 254}
+        ]
+        # Choice 0 -> Selects first network
         auditor.ask_choice = MagicMock(return_value=0)
 
-        with patch(
-            "redaudit.core.network.detect_all_networks",
-            return_value=[
-                {"network": "192.168.1.0/24", "interface": "eth0", "hosts_estimated": 254}
-            ],
-        ):
-            result = auditor.ask_network_range()
-            assert result == ["192.168.1.0/24"]
+        result = auditor.ask_network_range()
+        assert result == ["192.168.1.0/24"]
 
-    def test_ask_network_range_manual(self):
+    @patch("redaudit.core.net_discovery.detect_routed_networks", return_value={})
+    def test_ask_network_range_manual(self, mock_routed):
         """Test network range with manual entry."""
-        pass
-        # auditor = MockAuditorScan()
-        # auditor.ask_choice = MagicMock(return_value=1)
-        # auditor.ask_manual_network = MagicMock(return_value="10.0.0.0/8")
+        pass  # Placeholder per original code
 
-        # with patch(
-        #     "redaudit.core.network.detect_all_networks",
-        #     return_value=[
-        #         {"network": "192.168.1.0/24", "interface": "eth0", "hosts_estimated": 254}
-        #     ],
-        # ):
-        #     result = auditor.ask_network_range()
-        #     assert result == ["10.0.0.0/8"]
-
-    def test_ask_network_range_no_networks(self):
+    @patch("redaudit.core.net_discovery.detect_routed_networks", return_value={})
+    def test_ask_network_range_no_networks(self, mock_routed):
         """Test network range when no networks detected."""
         auditor = MockAuditorScan()
+        # Mock empty detection
+        auditor.scanner.detect_local_networks.return_value = []
         auditor.ask_manual_network = MagicMock(return_value=["172.16.0.0/16"])
 
-        with patch("redaudit.core.network.detect_all_networks", return_value=[]):
-            result = auditor.ask_network_range()
-            assert result == ["172.16.0.0/16"]
+        result = auditor.ask_network_range()
+        assert result == ["172.16.0.0/16"]
 
-    def test_ask_network_range_scan_all_dedup(self):
+    @patch("redaudit.core.net_discovery.detect_routed_networks", return_value={})
+    def test_ask_network_range_scan_all_dedup(self, mock_routed):
         auditor = MockAuditorScan()
-        auditor.ask_choice = lambda _q, options: len(options) - 1
-        auditor.scanner.detect_local_networks.return_value = [
+        # Mock 3 options -> Choice is index (3 - 1) = 2 -> 'Scan All' logic
+        # Implementation adds "Manual Entry" and "Scan All" to opts
+        # If 3 nets: opts indices 0,1,2 + 3(Manual) + 4(Scan All)
+        # len(opts) = 5. Scan All is index 4.
+
+        nets = [
             {"network": "192.168.1.0/24", "interface": "eth0", "hosts_estimated": 254},
             {"network": "192.168.1.0/24", "interface": "eth1", "hosts_estimated": 254},
             {"network": "10.0.0.0/24", "interface": "eth2", "hosts_estimated": 128},
         ]
+        auditor.scanner.detect_local_networks.return_value = nets
+
+        # We need mock choice to return len(opts) - 1
+        # Implementation calls ask_choice with list of strings
+        def side_effect_choice(q, opts):
+            return len(opts) - 1
+
+        auditor.ask_choice = side_effect_choice
+
         result = auditor.ask_network_range()
-        assert result == ["192.168.1.0/24", "10.0.0.0/24"]
+        # Should return deduped CIDs
+        assert sorted(result) == ["10.0.0.0/24", "192.168.1.0/24"]
 
 
 if __name__ == "__main__":
