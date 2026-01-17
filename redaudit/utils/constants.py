@@ -129,6 +129,7 @@ DEFAULT_OUTPUT_DIR = "~/Documents/RedAuditReports"
 DEFAULT_THREADS = 6
 DEFAULT_IDENTITY_THRESHOLD = 3
 DEFAULT_DEEP_SCAN_BUDGET = 0
+DEFAULT_DEAD_HOST_RETRIES = 3  # v4.13: Abandon host after N consecutive timeouts
 
 # Thread limits and autodetection.
 # Maximum concurrent host scans. Higher values cause:

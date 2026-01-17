@@ -18,6 +18,7 @@ from redaudit.utils.constants import (
     MAX_CIDR_LENGTH,
     DEFAULT_UDP_MODE,
     UDP_TOP_PORTS,
+    DEFAULT_DEAD_HOST_RETRIES,
     DEFAULT_DEEP_SCAN_BUDGET,
     DEFAULT_IDENTITY_THRESHOLD,
     suggest_threads,
@@ -55,6 +56,7 @@ def parse_arguments():
         help_identity_threshold = (
             "Umbral mínimo de identity_score para omitir Deep Scan (defecto: 3)."
         )
+        help_dead_host_retries = "Abandonar host tras N timeouts consecutivos (0 = sin límite)."
     else:
         help_low_impact = (
             "Enable low-impact enrichment (DNS/mDNS/SNMP) before TCP scanning. "
@@ -62,6 +64,7 @@ def parse_arguments():
         )
         help_deep_budget = "Max hosts that can run aggressive Deep Scan per run (0 = unlimited)."
         help_identity_threshold = "Minimum identity_score to skip Deep Scan (default: 3)."
+        help_dead_host_retries = "Abandon host after N consecutive timeouts (0 = unlimited)."
 
     parser = argparse.ArgumentParser(
         description=f"RedAudit v{VERSION} - Network Auditing Tool",
@@ -208,6 +211,13 @@ Examples:
         help=help_identity_threshold,
     )
     parser.add_argument(
+        "--dead-host-retries",
+        type=int,
+        default=DEFAULT_DEAD_HOST_RETRIES,
+        metavar="N",
+        help=help_dead_host_retries,
+    )
+    parser.add_argument(
         "--yes",
         "-y",
         action="store_true",
@@ -275,7 +285,6 @@ Examples:
         "--nuclei-timeout",
         type=int,
         default=300,
-        metavar="SECONDS",
         help="Nuclei batch timeout in seconds (default: 300). Increase for slow networks.",
     )
     windows_verify_group = parser.add_mutually_exclusive_group()
@@ -734,6 +743,11 @@ def configure_from_args(app, args) -> bool:
     if not isinstance(identity_threshold, int) or identity_threshold < 0:
         identity_threshold = DEFAULT_IDENTITY_THRESHOLD
     app.config["identity_threshold"] = identity_threshold
+    # v4.13: Dead host budget - abandon after N consecutive timeouts
+    dead_host_retries = getattr(args, "dead_host_retries", DEFAULT_DEAD_HOST_RETRIES)
+    if not isinstance(dead_host_retries, int) or dead_host_retries < 0:
+        dead_host_retries = DEFAULT_DEAD_HOST_RETRIES
+    app.config["dead_host_retries"] = dead_host_retries
 
     # Set UDP mode (v2.8.0)
     app.config["udp_mode"] = args.udp_mode

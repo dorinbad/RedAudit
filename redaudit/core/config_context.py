@@ -13,6 +13,7 @@ from collections.abc import MutableMapping
 from typing import Any, Dict, Iterator, List, Optional
 
 from redaudit.utils.constants import (
+    DEFAULT_DEAD_HOST_RETRIES,
     DEFAULT_DEEP_SCAN_BUDGET,
     DEFAULT_IDENTITY_THRESHOLD,
     DEFAULT_THREADS,
@@ -67,6 +68,7 @@ class ConfigurationContext(MutableMapping):
             "deep_id_scan": True,
             "low_impact_enrichment": False,
             "deep_scan_budget": DEFAULT_DEEP_SCAN_BUDGET,
+            "dead_host_retries": DEFAULT_DEAD_HOST_RETRIES,
             "identity_threshold": DEFAULT_IDENTITY_THRESHOLD,
             "topology_enabled": False,
             "topology_only": False,
@@ -263,6 +265,14 @@ class ConfigurationContext(MutableMapping):
         return int(
             self._config.get("deep_scan_budget", DEFAULT_DEEP_SCAN_BUDGET)
             or DEFAULT_DEEP_SCAN_BUDGET
+        )
+
+    @property
+    def dead_host_retries(self) -> int:
+        """Get dead host retry limit (abandon after N consecutive timeouts)."""
+        return int(
+            self._config.get("dead_host_retries", DEFAULT_DEAD_HOST_RETRIES)
+            or DEFAULT_DEAD_HOST_RETRIES
         )
 
     @property
