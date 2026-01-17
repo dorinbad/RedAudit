@@ -14,15 +14,6 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 These items represent the current backlog of planned or deferred work for the remaining v4.x series.
 
-### v4.13 Resilience & Observability (Priority: Medium)
-
-| Feature | Status | Description |
-|---|---|---|
-| **Abort Budget for Dead Hosts** | Planned | Configurable time/retry limit for unresponsive hosts ("Dead Host Budget"). |
-| **Honeypot Detection** | Planned | Heuristic to detect hosts responding to all ports. Flag as suspicious and limit scanning. |
-| **No-Response Tagging** | Planned | Explicitly distinguish transient errors from silent hosts in final reports. |
-| **Phase Transition Diagram** | Planned | Add a visual state diagram to document phase 1-3 escalation logic. |
-
 ### v4.14 Dependency Management (Priority: Low)
 
 | Feature | Status | Description |
@@ -54,6 +45,15 @@ These items represent the current backlog of planned or deferred work for the re
 ## 2. Completed Milestones (History)
 
 These items are ordered chronologically (most recent first).
+
+### v4.13 Resilience & Observability (Done)
+
+| Feature | Status | Description |
+|---|---|---|
+| **Dead Host Retries** | Done (v4.13.0) | New `--dead-host-retries` CLI flag to abandon hosts after N consecutive timeouts. |
+| **Honeypot Detection** | Done (v4.9.1) | Heuristic tagging (`honeypot`) for hosts with excessive open ports (>100). |
+| **No-Response Tagging** | Done (v4.9.1) | Distinct `no_response` tag for hosts that fail Nmap scanning. |
+| **i18n Nuclei Time Estimates** | Done (v4.13.0) | Corrected wizard profile time estimates for fast/balanced profiles. |
 
 ### v4.12 Performance & Data Quality (Done)
 

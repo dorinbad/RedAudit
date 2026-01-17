@@ -14,15 +14,6 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 Estos elementos representan el backlog actual de trabajo planificado o aplazado para la serie v4.x restante.
 
-### v4.13 Resiliencia y Observabilidad (Prioridad: Media)
-
-| Funcionalidad | Estado | Descripción |
-|---|---|---|
-| **Presupuesto de Aborto para Hosts Muertos** | Planeado | Límite configurable de tiempo/reintentos para hosts que no responden ("Dead Host Budget"). |
-| **Detección de Honeypot** | Planeado | Heurística para detectar hosts que responden a todos los puertos. Marcar como sospechoso y limitar escaneo. |
-| **Etiquetado "Sin Respuesta"** | Planeado | Distinguir explícitamente errores transitorios de hosts silenciosos en los reportes finales. |
-| **Diagrama de Transición de Fase** | Planeado | Añadir un diagrama de estado visual para documentar la lógica de escalado de fases 1-3. |
-
 ### v4.14 Gestión de Dependencias (Prioridad: Baja)
 
 | Funcionalidad | Estado | Descripción |
@@ -54,6 +45,15 @@ Estos elementos representan el backlog actual de trabajo planificado o aplazado 
 ## 2. Hitos Completados (Histórico)
 
 Estos elementos están ordenados cronológicamente (el más reciente primero).
+
+### v4.13 Resiliencia y Observabilidad (Hecho)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
+| **Reintentos de Host Muerto** | Hecho (v4.13.0) | Nuevo flag CLI `--dead-host-retries` para abandonar hosts tras N timeouts consecutivos. |
+| **Detección de Honeypot** | Hecho (v4.9.1) | Etiquetado heurístico (`honeypot`) para hosts con excesivos puertos abiertos (>100). |
+| **Etiquetado Sin Respuesta** | Hecho (v4.9.1) | Etiqueta distintiva `no_response` para hosts que fallan el escaneo Nmap. |
+| **i18n Estimaciones Nuclei** | Hecho (v4.13.0) | Corregidas estimaciones de tiempo en wizard para perfiles fast/balanced. |
 
 ### v4.12 Rendimiento y Calidad de Dato (Hecho)
 

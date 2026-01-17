@@ -8,6 +8,20 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.13.0] - 2026-01-17
+
+### Añadido
+
+- **Reintentos de Host Muerto**: Nuevo flag CLI `--dead-host-retries` para abandonar hosts tras N timeouts consecutivos (predeterminado: 3). Evita atascos en hosts que no responden.
+- **Integración ConfigurationContext**: Añadida propiedad `dead_host_retries` al wrapper de configuración tipada.
+
+### Corregido
+
+- **i18n Estimaciones Nuclei**: Corregidas estimaciones de tiempo de perfiles Nuclei en el asistente:
+  - `fast`: ~15min -> ~30-60min
+  - `balanced`: ~30min -> ~1h
+- **Truncamiento de Texto en Asistente**: Acortadas las descripciones de perfiles del asistente en español para evitar truncamiento en terminales estrechos.
+
 ## [4.12.1] - 2026-01-17
 
 ### Añadido

@@ -8,6 +8,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.13.0] - 2026-01-17
+
+### Added
+
+- **Dead Host Retries**: New `--dead-host-retries` CLI flag to abandon hosts after N consecutive timeouts (default: 3). Prevents scan stalls on unresponsive hosts.
+- **ConfigurationContext Integration**: Added `dead_host_retries` property to typed config wrapper.
+
+### Fixed
+
+- **i18n Nuclei Estimates**: Corrected Nuclei profile time estimates in wizard:
+  - `fast`: ~15min -> ~30-60min
+  - `balanced`: ~30min -> ~1h
+- **Wizard Text Truncation**: Shortened Spanish wizard profile descriptions to prevent terminal truncation on narrow displays.
+
 ## [4.12.1] - 2026-01-17
 
 ### Added
