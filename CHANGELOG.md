@@ -8,6 +8,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [v4.11.0] - 2026-01-17
+
+### Added
+
+- **Nuclei Profile Selector**: Introduced optimized scanning profiles (`--profile`) to balance speed and coverage:
+  - `full`: All templates (default behavior).
+  - `balanced`: High-impact tags only (cve, rce, exposure, misconfig) - ~4x faster.
+  - `fast`: Critical checks only (cve, critical) - ~10x faster.
+- **Improved IoT Visibility**:
+  - **WiZ Protocol Support**: Automatically detects and reports WiZ smart bulbs via UDP port 38899 injection, solving "zero ports found" issue for these devices.
+  - **Closed-Port IoT**: Documentation updated to clarify handling of devices that respond to multicast/UPnP but have no open TCP ports.
+- **Enhanced Identity Engine**:
+  - **OUI Database**: Massive update from 46 to **38,911 vendors** using Wireshark's manufacturer database, significantly reducing "Unknown" vendor tags.
+
+### Changed
+
+- **Nuclei Optimization**:
+  - Reduced batch size from 25 to 10 targets to prevent timeouts.
+  - Increased timeout from 300s to 600s per batch for better reliability in dense networks.
+  - Implemented "partial success" logic: findings are reported even if some batches timeout.
+- **Timeouts**: Confirmed satisfactory timeouts for Nikto (330s) and TestSSL (90s).
+
 ## [v4.10.1] - 2026-01-16
 
 ### Fixed
