@@ -12,46 +12,32 @@ This document outlines the technical roadmap, verifies implemented capabilities,
 
 ## 1. Active Roadmap (Future & In-Progress)
 
-These items represent the current backlog of planned or deferred work.
+These items represent the current backlog of planned or deferred work for the remaining v4.x series.
 
-### v4.7 Audit Follow-ups (Priority: High)
-
-| Feature | Status | Description |
-|---|---|---|
-| **Escalation Reason Counters** | Planned | Report why deep scans triggered (identity score, ambiguity, manual override). |
-| **Smart-Check Documentation Clarification** | Planned | Align docs with the actual signal cross-checking behavior. |
-
-### v4.7 Audit Follow-ups (Priority: Medium)
+### v4.13 Resilience & Observability (Priority: Medium)
 
 | Feature | Status | Description |
 |---|---|---|
-| **Abort Budget for Dead Hosts** | Planned | Configurable time/retry limit for unresponsive hosts. Avoids hangs on unreachable hosts. |
-| **Honeypot Detection** | Planned | Heuristic to detect hosts responding to all ports (honeypot behavior). Flag as suspicious and limit scanning. |
+| **Abort Budget for Dead Hosts** | Planned | Configurable time/retry limit for unresponsive hosts ("Dead Host Budget"). |
+| **Honeypot Detection** | Planned | Heuristic to detect hosts responding to all ports. Flag as suspicious and limit scanning. |
+| **No-Response Tagging** | Planned | Explicitly distinguish transient errors from silent hosts in final reports. |
+| **Phase Transition Diagram** | Planned | Add a visual state diagram to document phase 1-3 escalation logic. |
+
+### v4.14 Dependency Management (Priority: Low)
+
+| Feature | Status | Description |
+|---|---|---|
 | **Dependency Pinning Mode** | Planned | Optional pinned tags/commits for external tools installed from git. |
-| **Phase Transition Diagram** | Planned | Add a concise state diagram for phase 1-3 escalation logic. |
-| **No-Response Classification Tagging** | Planned | Distinguish transient errors from silent hosts in reporting. |
+| **Streaming JSON Report** | Planned | Incremental write for reports >500MB on very large networks to prevent OOM. |
 
-### v4.7 Audit Follow-ups (Deferred)
+### Deferred / Technical Backlog
 
 | Feature | Status | Description |
 |---|---|---|
 | **auditor.py Refactor** | Deferred | Split orchestration and decision logic only if it unlocks testing or fixes defects. |
-
-### Phase 7: UX Polish & Cosmetics (Priority: Low)
-
-Minor improvements identified during v4.4.0 Gold Master validation.
-
-| Task | Status | Description |
-|---|---|---|
-| **P7.3 Streaming JSON Report** | Planned | Incremental write for reports >500MB on very large networks. |
-
-### Infrastructure (Priority: Low)
-
-| Feature | Status | Description |
-|---|---|---|
 | **PyPI Distribution** | Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
 | **Plugin Engine** | Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
-| **AsyncIO Migration** | Deferred | Full migration to AsyncIO deferred to v5.0 based on feasibility study. |
+| **AsyncIO Migration** | Deferred | Full migration to AsyncIO deferred to v5.0. |
 
 ---
 
@@ -61,13 +47,23 @@ Minor improvements identified during v4.4.0 Gold Master validation.
 |---|---|
 | **Protocol Specific IoT Probes** | Deep queries for device-specific protocols (Tuya, CoAP, proprietary). |
 | **Leak Following** | Automated scope expansion based on leaked internal headers. |
-| **Pipeline Audit** | Visualization of the discovery flow (net_discovery -> hyperscan -> smart_scan). |
+| **Pipeline Audit** | Interactive visualization of the discovery flow. |
 
 ---
 
 ## 2. Completed Milestones (History)
 
 These items are ordered chronologically (most recent first).
+
+### v4.12 Performance & Data Quality (Done)
+
+| Feature | Status | Description |
+|---|---|---|
+| **Nuclei 'Fast' Profile Optimization** | Done (v4.12.1) | Boosted speed (300 req/s) and batch size (15) for fast profile. |
+| **OUI Vendor Enrichment** | Done (v4.12.1) | Fallback to online API for unknown vendors in network topology. |
+| **Clarified 'Express' Wizard** | Done (v4.12.1) | Updated i18n to explicitly state "Discovery Only". |
+| **Flexible Nuclei Config** | Done (v4.12.1) | Configurable `rate_limit` and `batch_size` per profile with override support. |
+| **Escalation Reason Counters** | Done (v4.12.1) | Aggregated metrics on why deep scans were triggered (score, ambiguity). |
 
 ### v4.11 Performance & IoT Visibility (Done)
 

@@ -12,46 +12,32 @@ Este documento describe el roadmap técnico, verifica las capacidades ya impleme
 
 ## 1. Roadmap Activo (Futuro y En Progreso)
 
-Estos elementos representan el backlog actual de trabajo planificado o aplazado.
+Estos elementos representan el backlog actual de trabajo planificado o aplazado para la serie v4.x restante.
 
-### v4.7 Seguimiento de Auditoria (Prioridad: Alta)
-
-| Funcionalidad | Estado | Descripción |
-|---|---|---|
-| **Contadores de Razón de Escalado** | Planeado | Reportar por qué se dispararon los escaneos profundos (puntuación identidad, ambigüedad, manual). |
-| **Clarificación Documentación Smart-Check** | Planeado | Alinear documentación con el comportamiento real de cruce de señales. |
-
-### v4.7 Seguimiento de Auditoria (Prioridad: Media)
+### v4.13 Resiliencia y Observabilidad (Prioridad: Media)
 
 | Funcionalidad | Estado | Descripción |
 |---|---|---|
-| **Presupuesto de Aborto para Hosts Muertos** | Planeado | Límite configurable de tiempo/reintentos para hosts que no responden. Evita colgarse en hosts inalcanzables. |
-| **Detección de Honeypot** | Planeado | Heurística para detectar hosts que responden a todos los puertos (comportamiento honeypot). Marcar como sospechoso y limitar escaneo. |
+| **Presupuesto de Aborto para Hosts Muertos** | Planeado | Límite configurable de tiempo/reintentos para hosts que no responden ("Dead Host Budget"). |
+| **Detección de Honeypot** | Planeado | Heurística para detectar hosts que responden a todos los puertos. Marcar como sospechoso y limitar escaneo. |
+| **Etiquetado "Sin Respuesta"** | Planeado | Distinguir explícitamente errores transitorios de hosts silenciosos en los reportes finales. |
+| **Diagrama de Transición de Fase** | Planeado | Añadir un diagrama de estado visual para documentar la lógica de escalado de fases 1-3. |
+
+### v4.14 Gestión de Dependencias (Prioridad: Baja)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
 | **Modo de Anclaje de Dependencias** | Planeado | Tags/commits anclados opcionales para herramientas externas instaladas desde git. |
-| **Diagrama de Transición de Fase** | Planeado | Añadir un diagrama de estado conciso para la lógica de escalado de fases 1-3. |
-| **Etiquetado de Clasificación Sin Respuesta** | Planeado | Distinguir errores transitorios de hosts silenciosos en los reportes. |
+| **Streaming JSON Report** | Planeado | Escritura incremental para reportes >500MB en redes muy grandes para evitar OOM. |
 
-### v4.7 Seguimiento de Auditoría (Aplazado)
+### Diferido / Backlog Técnico
 
 | Funcionalidad | Estado | Descripción |
 |---|---|---|
 | **Refactorización de auditor.py** | Diferido | Dividir orquestación y lógica de decisión solo si desbloquea tests o corrige defectos. |
-
-### Fase 7: Pulido UX y Cosméticos (Prioridad: Baja)
-
-Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
-
-| Tarea | Estado | Descripción |
-|---|---|---|
-| **P7.3 Streaming JSON Report** | Planeado | Escritura incremental para reportes >500MB en redes muy grandes. |
-
-### Infraestructura (Prioridad: Baja)
-
-| Funcionalidad | Estado | Descripción |
-|---|---|---|
 | **Distribución PyPI** | Diferido | Publicar `pip install redaudit`. Bloqueado por necesidad de testeo extensivo multiplataforma. |
 | **Motor de Plugins** | Diferido | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
-| **Migración AsyncIO** | Diferido | Migración completa a AsyncIO diferida a v5.0 basada en estudio de viabilidad. |
+| **Migración AsyncIO** | Diferido | Migración completa a AsyncIO diferida a v5.0. |
 
 ---
 
@@ -61,13 +47,23 @@ Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
 |---|---|
 | **Sondas IoT Específicas de Protocolo** | Consultas profundas para protocolos específicos de dispositivos (Tuya, CoAP, propietarios). |
 | **Seguimiento de Fugas (Leak Following)** | Expansión automatizada del alcance basada en cabeceras internas filtradas. |
-| **Auditoría de Pipeline** | Visualización del flujo de descubrimiento (net_discovery -> hyperscan -> smart_scan). |
+| **Auditoría de Pipeline** | Visualización interactiva del flujo de descubrimiento. |
 
 ---
 
 ## 2. Hitos Completados (Histórico)
 
 Estos elementos están ordenados cronológicamente (el más reciente primero).
+
+### v4.12 Rendimiento y Calidad de Dato (Hecho)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
+| **Optimización Perfil Nuclei 'Fast'** | Hecho (v4.12.1) | Aumento de velocidad (300 req/s) y tamaño de lote (15) para perfil rápido. |
+| **Enriquecimiento Vendor OUI** | Hecho (v4.12.1) | Fallback a API online para vendors desconocidos en topología de red. |
+| **Wizard "Express" Clarificado** | Hecho (v4.12.1) | I18n actualizado para indicar explícitamente "Solo Descubrimiento". |
+| **Configuración Nuclei Flexible** | Hecho (v4.12.1) | Parámetros `rate_limit` y `batch_size` configurables por perfil y overrideables. |
+| **Contadores Razón Escalado** | Hecho (v4.12.1) | Métricas agregadas de por qué se dispararon escaneos profundos (score, ambigüedad). |
 
 ### v4.11 Rendimiento y Visibilidad IoT (Hecho)
 
