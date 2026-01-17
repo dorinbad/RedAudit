@@ -10,89 +10,9 @@
 
 This document outlines the technical roadmap, verifies implemented capabilities, and records discarded approaches for RedAudit.
 
-## 1. Active Roadmap (Upcoming Features)
+## 1. Active Roadmap (Future & In-Progress)
 
-These items are ordered chronologically and include delivered, planned, and deferred work.
-
-### v4.11 Performance & IoT Visibility (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Nuclei Scan Profiles** | Done (v4.11.0) | `--profile` flag (full/balanced/fast) to control scan intensity and speed. |
-| **IoT WiZ Detection** | Done (v4.11.0) | Specialized UDP probe (38899) for WiZ smart bulbs. |
-| **OUI Database Expansion** | Done (v4.11.0) | Updated Macs to ~39k vendors (Wireshark ingest). |
-| **Nuclei Batch Optimization** | Done (v4.11.0) | Reduced batch size (10) and increased timeouts (600s) for dense nets. |
-
-### v4.6 Scan Fidelity & Time Control (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Infra-Aware Web App Gating** | Done | Skip sqlmap/ZAP on infrastructure UIs when identity evidence indicates router/switch/AP devices. |
-| **Deep Scan Identity Evidence** | Done | HTTP title/server and device-type hints suppress deep scan when identity is already strong. |
-| **Quick HTTP Identity Probe** | Done | Short HTTP/HTTPS probe on quiet hosts to resolve identity early. |
-| **Nuclei Partial Reporting** | Done | Mark partial runs and record timeout/failed batch indexes in reports. |
-| **Nuclei Batch Heartbeat** | Done (v4.6.11) | Keep progress updates during long batches to show activity and elapsed time. |
-| **Nuclei Target Progress** | Done (v4.6.13) | Show target-based progress within batches to avoid frozen bars. |
-| **Nuclei Progress Stability** | Done (v4.6.15) | Keep target progress monotonic across batch retries/timeouts. |
-| **Nuclei Timeout Hardening** | Done (v4.6.16) | Adaptive batch timeouts and recursive splits to reduce partial runs. |
-| **Sudo Keyring Context** | Done (v4.6.17) | Preserve DBus context when loading saved credentials under sudo. |
-| **Host Report Alignment** | Done (v4.6.15) | Backfill host entries with unified asset names/interfaces for consistency. |
-| **HTTP Identity Source Guard** | Done (v4.6.11) | Treat UPnP-only titles as hints and avoid forcing web scans or identity scoring. |
-| **Wizard Target Normalization Summary** | Done (v4.6.13) | Show normalized targets with estimated host counts before execution. |
-| **SSH Credential Spray** | Done (v4.6.18) | Try all credentials in spray list until success. Enables unified credential lists. |
-| **Finding Prioritization** | Done (v4.6.19) | New `priority_score` (0-100) and `confirmed_exploitable` fields for better vulnerability ranking. |
-| **Classic Backdoor Detection** | Done (v4.6.19) | Automatic banner detection for `vsftpd 2.3.4`, `UnrealIRCd 3.2.8.1`, and other known backdoors. |
-| **Report Confidence Score** | Done (v4.6.19) | `confidence_score` (0.0-1.0) based on cross-validation (Nuclei+CVE) to reduce false positives. |
-| **Improved Finding Titles** | Done (v4.6.19) | Descriptive titles ("SSL Hostname Mismatch", "Missing HSTS") with better fallback logic. |
-| **Wizard Spray Counter** | Done (v4.6.19) | Display `(+N spray)` in credential summary for better visibility. |
-
-### v4.7 HyperScan Masscan Integration (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Masscan Backend** | Replaced (v4.8.0) | `masscan_scanner.py` replaced by `RustScan` for higher speed and accuracy. |
-| **RustScan Integration** | Done (v4.8.0) | New primary module for HyperScan. Scans all ports in ~3s. |
-| **Docker Network Fallback** | Done (v4.7.1) | Automatic Scapy fallback when Masscan returns 0 ports (Docker bridge networks). |
-| **Nuclei Timeout Fix** | Done (v4.7.2) | Increased command_runner timeout to 600s for Nuclei (was 60s, causing batch timeouts). |
-| **NVD API 404 Skip** | Done (v4.7.2) | Skip retries on 404 responses (CPE not found). Reduces log spam. |
-
-### v4.8.x RustScan and Installer Fixes (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **RustScan Full Port Range** | Done (v4.8.2) | Force `-r 1-65535` to scan all ports instead of RustScan's default top 1000. |
-| **ARM64 Installer Support** | Done (v4.8.3) | Added ARM64/aarch64 detection for Raspberry Pi and Apple Silicon VMs. |
-| **Nuclei Wizard Toggle** | Done (v4.8.1) | Restore interactive Nuclei enable prompt in Exhaustive profile. |
-
-### v4.9.0 Hidden Network Detection (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Routed Network Discovery** | Done (v4.9.0) | Detect hidden networks via `ip route` and `ip neigh` parsing. |
-| **Interactive Discovery Prompt** | Done (v4.9.0) | Wizard asks to include discovered routed networks in scope. |
-| **CLI --scan-routed** | Done (v4.9.0) | Automated inclusion of routed networks for CI/CD pipelines. |
-
-### v4.9.1 Quick Wins Implementation (Done)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **IoT UDP Port Visibility** | Done (v4.9.1) | Ensure specialized UDP ports (e.g., WiZ 38899) found by HyperScan are included in final reports. |
-| **Honeypot Detection** | Done (v4.9.1) | Heuristic tagging (`honeypot`) for hosts with excessive open ports (>100). |
-| **No-Response Tagging** | Done (v4.9.1) | Distinct `no_response` tag for hosts that fail Nmap scanning, differentiating from generic Down status. |
-| :--- | :--- | :--- |
-| **Routed Network Discovery** | Done (v4.9.0) | `detect_routed_networks()` parses `ip route` and `ip neigh` for hidden networks. |
-| **Wizard Hidden Network Prompt** | Done (v4.9.0) | Interactive prompt to include discovered routed networks in scan scope. |
-| **`--scan-routed` CLI Flag** | Done (v4.9.0) | Non-interactive flag to auto-add routed networks to targets. |
-| **VLAN Limitation Docs** | Done (v4.9.0) | Documented that 802.1Q L2-isolated VLANs are not discoverable without SNMP/switch access. |
-
-### v4.10 Advanced Discovery (Planned)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **SNMP Router Query** | Planned | Query router interfaces and remote ARP tables via `snmpwalk`. |
-| **LLDP Discovery** | Planned | Discover switch topology on managed networks via `lldpctl`. |
-| **CDP Discovery** | Planned | Cisco Discovery Protocol parsing for Cisco-based topologies. |
-| **VLAN Tagging Detection** | Planned | Detect 802.1Q tagged VLANs on the audit host interfaces. |
+These items represent the current backlog of planned or deferred work.
 
 ### v4.7 Audit Follow-ups (Priority: High)
 
@@ -123,89 +43,7 @@ Minor improvements identified during v4.4.0 Gold Master validation.
 
 | Task | Status | Description |
 | :--- | :--- | :--- |
-| **P7.1 Progress Bar Completion** | Done (v4.6.8) | Stop updating vuln scan progress after a host finishes to prevent misleading movement. |
-| **P7.2 Nikto Timeout Visibility** | Done (v4.6.13) | Show a timeout indicator instead of stalled progress when Nikto exceeds its threshold. |
 | **P7.3 Streaming JSON Report** | Planned | Incremental write for reports >500MB on very large networks. |
-| **P7.4 Web Tag Backfill** | Done (v4.6.8) | Add the `web` tag when `web_ports_count` is present even if port flags are missing. |
-| **P7.5 Wizard Cancel UX** | Done (v4.6.14) | Rename "Go Back" to "Cancel" (warning color) and allow canceling auth credential prompts. |
-
-### v4.4 Code Coverage & Stability (Priority: High)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **100% Topology Coverage** | Done (v4.4.5) | Achieved complete test coverage for `topology.py` (route parsing, loop detection, graphing). |
-| **>94% Updater Coverage** | Done (v4.4.5) | Hardened `updater.py` with robust tests for Git operations, rollback scenarios, edge-case failures. |
-| **Project Coverage ~89%** | Done (v4.4.5) | Overall project coverage now at 88.75% (1619 tests passing). |
-| **Memory Leak Fix** | Done (v4.4.5) | Fixed infinite loop in test mocks that caused 95GB RAM spike. |
-
-### Phase 6: Enterprise Scalability (>50 Hosts) (Priority: Medium)
-
-Focus: Removing bottlenecks for large corporate networks.
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Generator-based Targeting** | Done | Switch from list-based targeting to generator-based streaming. Prevents memory spikes when loading large subnets (/16). |
-| **Streaming JSON Report** | Done | Optimized `auditor_scan.py` host collection to avoid list materialization on large networks. |
-| **AsyncIO Migration** | Deferred | Full migration to AsyncIO deferred to v5.0 based on feasibility study. |
-| **Smart-Throttle (Adaptive Congestion)** | Done | AIMD-based dynamic batch size adjustment (Smart-Throttle). Detects network stress/packet loss and auto-throttles scans to prevent DoS. [View Spec](design/smart_throttle_spec.md) |
-
-### v4.3 Risk Score & Performance Improvements (Priority: High)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Weighted Maximum Gravity Algorithm** | Done | Refactored `calculate_risk_score()` to use CVSS scores from NVD data as primary factor. Formula: Base (max CVSS * 10) + Density bonus (log10) + Exposure multiplier (1.15x for external ports). |
-| **Risk Score Breakdown Tooltip** | Done | HTML reports show detailed risk score components on hover (Max CVSS, Base Score, Density Bonus, Exposure Multiplier). |
-| **Identity Score Visualization** | Done | HTML reports display color-coded identity_score with tooltip showing identity signals. |
-| **Smart-Check CPE Validation** | Done | Enhanced Nuclei false positive detection using host CPE data before HTTP header checks. |
-| **HyperScan SYN Mode** | Done | Optional scapy-based SYN scanning (`--hyperscan-mode syn`) for ~10x faster discovery. Auto-detection with fallback to connect mode. |
-| **PCAP Management Utilities** | Done | `merge_pcap_files()`, `organize_pcap_files()`, `finalize_pcap_artifacts()` for post-scan cleanup. |
-
-### v4.2 Pipeline Optimizations (Released in v4.2.0)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Enhanced Parallel Progress UI** | Done (v4.2.0) | Multi-bar Rich progress bars for Deep Scan and parallel phases. |
-| **Web App Vuln Scan (sqlmap)** | Done (v4.1.0) | Integrated `sqlmap` with configurable level/risk in wizard. |
-| **Web App Vuln Scan (ZAP)** | Done (v4.2.0) | Integrated OWASP ZAP for web app spidering. |
-| **Parallel Deep Scan** | Done (v4.2.0) | Decoupled Deep Scan with up to 50 threads and multi-bar UI. |
-| **Thread Uncapping** | Done (v4.6.29) | Increased global limits to 100 threads for modern hardware. |
-| **Private MAC Indicator** | Done (v4.2.0) | Detects locally-administered MACs (bit 2 of first byte) and shows "(private MAC)". |
-| **Deep Scan Separation** | Done (v4.2.0) | Deep Scan extracted from `scan_host_ports()` as independent phase `run_deep_scans_concurrent()`. |
-| **Red Team → Agentless** | Done (v4.2.0) | SMB/LDAP findings from Red Team passed to Agentless Verify. |
-| **Wizard UX: Phase 0 auto** | Done (v4.2.0) | Phase 0 auto-enabled in Exhaustive profile. |
-| **Wizard UX: Custom** | Done (v4.2.0) | Improved Custom wizard with Masscan vs HyperScan choice. |
-| **HyperScan naming cleanup** | Done (v4.2.0) | Functions renamed for clearer purpose. |
-| **Session log detail** | Done (v4.2.0) | Session log enriched with more detail than cli.txt. |
-
-### v4.1 Performance Optimizations (Priority: High)
-
-Optimizations following the "fast discovery, targeted fingerprint" pattern:
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **HyperScan-First Sequential** | Done | Pre-scan all 65,535 ports per host sequentially before nmap. Avoids FD exhaustion. batch_size=2000. |
-| **Parallel Vuln Scanning** | Done | Run nikto/testssl/whatweb concurrently per host. |
-| **Pre-filter Nikto CDN** | Done | Skip Nikto on Cloudflare/Akamai/AWS CloudFront. |
-| **Masscan Port Reuse** | Done | Pre-scan uses masscan ports if already discovered. |
-| **CVE Lookup Reordering** | Done | CVE correlation moved after Vuln Scan + Nuclei. |
-
-### v4.0 Architecture Refactoring (Released in v3.10.2)
-
-Internal refactoring using Strangler Fig pattern:
-
-1. **Phase 1**: UIManager - Standalone UI operations class
-2. **Phase 2**: ConfigurationContext - Typed configuration wrapper
-3. **Phase 3**: NetworkScanner - Identity scoring utilities
-4. **Phase 4**: Adapter properties for gradual migration
-
-**Status**: Completed in v4.0.0. Composition-first orchestration via `AuditorRuntime`, with
-legacy inheritance removed and compatibility handled by adapter-backed components.
-
-### Infrastructure (Priority: High)
-
-| Feature | Status | Description |
-| :--- | :--- | :--- |
-| **Test Suite Consolidation** | Done | Refactored 199 test files → 123 files. Created `conftest.py`. Removed 76 coverage-gaming artifacts. 1130 tests at 85% coverage. |
 
 ### Infrastructure (Priority: Low)
 
@@ -213,72 +51,130 @@ legacy inheritance removed and compatibility handled by adapter-backed component
 | :--- | :--- | :--- |
 | **PyPI Distribution** | Deferred | Publishing `pip install redaudit`. Blocked by need for extensive cross-platform testing. |
 | **Plugin Engine** | Deferred | "Plugin-first" architecture to decouple core scanner from tools. |
+| **AsyncIO Migration** | Deferred | Full migration to AsyncIO deferred to v5.0 based on feasibility study. |
 
 ---
 
-## 2. Implemented Capabilities (Verified)
+## 2. Completed Milestones (History)
 
-Features present in releases where `redaudit --version` >= v3.6.0, with verification paths in the codebase.
+These items are ordered chronologically (most recent first).
 
-### v4.5 Authenticated Scanning (Phase 4)
+### v4.11 Performance & IoT Visibility (Done)
 
-| Feature | Version | Verification |
+| Feature | Status | Description |
 | :--- | :--- | :--- |
-| **Secrets Management** | v4.5.0 | `redaudit/core/credentials.py`. Secure credential storage with Environment and Keyring backends. |
-| **SSH Scanning** | v4.5.0 | `redaudit/core/auth_ssh.py`. Authenticated Linux enumeration (OS, Packages, Services) via Paramiko. |
-| **SMB/WMI Scanning** | v4.5.0 | `redaudit/core/auth_smb.py`. Authenticated Windows enumeration (Shares, Users, OS) via Impacket. |
-| **SNMP v3** | v4.5.0 | `redaudit/core/auth_snmp.py`. Secure network device auditing with Auth/Priv protocols. |
-| **Lynis Integration** | v4.5.0 | `redaudit/core/auth_lynis.py`. Remote execution of CIS hardening audits via SSH. |
-| **Multi-Credential Support** | v4.5.2 | `redaudit/core/credentials_manager.py`. Universal credential spraying with protocol auto-detection. |
-| **Wizard Universal Auth** | v4.5.2 | `redaudit/core/wizard.py`. New `ask_auth_config` step supporting both Universal and Advanced auth modes. |
+| **Nuclei Scan Profiles** | Done (v4.11.0) | `--profile` flag (full/balanced/fast) to control scan intensity and speed. |
+| **IoT WiZ Detection** | Done (v4.11.0) | Specialized UDP probe (38899) for WiZ smart bulbs. |
+| **OUI Database Expansion** | Done (v4.11.0) | Updated Macs to ~39k vendors (Wireshark ingest). |
+| **Nuclei Batch Optimization** | Done (v4.11.0) | Reduced batch size (10) and increased timeouts (600s) for dense nets. |
 
-### UX & Integrations (v3.7.0+)
+### v4.10 Advanced Discovery (Done)
 
-| Feature | Version | Verification |
+| Feature | Status | Description |
 | :--- | :--- | :--- |
-| **VPN Interface Detection** | v3.9.6 | `redaudit/core/entity_resolver.py`. Classifies VPN gateways via vendor OUI matching, VPN service ports (500/4500/1194/51820), and hostname patterns. |
-| **IoT Signature Pack** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Protocol-specific UDP payloads for WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter devices. |
-| **Wizard Profile Selector** | v3.9.0 | `redaudit/core/auditor.py`. Express/Standard/Exhaustive auto-config presets + Custom wizard mode. |
-| **Real Timing Modes** | v3.9.0 | `redaudit/core/scanner/nmap.py`, `redaudit/core/auditor_scan.py`. Timing modes apply nmap `-T1`/`-T4`/`-T5` templates with delay/thread adjustments. |
-| **Enhanced HTML Reports** | v3.9.0 | `redaudit/templates/report*.html.j2`. Expandable findings with observations, smart scan analysis, playbooks grid, PCAP evidence, topology details. |
-| **Nuclei False Positive Detection** | v3.9.0 | `redaudit/core/verify_vuln.py`. Server header vs vendor CPE mapping to flag suspected FPs (`suspected_false_positive` field). |
-| **Status Color Consistency** | v3.8.4 | `redaudit/core/auditor.py`. Uses Rich console.print() when progress is active to ensure colors display correctly. |
-| **Auditor Identity** | v3.8.3 | `redaudit/core/wizard.py`. Wizard prompt for auditor name, surfaced in TXT/HTML reports. |
-| **Bilingual HTML Reports** | v3.8.3 | `redaudit/core/reporter.py`. When language is ES, `report_es.html` is generated alongside the default HTML report. |
-| **Wizard Navigation** | v3.8.1 | `redaudit/core/wizard.py`. "Cancel" option in wizard menus for step-by-step navigation. |
-| **HTML Report Watermark** | v3.8.2 | `redaudit/templates/report.html.j2`. Professional footer with GPLv3, author, and GitHub link. |
-| **Interactive Webhooks** | v3.7.0 | `redaudit/core/wizard.py`. Configure Slack/Teams directly in wizard. |
-| **Parallel Net Discovery** | v4.6.32 | Concurrent execution of DHCP, ARP, mDNS, UPnP. |
-| **HyperScan Parallelization** | v4.6.31 | Multi-threaded pre-scan. |
-| **Advanced Net Discovery Wizard** | v3.7.0 | `redaudit/core/wizard.py`. Configure SNMP/DNS/Targets interactively. |
-| **Native SIEM Pipeline** | v3.7.0 | `siem/`. Configs for Filebeat/Logstash + Sigma rules. |
-| **Session Logging** | v3.7.0 | `redaudit/utils/session_log.py`. Captures terminal output to `.log` and `.txt`. |
-| **Stable Progress (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/hyperscan.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Avoids flicker and shows ETA. |
+| **SNMP Router Query** | Done (v4.10.0) | Query router interfaces and remote ARP tables via `snmpwalk`. |
+| **LLDP Discovery** | Done (v4.10.0) | Discover switch topology on managed networks via `lldpctl`. |
+| **CDP Discovery** | Done (v4.10.0) | Cisco Discovery Protocol parsing for Cisco-based topologies. |
+| **VLAN Tagging Detection** | Done (v4.10.0) | Detect 802.1Q tagged VLANs on the audit host interfaces via `ifconfig`/`ip link`. |
 
-### Advanced Scanning & Automation
+### v4.9 Hidden Network Detection (Done)
 
-| Feature | Version | Verification |
+| Feature | Status | Description |
 | :--- | :--- | :--- |
-| **Nuclei Integration** | v3.6.0 | Module `redaudit/core/nuclei.py`. Runs templates when Nuclei is installed and explicitly enabled (wizard or `--nuclei`). |
-| **Agentless Verification** | v3.7.3 | `redaudit/core/agentless_verify.py`. Optional SMB/RDP/LDAP/SSH/HTTP fingerprinting (wizard or `--agentless-verify`). |
-| **Quiet-Host HTTP Probe** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner/enrichment.py`. Short HTTP/HTTPS title+server probe on common ports for vendor-only hosts with zero open ports. |
-| **Playbook Generation** | v3.4.0 | Module `redaudit/core/playbook_generator.py`. Creates MD remediation guides in `playbooks/`. |
-| **Red Team: Kerberos** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `kerbrute` for user enumeration if approved. |
-| **Red Team: SNMP/SMB** | v3.2.0 | Module `redaudit/core/net_discovery.py`. Uses `snmpwalk` and `enum4linux`. |
-| **SIEM Readiness** | v3.1.0 | Module `redaudit/core/siem.py`. Outputs SIEM-friendly JSON/JSONL with ECS-aligned fields. |
-| **Differential Analysis** | v3.3.0 | Module `redaudit/core/diff.py`. Visual HTML diff of two scans. |
+| **Routed Network Discovery** | Done (v4.9.0) | Detect hidden networks via `ip route` and `ip neigh` parsing. |
+| **Interactive Discovery Prompt** | Done (v4.9.0) | Wizard asks to include discovered routed networks in scope. |
+| **CLI --scan-routed** | Done (v4.9.0) | Automated inclusion of routed networks for CI/CD pipelines. |
+| **IoT UDP Port Visibility** | Done (v4.9.1) | Ensure specialized UDP ports (e.g., WiZ 38899) found by HyperScan are included in final reports. |
+| **Honeypot Detection** | Done (v4.9.1) | Heuristic tagging (`honeypot`) for hosts with excessive open ports (>100). |
+| **No-Response Tagging** | Done (v4.9.1) | Distinct `no_response` tag for hosts that fail Nmap scanning. |
 
-### Core & Stability
+### v4.8 RustScan and Installer Fixes (Done)
 
-| Feature | Version | Verification |
+| Feature | Status | Description |
 | :--- | :--- | :--- |
-| **Single Version Source** | v3.5.4 | Version now resolves reliably across install modes: `importlib.metadata` when available, plus a packaged `redaudit/VERSION` fallback for script-based `/usr/local/lib/redaudit` installs. |
-| **Container Image** | v3.8.4 | `Dockerfile` + `.github/workflows/docker.yml` publish a GHCR image for reproducible runs. |
-| **Centralized CommandRunner** | v3.5.0 | `redaudit/core/command_runner.py` handles all subprocesses safely. |
-| **Timeout-Safe Host Scans** | v3.7.3 | `redaudit/core/auditor.py` enforces hard timeouts for nmap host scans, keeping progress responsive. |
-| **Persistent Config** | v3.1.1 | `~/.redaudit/config.json` stores user defaults. |
-| **Async Discovery** | v3.1.3 | `redaudit/core/hyperscan.py` uses `asyncio` for fast port probing. |
-| **Quiet Progress UI (with detail)** | v3.6.0 | `redaudit/core/auditor.py` reduces terminal noise while progress bars are active and surfaces “what’s happening” inside the progress line. |
+| **RustScan Full Port Range** | Done (v4.8.2) | Force `-r 1-65535` to scan all ports instead of RustScan's default top 1000. |
+| **ARM64 Installer Support** | Done (v4.8.3) | Added ARM64/aarch64 detection for Raspberry Pi and Apple Silicon VMs. |
+| **Nuclei Wizard Toggle** | Done (v4.8.1) | Restore interactive Nuclei enable prompt in Exhaustive profile. |
+
+### v4.7 HyperScan Masscan Integration (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Masscan Backend** | Replaced (v4.8.0) | `masscan_scanner.py` replaced by `RustScan` for higher speed and accuracy. |
+| **RustScan Integration** | Done (v4.8.0) | New primary module for HyperScan. Scans all ports in ~3s. |
+| **Docker Network Fallback** | Done (v4.7.1) | Automatic Scapy fallback when Masscan returns 0 ports (Docker bridge networks). |
+| **Nuclei Timeout Fix** | Done (v4.7.2) | Increased command_runner timeout to 600s for Nuclei (was 60s, causing batch timeouts). |
+| **NVD API 404 Skip** | Done (v4.7.2) | Skip retries on 404 responses (CPE not found). Reduces log spam. |
+
+### v4.6 Scan Fidelity & Time Control (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Infra-Aware Web App Gating** | Done | Skip sqlmap/ZAP on infrastructure UIs when identity evidence indicates router/switch/AP devices. |
+| **Deep Scan Identity Evidence** | Done | HTTP title/server and device-type hints suppress deep scan when identity is already strong. |
+| **Quick HTTP Identity Probe** | Done | Short HTTP/HTTPS probe on quiet hosts to resolve identity early. |
+| **Nuclei Partial Reporting** | Done | Mark partial runs and record timeout/failed batch indexes in reports. |
+| **Nuclei Batch Heartbeat** | Done (v4.6.11) | Keep progress updates during long batches to show activity and elapsed time. |
+| **Nuclei Target Progress** | Done (v4.6.13) | Show target-based progress within batches to avoid frozen bars. |
+| **Nuclei Progress Stability** | Done (v4.6.15) | Keep target progress monotonic across batch retries/timeouts. |
+| **Nuclei Timeout Hardening** | Done (v4.6.16) | Adaptive batch timeouts and recursive splits to reduce partial runs. |
+| **Sudo Keyring Context** | Done (v4.6.17) | Preserve DBus context when loading saved credentials under sudo. |
+| **Host Report Alignment** | Done (v4.6.15) | Backfill host entries with unified asset names/interfaces for consistency. |
+| **HTTP Identity Source Guard** | Done (v4.6.11) | Treat UPnP-only titles as hints and avoid forcing web scans or identity scoring. |
+| **Wizard Target Normalization Summary** | Done (v4.6.13) | Show normalized targets with estimated host counts before execution. |
+| **SSH Credential Spray** | Done (v4.6.18) | Try all credentials in spray list until success. Enables unified credential lists. |
+| **Finding Prioritization** | Done (v4.6.19) | New `priority_score` (0-100) and `confirmed_exploitable` fields for better vulnerability ranking. |
+| **Classic Backdoor Detection** | Done (v4.6.19) | Automatic banner detection for `vsftpd 2.3.4`, `UnrealIRCd 3.2.8.1`, and other known backdoors. |
+| **Report Confidence Score** | Done (v4.6.19) | `confidence_score` (0.0-1.0) based on cross-validation (Nuclei+CVE) to reduce false positives. |
+| **Improved Finding Titles** | Done (v4.6.19) | Descriptive titles ("SSL Hostname Mismatch", "Missing HSTS") with better fallback logic. |
+| **Wizard Spray Counter** | Done (v4.6.19) | Display `(+N spray)` in credential summary for better visibility. |
+
+### v4.4 Code Coverage & Stability (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **100% Topology Coverage** | Done (v4.4.5) | Achieved complete test coverage for `topology.py` (route parsing, loop detection, graphing). |
+| **>94% Updater Coverage** | Done (v4.4.5) | Hardened `updater.py` with robust tests for Git operations, rollback scenarios, edge-case failures. |
+| **Project Coverage ~89%** | Done (v4.4.5) | Overall project coverage at 88.75% (1619 tests passing). |
+| **Memory Leak Fix** | Done (v4.4.5) | Fixed infinite loop in test mocks that caused 95GB RAM spike. |
+| **Generator-based Targeting** | Done (v4.4.0) | Switch from list-based targeting to generator-based streaming. Prevents memory spikes when loading large subnets (/16). |
+| **Streaming JSON Report** | Done | Optimized `auditor_scan.py` host collection to avoid list materialization on large networks. |
+| **Smart-Throttle (Adaptive Congestion)** | Done (v4.4.0) | AIMD-based dynamic batch size adjustment (Smart-Throttle). Detects network stress/packet loss and auto-throttles scans. |
+
+### v4.3 Risk Score & Performance Improvements (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Weighted Maximum Gravity Algorithm** | Done | Refactored `calculate_risk_score()` to use CVSS scores from NVD data as primary factor. |
+| **Risk Score Breakdown Tooltip** | Done | HTML reports show detailed risk score components on hover. |
+| **Identity Score Visualization** | Done | HTML reports display color-coded identity_score with tooltip showing identity signals. |
+| **Smart-Check CPE Validation** | Done | Enhanced Nuclei false positive detection using host CPE data before HTTP header checks. |
+| **HyperScan SYN Mode** | Done | Optional scapy-based SYN scanning (`--hyperscan-mode syn`) for ~10x faster discovery. |
+| **PCAP Management Utilities** | Done | `merge_pcap_files()`, `organize_pcap_files()`, `finalize_pcap_artifacts()` for post-scan cleanup. |
+
+### v4.2 Pipeline Optimizations (Released in v4.2.0)
+
+See [Release Notes](../releases/RELEASE_NOTES_v4.2.0.md) for details.
+
+### v4.1 Performance Optimizations (Done)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **HyperScan-First Sequential** | Done | Pre-scan all 65,535 ports per host sequentially before nmap. Avoids FD exhaustion. |
+| **Parallel Vuln Scanning** | Done | Run nikto/testssl/whatweb concurrently per host. |
+| **Pre-filter Nikto CDN** | Done | Skip Nikto on Cloudflare/Akamai/AWS CloudFront. |
+| **Masscan Port Reuse** | Done | Pre-scan uses masscan ports if already discovered. |
+| **CVE Lookup Reordering** | Done | CVE correlation moved after Vuln Scan + Nuclei. |
+
+### v4.0 Architecture Refactoring (Done)
+
+Internal refactoring using Strangler Fig pattern. Completed in v4.0.0.
+
+### Infrastructure (Priority: High)
+
+| Feature | Status | Description |
+| :--- | :--- | :--- |
+| **Test Suite Consolidation** | Done | Refactored 199 test files → 123 files. Created `conftest.py`. Removed 76 coverage-gaming artifacts. 1130 tests at 85% coverage. |
 
 ---
 

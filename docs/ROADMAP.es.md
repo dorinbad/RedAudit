@@ -10,90 +10,9 @@
 
 Este documento describe el roadmap técnico, verifica las capacidades ya implementadas y registra los enfoques descartados para RedAudit.
 
-## 1. Roadmap Activo (Próximas Funcionalidades)
+## 1. Roadmap Activo (Futuro y En Progreso)
 
-Estos elementos están ordenados cronológicamente e incluyen trabajo entregado, planificado y aplazado.
-
-### v4.11 Rendimiento y Visibilidad IoT (Hecho)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Perfiles de Escaneo Nuclei** | Hecho (v4.11.0) | Flag `--profile` (full/balanced/fast) para controlar intensidad y velocidad. |
-| **Detección IoT WiZ** | Hecho (v4.11.0) | Sonda UDP especializada (38899) para bombillas inteligentes WiZ. |
-| **Expansión Base de Datos OUI** | Hecho (v4.11.0) | Actualización de MACs a ~39k fabricantes (ingesta Wireshark). |
-| **Optimización Lotes Nuclei** | Hecho (v4.11.0) | Reducción de lote (10) y aumento de timeouts (600s) para redes densas. |
-
-### v4.6 Fidelidad de Escaneo y Control de Tiempo (Hecho)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Gating de Apps Web por Infraestructura** | Hecho | Omitir sqlmap/ZAP en UIs de infraestructura cuando la evidencia de identidad indica router/switch/AP. |
-| **Evidencia de Identidad en Deep Scan** | Hecho | Título/servidor HTTP y tipo de dispositivo evitan deep scan cuando la identidad ya es fuerte. |
-| **Sonda HTTP Rápida de Identidad** | Hecho | Sonda HTTP/HTTPS breve en hosts silenciosos para resolver identidad antes. |
-| **Informe Parcial de Nuclei** | Hecho | Marcar ejecuciones parciales y registrar lotes con timeout/fallidos en el informe. |
-| **Latido por Batch de Nuclei** | Hecho (v4.6.11) | Mantener actualizaciones de progreso durante lotes largos para mostrar actividad y tiempo transcurrido. |
-| **Progreso por Objetivos de Nuclei** | Hecho (v4.6.13) | Mostrar avance basado en objetivos dentro de cada batch para evitar barras congeladas. |
-| **Estabilidad del progreso de Nuclei** | Hecho (v4.6.15) | Mantener el avance de objetivos sin retrocesos durante reintentos/timeouts. |
-| **Endurecimiento de timeouts Nuclei** | Hecho (v4.6.16) | Timeouts adaptativos por lote y divisiones recursivas para reducir ejecuciones parciales. |
-| **Contexto de keyring con sudo** | Hecho (v4.6.17) | Preservar el contexto de DBus al cargar credenciales guardadas bajo sudo. |
-| **Alineación de informes de hosts** | Hecho (v4.6.15) | Rellenar hosts con nombres/interfaces unificados para consistencia. |
-| **Guardia de Origen de Identidad HTTP** | Hecho (v4.6.11) | Tratar títulos solo UPnP como pistas y evitar forzar escaneo web o score de identidad. |
-| **Resumen de normalización de objetivos en el wizard** | Hecho (v4.6.13) | Mostrar objetivos normalizados con hosts estimados antes de ejecutar. |
-| **P7.5 Cancelar en el wizard** | Hecho (v4.6.14) | Cambia "Volver" por "Cancelar" (color de advertencia) y permite cancelar prompts de credenciales. |
-| **Spray de Credenciales SSH** | Hecho (v4.6.18) | Probar todas las credenciales de la lista spray hasta autenticar. Permite listas de claves/passwords unificadas. |
-| **Priorización de Hallazgos** | Hecho (v4.6.19) | Nuevos campos `priority_score` (0-100) y `confirmed_exploitable` para ranking superior de vulnerabilidades críticas (CVE/Exploits). |
-| **Detección Clásica de Backdoors** | Hecho (v4.6.19) | Detección automática en banner de `vsftpd 2.3.4`, `UnrealIRCd 3.2.8.1` y otros backdoors históricos conocidos. |
-| **Puntuación de Confianza de Reporte** | Hecho (v4.6.19) | Score de confianza (`confidence_score` 0.0-1.0) basado en validación cruzada (Nuclei+CVE) y redução de falsos positivos. |
-| **Mejora de Títulos de Hallazgos** | Hecho (v4.6.19) | Títulos más descriptivos ("SSL Hostname Mismatch", "Missing HSTS") en lugar de genéricos, con mejor lógica de fallback. |
-| **Contador de Spray en Wizard** | Hecho (v4.6.19) | Visualización `(+N spray)` en el resumen de credenciales guardadas para mayor claridad. |
-
-### v4.7 Integracion HyperScan Masscan (Hecho)
-
-| Caracteristica | Estado | Descripcion |
-| :--- | :--- | :--- |
-| **Backend Masscan** | Reemplazado (v4.8.0) | `masscan_scanner.py` reemplazado por `RustScan` para mayor velocidad y precision. |
-| **Integracion RustScan** | Hecho (v4.8.0) | Nuevo modulo primario para HyperScan. Escaneo de todos los puertos en ~3s. |
-| **Fallback Redes Docker** | Hecho (v4.7.1) | Fallback automatico a Scapy cuando Masscan retorna 0 puertos (redes bridge Docker). |
-| **Fix Timeout Nuclei** | Hecho (v4.7.2) | Timeout de command_runner aumentado a 600s para Nuclei (era 60s, causando timeouts de batch). |
-| **Skip 404 API NVD** | Hecho (v4.7.2) | Omitir reintentos en respuestas 404 (CPE no encontrado). Reduce spam de logs. |
-
-### v4.8.x RustScan y Correcciones Instalador (Hecho)
-
-| Caracteristica | Estado | Descripcion |
-| :--- | :--- | :--- |
-| **RustScan Rango Completo** | Hecho (v4.8.2) | Forzar `-r 1-65535` para escanear todos los puertos en vez del top 1000 por defecto. |
-| **Soporte ARM64 Instalador** | Hecho (v4.8.3) | Deteccion ARM64/aarch64 para Raspberry Pi y VMs Apple Silicon. |
-| **Toggle Nuclei en Wizard** | Hecho (v4.8.1) | Restaurar prompt interactivo para activar Nuclei en perfil Exhaustivo. |
-
-### v4.9.0 Deteccion de Redes Ocultas (Hecho)
-
-| Caracteristica | Estado | Descripcion |
-| :--- | :--- | :--- |
-| **Descubrimiento de Redes Enrutadas** | Hecho (v4.9.0) | Detectar redes ocultas via parsing de `ip route` y `ip neigh`. |
-| **Prompt Interactivo de Descubrimiento** | Hecho (v4.9.0) | El wizard pregunta si incluir redes enrutadas descubiertas en el alcance. |
-| **CLI --scan-routed** | Hecho (v4.9.0) | Inclusion automatica de redes enrutadas para pipelines CI/CD. |
-
-### v4.9.1 Implementacion Quick Wins (Hecho)
-
-| Caracteristica | Estado | Descripcion |
-| :--- | :--- | :--- |
-| **Visibilidad Puertos UDP IoT** | Hecho (v4.9.1) | Asegurar que puertos UDP especializados (ej. WiZ 38899) hallados por HyperScan se incluyan en reportes. |
-| **Deteccion de Honeypot** | Hecho (v4.9.1) | Etiquetado heuristico (`honeypot`) para hosts con excesivos puertos abiertos (>100). |
-| **Etiquetado Sin Respuesta** | Hecho (v4.9.1) | Etiqueta `no_response` distintiva para hosts que fallan en Nmap, diferenciando de estado Down generico. |
-| :--- | :--- | :--- |
-| **Descubrimiento Redes Enrutadas** | Hecho (v4.9.0) | `detect_routed_networks()` parsea `ip route` e `ip neigh` para redes ocultas. |
-| **Prompt Wizard Redes Ocultas** | Hecho (v4.9.0) | Prompt interactivo para incluir redes enrutadas descubiertas en el alcance. |
-| **Flag CLI `--scan-routed`** | Hecho (v4.9.0) | Flag no interactivo para anadir automaticamente redes enrutadas a objetivos. |
-| **Documentacion Limitacion VLAN** | Hecho (v4.9.0) | Documentado que VLANs 802.1Q aisladas a L2 no son descubribles sin SNMP/acceso al switch. |
-
-### v4.10 Descubrimiento Avanzado (Planificado)
-
-| Caracteristica | Estado | Descripcion |
-| :--- | :--- | :--- |
-| **Query SNMP a Router** | Planificado | Consultar interfaces del router y tablas ARP remotas via `snmpwalk`. |
-| **Descubrimiento LLDP** | Planificado | Topologia de switches en redes gestionadas via `lldpctl`. |
-| **Descubrimiento CDP** | Planificado | Parseo de Cisco Discovery Protocol para topologias Cisco. |
-| **Deteccion VLAN Tagging** | Planificado | Detectar VLANs taggeadas 802.1Q en las interfaces del host auditor. |
+Estos elementos representan el backlog actual de trabajo planificado o aplazado.
 
 ### v4.7 Seguimiento de Auditoria (Prioridad: Alta)
 
@@ -124,82 +43,7 @@ Mejoras menores identificadas durante la validación Gold Master de v4.4.0.
 
 | Tarea | Estado | Descripción |
 | :--- | :--- | :--- |
-| **P7.1 Completitud Barras de Progreso** | Hecho (v4.6.8) | Evitar que las barras de vuln scan se actualicen tras finalizar un host para no confundir. |
-| **P7.2 Visibilidad Timeout Nikto** | Hecho (v4.6.13) | Mostrar indicador "timeout" en lugar de progreso estancado cuando Nikto excede el umbral. |
 | **P7.3 Informe JSON en Streaming** | Planificado | Escritura incremental para informes >500MB en redes muy grandes. |
-| **P7.4 Backfill de Tag Web** | Hecho (v4.6.8) | Añadir la etiqueta `web` cuando existe `web_ports_count` aunque falten flags de puerto. |
-| **P7.5 Cancelar en el wizard** | Hecho (v4.6.14) | Cambia "Volver" por "Cancelar" (color de advertencia) y permite cancelar prompts de credenciales. |
-
-### v4.4 Cobertura de Código y Estabilidad (Prioridad: Alta)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Cobertura Topology 100%** | Hecho (v4.4.5) | Alcanzada cobertura completa de tests para `topology.py` (parseo de rutas, detección de bucles, grafado). |
-| **Cobertura Updater >94%** | Hecho (v4.4.5) | Endurecido `updater.py` con tests robustos para operaciones Git, escenarios de rollback, fallos en casos borde. |
-| **Cobertura Proyecto ~89%** | Hecho (v4.4.5) | Cobertura total del proyecto ahora en 88.75% (1619 tests pasando). |
-| **Corrección Memory Leak** | Hecho (v4.4.5) | Corregido bucle infinito en mocks de tests que causaba pico de 95GB RAM. |
-
-### Fase 6: Escalabilidad Empresarial (>50 Hosts) (Prioridad: Media)
-
-Foco: Eliminar cuellos de botella en grandes redes corporativas.
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Targeting basado en Generadores** | Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. Evita picos de memoria en subredes grandes (/16). |
-| **Informe JSON en Streaming** | Hecho | Optimizado `auditor_scan.py` para evitar materializar listas en redes grandes. |
-| **Migración AsyncIO** | Aplazado | Migración completa a AsyncIO aplazada a v5.0 tras estudio de viabilidad. |
-| **Smart-Throttle (AIMD)** | Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. Ajusta batch_size dinámicamente. |
-
-### v4.3 Mejoras al Risk Score (Prioridad: Alta)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Algoritmo Weighted Maximum Gravity** | Hecho | Refactorizado `calculate_risk_score()` para usar scores CVSS de datos NVD como factor principal. Fórmula: Base (max CVSS * 10) + Bonus densidad (log10) + Multiplicador exposición (1.15x para puertos externos). |
-
-### v4.2 Optimizaciones Pipeline (Liberado en v4.2.0)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Enhanced Parallel Progress UI** | Hecho (v4.2.0) | Barras de progreso multi-hilo con Rich para Deep Scan y fases paralelas. |
-| **Web App Vuln Scan (sqlmap)** | Hecho (v4.1.0) | Integración `sqlmap` con niveles configurables (level/risk) en wizard. |
-| **Web App Vuln Scan (ZAP)** | Hecho (v4.2.0) | Integración OWASP ZAP para spidering de aplicaciones web. |
-| **Parallel Deep Scan** | Hecho (v4.2.0) | Deep Scan decoupled con concurrencia hasta 50 threads y multi-bar UI. |
-| **Desbloqueo de Hilos** | Hecho (v4.6.29) | Límite global incrementado a 100 hilos para hardware moderno. |
-| **MAC Privado Indicator** | Hecho (v4.2.0) | Detecta MACs localmente administrados (bit 2 del primer byte) y muestra "(MAC privado)". |
-| **Separación Deep Scan** | Hecho (v4.2.0) | Deep Scan extraído de `scan_host_ports()` como fase independiente `run_deep_scans_concurrent()`. |
-| **Red Team → Agentless** | Hecho (v4.2.0) | Hallazgos SMB/LDAP de Red Team pasan a Agentless Verify. |
-| **Wizard UX: Phase 0 auto** | Hecho (v4.2.0) | Phase 0 se activa automáticamente en perfil Exhaustivo. |
-| **Wizard UX: Personalizado** | Hecho (v4.2.0) | Lógica mejorada para elección entre Masscan vs HyperScan. |
-| **HyperScan naming cleanup** | Hecho (v4.2.0) | Funciones renombradas para clarificar propósito. |
-| **Session log mejorado** | Hecho (v4.2.0) | Session log enriquecido con más detalle que cli.txt. |
-
-### v4.1 Optimizaciones de Rendimiento (Prioridad: Alta)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **HyperScan-First Secuencial** | Hecho | Pre-escaneo de 65.535 puertos por host secuencialmente antes de nmap. Evita agotamiento de file descriptors. batch_size=2000. |
-| **Escaneo Vulns Paralelo** | Hecho | nikto/testssl/whatweb concurrentemente por host. |
-| **Pre-filtrado Nikto CDN** | Hecho | Omitir Nikto en Cloudflare/Akamai/AWS CloudFront. |
-| **Reutilización puertos masscan** | Hecho | Pre-scan usa puertos de masscan si ya estaban descubiertos. |
-| **CVE Lookup reordenado** | Hecho | CVE correlation movido después de Vuln Scan + Nuclei. |
-
-### v4.0 Refactorización Arquitectónica (Liberado en v3.10.2)
-
-Refactorización interna utilizando el patrón Strangler Fig:
-
-1. **Fase 1**: UIManager - Clase de operaciones UI independiente
-2. **Fase 2**: ConfigurationContext - Wrapper tipado de configuración
-3. **Fase 3**: NetworkScanner - Utilidades de puntuación de identidad
-4. **Fase 4**: Propiedades adaptador para migración gradual
-
-**Estado**: Completado en v4.0.0. Orquestación por composición vía `AuditorRuntime`, con
-herencia legacy eliminada y compatibilidad gestionada por componentes con adaptador.
-
-### Infraestructura (Prioridad: Alta)
-
-| Característica | Estado | Descripción |
-| :--- | :--- | :--- |
-| **Consolidación Suite Tests** | Hecho | Refactorizado 199 archivos → 123. Creado `conftest.py`. Eliminados 76 artefactos de coverage-gaming. 1130 tests al 85%. |
 
 ### Infraestructura (Prioridad: Baja)
 
@@ -207,72 +51,130 @@ herencia legacy eliminada y compatibilidad gestionada por componentes con adapta
 | :--- | :--- | :--- |
 | **Distribución PyPI** | Aplazado | Publicar `pip install redaudit`. Bloqueado por necesidad de testing multiplataforma extensivo. |
 | **Motor de Plugins** | Aplazado | Arquitectura "Plugin-first" para desacoplar el escáner core de las herramientas. |
+| **Migración AsyncIO** | Aplazado | Migración completa a AsyncIO aplazada a v5.0 tras estudio de viabilidad. |
 
 ---
 
-## 2. Capacidades Implementadas (Verificado)
+## 2. Hitos Completados (Histórico)
 
-Funcionalidades presentes en versiones con `redaudit --version` >= v3.6.0, con rutas de verificación en el código.
+Estos elementos están ordenados cronológicamente (el más reciente primero).
 
-### v4.5 Escaneo Autenticado (Fase 4)
+### v4.11 Rendimiento y Visibilidad IoT (Hecho)
 
-| Característica | Versión | Verificación |
+| Característica | Estado | Descripción |
 | :--- | :--- | :--- |
-| **Gestión de Secretos** | v4.5.0 | `redaudit/core/credentials.py`. Almacenamiento seguro en entorno o Keyring. |
-| **Escaneo SSH** | v4.5.0 | `redaudit/core/auth_ssh.py`. Auditoría remota Linux (OS, Paquetes, Servicios) vía Paramiko. |
-| **Escaneo SMB/WMI** | v4.5.0 | `redaudit/core/auth_smb.py`. Enumeración Windows (Shares, Usuarios, OS) vía Impacket. |
-| **SNMP v3** | v4.5.0 | `redaudit/core/auth_snmp.py`. Auditoría segura de red con protocolos Auth/Priv. |
-| **Integración Lynis** | v4.5.0 | `redaudit/core/auth_lynis.py`. Ejecución remota de auditorías de hardening CIS. |
-| **Soporte Multi-Credencial** | v4.5.2 | `redaudit/core/credentials_manager.py`. Spraying de credenciales con detección automática de protocolo. |
-| **Wizard Auth Universal** | v4.5.2 | `redaudit/core/wizard.py`. Nuevo paso `ask_auth_config` con soporte para modos Universal y Avanzado. |
+| **Perfiles de Escaneo Nuclei** | Hecho (v4.11.0) | Flag `--profile` (full/balanced/fast) para controlar intensidad y velocidad. |
+| **Detección IoT WiZ** | Hecho (v4.11.0) | Sonda UDP especializada (38899) para bombillas inteligentes WiZ. |
+| **Expansión Base de Datos OUI** | Hecho (v4.11.0) | Actualización de MACs a ~39k fabricantes (ingesta Wireshark). |
+| **Optimización Lotes Nuclei** | Hecho (v4.11.0) | Reducción de lote (10) y aumento de timeouts (600s) para redes densas. |
 
-### UX e Integraciones (v3.7.0+)
+### v4.10 Descubrimiento Avanzado (Hecho)
 
-| Característica | Versión | Verificación |
+| Caracteristica | Estado | Descripcion |
 | :--- | :--- | :--- |
-| **Detección Interfaces VPN** | v3.9.6 | `redaudit/core/entity_resolver.py`. Clasifica gateways VPN vía OUI del fabricante, puertos VPN (500/4500/1194/51820) y patrones de nombre de host. |
-| **Pack de Firmas IoT** | v3.9.5 | `redaudit/core/udp_probe.py`, `redaudit/core/hyperscan.py`. Payloads UDP específicos para WiZ, Yeelight, Tuya/SmartLife, CoAP/Matter. |
-| **Selector de Perfil del Wizard** | v3.9.0 | `redaudit/core/auditor.py`. Express/Estándar/Exhaustivo presets + modo Custom. |
-| **Modos de Temporización Reales** | v3.9.0 | `redaudit/core/scanner/nmap.py`, `redaudit/core/auditor_scan.py`. Aplica nmap `-T1`/`-T4`/`-T5` con ajustes de delay/threads. |
-| **Informes HTML Mejorados** | v3.9.0 | `redaudit/templates/report*.html.j2`. Hallazgos expandibles, análisis smart scan, playbooks, evidencia. |
-| **Detección FPs Nuclei** | v3.9.0 | `redaudit/core/verify_vuln.py`. Mapeo server header vs CPE para marcar FPs. |
-| **Consistencia de Colores** | v3.8.4 | `redaudit/core/auditor.py`. Usa Rich console.print() cuando el progreso está activo para asegurar colores correctos. |
-| **Identidad del Auditor** | v3.8.3 | `redaudit/core/wizard.py`. Prompt del asistente para nombre del auditor, visible en informes TXT/HTML. |
-| **Informes HTML Bilingües** | v3.8.3 | `redaudit/core/reporter.py`. Cuando el idioma es ES, se genera `report_es.html` junto al HTML principal. |
-| **Navegación del Asistente** | v3.8.1 | `redaudit/core/wizard.py`. Opción "Cancelar" en menús del asistente para navegación paso a paso. |
-| **Watermark HTML** | v3.8.2 | `redaudit/templates/report.html.j2`. Footer profesional con GPLv3, autor y enlace a GitHub. |
-| **Webhooks Interactivos** | v3.7.0 | `redaudit/core/wizard.py`. Configura Slack/Teams directamente en el asistente. |
-| **Net Discovery Paralelo** | v4.6.32 | Ejecución concurrente de DHCP, ARP, mDNS, UPnP. |
-| **HyperScan Paralelo** | v4.6.31 | Pre-escaneo multi-hilo. |
-| **Asistente: Net Discovery Avanzado** | v3.7.0 | `redaudit/core/wizard.py`. Configura SNMP/DNS/Targets interactivamente. |
-| **Pipeline SIEM Nativo** | v3.7.0 | `siem/`. Configs para Filebeat/Logstash + reglas Sigma. |
-| **Logging de Sesión** | v3.7.0 | `redaudit/utils/session_log.py`. Captura salida de terminal a `.log` y `.txt`. |
-| **Progreso estable (HyperScan/Nuclei)** | v3.7.2 | `redaudit/core/hyperscan.py`, `redaudit/core/auditor.py`, `redaudit/core/nuclei.py`. Reduce flickering y muestra ETA. |
+| **Query SNMP a Router** | Hecho (v4.10.0) | Consultar interfaces del router y tablas ARP remotas via `snmpwalk`. |
+| **Descubrimiento LLDP** | Hecho (v4.10.0) | Topologia de switches en redes gestionadas via `lldpctl`. |
+| **Descubrimiento CDP** | Hecho (v4.10.0) | Parseo de Cisco Discovery Protocol para topologias Cisco. |
+| **Deteccion VLAN Tagging** | Hecho (v4.10.0) | Detectar VLANs taggeadas 802.1Q en las interfaces del host auditor vía `ifconfig`/`ip link`. |
 
-### Escaneo Avanzado y Automatización
+### v4.9 Deteccion de Redes Ocultas (Hecho)
 
-| Característica | Versión | Verificación |
+| Caracteristica | Estado | Descripcion |
 | :--- | :--- | :--- |
-| **Integración Nuclei** | v3.6.0 | Módulo `redaudit/core/nuclei.py`. Ejecuta plantillas cuando Nuclei está instalado y se habilita explícitamente (asistente o `--nuclei`). |
-| **Verificación sin agente** | v3.7.3 | `redaudit/core/agentless_verify.py`. Fingerprinting SMB/RDP/LDAP/SSH/HTTP opcional (asistente o `--agentless-verify`). |
-| **Sonda HTTP en hosts silenciosos** | v3.8.5 | `redaudit/core/auditor_scan.py`, `redaudit/core/scanner/enrichment.py`. Sonda HTTP/HTTPS breve en puertos comunes para hosts con fabricante y cero puertos abiertos. |
-| **Generación Playbooks** | v3.4.0 | Módulo `redaudit/core/playbook_generator.py`. Crea guías de remediación MD en `playbooks/`. |
-| **Red Team: Kerberos** | v3.2.0 | Módulo `redaudit/core/net_discovery.py`. Usa `kerbrute` para enumeración si está autorizado. |
-| **Red Team: SNMP/SMB** | v3.2.0 | Módulo `redaudit/core/net_discovery.py`. Usa `snmpwalk` y `enum4linux`. |
-| **Preparación SIEM** | v3.1.0 | Módulo `redaudit/core/siem.py`. Genera JSON/JSONL compatibles con SIEM y campos alineados con ECS. |
-| **Análisis Diferencial** | v3.3.0 | Módulo `redaudit/core/diff.py`. Diff visual HTML entre dos escaneos. |
+| **Descubrimiento de Redes Enrutadas** | Hecho (v4.9.0) | Detectar redes ocultas via parsing de `ip route` y `ip neigh`. |
+| **Prompt Interactivo de Descubrimiento** | Hecho (v4.9.0) | El wizard pregunta si incluir redes enrutadas descubiertas en el alcance. |
+| **CLI --scan-routed** | Hecho (v4.9.0) | Inclusion automatica de redes enrutadas para pipelines CI/CD. |
+| **Visibilidad Puertos UDP IoT** | Hecho (v4.9.1) | Asegurar que puertos UDP especializados (ej. WiZ 38899) hallados por HyperScan se incluyan en reportes. |
+| **Deteccion de Honeypot** | Hecho (v4.9.1) | Etiquetado heuristico (`honeypot`) para hosts con excesivos puertos abiertos (>100). |
+| **Etiquetado Sin Respuesta** | Hecho (v4.9.1) | Etiqueta `no_response` distintiva para hosts que fallan en Nmap. |
 
-### Core y Estabilidad
+### v4.8 RustScan y Correcciones Instalador (Hecho)
 
-| Característica | Versión | Verificación |
+| Caracteristica | Estado | Descripcion |
 | :--- | :--- | :--- |
-| **Versión Única** | v3.5.4 | La versión ahora se resuelve de forma fiable en todos los modos: `importlib.metadata` cuando existe, más un fallback `redaudit/VERSION` para instalaciones vía script en `/usr/local/lib/redaudit`. |
-| **Imagen de Contenedor** | v3.8.4 | `Dockerfile` + `.github/workflows/docker.yml` publican imagen en GHCR. |
-| **CommandRunner Central** | v3.5.0 | `redaudit/core/command_runner.py` maneja todos los subprocesos de forma segura. |
-| **Escaneos con Timeout** | v3.7.3 | `redaudit/core/auditor.py` aplica timeouts duros en nmap por host, manteniendo el progreso fluido. |
-| **Config Persistente** | v3.1.1 | `~/.redaudit/config.json` almacena defaults del usuario. |
-| **Descubrimiento Async** | v3.1.3 | `redaudit/core/hyperscan.py` usa `asyncio` para sondeo rápido de puertos. |
-| **UI de Progreso Silenciosa (con detalle)** | v3.6.0 | `redaudit/core/auditor.py` reduce el ruido del terminal mientras hay barras de progreso y muestra “qué está haciendo” dentro de la propia línea de progreso. |
+| **RustScan Rango Completo** | Hecho (v4.8.2) | Forzar `-r 1-65535` para escanear todos los puertos en vez del top 1000 por defecto. |
+| **Soporte ARM64 Instalador** | Hecho (v4.8.3) | Deteccion ARM64/aarch64 para Raspberry Pi y VMs Apple Silicon. |
+| **Toggle Nuclei en Wizard** | Hecho (v4.8.1) | Restaurar prompt interactivo para activar Nuclei en perfil Exhaustivo. |
+
+### v4.7 Integracion HyperScan Masscan (Hecho)
+
+| Caracteristica | Estado | Descripcion |
+| :--- | :--- | :--- |
+| **Backend Masscan** | Reemplazado (v4.8.0) | `masscan_scanner.py` reemplazado por `RustScan` para mayor velocidad y precision. |
+| **Integracion RustScan** | Hecho (v4.8.0) | Nuevo modulo primario para HyperScan. Escaneo de todos los puertos en ~3s. |
+| **Fallback Redes Docker** | Hecho (v4.7.1) | Fallback automatico a Scapy cuando Masscan retorna 0 puertos (redes bridge Docker). |
+| **Fix Timeout Nuclei** | Hecho (v4.7.2) | Timeout de command_runner aumentado a 600s para Nuclei (era 60s, causando timeouts de batch). |
+| **Skip 404 API NVD** | Hecho (v4.7.2) | Omitir reintentos en respuestas 404 (CPE no encontrado). Reduce spam de logs. |
+
+### v4.6 Fidelidad de Escaneo y Control de Tiempo (Hecho)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Gating de Apps Web por Infraestructura** | Hecho | Omitir sqlmap/ZAP en UIs de infraestructura cuando la evidencia de identidad indica router/switch/AP. |
+| **Evidencia de Identidad en Deep Scan** | Hecho | Título/servidor HTTP y tipo de dispositivo evitan deep scan cuando la identidad ya es fuerte. |
+| **Sonda HTTP Rápida de Identidad** | Hecho | Sonda HTTP/HTTPS breve en hosts silenciosos para resolver identidad antes. |
+| **Informe Parcial de Nuclei** | Hecho | Marcar ejecuciones parciales y registrar lotes con timeout/fallidos en el informe. |
+| **Latido por Batch de Nuclei** | Hecho (v4.6.11) | Mantener actualizaciones de progreso durante lotes largos para mostrar actividad y tiempo transcurrido. |
+| **Progreso por Objetivos de Nuclei** | Hecho (v4.6.13) | Mostrar avance basado en objetivos dentro de cada batch para evitar barras congeladas. |
+| **Estabilidad del progreso de Nuclei** | Hecho (v4.6.15) | Mantener el avance de objetivos sin retrocesos durante reintentos/timeouts. |
+| **Endurecimiento de timeouts Nuclei** | Hecho (v4.6.16) | Timeouts adaptativos por lote y divisiones recursivas para reducir ejecuciones parciales. |
+| **Contexto de keyring con sudo** | Hecho (v4.6.17) | Preservar el contexto de DBus al cargar credenciales guardadas bajo sudo. |
+| **Alineación de informes de hosts** | Hecho (v4.6.15) | Rellenar hosts con nombres/interfaces unificados para consistencia. |
+| **Guardia de Origen de Identidad HTTP** | Hecho (v4.6.11) | Tratar títulos solo UPnP como pistas y evitar forzar escaneo web o score de identidad. |
+| **Resumen de normalización de objetivos en el wizard** | Hecho (v4.6.13) | Mostrar objetivos normalizados con hosts estimados antes de ejecutar. |
+| **Spray de Credenciales SSH** | Hecho (v4.6.18) | Probar todas las credenciales de la lista spray hasta autenticar. |
+| **Priorización de Hallazgos** | Hecho (v4.6.19) | Nuevos campos `priority_score` (0-100) y `confirmed_exploitable` para ranking superior de vulnerabilidades. |
+| **Detección Clásica de Backdoors** | Hecho (v4.6.19) | Detección automática en banner de `vsftpd 2.3.4`, `UnrealIRCd 3.2.8.1` y otros backdoors. |
+| **Puntuación de Confianza de Reporte** | Hecho (v4.6.19) | Score de confianza (`confidence_score` 0.0-1.0) basado en validación cruzada (Nuclei+CVE). |
+| **Mejora de Títulos de Hallazgos** | Hecho (v4.6.19) | Títulos más descriptivos ("SSL Hostname Mismatch") en lugar de genéricos. |
+| **Contador de Spray en Wizard** | Hecho (v4.6.19) | Visualización `(+N spray)` en el resumen de credenciales guardadas para mayor claridad. |
+
+### v4.4 Cobertura de Código y Estabilidad (Hecho)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Cobertura Topology 100%** | Hecho (v4.4.5) | Alcanzada cobertura completa de tests para `topology.py`. |
+| **Cobertura Updater >94%** | Hecho (v4.4.5) | Endurecido `updater.py` con tests robustos. |
+| **Cobertura Proyecto ~89%** | Hecho (v4.4.5) | Cobertura total del proyecto ahora en 88.75% (1619 tests pasando). |
+| **Corrección Memory Leak** | Hecho (v4.4.5) | Corregido bucle infinito en mocks de tests. |
+| **Targeting basado en Generadores** | Hecho (v4.4.0) | Refactorizado HyperScan para usar generadores lazy. |
+| **Informe JSON en Streaming** | Hecho | Optimizado `auditor_scan.py` para evitar materializar listas. |
+| **Smart-Throttle (AIMD)** | Hecho (v4.4.0) | Control de congestión adaptativo AIMD en HyperScan. |
+
+### v4.3 Mejoras al Risk Score (Hecho)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Algoritmo Weighted Maximum Gravity** | Hecho | Refactorizado `calculate_risk_score()` usando CVSS de NVD. |
+| **Risk Score Breakdown Tooltip** | Hecho | HTML reports show detailed risk score components on hover. |
+| **Identity Score Visualization** | Hecho | HTML reports display color-coded identity_score with tooltip showing identity signals. |
+| **Smart-Check CPE Validation** | Hecho | Enhanced Nuclei false positive detection using host CPE data. |
+| **HyperScan SYN Mode** | Hecho | Optional scapy-based SYN scanning (`--hyperscan-mode syn`). |
+| **PCAP Management Utilities** | Hecho | `merge_pcap_files()`, `organize_pcap_files()`, cleanup. |
+
+### v4.2 Optimizaciones Pipeline (Liberado en m v4.2.0)
+
+Ver [Release Notes](../releases/RELEASE_NOTES_v4.2.0.md) para detalles.
+
+### v4.1 Optimizaciones de Rendimiento (Hecho)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **HyperScan-First Secuencial** | Hecho | Pre-escaneo de 65.535 puertos por host secuencialmente. |
+| **Escaneo Vulns Paralelo** | Hecho | nikto/testssl/whatweb concurrentemente por host. |
+| **Pre-filtrado Nikto CDN** | Hecho | Omitir Nikto en Cloudflare/Akamai/AWS CloudFront. |
+| **Reutilización puertos masscan** | Hecho | Pre-scan usa puertos de masscan si ya estaban descubiertos. |
+| **CVE Lookup reordenado** | Hecho | CVE correlation movido después de Vuln Scan + Nuclei. |
+
+### v4.0 Refactorización Arquitectónica (Hecho)
+
+Refactorización interna utilizando el patrón Strangler Fig. Completado en v4.0.0.
+
+### Infraestructura (Prioridad: Alta)
+
+| Característica | Estado | Descripción |
+| :--- | :--- | :--- |
+| **Consolidación Suite Tests** | Hecho | Refactorizado 199 archivos → 123. 1130 tests al 85%. |
 
 ---
 
@@ -282,11 +184,11 @@ Ideas consideradas pero rechazadas para mantener el foco del proyecto.
 
 | Propuesta | Razón del Descarte |
 | :--- | :--- |
-| **GUI Web (Controlador)** | Incrementa superficie de ataque y peso. RedAudit está diseñado como herramienta CLI "headless" para automatización. |
-| **Framework de Explotación** | Fuera de alcance. RedAudit es para *auditoría* y *descubrimiento*, no explotación armada (como Metasploit). |
-| **Soporte Nativo Windows** | Demasiado complejo debido a requisitos de sockets raw. Usar WSL2 o Docker. |
-| **Generación Informe PDF** | Añade dependencias pesadas (LaTeX/ReportLab). Se prefiere salida JSON/HTML para flujos modernos. |
-| **Escaneo Distribuido** | Demasiado complejo (FastAPI/Redis). RedAudit es una herramienta CLI táctica, no una plataforma SaaS. Arquitectura rechazada. |
+| **GUI Web (Controlador)** | Incrementa superficie de ataque y peso. RedAudit es una herramienta CLI "headless". |
+| **Framework de Explotación** | Fuera de alcance. RedAudit es para *auditoría*, no explotación (como Metasploit). |
+| **Soporte Nativo Windows** | Demasiado complejo. Usar WSL2 o Docker. |
+| **Generación Informe PDF** | Añade dependencias pesadas. Se prefiere salida JSON/HTML. |
+| **Escaneo Distribuido** | Demasiado complejo (FastAPI/Redis). Arquitectura rechazada. |
 
 ---
 
