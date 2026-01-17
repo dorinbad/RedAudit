@@ -120,12 +120,13 @@ See [CHANGELOG](CHANGELOG.md) for complete version history.
 
 RedAudit operates as an orchestration layer, managing concurrent execution threads for network interaction and data processing. It implements a multi-stage architecture:
 
-1. **HyperScan**: Async UDP/TCP discovery.
+1. **HyperScan**: Async UDP/TCP discovery with **Smart-Throttle (AIMD)** congestion control.
 2. **Adaptive Deep Scan**: Targeted enumeration based on host identity.
 3. **Entity Resolution**: Identity-Based consolidation of multi-interface devices (heuristic).
 4. **Smart Filtering**: Reducing noise via context-aware verification (`verify_vuln.py`).
+5. **Resilience**: Automatic **Dead Host Retries** to abandon unresponsive hosts and prevent scan stalls.
 
-![System Overview](docs/images/system_overview_v4.5_en.png)
+![System Overview](docs/images/system_overview_v4_en.png)
 
 ### Adaptive Scanning Logic
 

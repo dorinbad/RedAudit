@@ -122,12 +122,13 @@ Ver [NOTAS DE LANZAMIENTO](../docs/releases/RELEASE_NOTES_v4.4.4_ES.md) para má
 
 RedAudit opera como una capa de orquestación, gestionando hilos de ejecución concurrentes para la interacción de red y el procesamiento de datos. Implementa una arquitectura multifase:
 
-1. **HyperScan**: Descubrimiento async UDP/TCP.
+1. **HyperScan**: Descubrimiento async UDP/TCP con control de congestión **Smart-Throttle (AIMD)**.
 2. **Deep Scan Adaptativo**: Enumeración dirigida basada en la identidad del host.
 3. **Resolución de Entidad**: Consolidación basada en identidad de dispositivos multi-interfaz (heurística).
 4. **Filtrado Inteligente**: Reducción de ruido vía verificación consciente del contexto (`verify_vuln.py`).
+5. **Resiliencia**: **Reintentos de Host Muerto** automáticos para abandonar hosts que no responden y evitar bloqueos.
 
-![Vista General del Sistema](../docs/images/system_overview_v4.5_es.png)
+![Vista General del Sistema](../docs/images/system_overview_v4_es.png)
 
 ### Lógica de Escaneo Adaptativo
 
