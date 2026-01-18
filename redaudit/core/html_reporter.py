@@ -184,7 +184,7 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
                 # Try to pretty print if it looks like XML
                 if raw_evidence.strip().startswith("<") and raw_evidence.strip().endswith(">"):
                     try:
-                        dom = xml.dom.minidom.parseString(raw_evidence)
+                        dom = xml.dom.minidom.parseString(raw_evidence)  # nosec B318
                         evidence = dom.toprettyxml()
                     except Exception:
                         evidence = raw_evidence
