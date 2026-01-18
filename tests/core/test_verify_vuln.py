@@ -345,3 +345,61 @@ def test_filter_nuclei_false_positives_with_host_records():
     assert len(fps) == 1
     assert len(genuine) == 0
     assert fps[0].get("suspected_false_positive") is True
+
+
+def test_check_nuclei_false_positive_fritz_in_response_body():
+    """v4.13.2: Detect FRITZ!OS in response body, not just Server header."""
+    finding = {
+        "template-id": "CVE-2022-26143",
+        "response": (
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "\r\n"
+            '{"server":"FRITZ!OS Guest information Server","version":"1.0"}'
+        ),
+    }
+    is_fp, reason = check_nuclei_false_positive(finding)
+    assert is_fp is True
+    assert "fritz" in reason.lower()
+
+
+def test_normalize_nuclei_finding_extracts_rich_fields():
+    """v4.13.2: Verify nuclei normalization extracts impact/remediation/cvss."""
+    from redaudit.core.nuclei import _normalize_nuclei_finding
+
+    raw = {
+        "template-id": "CVE-2024-54767",
+        "info": {
+            "name": "AVM FRITZ!Box Vulnerability",
+            "severity": "high",
+            "description": "A vulnerability in FRITZ!Box devices allows...",
+            "impact": "An attacker can exploit this to...",
+            "remediation": "Update to the latest firmware version.",
+            "classification": {
+                "cvss-score": 8.6,
+                "cvss-metrics": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N",
+            },
+            "reference": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2024-54767",
+            ],
+        },
+        "host": "http://192.168.178.1:443",
+        "matched-at": "http://192.168.178.1:443/path",
+        "extracted-results": ["<result>data</result>"],
+    }
+
+    result = _normalize_nuclei_finding(raw)
+
+    assert result is not None
+    assert result["source"] == "nuclei"
+    assert result["template_id"] == "CVE-2024-54767"
+    assert result["name"] == "AVM FRITZ!Box Vulnerability"
+    assert result["severity"] == "high"
+    assert result["description"] == "A vulnerability in FRITZ!Box devices allows..."
+    # v4.13.2 new fields
+    assert result["impact"] == "An attacker can exploit this to..."
+    assert result["remediation"] == "Update to the latest firmware version."
+    assert result["cvss_score"] == 8.6
+    assert "CVSS:3.1" in result["cvss_metrics"]
+    assert len(result["reference"]) == 1
+    assert result["extracted_results"] == ["<result>data</result>"]

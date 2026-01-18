@@ -166,14 +166,26 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
                 observations = [obs for obs in observations[:5] if obs]  # Limit to 5
             else:
                 observations = []
+            # v4.13.2: Fallback to description if no observations
+            if not observations:
+                desc_fallback = vuln.get("description") or vuln.get("info", {}).get(
+                    "description", ""
+                )
+                if desc_fallback:
+                    observations = [desc_fallback]
 
             title = _extract_finding_title(vuln)
             if lang:
                 title = _translate_finding_title(title, lang)
 
             # v4.3.0: Extract rich details
+            # v4.13.2: Fixed key mismatch - nuclei outputs "reference", not "references"
             description = vuln.get("description") or vuln.get("info", {}).get("description", "")
-            references = vuln.get("references") or vuln.get("info", {}).get("reference", [])
+            references = (
+                vuln.get("reference")
+                or vuln.get("references")
+                or vuln.get("info", {}).get("reference", [])
+            )
             if not references and cve_ids:
                 references = [f"https://nvd.nist.gov/vuln/detail/{cve}" for cve in cve_ids]
 

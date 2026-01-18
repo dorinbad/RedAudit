@@ -711,6 +711,11 @@ def _normalize_nuclei_finding(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "name": info.get("name", template_id),
         "severity": severity,
         "description": info.get("description", ""),
+        # v4.13.2: Extract additional rich fields
+        "impact": info.get("impact", ""),
+        "remediation": info.get("remediation", ""),
+        "cvss_score": info.get("classification", {}).get("cvss-score") or 0,
+        "cvss_metrics": info.get("classification", {}).get("cvss-metrics", ""),
         "host": raw.get("host", ""),
         "matched_at": raw.get("matched-at", raw.get("matchedAt", "")),
         "matcher_name": raw.get("matcher-name", raw.get("matcherName", "")),
@@ -718,6 +723,8 @@ def _normalize_nuclei_finding(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "reference": info.get("reference", []),
         "tags": info.get("tags", []),
         "cve_ids": _extract_cve_ids(info),
+        # v4.13.2: Include extracted results for evidence display
+        "extracted_results": raw.get("extracted-results") or raw.get("extractedResults") or [],
         "raw": raw,
         # v3.9.0: FP detection
         "suspected_false_positive": is_fp,

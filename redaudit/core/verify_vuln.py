@@ -630,13 +630,18 @@ def check_nuclei_false_positive(
         agentless_server = (agentless_data.get("http_server") or "").lower()
 
     # Combine all identifiers
-    identifiers = f"{server_header} {agentless_vendor} {agentless_title} {agentless_server}".lower()
+    # v4.13.2: Include full response body for better FP detection (e.g., "FRITZ!OS" in body)
+    response_body_snippet = response[:2000].lower() if len(response) > 2000 else response.lower()
+    identifiers = (
+        f"{server_header} {agentless_vendor} {agentless_title} "
+        f"{agentless_server} {response_body_snippet}"
+    ).lower()
 
     if logger and "micollab" in template_config.get("description", "").lower():
         logger.debug(
-            "Smart-Check Debug: template=%s identifiers=[%s] expected=%s fp=%s",
+            "Smart-Check Debug: template=%s identifiers_len=%d expected=%s fp=%s",
             template_id,
-            identifiers,
+            len(identifiers),
             template_config.get("expected_vendors", []),
             template_config.get("false_positive_vendors", []),
         )
