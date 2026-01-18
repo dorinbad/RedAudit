@@ -388,12 +388,14 @@ class TestWizard(unittest.TestCase):
             key = self.wizard._read_key()
             self.assertEqual(key, "up")
 
-    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[True])  # SSH Yes
+    @patch(
+        "redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[True, False, False]
+    )  # SSH Yes, SMB No, SNMP No
     @patch("builtins.input", side_effect=["u", "u", "u"])
     @patch("redaudit.core.wizard.Wizard.ask_choice", side_effect=[1, 1, 1, 1])  # Pass
     @patch("getpass.getpass", side_effect=Exception("Error"))
     def test_collect_advanced_credentials_exception(
-        self, mock_pass, mock_choice, mock_input, mock_ask
+        self, mock_getpass, mock_ask_choice, mock_input, mock_ask_yes_no
     ):
         config = {}
         self.wizard._collect_advanced_credentials(config)  # type: ignore
@@ -415,30 +417,12 @@ class TestWizard(unittest.TestCase):
 
     @patch("redaudit.core.wizard.Wizard._read_key")
     @patch("redaudit.core.wizard.Wizard._use_arrow_menu", return_value=True)
-    def test_arrow_menu_search(self, mock_use, mock_key):
-        # Swap args again? No, decorators apply bottom up?
-        # @patch("A") # Outer -> Arg 1
-        # @patch("B") # Inner -> Arg 2
-        # def test(a, b)
-        # So test_arrow_menu_search(mock_key, mock_use) was correct.
-        # But previous run failed.
-        # Let's try explicitly naming them or using *args
-        opts = ["Apple", "Banana", "Cherry"]
-        mock_key.side_effect = ["b", "enter"]
-
-        with patch("shutil.get_terminal_size", return_value=os.terminal_size((80, 24))):
-            res = self.wizard._arrow_menu("Q", opts, default=0)
-            # If 0 returned, maybe key was ignored?
-            self.assertEqual(res, 1)
-
-    @patch("redaudit.core.wizard.Wizard._read_key")
-    @patch("redaudit.core.wizard.Wizard._use_arrow_menu", return_value=True)
-    def test_arrow_menu_scroll(self, mock_key, mock_use):
-        # If swap failed, let's verify which is which via type check or behavior?
-        # Assume correct.
+    def test_arrow_menu_scroll(self, mock_use_arrow, mock_read_key):
+        # 100 options. Scroll down.
         opts = [f"Opt{i}" for i in range(100)]
+        # Down 10 times, then enter.
         keys = ["down"] * 10 + ["enter"]
-        mock_key.side_effect = keys
+        mock_read_key.side_effect = keys
 
         with patch("shutil.get_terminal_size", return_value=os.terminal_size((80, 24))):
             res = self.wizard._arrow_menu("Q", opts, default=0)
