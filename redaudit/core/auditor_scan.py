@@ -247,7 +247,7 @@ class AuditorScan:
             try:
                 import impacket  # noqa: F401
 
-                # self.ui.print_status(self.ui.t("impacket_avail"), "OKGREEN") # Use generic message for now
+                # self.ui.print_status(self.ui.t("impacket_avail"), "OKGREEN")  # Generic msg
                 self.ui.print_status("Impacket available (SMB/WMI)", "OKGREEN")
             except ImportError:
                 self.ui.print_status(
@@ -1107,7 +1107,7 @@ class AuditorScan:
 
             # v4.6.0: Trust HyperScan Optimization
             # If enabled and we have discovery ports, use them instead of -p-
-            # v4.6.2: Handle "Mute" hosts (0 ports). If untrusted -> -p- (def). If trusted -> top-1000 sanity check.
+            # v4.6.2: Handle "Mute" hosts (0 ports). Untrusted->-p-. Trusted->top-1000 check.
             if self.config.get("trust_hyperscan"):
                 if trusted_ports is not None:
                     # Case A: Ports found (Speed++)
@@ -1124,7 +1124,8 @@ class AuditorScan:
                             safe_ip,
                         ]
                         self.ui.print_status(
-                            f"⚡ Trust HyperScan active: Scanning {len(trusted_ports)} ports instead of 65k",
+                            f"⚡ Trust HyperScan active: Scanning {len(trusted_ports)} ports "
+                            "instead of 65k",
                             "OKBLUE",
                         )
                     # Case B: No ports found (Sanity Check)
@@ -1233,7 +1234,10 @@ class AuditorScan:
                 noresp_count = sum(1 for r in udp_probe if r.get("state") == "no_response")
 
                 record = {
-                    "command": f"udp_probe {safe_ip} priority_ports={len(priority_ports)} timeout={udp_probe_timeout}",
+                    "command": (
+                        f"udp_probe {safe_ip} priority_ports={len(priority_ports)} "
+                        f"timeout={udp_probe_timeout}"
+                    ),
                     "returncode": 0,
                     "stdout": (
                         f"responded_ports: {', '.join(responded) if responded else 'none'}\n"
@@ -1336,7 +1340,8 @@ class AuditorScan:
                     )
                     if "os_detected" not in deep_obj:
                         os2b = extract_os_detection(
-                            f"{self._coerce_text(rec2b.get('stdout'))}\n{self._coerce_text(rec2b.get('stderr'))}"
+                            f"{self._coerce_text(rec2b.get('stdout'))}\n"
+                            f"{self._coerce_text(rec2b.get('stderr'))}"
                         )
                         if os2b:
                             deep_obj["os_detected"] = os2b
@@ -1450,7 +1455,7 @@ class AuditorScan:
             and not self.config.get("no_hyperscan_first")
         )
 
-        # v4.5.17: Always check for HyperScan ports (for port preservation, even if not in full mode)
+        # v4.5.17: Always check HyperScan ports (preservation, even if not full mode)
         discovery_ports: List[int] = []
         if "_hyperscan_discovery_ports" in self.__dict__:
             discovery_ports = self._hyperscan_discovery_ports.get(safe_ip, [])
@@ -1862,7 +1867,8 @@ class AuditorScan:
 
                     try:
                         self._set_ui_detail(
-                            f"[SMB] {safe_ip} ({smb_idx + 1}/{len(smb_credentials)}) {smb_cred.username}"
+                            f"[SMB] {safe_ip} ({smb_idx + 1}/{len(smb_credentials)}) "
+                            f"{smb_cred.username}"
                         )
 
                         smb_scanner = SMBScanner(smb_cred)
@@ -1979,7 +1985,7 @@ class AuditorScan:
             if self.config.get("low_impact_enrichment"):
                 host_record["phase0_enrichment"] = phase0_enrichment or {}
 
-            # Best-effort identity capture from nmap host data (fast, avoids deep scan for quiet hosts).
+            # Best-effort ID from nmap (fast, avoids deep scan for quiet hosts).
             try:
                 addresses = (data.get("addresses") or {}) if hasattr(data, "get") else {}
                 mac = addresses.get("mac") if isinstance(addresses, dict) else None
@@ -2809,9 +2815,10 @@ class AuditorScan:
                                 if now - last_heartbeat >= 60.0:
                                     elapsed = int(now - start_t)
                                     mins, secs = divmod(elapsed, 60)
-                                    # Use progress.console to print safely without breaking the Live display
+                                    # Use progress.console to print without breaking Live
                                     progress.console.print(
-                                        f"[cyan][INFO][/cyan] {self.ui.t('scanning_hosts')}... {done}/{total} ({mins}:{secs:02d} elapsed)",
+                                        f"[cyan][INFO][/cyan] {self.ui.t('scanning_hosts')}... "
+                                        f"{done}/{total} ({mins}:{secs:02d} elapsed)",
                                         highlight=False,
                                     )
                                     last_heartbeat = now
@@ -2878,7 +2885,8 @@ class AuditorScan:
                             elapsed = int(time.time() - start_t)
                             mins, secs = divmod(elapsed, 60)
                             self.ui.print_status(
-                                f"{self.ui.t('progress', done, total)} ({mins}:{secs:02d} transcurrido)",
+                                f"{self.ui.t('progress', done, total)} "
+                                f"({mins}:{secs:02d} transcurrido)",
                                 "INFO",
                                 update_activity=False,
                                 force=True,
@@ -3004,7 +3012,8 @@ class AuditorScan:
                                     progress.update(
                                         task,
                                         advance=1,
-                                        description=f"[cyan]{self.ui.t('windows_verify_label')} ({done}/{total})",
+                                        description=f"[cyan]{self.ui.t('windows_verify_label')} "
+                                        f"({done}/{total})",
                                     )
                 else:
                     for fut in as_completed(futures):
@@ -3032,7 +3041,8 @@ class AuditorScan:
                             elapsed = int(time.time() - start_t)
                             mins, secs = divmod(elapsed, 60)
                             self.ui.print_status(
-                                f"{self.ui.t('windows_verify_label')} {done}/{total} | ETA≈ {eta_est_val}",
+                                f"{self.ui.t('windows_verify_label')} {done}/{total} | "
+                                f"ETA≈ {eta_est_val}",
                                 "INFO",
                                 force=True,
                             )
