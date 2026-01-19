@@ -8,6 +8,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Release notes live under `docs/releases/` for additional context.
 
+## [4.14.0] - 2026-01-19
+
+### Added
+
+- **Device-Aware Remediation**: New templates in `playbook_generator.py` for AVM (FRITZ!), Linux, Cisco/Network, and Windows devices.
+  - Embedded devices (e.g., FRITZ!Box) now suggest firmware updates via web UI instead of `apt/yum`.
+  - Network devices suggest IOS/firmware updates.
+  - Linux servers retain `apt/yum` guidance.
+- **Model-Specific CVE Matching**: Enhanced `verify_vuln.py` to support `expected_models` and `false_positive_models`.
+  - Implemented for **CVE-2024-54767** (AVM Unauth Access): matches only `7530`, excludes `7590` and Repeaters.
+- **Technical Detail Fallback**: `evidence_parser.py` now generates robust observations from service versions, banners, and headers when specific tool output is missing.
+
+### Fixed
+
+- **Playbook Titles**: Fixed issue where finding titles containing URLs (e.g. `http://...`) were used as playbook titles. Now falls back to descriptive titles or generic names.
+- **Wizard UX**: Added logic to prompt for manual configuration if user declines to load credentials from keyring.
+- **Wizard Styling**: Enhanced wizard menu with professional colors (Dim for navigation, Bold Cyan for selection).
+- **Code Robustness**: Completed exhaustive audit of `playbook_generator.py`:
+  - Fixed `{host}` placeholder logic in steps.
+  - Added strict type safety checks for vendor and device type processing.
+
 ## [4.13.2] - 2026-01-18
 
 ### Fixed

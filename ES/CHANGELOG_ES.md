@@ -8,6 +8,27 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.14.0] - 2026-01-19
+
+### Añadido
+
+- **Remediación Consciente del Dispositivo**: Nuevas plantillas en `playbook_generator.py` para dispositivos AVM (FRITZ!), Linux, Cisco/Red y Windows.
+  - Dispositivos embebidos (ej. FRITZ!Box) ahora sugieren actualizaciones de firmware vía interfaz web en lugar de `apt/yum`.
+  - Dispositivos de red sugieren actualizaciones de IOS/firmware.
+  - Servidores Linux mantienen guía `apt/yum`.
+- **Coincidencia de Modelos CVE**: Mejorado `verify_vuln.py` para soportar `expected_models` y `false_positive_models`.
+  - Implementado para **CVE-2024-54767** (Acceso No Autorizado AVM): coincide solo con `7530`, excluye `7590` y Repetidores.
+- **Fallback de Detalles Técnicos**: `evidence_parser.py` ahora genera observaciones robustas desde versiones de servicio, banners y cabeceras cuando falta salida específica de herramientas.
+
+### Corregido
+
+- **Títulos de Playbook**: Corregido problema donde títulos de hallazgos que contenían URLs (ej. `http://...`) se usaban como títulos de playbook. Ahora usa títulos descriptivos o nombres genéricos.
+- **UX del Asistente**: Añadida lógica para sugerir configuración manual si el usuario rechaza cargar credenciales del llavero.
+- **Estilo del Asistente**: Mejorado menú del asistente con colores profesionales (Tenue para navegación, Cian Negrita para selección).
+- **Robustez del Código**: Completada auditoría exhaustiva de `playbook_generator.py`:
+  - Corregida lógica de placeholder `{host}` en pasos.
+  - Añadidas comprobaciones estrictas de tipos para procesamiento de vendor y tipo de dispositivo.
+
 ## [4.13.2] - 2026-01-18
 
 ### Corregido
