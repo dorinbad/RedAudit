@@ -62,6 +62,74 @@ PLAYBOOK_PATTERNS = {
     ],
 }
 
+# v4.14: Device-aware remediation templates
+# Commands and steps vary based on device type/vendor
+DEVICE_REMEDIATION_TEMPLATES = {
+    "embedded_device": {
+        "vendors": ["avm", "fritz", "mikrotik", "ubiquiti", "netgear", "tp-link", "asus"],
+        "steps": [
+            "Access device web interface at http://{host}",
+            "Navigate to System/Administration > Firmware Update",
+            "Check for available firmware updates",
+            "Download latest firmware from vendor website if manual update needed",
+            "Apply update and verify device restarts correctly",
+        ],
+        "commands": [
+            "# Embedded devices do not use apt/yum",
+            "# Update via web interface or vendor tool:",
+            "# - AVM FRITZ: http://{host} > System > Update",
+            "# - MikroTik: /system package update check-for-updates",
+            "# - Ubiquiti: Web UI > Settings > Firmware",
+        ],
+    },
+    "network_device": {
+        "vendors": ["cisco", "juniper", "arista", "huawei", "fortinet", "paloalto"],
+        "steps": [
+            "Identify current firmware/IOS version",
+            "Check vendor security advisories",
+            "Download patched firmware from vendor portal",
+            "Schedule maintenance window for update",
+            "Backup configuration before applying",
+            "Apply update and verify connectivity",
+        ],
+        "commands": [
+            "# Network device update (vendor-specific):",
+            "# Cisco IOS: copy tftp flash && reload",
+            "# Juniper: request system software add",
+            "# Check running version: show version",
+        ],
+    },
+    "linux_server": {
+        "vendors": ["linux", "ubuntu", "debian", "rhel", "centos", "rocky", "fedora"],
+        "steps": [
+            "Identify affected packages",
+            "Check vendor advisories for patches",
+            "Apply security updates",
+            "Verify fix with vulnerability scanner",
+            "Document remediation in change log",
+        ],
+        "commands": [
+            "# Debian/Ubuntu: apt update && apt upgrade",
+            "# RHEL/CentOS: yum update",
+            "# Check version: dpkg -l | grep <package>",
+        ],
+    },
+    "windows": {
+        "vendors": ["windows", "microsoft"],
+        "steps": [
+            "Check Windows Update for security patches",
+            "Apply pending updates",
+            "Restart if required",
+            "Verify with vulnerability scanner",
+        ],
+        "commands": [
+            "# Windows Update: Settings > Update & Security",
+            "# PowerShell: Get-WindowsUpdate",
+            "# wmic qfe list brief",
+        ],
+    },
+}
+
 # Compiled patterns for efficiency
 COMPILED_PATTERNS: Dict[str, List[re.Pattern]] = {}
 for category, patterns in PLAYBOOK_PATTERNS.items():
@@ -125,6 +193,34 @@ def _extract_port(finding: Dict) -> Optional[int]:
     return None
 
 
+def _detect_device_type(vendor: Optional[str], device_type: Optional[str]) -> str:
+    """
+    Detect remediation template type based on vendor and device type.
+    """
+    # Type safety: vendor and device_type must be strings
+    if not vendor or not isinstance(vendor, str):
+        return "linux_server"  # Default fallback
+
+    vendor_lower = vendor.lower()
+
+    # Check templates for vendor match
+    for template_name, template in DEVICE_REMEDIATION_TEMPLATES.items():
+        if any(v in vendor_lower for v in template["vendors"]):
+            return template_name
+
+    # Check generic device types
+    if device_type and isinstance(device_type, str):
+        dt_lower = device_type.lower()
+        if "router" in dt_lower or "switch" in dt_lower or "firewall" in dt_lower:
+            return "network_device"
+        if "embedded" in dt_lower or "iot" in dt_lower or "printer" in dt_lower:
+            return "embedded_device"
+        if "windows" in dt_lower:
+            return "windows"
+
+    return "linux_server"
+
+
 def classify_finding(finding: Dict) -> Optional[str]:
     """
     Classify a finding into a playbook category.
@@ -135,13 +231,19 @@ def classify_finding(finding: Dict) -> Optional[str]:
     Returns:
         Playbook category name or None
     """
-    # Build searchable text from finding fields
+    # Build searchable text from all relevant finding fields
     search_texts = []
 
-    for key in ("descriptive_title", "url", "severity", "category"):
+    # Basic text fields
+    for key in ("title", "descriptive_title", "description", "url", "severity", "category"):
         val = finding.get(key)
         if isinstance(val, str):
             search_texts.append(val)
+
+    # Check CVE IDs first (highest priority)
+    cve_ids = finding.get("cve_ids", [])
+    if isinstance(cve_ids, list) and cve_ids:
+        return "cve_remediation"
 
     # Check nikto findings
     nikto = finding.get("nikto_findings", [])
@@ -154,7 +256,7 @@ def classify_finding(finding: Dict) -> Optional[str]:
     testssl = finding.get("testssl_analysis", {})
     if isinstance(testssl, dict):
         summary = testssl.get("summary", "")
-        if summary:
+        if isinstance(summary, str) and summary:
             search_texts.append(summary)
         vulns = testssl.get("vulnerabilities", [])
         if isinstance(vulns, list):
@@ -162,11 +264,6 @@ def classify_finding(finding: Dict) -> Optional[str]:
         weak = testssl.get("weak_ciphers", [])
         if isinstance(weak, list):
             search_texts.extend(c for c in weak[:5] if isinstance(c, str))
-
-    # Check CVEs
-    cves = finding.get("cve_ids", [])
-    if isinstance(cves, list):
-        search_texts.extend(c for c in cves if isinstance(c, str))
 
     # Check parsed observations
     obs = finding.get("parsed_observations", [])
@@ -190,7 +287,13 @@ def classify_finding(finding: Dict) -> Optional[str]:
     return None
 
 
-def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
+def generate_playbook(
+    finding: Dict,
+    host: str,
+    category: str,
+    vendor: Optional[str] = None,
+    device_type: Optional[str] = None,
+) -> Dict:
     """
     Generate a playbook structure for a finding.
 
@@ -198,17 +301,35 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
         finding: Vulnerability finding dictionary
         host: Host IP address
         category: Playbook category
+        vendor: Detected vendor (for device-aware remediation)
+        device_type: Detected device type (for device-aware remediation)
 
     Returns:
         Playbook dictionary with title, steps, references
     """
     descriptive_title = finding.get("descriptive_title")
     url = finding.get("url")
+    # v4.14: Prefer 'title' field over URL if descriptive_title absent
+    raw_title = finding.get("title")
+
+    # v4.14: Check if raw_title is not a URL (URLs are not real titles)
+    is_valid_title = (
+        isinstance(raw_title, str)
+        and raw_title.strip()
+        and raw_title.lower() != "untitled"
+        and not raw_title.startswith(("http://", "https://", "/"))
+    )
+
     title = (
         descriptive_title
         if isinstance(descriptive_title, str) and descriptive_title.strip()
-        else url if isinstance(url, str) and url.strip() else f"Finding on {host}"
+        else (
+            raw_title
+            if is_valid_title
+            else url if isinstance(url, str) and url.strip() else f"Finding on {host}"
+        )
     )
+
     severity_val = finding.get("severity", "info")
     severity = severity_val.upper() if isinstance(severity_val, str) else str(severity_val).upper()
     port = _extract_port(finding)
@@ -223,7 +344,15 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
         "steps": [],
         "commands": [],
         "references": [],
+        "vendor": vendor,  # Meta info
+        "device_type": device_type,  # Meta info
     }
+
+    # Detect remediation profile
+    profile_name = _detect_device_type(vendor, device_type)
+    profile = DEVICE_REMEDIATION_TEMPLATES.get(
+        profile_name, DEVICE_REMEDIATION_TEMPLATES["linux_server"]
+    )
 
     # Category-specific content
     if category == "tls_hardening":
@@ -269,26 +398,29 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
     elif category == "cve_remediation":
         cves = finding.get("cve_ids", [])
         if cves:
-            playbook["steps"] = [
-                f"Research CVE details: {', '.join(cves[:3])}",
-                "Check vendor advisories for patches",
-                "Apply security updates or upgrade software",
-                "Verify fix with vulnerability scanner",
-                "Document remediation in change log",
-            ]
+            # v4.14: Use device-aware steps for CVEs
+            if profile_name in ("embedded_device", "network_device"):
+                raw_steps = [
+                    f"Research CVE details: {', '.join(cves[:3])}",
+                    "Check vendor advisories for firmware updates",
+                ] + profile["steps"]
+            else:
+                raw_steps = [
+                    f"Research CVE details: {', '.join(cves[:3])}",
+                    "Check vendor advisories for patches",
+                    "Apply security updates or upgrade software",
+                    "Verify fix with vulnerability scanner",
+                    "Document remediation in change log",
+                ]
+            # Replace {host} placeholder in steps
+            playbook["steps"] = [step.replace("{host}", host) for step in raw_steps]
             playbook["references"] = [f"https://nvd.nist.gov/vuln/detail/{cve}" for cve in cves[:3]]
         else:
-            playbook["steps"] = [
-                "Identify affected software version",
-                "Search NVD for known vulnerabilities",
-                "Apply vendor patches",
-                "Retest after remediation",
-            ]
-        playbook["commands"] = [
-            "# Debian/Ubuntu: apt update && apt upgrade",
-            "# RHEL/CentOS: yum update",
-            "# Check version: dpkg -l | grep <package>",
-        ]
+            # v4.14: Use device-aware generic steps (also replace {host})
+            playbook["steps"] = [step.replace("{host}", host) for step in profile["steps"]]
+
+        # v4.14: Use device-aware commands (replace {host})
+        playbook["commands"] = [cmd.replace("{host}", host) for cmd in profile["commands"]]
 
     elif category == "web_hardening":
         playbook["steps"] = [
@@ -321,6 +453,7 @@ def generate_playbook(finding: Dict, host: str, category: str) -> Dict:
                 f"# Check service: netstat -tlnp | grep :{port}",
                 f"# Block port: iptables -A INPUT -p tcp --dport {port} -j DROP",
                 "# Disable service: systemctl disable <service>",
+                f"# UFW: ufw deny {port}/tcp",  # v4.14
             ]
         else:
             playbook["commands"] = [
@@ -339,6 +472,8 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
     """
     Generate playbooks for all findings in scan results.
 
+    v4.14: Now extracts host vendor/device_type for device-aware remediation.
+
     Args:
         results: Complete scan results dictionary
 
@@ -348,13 +483,44 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
     playbooks = []
     seen_categories: Dict[str, set] = {}  # host -> set of categories
 
+    # v4.14: Build host info lookup for vendor/device_type
+    host_info: Dict[str, Dict] = {}
+    for host_entry in results.get("hosts", []):
+        # Type safety: host_entry must be a dict
+        if not isinstance(host_entry, dict):
+            continue
+        ip = host_entry.get("ip")
+        if ip:
+            deep_scan = host_entry.get("deep_scan", {}) or {}
+            identity = host_entry.get("identity", {}) or {}
+            # Ensure nested dicts are actually dicts
+            if not isinstance(deep_scan, dict):
+                deep_scan = {}
+            if not isinstance(identity, dict):
+                identity = {}
+            host_info[ip] = {
+                "vendor": deep_scan.get("vendor") or identity.get("vendor"),
+                "device_type": identity.get("device_type"),
+            }
+
     for vuln_entry in results.get("vulnerabilities", []):
+        # Type safety: vuln_entry must be a dict
+        if not isinstance(vuln_entry, dict):
+            continue
         host = vuln_entry.get("host", "unknown")
 
         if host not in seen_categories:
             seen_categories[host] = set()
 
+        # v4.14: Get vendor info for this host
+        info = host_info.get(host, {})
+        vendor = info.get("vendor")
+        device_type = info.get("device_type")
+
         for vuln in vuln_entry.get("vulnerabilities", []):
+            # Type safety: vuln must be a dict for classify_finding
+            if not isinstance(vuln, dict):
+                continue
             category = classify_finding(vuln)
             if not category:
                 continue
@@ -364,7 +530,8 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
                 continue
 
             seen_categories[host].add(category)
-            playbook = generate_playbook(vuln, host, category)
+            # v4.14: Pass vendor/device_type for device-aware remediation
+            playbook = generate_playbook(vuln, host, category, vendor, device_type)
             playbooks.append(playbook)
 
     return playbooks

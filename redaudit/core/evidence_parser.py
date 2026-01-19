@@ -270,6 +270,42 @@ def extract_observations(vuln_record: Dict) -> Tuple[List[str], str]:
             if len(tech) < 50 and tech not in observations:
                 observations.append(f"Technology: {tech}")
 
+    # v4.14: Generate fallback observations from service/port data
+    # This ensures findings with source "redaudit" have some technical details
+    if not observations:
+        port = vuln_record.get("port")
+        url = vuln_record.get("url")
+        description = vuln_record.get("description")
+        service = vuln_record.get("service")
+        banner = vuln_record.get("banner")
+
+        # Type-safe extraction with validation
+        if isinstance(url, str) and url.strip():
+            observations.append(f"Endpoint: {url.strip()}")
+        elif port is not None:
+            observations.append(f"Port: {port}")
+
+        if isinstance(service, str) and service.strip():
+            observations.append(f"Service: {service.strip()}")
+        if isinstance(banner, str) and banner.strip():
+            # Clean and truncate banner
+            clean_banner = banner.strip()[:100]
+            observations.append(f"Banner: {clean_banner}")
+
+        if isinstance(description, str) and description.strip():
+            # Use description as observation
+            observations.append(description.strip()[:200])
+
+        # Check for headers if available
+        headers = vuln_record.get("headers", {})
+        if isinstance(headers, dict):
+            server = headers.get("server")
+            powered_by = headers.get("x-powered-by")
+            if isinstance(server, str) and server.strip():
+                observations.append(f"Server: {server.strip()}")
+            if isinstance(powered_by, str) and powered_by.strip():
+                observations.append(f"X-Powered-By: {powered_by.strip()}")
+
     raw_output = "\n\n".join(raw_parts)
 
     return observations[:25], raw_output

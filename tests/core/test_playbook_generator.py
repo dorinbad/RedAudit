@@ -172,5 +172,144 @@ class TestSavePlaybooks(unittest.TestCase):
             self.assertEqual(playbook_data, [])
 
 
+class TestDeviceAwarePlaybooks(unittest.TestCase):
+    """Test device-aware remediation (v4.14)."""
+
+    def test_generate_playbook_with_avm_vendor(self):
+        """Test AVM/FRITZ devices get embedded_device remediation."""
+        finding = {"cve_ids": ["CVE-2024-54767"], "severity": "high"}
+        playbook = generate_playbook(
+            finding, "192.168.178.1", "cve_remediation", vendor="AVM GmbH", device_type=None
+        )
+
+        # Should NOT contain apt/yum commands for embedded devices
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertNotIn("apt update", commands_str)
+        self.assertNotIn("yum update", commands_str)
+        # Should contain embedded device guidance
+        self.assertIn("Embedded", commands_str)
+
+        # Verify {host} is replaced in steps (not left as placeholder)
+        steps_str = " ".join(playbook.get("steps", []))
+        self.assertNotIn("{host}", steps_str)
+        # The actual IP should appear in steps
+        self.assertIn("192.168.178.1", steps_str)
+
+    def test_generate_playbook_with_linux_vendor(self):
+        """Test Linux servers get apt/yum remediation."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "critical"}
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor="Ubuntu", device_type=None
+        )
+
+        # Should contain apt/yum commands for Linux
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+    def test_generate_playbook_default_without_vendor(self):
+        """Test default behavior without vendor info falls back to linux_server."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "critical"}
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor=None, device_type=None
+        )
+
+        # Should contain linux commands as default
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+    def test_generate_playbook_cisco_network_device(self):
+        """Test Cisco devices get network_device remediation."""
+        finding = {"cve_ids": ["CVE-2023-1234"], "severity": "high"}
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor="Cisco Systems", device_type=None
+        )
+
+        # Should contain network device guidance
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("Network device", commands_str)
+
+    def test_playbook_title_prefers_finding_title(self):
+        """Test that playbook title uses finding title over URL."""
+        finding = {
+            "title": "SSL/TLS vulnerability detected",
+            "url": "https://192.168.1.1:55174/",
+            "severity": "high",
+        }
+        playbook = generate_playbook(finding, "192.168.1.1", "tls_hardening")
+
+        # Title should be the descriptive title, not the URL
+        self.assertEqual(playbook["title"], "SSL/TLS vulnerability detected")
+        self.assertNotIn("://", playbook["title"])
+
+    def test_playbook_title_rejects_url_like_title(self):
+        """Test that URL-like titles fall back to the actual URL or default."""
+        finding = {
+            "title": "https://192.168.1.1:55174/some/path",  # URL as title
+            "url": "https://192.168.1.1:55174/",
+            "severity": "info",
+        }
+        playbook = generate_playbook(finding, "192.168.1.1", "web_hardening")
+
+        # Title should fall back to URL (which is acceptable), not use URL-like title
+        # The key is the `title` field wasn't used - it goes to URL or default
+        self.assertTrue(
+            playbook["title"] == "https://192.168.1.1:55174/"
+            or playbook["title"] == "Finding on 192.168.1.1"
+        )
+
+    def test_generate_playbook_with_non_string_vendor(self):
+        """Test that non-string vendor doesn't crash and falls back to linux."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "high"}
+        # Vendor as list (edge case - malformed data)
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor=["invalid"], device_type=None
+        )
+        # Should not crash and should fall back to linux server
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+    def test_generate_playbook_with_empty_string_vendor(self):
+        """Test that empty string vendor falls back to linux."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "high"}
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor="", device_type=None
+        )
+        # Should fall back to linux server
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+
+class TestTypeSafetyEdgeCases(unittest.TestCase):
+    """Test edge cases for type safety (v4.14 audit)."""
+
+    def test_get_playbooks_handles_non_dict_host_entry(self):
+        """Test that non-dict entries in hosts list are skipped."""
+        results = {
+            "hosts": [
+                {"ip": "192.168.1.1", "identity": {"vendor": "AVM"}},
+                "invalid_string_entry",  # Should be skipped
+                None,  # Should be skipped
+                123,  # Should be skipped
+            ],
+            "vulnerabilities": [],
+        }
+        # Should not crash
+        playbooks = get_playbooks_for_results(results)
+        self.assertEqual(playbooks, [])
+
+    def test_get_playbooks_handles_non_dict_vuln_entry(self):
+        """Test that non-dict entries in vulnerabilities list are skipped."""
+        results = {
+            "hosts": [],
+            "vulnerabilities": [
+                "invalid_string",  # Should be skipped
+                None,  # Should be skipped
+            ],
+        }
+        # Should not crash
+        playbooks = get_playbooks_for_results(results)
+        self.assertEqual(playbooks, [])
+
+
 if __name__ == "__main__":
     unittest.main()
