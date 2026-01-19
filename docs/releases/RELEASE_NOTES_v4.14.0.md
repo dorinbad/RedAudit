@@ -27,7 +27,7 @@ This release focuses on delivering a consumer-grade user experience with enhance
 
 ## Testing
 
-- **Verified on**: macOS Sequoia 15.2
+- **Verified on**: macOS 26.2 (Darwin 25.2.0)
 - **Python Versions**: 3.9, 3.10, 3.11, 3.12, 3.13
 - **Test Suite**: 1937 tests passed (100% pass rate)
 

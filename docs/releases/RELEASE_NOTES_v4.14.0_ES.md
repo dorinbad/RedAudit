@@ -27,7 +27,7 @@ Este lanzamiento se centra en ofrecer una experiencia de usuario de nivel consum
 
 ## Pruebas
 
-- **Verificado en**: macOS Sequoia 15.2
+- **Verificado en**: macOS 26.2 (Darwin 25.2.0)
 - **Versiones de Python**: 3.9, 3.10, 3.11, 3.12, 3.13
 - **Suite de Pruebas**: 1937 pruebas pasadas (100% tasa de éxito)
 
