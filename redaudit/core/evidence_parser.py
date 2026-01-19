@@ -274,35 +274,37 @@ def extract_observations(vuln_record: Dict) -> Tuple[List[str], str]:
     # This ensures findings with source "redaudit" have some technical details
     if not observations:
         port = vuln_record.get("port")
-        url = vuln_record.get("url", "")
-        description = vuln_record.get("description", "")
-        service = vuln_record.get("service", "")
-        banner = vuln_record.get("banner", "")
+        url = vuln_record.get("url")
+        description = vuln_record.get("description")
+        service = vuln_record.get("service")
+        banner = vuln_record.get("banner")
 
-        if url:
-            observations.append(f"Endpoint: {url}")
-        elif port:
+        # Type-safe extraction with validation
+        if isinstance(url, str) and url.strip():
+            observations.append(f"Endpoint: {url.strip()}")
+        elif port is not None:
             observations.append(f"Port: {port}")
 
-        if service:
-            observations.append(f"Service: {service}")
-        if banner:
+        if isinstance(service, str) and service.strip():
+            observations.append(f"Service: {service.strip()}")
+        if isinstance(banner, str) and banner.strip():
             # Clean and truncate banner
             clean_banner = banner.strip()[:100]
-            if clean_banner:
-                observations.append(f"Banner: {clean_banner}")
+            observations.append(f"Banner: {clean_banner}")
 
-        if description:
+        if isinstance(description, str) and description.strip():
             # Use description as observation
-            observations.append(description[:200])
+            observations.append(description.strip()[:200])
 
         # Check for headers if available
         headers = vuln_record.get("headers", {})
         if isinstance(headers, dict):
-            if headers.get("server"):
-                observations.append(f"Server: {headers['server']}")
-            if headers.get("x-powered-by"):
-                observations.append(f"X-Powered-By: {headers['x-powered-by']}")
+            server = headers.get("server")
+            powered_by = headers.get("x-powered-by")
+            if isinstance(server, str) and server.strip():
+                observations.append(f"Server: {server.strip()}")
+            if isinstance(powered_by, str) and powered_by.strip():
+                observations.append(f"X-Powered-By: {powered_by.strip()}")
 
     raw_output = "\n\n".join(raw_parts)
 

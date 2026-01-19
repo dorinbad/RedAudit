@@ -399,24 +399,26 @@ def generate_playbook(
         if cves:
             # v4.14: Use device-aware steps for CVEs
             if profile_name in ("embedded_device", "network_device"):
-                playbook["steps"] = [
+                raw_steps = [
                     f"Research CVE details: {', '.join(cves[:3])}",
                     "Check vendor advisories for firmware updates",
                 ] + profile["steps"]
             else:
-                playbook["steps"] = [
+                raw_steps = [
                     f"Research CVE details: {', '.join(cves[:3])}",
                     "Check vendor advisories for patches",
                     "Apply security updates or upgrade software",
                     "Verify fix with vulnerability scanner",
                     "Document remediation in change log",
                 ]
+            # Replace {host} placeholder in steps
+            playbook["steps"] = [step.replace("{host}", host) for step in raw_steps]
             playbook["references"] = [f"https://nvd.nist.gov/vuln/detail/{cve}" for cve in cves[:3]]
         else:
-            # v4.14: Use device-aware generic steps
-            playbook["steps"] = profile["steps"]
+            # v4.14: Use device-aware generic steps (also replace {host})
+            playbook["steps"] = [step.replace("{host}", host) for step in profile["steps"]]
 
-        # v4.14: Use device-aware commands
+        # v4.14: Use device-aware commands (replace {host})
         playbook["commands"] = [cmd.replace("{host}", host) for cmd in profile["commands"]]
 
     elif category == "web_hardening":

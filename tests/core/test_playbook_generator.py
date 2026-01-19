@@ -189,6 +189,12 @@ class TestDeviceAwarePlaybooks(unittest.TestCase):
         # Should contain embedded device guidance
         self.assertIn("Embedded", commands_str)
 
+        # Verify {host} is replaced in steps (not left as placeholder)
+        steps_str = " ".join(playbook.get("steps", []))
+        self.assertNotIn("{host}", steps_str)
+        # The actual IP should appear in steps
+        self.assertIn("192.168.178.1", steps_str)
+
     def test_generate_playbook_with_linux_vendor(self):
         """Test Linux servers get apt/yum remediation."""
         finding = {"cve_ids": ["CVE-2021-44228"], "severity": "critical"}
