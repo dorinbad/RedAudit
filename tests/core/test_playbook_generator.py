@@ -257,6 +257,59 @@ class TestDeviceAwarePlaybooks(unittest.TestCase):
             or playbook["title"] == "Finding on 192.168.1.1"
         )
 
+    def test_generate_playbook_with_non_string_vendor(self):
+        """Test that non-string vendor doesn't crash and falls back to linux."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "high"}
+        # Vendor as list (edge case - malformed data)
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor=["invalid"], device_type=None
+        )
+        # Should not crash and should fall back to linux server
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+    def test_generate_playbook_with_empty_string_vendor(self):
+        """Test that empty string vendor falls back to linux."""
+        finding = {"cve_ids": ["CVE-2021-44228"], "severity": "high"}
+        playbook = generate_playbook(
+            finding, "10.0.0.1", "cve_remediation", vendor="", device_type=None
+        )
+        # Should fall back to linux server
+        commands_str = " ".join(playbook.get("commands", []))
+        self.assertIn("apt", commands_str.lower())
+
+
+class TestTypeSafetyEdgeCases(unittest.TestCase):
+    """Test edge cases for type safety (v4.14 audit)."""
+
+    def test_get_playbooks_handles_non_dict_host_entry(self):
+        """Test that non-dict entries in hosts list are skipped."""
+        results = {
+            "hosts": [
+                {"ip": "192.168.1.1", "identity": {"vendor": "AVM"}},
+                "invalid_string_entry",  # Should be skipped
+                None,  # Should be skipped
+                123,  # Should be skipped
+            ],
+            "vulnerabilities": [],
+        }
+        # Should not crash
+        playbooks = get_playbooks_for_results(results)
+        self.assertEqual(playbooks, [])
+
+    def test_get_playbooks_handles_non_dict_vuln_entry(self):
+        """Test that non-dict entries in vulnerabilities list are skipped."""
+        results = {
+            "hosts": [],
+            "vulnerabilities": [
+                "invalid_string",  # Should be skipped
+                None,  # Should be skipped
+            ],
+        }
+        # Should not crash
+        playbooks = get_playbooks_for_results(results)
+        self.assertEqual(playbooks, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -197,7 +197,8 @@ def _detect_device_type(vendor: Optional[str], device_type: Optional[str]) -> st
     """
     Detect remediation template type based on vendor and device type.
     """
-    if not vendor:
+    # Type safety: vendor and device_type must be strings
+    if not vendor or not isinstance(vendor, str):
         return "linux_server"  # Default fallback
 
     vendor_lower = vendor.lower()
@@ -208,7 +209,7 @@ def _detect_device_type(vendor: Optional[str], device_type: Optional[str]) -> st
             return template_name
 
     # Check generic device types
-    if device_type:
+    if device_type and isinstance(device_type, str):
         dt_lower = device_type.lower()
         if "router" in dt_lower or "switch" in dt_lower or "firewall" in dt_lower:
             return "network_device"
@@ -485,16 +486,27 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
     # v4.14: Build host info lookup for vendor/device_type
     host_info: Dict[str, Dict] = {}
     for host_entry in results.get("hosts", []):
+        # Type safety: host_entry must be a dict
+        if not isinstance(host_entry, dict):
+            continue
         ip = host_entry.get("ip")
         if ip:
             deep_scan = host_entry.get("deep_scan", {}) or {}
             identity = host_entry.get("identity", {}) or {}
+            # Ensure nested dicts are actually dicts
+            if not isinstance(deep_scan, dict):
+                deep_scan = {}
+            if not isinstance(identity, dict):
+                identity = {}
             host_info[ip] = {
                 "vendor": deep_scan.get("vendor") or identity.get("vendor"),
                 "device_type": identity.get("device_type"),
             }
 
     for vuln_entry in results.get("vulnerabilities", []):
+        # Type safety: vuln_entry must be a dict
+        if not isinstance(vuln_entry, dict):
+            continue
         host = vuln_entry.get("host", "unknown")
 
         if host not in seen_categories:
@@ -506,6 +518,9 @@ def get_playbooks_for_results(results: Dict) -> List[Dict]:
         device_type = info.get("device_type")
 
         for vuln in vuln_entry.get("vulnerabilities", []):
+            # Type safety: vuln must be a dict for classify_finding
+            if not isinstance(vuln, dict):
+                continue
             category = classify_finding(vuln)
             if not category:
                 continue
