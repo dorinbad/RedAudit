@@ -2823,11 +2823,16 @@ class AuditorScan:
                                     elapsed = int(now - start_t)
                                     mins, secs = divmod(elapsed, 60)
                                     # Use progress.console to print without breaking Live
-                                    progress.console.print(
-                                        f"[cyan][INFO][/cyan] {self.ui.t('scanning_hosts')}... "
-                                        f"{done}/{total} ({mins}:{secs:02d} elapsed)",
-                                        highlight=False,
+                                    # v4.16: Use Text objects to avoid Rich markup issues with [INFO]
+                                    from rich.text import Text
+
+                                    heartbeat_msg = Text()
+                                    heartbeat_msg.append("[INFO] ", style="cyan")
+                                    heartbeat_msg.append(
+                                        f"{self.ui.t('scanning_hosts')}... "
+                                        f"{done}/{total} ({mins}:{secs:02d} elapsed)"
                                     )
+                                    progress.console.print(heartbeat_msg)
                                     last_heartbeat = now
 
                                 # Update progress for still-pending hosts
