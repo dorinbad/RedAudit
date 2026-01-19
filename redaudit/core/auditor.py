@@ -830,6 +830,52 @@ class InteractiveNetworkAuditor:
                                 "INFO",
                             )
 
+                        # v4.16: For audit-focused scans, limit multi-port hosts to 2 URLs
+                        # Prioritize standard HTTP ports (80, 443) to avoid timeout issues
+                        # Rationale: Auditing seeks critical CVEs on main services, not full pentesting
+                        if multi_port_hosts:
+                            priority_ports = {80, 443, 8080, 8443}  # Standard HTTP/HTTPS ports
+                            filtered_targets: list = []
+                            host_url_count: Dict[str, int] = {}
+
+                            # First pass: add priority port URLs (max 2 per host)
+                            for url in nuclei_targets:
+                                try:
+                                    parsed = urlparse(url)
+                                    host = parsed.hostname or ""
+                                    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+                                    if host and port in priority_ports:
+                                        if host_url_count.get(host, 0) < 2:
+                                            filtered_targets.append(url)
+                                            host_url_count[host] = host_url_count.get(host, 0) + 1
+                                except Exception:
+                                    pass
+
+                            # Second pass: add remaining URLs for hosts not in multi_port_hosts
+                            for url in nuclei_targets:
+                                try:
+                                    parsed = urlparse(url)
+                                    host = parsed.hostname or ""
+                                    if host and host not in multi_port_hosts:
+                                        if url not in filtered_targets:
+                                            filtered_targets.append(url)
+                                except Exception:
+                                    pass
+
+                            original_count = len(nuclei_targets)
+                            nuclei_targets = filtered_targets
+                            if len(nuclei_targets) < original_count:
+                                if self.logger:
+                                    self.logger.info(
+                                        "Nuclei targets limited: %d -> %d (audit focus)",
+                                        original_count,
+                                        len(nuclei_targets),
+                                    )
+                                self.ui.print_status(
+                                    f"Nuclei: {original_count} -> {len(nuclei_targets)} targets (audit focus)",
+                                    "INFO",
+                                )
+
                         # Prefer a single Progress instance managed by the auditor to avoid
                         # competing Rich Live displays (which can cause flicker/no output).
                         nuclei_result = None

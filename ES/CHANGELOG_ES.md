@@ -8,6 +8,21 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto sigue [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Las notas de versión viven en `docs/releases/` para más contexto.
 
+## [4.16.0] - 2026-01-19
+
+### Añadido
+
+- **Modo Audit-Focus Nuclei**: Hosts multi-puerto (3+ puertos HTTP) ahora limitados a 2 URLs para escaneo Nuclei.
+  - Prioriza puertos estándar (80, 443, 8080, 8443) para eficiencia de auditoría.
+  - Reduce significativamente el tiempo de escaneo (estimado 25min vs 1.5h para hosts complejos).
+  - Mensaje visible al usuario muestra reducción: `Nuclei: 25 -> 8 targets (audit focus)`.
+
+### Corregido
+
+- **Corrección Bug de Color (de v4.15.1)**: Mensajes [INFO] ya no aparecen blancos durante barras de progreso.
+  - Causa raíz: El markup Rich `[INFO]` se interpretaba como un tag desconocido.
+  - Corrección: Usar objetos `Text()` de Rich para salida de color confiable.
+
 ## [4.15.0] - 2026-01-19
 
 ### Añadido
