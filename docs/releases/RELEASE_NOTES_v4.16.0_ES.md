@@ -1,6 +1,6 @@
 # Notas de Version - v4.16.0
 
-## Fecha de Publicacion: 2026-01-19
+[![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](https://github.com/dorinbadea/RedAudit/blob/v4.16.0/docs/releases/RELEASE_NOTES_v4.16.0.md)
 
 ## Resumen
 
