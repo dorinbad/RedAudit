@@ -219,29 +219,31 @@ Controls which templates are executed:
 | `balanced` | Optimized for ports 80/443, reduced others | ~1 hour (recommended) |
 | `fast` | Critical CVEs only | ~30-60 minutes |
 
-**2. Full Coverage (`--nuclei-full`)**
+**2. Full Coverage (wizard only)**
 
-Controls which HTTP ports are scanned per host:
+During interactive mode, the wizard asks "Scan ALL HTTP ports?" This controls which HTTP ports are scanned per host:
 
 | Option | Behavior |
 |:-------|:---------|
-| **Default (audit-focus)** | Max 2 URLs per multi-port host (prioritizes 80, 443) |
-| `--nuclei-full` | Scan ALL HTTP ports on every host |
+| **No (default)** | Max 2 URLs per multi-port host (prioritizes 80, 443) |
+| **Yes** | Scan ALL HTTP ports on every host |
+
+Note: This option is only available in the interactive wizard, not via CLI flags.
 
 **When to use each combination:**
 
 | Scenario | Recommended Settings |
 |:---------|:--------------------|
-| Quick vulnerability check | `--profile fast` (default coverage) |
-| Standard audit | `--profile balanced` (default coverage) |
-| Thorough pentest | `--profile full --nuclei-full` |
-| Time-constrained audit | `--profile fast` (default coverage) |
+| Quick vulnerability check | `--profile fast` |
+| Standard audit | `--profile balanced` (wizard: No to full coverage) |
+| Thorough pentest | `--profile full` (wizard: Yes to full coverage) |
+| Time-constrained audit | `--profile fast` |
 
 **Performance notes:**
 
 - Hosts with many HTTP ports (e.g., FRITZ!Box with 8+ ports) can dominate scan time.
 - Audit-focus mode (default) significantly reduces scan time on multi-port hosts.
-- Use `--nuclei-full` only when exhaustive coverage is required.
+- Enable full coverage only when exhaustive HTTP scanning is required.
 
 **Optional Performance Boost:**
 

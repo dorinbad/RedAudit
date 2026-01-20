@@ -224,29 +224,31 @@ Controla que plantillas se ejecutan:
 | `balanced` | Optimizado para puertos 80/443, reducido para otros | ~1 hora (recomendado) |
 | `fast` | Solo CVEs criticos | ~30-60 minutos |
 
-**2. Cobertura completa (`--nuclei-full`)**
+**2. Cobertura completa (solo en asistente)**
 
-Controla que puertos HTTP se escanean por host:
+Durante el modo interactivo, el asistente pregunta "Escanear TODOS puertos HTTP?" Esto controla que puertos HTTP se escanean por host:
 
 | Opcion | Comportamiento |
 |:-------|:---------------|
-| **Por defecto (audit-focus)** | Max 2 URLs por host multipuerto (prioriza 80, 443) |
-| `--nuclei-full` | Escaner TODOS los puertos HTTP en cada host |
+| **No (por defecto)** | Max 2 URLs por host multipuerto (prioriza 80, 443) |
+| **Si** | Escanea TODOS los puertos HTTP en cada host |
+
+Nota: Esta opcion solo esta disponible en el asistente interactivo, no via flags CLI.
 
 **Cuando usar cada combinacion:**
 
 | Escenario | Configuracion Recomendada |
 |:----------|:--------------------------|
-| Comprobacion rapida de vulnerabilidades | `--profile fast` (cobertura por defecto) |
-| Auditoria estandar | `--profile balanced` (cobertura por defecto) |
-| Pentest exhaustivo | `--profile full --nuclei-full` |
-| Auditoria con tiempo limitado | `--profile fast` (cobertura por defecto) |
+| Comprobacion rapida de vulnerabilidades | `--profile fast` |
+| Auditoria estandar | `--profile balanced` (asistente: No a cobertura completa) |
+| Pentest exhaustivo | `--profile full` (asistente: Si a cobertura completa) |
+| Auditoria con tiempo limitado | `--profile fast` |
 
 **Notas de rendimiento:**
 
 - Hosts con muchos puertos HTTP (p. ej., FRITZ!Box con 8+ puertos) pueden dominar el tiempo de escaneo.
 - El modo audit-focus (por defecto) reduce significativamente el tiempo en hosts multipuerto.
-- Usa `--nuclei-full` solo cuando se requiere cobertura exhaustiva.
+- Habilitar cobertura completa solo cuando se requiere escaneo HTTP exhaustivo.
 
 **Mejora de rendimiento opcional:**
 
