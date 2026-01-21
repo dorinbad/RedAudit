@@ -216,17 +216,17 @@ Controls which templates are executed:
 | Profile | Description | Time Estimate |
 |:--------|:------------|:--------------|
 | `full` | All templates, all severity levels | ~2 hours |
-| `balanced` | Optimized for ports 80/443, reduced others | ~1 hour (recommended) |
+| `balanced` | Core security templates (cve, default-login, exposure, misconfig) | ~1 hour (recommended) |
 | `fast` | Critical CVEs only | ~30-60 minutes |
 
 **2. Full Coverage (wizard only)**
 
-During interactive mode, the wizard asks "Scan ALL HTTP ports?" This controls which HTTP ports are scanned per host:
+During interactive mode, the wizard asks "Scan ALL detected HTTP ports?" This controls which HTTP ports are scanned per host:
 
 | Option | Behavior |
 |:-------|:---------|
 | **No (default for balanced/fast)** | Max 2 URLs per multi-port host (prioritizes 80, 443) |
-| **Yes (default for full)** | Scan ALL HTTP ports on every host |
+| **Yes (default for full)** | Scan ALL detected HTTP ports on every host (beyond 80/443) |
 
 Note: This option is only available in the interactive wizard, not via CLI flags.
 When full coverage is enabled, the auto-fast profile switch is skipped so the selected profile is honored.

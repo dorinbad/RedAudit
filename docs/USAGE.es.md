@@ -221,17 +221,17 @@ Controla que plantillas se ejecutan:
 | Perfil | Descripcion | Tiempo Estimado |
 |:-------|:------------|:----------------|
 | `full` | Todas las plantillas, todos los niveles de severidad | ~2 horas |
-| `balanced` | Optimizado para puertos 80/443, reducido para otros | ~1 hora (recomendado) |
+| `balanced` | Templates esenciales (cve, default-login, exposure, misconfig) | ~1 hora (recomendado) |
 | `fast` | Solo CVEs criticos | ~30-60 minutos |
 
 **2. Cobertura completa (solo en asistente)**
 
-Durante el modo interactivo, el asistente pregunta "Escanear TODOS puertos HTTP?" Esto controla que puertos HTTP se escanean por host:
+Durante el modo interactivo, el asistente pregunta "Escanear TODOS los puertos HTTP detectados?" Esto controla que puertos HTTP se escanean por host:
 
 | Opcion | Comportamiento |
 |:-------|:---------------|
 | **No (por defecto en balanced/fast)** | Max 2 URLs por host multipuerto (prioriza 80, 443) |
-| **Si (por defecto en full)** | Escanea TODOS los puertos HTTP en cada host |
+| **Si (por defecto en full)** | Escanea TODOS los puertos HTTP detectados en cada host (además de 80/443) |
 
 Nota: Esta opcion solo esta disponible en el asistente interactivo, no via flags CLI.
 Cuando la cobertura completa esta activada, se omite el cambio automatico a auto-fast para respetar el perfil seleccionado.
