@@ -101,6 +101,9 @@ class AuditorScan:
         def _set_ui_detail(self, detail: str) -> None:
             raise NotImplementedError
 
+        def _progress_ui(self):
+            raise NotImplementedError
+
     # v4.0: Authenticated Scanning Helpers
     @property
     def credential_provider(self):
