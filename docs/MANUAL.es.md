@@ -280,6 +280,7 @@ RedAudit v4.4+ introduce **Smart-Throttle**, un sistema de límite de tasa adapt
   - **Estrangula** (Multiplicativamente) cuando se detecta congestión (timeouts > 5%).
 - **Beneficio**: Previene la pérdida de paquetes en redes SOHO/VPN mientras maximiza la velocidad en enlaces de Data Center (escalando hasta 20,000 pps).
 - **Feedback**: La velocidad de escaneo y eventos de throttling (▼/▲) se muestran en tiempo real en la barra de progreso.
+- **Salida de progreso**: Cuando HyperScan usa barra Rich, se suprimen líneas por host para evitar UI mixta. La barra muestra detalle por IP.
 
 **Ejecución Paralela:**
 A partir de v4.2, los deep scans se ejecutan en un pool de hilos dedicado (hasta 50 hilos), desacoplado del bucle principal de descubrimiento. Esto asegura que los escaneos profundos lentos no bloqueen el progreso global.
@@ -296,6 +297,17 @@ RedAudit ahora integra herramientas especializadas para evaluación profunda de 
 
 Cuando los lotes de Nuclei agotan tiempo, la ejecución se marca como parcial y el informe incluye los índices de lotes con timeout y fallidos.
 Durante lotes largos, la CLI muestra progreso dentro del batch basado en tiempo (con tiempo transcurrido) para confirmar actividad.
+
+### Perfiles y Cobertura de Nuclei (v4.17+)
+
+Nuclei tiene dos controles independientes en el asistente:
+
+- **Perfil (plantillas)**: `full`, `balanced`, `fast` controla qué plantillas y severidades se ejecutan.
+- **Cobertura completa (objetivos)**: "Escanear TODOS los puertos HTTP detectados?" controla cuántas URLs HTTP por host se escanean.
+  - **No** (por defecto en balanced/fast): Máx 2 URLs por host multipuerto (prioriza 80/443).
+  - **Sí** (por defecto en full): Escanea todos los puertos HTTP detectados por host (además de 80/443).
+
+Estas opciones son distintas: el perfil define el alcance de plantillas y la cobertura completa define el alcance de objetivos.
 
 ### Auto-Exclusión
 

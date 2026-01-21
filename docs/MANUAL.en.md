@@ -281,6 +281,7 @@ RedAudit v4.4+ introduces:
   - **Throttles** (Multiplicatively) when congestion is detected (timeouts > 5%).
 - **Benefit**: Prevents packet loss on SOHO/VPN networks while maximizing speed on Data Center links (scaling up to 20,000 pps).
 - **Feedback**: Real-time scan speed and throttling events (▼/▲) are displayed in the progress bar.
+- **Progress Output**: When HyperScan runs with a Rich progress bar, per-host status lines are suppressed to avoid mixed UI. The bar itself shows per-IP detail.
 
 VPN classification is handled by asset typing heuristics (gateway MAC/IP, VPN ports, hostname patterns) after scanning.
 
@@ -299,6 +300,17 @@ RedAudit now integrates specialized tools for deep web application assessment:
 
 When Nuclei batch scans time out, the run is marked as partial and the report includes timeout and failed batch indexes.
 During long batches, the CLI shows time-based progress inside the batch (with elapsed time) so operators can confirm activity.
+
+### Nuclei Profiles and Coverage (v4.17+)
+
+Nuclei has two independent controls in the wizard:
+
+- **Profile (templates)**: `full`, `balanced`, `fast` controls which templates and severities run.
+- **Full Coverage (targets)**: "Scan ALL detected HTTP ports?" controls how many HTTP URLs per host are scanned.
+  - **No** (default for balanced/fast): Max 2 URLs per multi-port host (prioritizes 80/443).
+  - **Yes** (default for full): Scan all detected HTTP ports per host (beyond 80/443).
+
+These options are separate: profile defines template scope, full coverage defines target scope.
 
 ### Auto-Exclusion
 
