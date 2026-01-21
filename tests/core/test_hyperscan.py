@@ -42,6 +42,21 @@ def test_build_discovery_packets():
     assert b"registration" in wiz.lower()
 
 
+def test_compute_safe_max_batch_no_limit(monkeypatch):
+    monkeypatch.setattr(hyperscan, "_get_fd_soft_limit", lambda: None)
+    assert hyperscan._compute_safe_max_batch(20000, min_batch=100) == 20000
+
+
+def test_compute_safe_max_batch_caps_by_limit(monkeypatch):
+    monkeypatch.setattr(hyperscan, "_get_fd_soft_limit", lambda: 1000)
+    assert hyperscan._compute_safe_max_batch(20000, min_batch=100) == 800
+
+
+def test_compute_safe_max_batch_respects_min(monkeypatch):
+    monkeypatch.setattr(hyperscan, "_get_fd_soft_limit", lambda: 80)
+    assert hyperscan._compute_safe_max_batch(20000, min_batch=100) == 100
+
+
 def test_detect_potential_backdoors():
     tcp_results = {"10.0.0.1": [31337, 50000, 22]}
     service_info = {"10.0.0.1": {22: "weird"}}

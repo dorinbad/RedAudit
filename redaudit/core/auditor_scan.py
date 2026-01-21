@@ -1161,6 +1161,7 @@ class AuditorScan:
                 logger=self.logger,
                 dry_run=bool(self.config.get("dry_run", False)),
                 proxy_manager=self.proxy_manager,
+                max_stdout=None,
             )
 
             deep_ports: List[Dict[str, Any]] = self._parse_nmap_open_ports(rec1.get("stdout", ""))
@@ -1331,6 +1332,7 @@ class AuditorScan:
                         logger=self.logger,
                         dry_run=bool(self.config.get("dry_run", False)),
                         proxy_manager=self.proxy_manager,
+                        max_stdout=None,
                     )
                     if not mac:
                         m2b, v2b = extract_vendor_mac(rec2b.get("stdout", ""))

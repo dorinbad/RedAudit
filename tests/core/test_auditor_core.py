@@ -457,6 +457,27 @@ class TestDeepScan:
             res = auditor.deep_scan_host("192.168.1.100")
             assert "phase2_skipped" in res
 
+    def test_deep_scan_uses_full_stdout(self):
+        auditor = MockAuditorScan()
+        auditor.config["output_dir"] = "/tmp"
+        captured = {}
+
+        def _fake_run(*_args, **kwargs):
+            captured.update(kwargs)
+            return {"stdout": "22/tcp open ssh OpenSSH 8.9\n", "stderr": "", "returncode": 0}
+
+        with (
+            patch("redaudit.core.auditor_scan.extract_vendor_mac", return_value=(None, None)),
+            patch("redaudit.core.auditor_scan.extract_os_detection", return_value=None),
+            patch("redaudit.core.auditor_scan.start_background_capture", return_value=None),
+            patch("redaudit.core.auditor_scan.stop_background_capture", return_value=None),
+            patch("redaudit.core.auditor_scan.run_nmap_command", side_effect=_fake_run),
+            patch("redaudit.core.auditor_scan.output_has_identity", return_value=True),
+        ):
+            auditor.deep_scan_host("192.168.1.101")
+
+        assert captured.get("max_stdout") is None
+
     def test_deep_scan_host_sets_identity_fields(self):
         auditor = MockAuditorScan()
         auditor.config["output_dir"] = "/tmp"
