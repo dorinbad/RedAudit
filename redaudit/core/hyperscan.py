@@ -40,6 +40,27 @@ def _make_runner(*, logger=None, dry_run: Optional[bool] = None, timeout: Option
     )
 
 
+def _get_fd_soft_limit() -> Optional[int]:
+    try:
+        import resource
+
+        soft_limit, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if soft_limit in (resource.RLIM_INFINITY, None):
+            return None
+        soft_int = int(soft_limit)
+        return soft_int if soft_int > 0 else None
+    except Exception:
+        return None
+
+
+def _compute_safe_max_batch(default_max: int, min_batch: int) -> int:
+    soft_limit = _get_fd_soft_limit()
+    if not soft_limit:
+        return default_max
+    safe_limit = max(min_batch, int(soft_limit * 0.8))
+    return min(default_max, safe_limit)
+
+
 # ============================================================================
 # Configuration
 # ============================================================================
@@ -271,8 +292,18 @@ async def hyperscan_tcp_sweep(
     # Smart-Throttle initialization
     # Start with conservative batch size (500) regardless of default arg,
     # unless batch_size arg is unusually small (<500).
-    initial_batch = min(500, batch_size)
-    throttler = SmartThrottle(initial_batch=initial_batch, max_batch=20000)
+    safe_max_batch = _compute_safe_max_batch(20000, min_batch=100)
+    safe_min_batch = min(100, safe_max_batch)
+    initial_batch = min(500, batch_size, safe_max_batch)
+    if initial_batch < safe_min_batch:
+        initial_batch = safe_min_batch
+    throttler = SmartThrottle(
+        initial_batch=initial_batch,
+        min_batch=safe_min_batch,
+        max_batch=safe_max_batch,
+    )
+    if logger and safe_max_batch < 20000:
+        logger.debug("HyperScan TCP: max_batch capped to %d due to FD limit", safe_max_batch)
 
     completed = 0
 
