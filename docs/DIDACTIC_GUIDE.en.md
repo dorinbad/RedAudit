@@ -68,6 +68,8 @@ Professional audits require **verifiable evidence**. A report stating "port 22 i
 - JSON with `timestamp`, `version`, `scan_duration`
 - Optional PCAP captures
 - File permissions (0600) to prevent tampering
+- Per-finding evidence metadata (source tool, matched_at, raw output hash/ref when available)
+- Run manifest with config and pipeline snapshot (when encryption is disabled)
 
 **Practical question:** "If a client disputes your findings, how do you prove you ran the scan correctly?"
 
@@ -88,6 +90,8 @@ Scanning every host with full UDP (-p- -sU) would take hours. RedAudit uses **he
 | >8 open ports **or** network-device hints | Complex host or infrastructure, worth deeper enumeration |
 
 **Where in code:** Conditions in [`scan_host_ports()`](../redaudit/core/auditor_scan.py)
+
+**Operational note:** The pipeline summary in JSON/HTML includes resolved Nmap args/timing, deep scan settings, and HyperScan vs final counts (when available).
 
 ---
 

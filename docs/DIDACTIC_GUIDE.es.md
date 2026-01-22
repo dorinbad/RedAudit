@@ -68,6 +68,8 @@ Las auditorías profesionales requieren **evidencia verificable**. Un informe qu
 - JSON con `timestamp`, `version`, `scan_duration`
 - Capturas PCAP opcionales
 - Permisos de archivo (0600) para prevenir manipulación
+- Metadatos de evidencia por hallazgo (herramienta fuente, matched_at, hash/ref de salida cruda si aplica)
+- Manifiesto de ejecución con snapshot de config y pipeline (si el cifrado está deshabilitado)
 
 **Pregunta práctica:** "Si un cliente disputa tus hallazgos, ¿cómo demuestras que ejecutaste el escaneo correctamente?"
 
@@ -88,6 +90,8 @@ Escanear cada host con UDP completo (-p- -sU) tomaría horas. RedAudit usa **heu
 | >8 puertos abiertos **o** pistas de dispositivo de red | Host complejo o infraestructura, merece enumeración adicional |
 
 **Ubicación en código:** Condiciones en [`scan_host_ports()`](../redaudit/core/auditor_scan.py)
+
+**Nota operativa:** El resumen de pipeline en JSON/HTML incluye args/timing de Nmap, ajustes de deep scan y el resumen HyperScan vs final (cuando existe).
 
 ---
 
