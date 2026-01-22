@@ -74,7 +74,7 @@ sudo redaudit -t 192.168.56.101 \
   --no-prevent-sleep
 ```
 
-**Artefactos:** JSON/TXT, HTML opcional, PCAP (deep scan + tcpdump), playbooks (si hay categorías compatibles y sin cifrado).
+**Artefactos:** JSON/TXT, HTML opcional, JSONL, manifiesto de salida, PCAP (deep scan + tcpdump), playbooks (si hay categorías compatibles y sin cifrado).
 
 ### Escaneo Sigiloso (Modo Red Team)
 
@@ -314,10 +314,15 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requiere `--html-report`, deshabilitado por `--encrypt`).
 - **.jsonl**: Eventos streaming para SIEM (deshabilitado por `--encrypt`).
 - **playbooks/*.md**: Guías de remediación (deshabilitado por `--encrypt`).
-- **run_manifest.json**: Manifiesto de salida (deshabilitado por `--encrypt`).
+- **run_manifest.json**: Manifiesto de salida con snapshot de config/pipeline (deshabilitado por `--encrypt`).
 - **.pcap**: Capturas de paquetes (solo si Deep Scan + tcpdump + Root).
 - **session_*.log**: Salida de terminal raw con códigos de color (en `session_logs/`).
 - **session_*.txt**: Salida de terminal en texto plano limpio (en `session_logs/`).
+
+**Evidencia y transparencia del pipeline:**
+
+- El JSON principal incluye metadatos de evidencia por hallazgo (herramienta fuente, matched_at, hash/ref de salida cruda si aplica).
+- El HTML muestra los args/timing de Nmap, ajustes de deep scan y el resumen HyperScan vs final (cuando exista).
 
 **Notas de Progreso/ETA:**
 

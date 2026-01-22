@@ -603,7 +603,7 @@ Ruta de salida por defecto: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-
 | `findings.jsonl` | Si cifrado deshabilitado | Eventos JSONL para SIEM (campos alineados con ECS vía configs) |
 | `assets.jsonl` | Si cifrado deshabilitado | Inventario de activos |
 | `summary.json` | Si cifrado deshabilitado | Métricas para dashboards |
-| `run_manifest.json` | Si cifrado deshabilitado | Metadatos de sesión |
+| `run_manifest.json` | Si cifrado deshabilitado | Metadatos de sesión + snapshot de config/pipeline |
 | `playbooks/*.md` | Si cifrado deshabilitado | Guías de remediación |
 | `traffic_*.pcap` | Si se dispara deep scan y tcpdump disponible | Capturas de paquetes |
 | `session_logs/session_*.log` | Siempre | Logs de sesión (raw con ANSI) |
@@ -616,6 +616,11 @@ Cuando se usa `--encrypt`:
 - `.json` y `.txt` se convierten en `.json.enc` y `.txt.enc`
 - Se crea un fichero `.salt` junto a cada fichero cifrado
 - **Los artefactos en texto plano NO se generan:** HTML, JSONL, playbooks y ficheros manifest se omiten por seguridad
+
+**Evidencia y transparencia del pipeline:**
+
+- El JSON principal incluye metadatos de evidencia por hallazgo (herramienta fuente, matched_at, hash/ref de salida cruda si aplica).
+- El HTML muestra los args/timing de Nmap, ajustes de deep scan y el resumen HyperScan vs final cuando existe.
 
 **Descifrado:**
 

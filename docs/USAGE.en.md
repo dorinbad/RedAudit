@@ -59,7 +59,7 @@ sudo redaudit -t 192.168.56.101 \
   --no-prevent-sleep
 ```
 
-**Artifacts:** JSON/TXT, optional HTML, PCAP (deep scan + tcpdump), playbooks (when findings match categories and encryption is off).
+**Artifacts:** JSON/TXT, optional HTML, JSONL, run manifest, PCAP (deep scan + tcpdump), playbooks (when findings match categories and encryption is off).
 
 ## 2. Scenario Examples
 
@@ -311,10 +311,15 @@ sudo redaudit --output /opt/redaudit/reports --save-defaults --yes
 - **.html**: Dashboard (requires `--html-report`, disabled by `--encrypt`).
 - **.jsonl**: Streaming events for SIEM (disabled by `--encrypt`).
 - **playbooks/*.md**: Remediation guides (disabled by `--encrypt`).
-- **run_manifest.json**: Output manifest (disabled by `--encrypt`).
+- **run_manifest.json**: Output manifest with config/pipeline snapshot (disabled by `--encrypt`).
 - **.pcap**: Packet captures (only if Deep Scan + tcpdump + Root).
 - **session_*.log**: Raw terminal output with color codes (in `session_logs/`).
 - **session_*.txt**: Clean plain-text terminal output (in `session_logs/`).
+
+**Evidence & pipeline transparency:**
+
+- The main JSON includes per-finding evidence metadata (source tool, matched_at, raw output hash/ref when available).
+- HTML shows the resolved Nmap args/timing, deep scan settings, and HyperScan vs final summary (when present).
 
 **Progress/ETA Notes:**
 

@@ -607,7 +607,7 @@ Default output path: `~/Documents/RedAuditReports/RedAudit_YYYY-MM-DD_HH-MM-SS/`
 | `findings.jsonl` | If encryption disabled | SIEM-ready JSONL events (ECS-aligned via configs) |
 | `assets.jsonl` | If encryption disabled | Asset inventory |
 | `summary.json` | If encryption disabled | Dashboard metrics |
-| `run_manifest.json` | If encryption disabled | Session metadata |
+| `run_manifest.json` | If encryption disabled | Session metadata + config/pipeline snapshot |
 | `playbooks/*.md` | If encryption disabled | Remediation guides |
 | `traffic_*.pcap` | If deep scan triggers and tcpdump available | Packet captures |
 | `session_logs/session_*.log` | Always | Session logs (raw with ANSI) |
@@ -620,6 +620,11 @@ When `--encrypt` is used:
 - `.json` and `.txt` become `.json.enc` and `.txt.enc`
 - A `.salt` file is created alongside each encrypted file
 - **Plaintext artifacts are NOT generated:** HTML, JSONL, playbooks, and manifest files are skipped for security
+
+**Evidence and pipeline transparency:**
+
+- The main JSON includes per-finding evidence metadata (source tool, matched_at, raw output hash/ref when available).
+- The HTML pipeline section exposes resolved Nmap args/timing, deep scan settings, and HyperScan vs final summary when present.
 
 **Decryption:**
 
