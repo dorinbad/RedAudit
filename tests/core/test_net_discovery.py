@@ -582,9 +582,7 @@ def test_redteam_snmp_walk_errors():
     assert _redteam_snmp_walk(["1.1.1.1"], {})["status"] == "tool_missing"
     # 1252: Error log
     with patch("shutil.which", return_value="snmpwalk"):
-        with patch(
-            "redaudit.core.redteam._run_cmd", return_value=(1, "", "Permission Denied")
-        ):
+        with patch("redaudit.core.redteam._run_cmd", return_value=(1, "", "Permission Denied")):
             res = _redteam_snmp_walk(["1.1.1.1"], {"snmpwalk": True})
             assert "Permission Denied" in res["errors"][0]
     # 1263: Row-based raw fallback

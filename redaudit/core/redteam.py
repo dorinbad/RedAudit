@@ -3,6 +3,7 @@ RedAudit - Red Team Discovery Module
 
 Extracted from net_discovery to keep red team enumeration isolated.
 """
+
 from __future__ import annotations
 
 import ipaddress
