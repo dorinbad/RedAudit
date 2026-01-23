@@ -10,6 +10,7 @@ v3.3: Generate interactive HTML reports with Bootstrap + Chart.js.
 import os
 import re
 import json
+import copy
 import xml.dom.minidom  # nosec B408
 from datetime import datetime
 from typing import Dict, Optional
@@ -74,9 +75,10 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
     hosts = results.get("hosts", [])
     vulnerabilities = results.get("vulnerabilities", [])
     summary = results.get("summary", {})
-    pipeline = results.get("pipeline", {}) or {}
+    pipeline = copy.deepcopy(results.get("pipeline", {}) or {})
     smart_scan_summary = results.get("smart_scan_summary", {}) or {}
     config_snapshot = results.get("config_snapshot", {}) or {}
+    auth_scan = results.get("auth_scan", {}) or {}
 
     # Severity distribution for chart
     severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
@@ -276,6 +278,30 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
             }
         )
 
+    if lang.lower() == "es":
+        net_discovery = pipeline.get("net_discovery", {}) or {}
+        errors = net_discovery.get("errors") or []
+        if errors:
+            net_discovery["errors"] = [_translate_pipeline_error(err, lang) for err in errors]
+            pipeline["net_discovery"] = net_discovery
+
+    auth_errors = []
+    for item in auth_scan.get("errors") or []:
+        if not isinstance(item, dict):
+            continue
+        ip = item.get("ip") or "-"
+        msg = item.get("error") or "Unknown error"
+        auth_errors.append(f"{ip}: {msg}")
+
+    auth_summary = {
+        "enabled": bool(auth_scan.get("enabled")),
+        "targets": auth_scan.get("targets") or 0,
+        "completed": auth_scan.get("completed") or 0,
+        "ssh_success": auth_scan.get("ssh_success") or 0,
+        "lynis_success": auth_scan.get("lynis_success") or 0,
+        "errors": auth_errors,
+    }
+
     return {
         "version": VERSION,
         "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -291,6 +317,7 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
         "host_table": host_table,
         "finding_table": finding_table,
         "pipeline": pipeline,
+        "auth_scan": auth_summary,
         "smart_scan": smart_scan_summary,
         "smart_scan_reasons": smart_scan_reasons,
         "config_snapshot": config_snapshot,
@@ -300,6 +327,32 @@ def prepare_report_data(results: Dict, config: Dict, *, lang: str = "en") -> Dic
         "nuclei_suspected": nuclei_suspected,
         "scan_duration": summary.get("duration", "-"),
     }
+
+
+def _translate_pipeline_error(error: str, lang: str) -> str:
+    if not error or lang.lower() != "es":
+        return error
+    replacements = {
+        "no response to DHCP broadcast on ": "sin respuesta al broadcast DHCP en ",
+        " (timeout).": " (timeout).",
+        "Possible causes:": "Posibles causas:",
+        "interface is loopback; DHCP is not applicable": "la interfaz es loopback; DHCP no aplica",
+        "interface appears down or has no carrier": "la interfaz parece caída o sin portadora",
+        "no IPv4 address detected on interface": "no se detectó IPv4 en la interfaz",
+        "interface looks virtual/bridge; DHCP may be unavailable": (
+            "la interfaz parece virtual/bridge; DHCP puede no estar disponible"
+        ),
+        "wireless interface; AP isolation can block DHCP broadcasts": (
+            "interfaz inalámbrica; el aislamiento del AP puede bloquear el broadcast DHCP"
+        ),
+        "no DHCP server responding on this network": "ningún servidor DHCP responde en esta red",
+        "dhcp-discover failed on ": "dhcp-discover falló en ",
+        "dhcp-discover failed": "dhcp-discover falló",
+    }
+    translated = error
+    for src, dst in replacements.items():
+        translated = translated.replace(src, dst)
+    return translated
 
 
 def _extract_finding_title(vuln: Dict) -> str:

@@ -214,6 +214,21 @@
                         <li>HTTP <span>{{ pipeline.agentless_verify.signals.http or 0 }}</span></li>
                     </ul>
                 </div>
+                {% if auth_scan.enabled or auth_scan.targets or auth_scan.completed %}
+                <div class="meta-item">
+                    <h4>Authenticated Scan</h4>
+                    <ul>
+                        <li>Enabled <span>{{ 'Yes' if auth_scan.enabled else 'No' }}</span></li>
+                        <li>Targets <span>{{ auth_scan.targets or 0 }}</span></li>
+                        <li>Completed <span>{{ auth_scan.completed or 0 }}</span></li>
+                        <li>SSH Success <span>{{ auth_scan.ssh_success or 0 }}</span></li>
+                        <li>Lynis Success <span>{{ auth_scan.lynis_success or 0 }}</span></li>
+                        {% if auth_scan.errors %}
+                        <li>Errors <span>{{ auth_scan.errors|join('; ') }}</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
                 <div class="meta-item">
                     <h4>Nuclei</h4>
                     <ul>
