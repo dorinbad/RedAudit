@@ -245,6 +245,15 @@ TRANSLATIONS = {
         "update_home_changes_verify_failed_abort": (
             "Could not verify local changes in {}. Update aborted for safety."
         ),
+        "update_repo_sync_skip_dirty": (
+            "Local changes detected in {}. Skipping repo sync."
+        ),
+        "update_repo_sync_fetch_failed": "Could not refresh tags in {}. Skipping repo sync.",
+        "update_repo_sync_ok": "Updated local repo {} to {}.",
+        "update_repo_sync_pull_failed": "Could not fast-forward {} to main. Skipping repo sync.",
+        "update_repo_sync_branch_skip": (
+            "Repo {} is on '{}' (not main). Tags refreshed only."
+        ),
         "update_requires_root": "Update check requires sudo/root (or run with --skip-update-check).",
         "update_requires_root_install": (
             "System install update requires sudo/root. Re-run with sudo to update "
@@ -691,6 +700,19 @@ TRANSLATIONS = {
         ),
         "update_home_changes_verify_failed_abort": (
             "No se pudieron verificar cambios locales en {}. Actualización abortada por seguridad."
+        ),
+        "update_repo_sync_skip_dirty": (
+            "Se detectaron cambios locales en {}. Se omite la sincronización del repo."
+        ),
+        "update_repo_sync_fetch_failed": (
+            "No se pudieron actualizar los tags en {}. Se omite la sincronización."
+        ),
+        "update_repo_sync_ok": "Repositorio local {} actualizado a {}.",
+        "update_repo_sync_pull_failed": (
+            "No se pudo avanzar {} a main. Se omite la sincronización."
+        ),
+        "update_repo_sync_branch_skip": (
+            "El repo {} está en '{}' (no main). Solo se actualizaron los tags."
         ),
         "update_requires_root": "La comprobación de actualizaciones requiere sudo/root (o usa --skip-update-check).",
         "update_requires_root_install": (

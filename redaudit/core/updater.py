@@ -818,6 +818,7 @@ def perform_git_update(
     install_path = "/usr/local/lib/redaudit"
     system_install_updated = False
     update_home_copy = True
+    cwd_path = os.getcwd()
 
     try:
         runner = CommandRunner(
@@ -1311,6 +1312,17 @@ def perform_git_update(
                 if logger:
                     logger.debug("Keyring seeding failed (optional): %s", e)
 
+        # Best-effort: refresh current working copy if it's a clean RedAudit git repo.
+        _maybe_sync_local_repo(
+            cwd_path=cwd_path,
+            home_redaudit_path=home_redaudit_path,
+            target_ref=target_ref,
+            runner=runner,
+            print_fn=print_fn,
+            t_fn=t_fn,
+            logger=logger,
+        )
+
         # Success!
         return (True, "UPDATE_SUCCESS_RESTART")
 
@@ -1322,6 +1334,104 @@ def perform_git_update(
         if logger:
             logger.error("Update failed: %s", e)
         return (False, f"Update failed: {e}")
+
+
+def _maybe_sync_local_repo(
+    *,
+    cwd_path: str,
+    home_redaudit_path: str,
+    target_ref: str,
+    runner: CommandRunner,
+    print_fn,
+    t_fn,
+    logger=None,
+) -> None:
+    """Best-effort sync of a clean local RedAudit repo to avoid stale git tags."""
+    if not cwd_path:
+        return
+
+    cwd_real = os.path.realpath(cwd_path)
+    home_real = os.path.realpath(home_redaudit_path)
+    if cwd_real == home_real:
+        return
+
+    git_dir = os.path.join(cwd_real, ".git")
+    if not os.path.isdir(git_dir):
+        return
+
+    git_env = os.environ.copy()
+    git_env["GIT_TERMINAL_PROMPT"] = "0"
+    git_env["GIT_ASKPASS"] = "echo"
+
+    try:
+        origin_url = runner.check_output(
+            ["git", "remote", "get-url", "origin"],
+            cwd=cwd_real,
+            text=True,
+            timeout=10,
+            env=git_env,
+        ).strip()
+    except Exception:
+        return
+
+    if f"{GITHUB_OWNER}/{GITHUB_REPO}" not in origin_url:
+        return
+
+    try:
+        status = runner.check_output(
+            ["git", "status", "--porcelain"],
+            cwd=cwd_real,
+            text=True,
+            timeout=10,
+            env=git_env,
+        ).strip()
+        if status:
+            print_fn(t_fn("update_repo_sync_skip_dirty", cwd_real), "WARNING")
+            return
+    except Exception:
+        if logger:
+            logger.debug("Repo sync skipped (status check failed): %s", cwd_real)
+        return
+
+    try:
+        runner.check_output(
+            ["git", "fetch", "--tags", "origin"],
+            cwd=cwd_real,
+            text=True,
+            timeout=20,
+            env=git_env,
+        )
+    except Exception:
+        print_fn(t_fn("update_repo_sync_fetch_failed", cwd_real), "WARNING")
+        return
+
+    branch = ""
+    try:
+        branch = runner.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=cwd_real,
+            text=True,
+            timeout=10,
+            env=git_env,
+        ).strip()
+    except Exception:
+        branch = ""
+
+    if branch == "main":
+        try:
+            runner.check_output(
+                ["git", "pull", "--ff-only", "origin", "main"],
+                cwd=cwd_real,
+                text=True,
+                timeout=20,
+                env=git_env,
+            )
+            print_fn(t_fn("update_repo_sync_ok", cwd_real, target_ref), "OKGREEN")
+        except Exception:
+            print_fn(t_fn("update_repo_sync_pull_failed", cwd_real), "WARNING")
+    else:
+        if branch:
+            print_fn(t_fn("update_repo_sync_branch_skip", cwd_real, branch), "INFO")
 
 
 def get_repo_path() -> str:
