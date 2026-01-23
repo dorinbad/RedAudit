@@ -13,6 +13,7 @@ Release notes live under `docs/releases/` for additional context.
 ### Fixed
 
 - **DHCP Timeout Hints**: Added best-effort hints for DHCP broadcast timeouts to help interpret missing responses.
+- **SSH Auth Port Detection**: Authenticated scans now recognize SSH on non-22 ports (e.g., 2222).
 
 ## [4.18.9] - 2026-01-23
 
