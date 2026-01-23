@@ -14,6 +14,21 @@ Release notes live under `docs/releases/` for additional context.
 
 - None.
 
+## [4.18.11] - 2026-01-23
+
+### Fixed
+
+- **DHCP Hint Accuracy**: Avoids reporting missing IPv4 hints when interface data cannot be verified.
+- **HTML Pipeline Errors (ES)**: Pipeline error messages are now translated in Spanish reports.
+- **HTML Auth Summary**: Authenticated scan outcomes are now visible in HTML reports.
+- **Updater Repo Sync**: After updates, the updater refreshes tags and fast-forwards clean `main` checkouts to avoid stale version prompts.
+- **Lab Log Growth**: The lab setup script now applies Docker log rotation to prevent runaway container logs.
+- **Lab SMB Deploy**: The `.30` SMB container is force-redeployed to avoid stale configuration.
+
+### Documentation
+
+- **Lab Cleanup & Manual Log Rotation**: Documented clean lab removal and the log rotation flags for manual runs (EN/ES).
+
 ## [4.18.10] - 2026-01-23
 
 ### Fixed

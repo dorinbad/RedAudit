@@ -2,7 +2,7 @@
 
 [![View in English](https://img.shields.io/badge/View_in_English-blue?style=flat-square)](../README.md)
 
-[![Version](https://img.shields.io/badge/version-4.18.10-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
+[![Version](https://img.shields.io/badge/version-4.18.11-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Licencia](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -304,6 +304,8 @@ Buscar actualizaciones? [s/N]:
 Si aceptas, RedAudit realiza una **actualizacion atomica escalonada** con rollback automatico en caso de fallo. No requiere pasos manuales.
 
 > **Nota para Ubuntu 24.04+ (Noble):** **No** uses `pip install` directamente. El instalador usa paquetes del sistema (`python3-*`) para evitar errores de `externally-managed-environment`.
+>
+> **Nota (repo git):** Si mantienes un checkout `~/RedAudit`, el updater refresca tags y hace fast‑forward de `main` cuando el repo esta limpio para evitar prompts desfasados. Si tienes cambios locales o estas en otra rama/tag, actualiza manualmente.
 
 **Actualizacion manual (solo desarrolladores):**
 

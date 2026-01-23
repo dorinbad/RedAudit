@@ -39,6 +39,8 @@ sudo bash scripts/setup_lab.sh install
 sudo bash scripts/setup_lab.sh status
 ```
 
+**Log rotation**: The setup script configures Docker log rotation for lab containers to prevent runaway `*-json.log` growth. If you created the lab before this change, recreate the containers to apply it.
+
 ## Lab Management
 
 | Action | Command | Description |
@@ -47,6 +49,34 @@ sudo bash scripts/setup_lab.sh status
 | **Stop** | `sudo bash scripts/setup_lab.sh stop` | Stops all running containers (frees resources) |
 | **Remove** | `sudo bash scripts/setup_lab.sh remove` | DELETEs all containers and the network |
 | **Status** | `sudo bash scripts/setup_lab.sh status` | Lists containers and pings IPs |
+
+## Lab Cleanup (when you no longer need the lab)
+
+Use this when you want to fully remove the lab from your system.
+
+```bash
+# Remove lab containers, network, and named volumes
+sudo bash scripts/setup_lab.sh remove
+
+# Optional: remove lab images only (safe if you do not use them elsewhere)
+docker image rm \
+  bkimminich/juice-shop \
+  tleemcjr/metasploitable2 \
+  vulnerables/web-dvwa \
+  webgoat/webgoat \
+  ianwijaya/hackazon \
+  raesene/bwapp \
+  linuxserver/openssh-server \
+  elswork/samba \
+  polinux/snmpd \
+  ghcr.io/autonomy-logic/openplc-runtime:latest \
+  honeynet/conpot:latest \
+  nowsci/samba-domain \
+  vulhub/goahead:3.6.4
+
+# Optional: remove dangling volumes after lab removal
+docker volume prune
+```
 
 ## Docker Service Management
 
@@ -100,6 +130,12 @@ done
 
 ## Installation Commands (Verified)
 
+The automated script applies Docker log rotation to all containers. If you run these commands manually, append:
+
+```
+--log-driver local --log-opt max-size=10m --log-opt max-file=3
+```
+
 ### Core Group (Web and Legacy)
 
 ```bash
@@ -122,6 +158,8 @@ docker run -d --name target-ssh-lynis --net lab_seguridad --ip 172.20.0.20 \
   linuxserver/openssh-server
 
 # .30 SMB Server (elswork/samba - requires volume + runtime args)
+docker rm -f target-windows 2>/dev/null
+
 sudo mkdir -p /srv/lab_smb/Public
 sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb
 docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \

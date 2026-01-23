@@ -204,6 +204,8 @@ def _get_interface_facts(interface: Optional[str], logger=None) -> Dict[str, Any
         "ipv4": [],
         "ipv6": [],
         "kind": None,
+        "ipv4_checked": False,
+        "ipv6_checked": False,
     }
     safe_iface = _sanitize_iface(interface)
     if not safe_iface:
@@ -229,6 +231,8 @@ def _get_interface_facts(interface: Optional[str], logger=None) -> Dict[str, Any
                 facts["carrier"] = False
 
         rc, out, _ = _run_cmd(["ip", "-o", "-4", "addr", "show", "dev", safe_iface], 2, logger)
+        if rc == 0:
+            facts["ipv4_checked"] = True
         if rc == 0 and out:
             for line in out.splitlines():
                 match = re.search(r"inet\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+)/", line)
@@ -236,6 +240,8 @@ def _get_interface_facts(interface: Optional[str], logger=None) -> Dict[str, Any
                     facts["ipv4"].append(match.group(1))
 
         rc, out, _ = _run_cmd(["ip", "-o", "-6", "addr", "show", "dev", safe_iface], 2, logger)
+        if rc == 0:
+            facts["ipv6_checked"] = True
         if rc == 0 and out:
             for line in out.splitlines():
                 match = re.search(r"inet6\\s+([0-9a-fA-F:]+)/", line)
@@ -277,7 +283,7 @@ def _format_dhcp_timeout_hint(interface: Optional[str], logger=None) -> Optional
         _add_hint("interface is loopback; DHCP is not applicable")
     if facts.get("link_up") is False or facts.get("carrier") is False:
         _add_hint("interface appears down or has no carrier")
-    if not facts.get("ipv4"):
+    if facts.get("ipv4_checked") and not facts.get("ipv4"):
         _add_hint("no IPv4 address detected on interface")
     if facts.get("kind") == "virtual":
         _add_hint("interface looks virtual/bridge; DHCP may be unavailable")
