@@ -48,6 +48,34 @@ sudo bash scripts/setup_lab.sh status
 | **Eliminar** | `sudo bash scripts/setup_lab.sh remove` | BORRA todos los contenedores y la red |
 | **Estado** | `sudo bash scripts/setup_lab.sh status` | Lista contenedores y hace ping a IPs |
 
+## Limpieza del laboratorio (cuando ya no lo necesitas)
+
+Usa esto cuando quieras eliminar completamente el laboratorio del sistema.
+
+```bash
+# Elimina contenedores del lab, red y volumenes con nombre
+sudo bash scripts/setup_lab.sh remove
+
+# Opcional: elimina solo las imagenes del laboratorio (seguro si no las usas en otros entornos)
+docker image rm \
+  bkimminich/juice-shop \
+  tleemcjr/metasploitable2 \
+  vulnerables/web-dvwa \
+  webgoat/webgoat \
+  ianwijaya/hackazon \
+  raesene/bwapp \
+  linuxserver/openssh-server \
+  elswork/samba \
+  polinux/snmpd \
+  ghcr.io/autonomy-logic/openplc-runtime:latest \
+  honeynet/conpot:latest \
+  nowsci/samba-domain \
+  vulhub/goahead:3.6.4
+
+# Opcional: elimina volumenes sin uso tras borrar el lab
+docker volume prune
+```
+
 ## Gestion del Servicio Docker
 
 ```bash
@@ -122,6 +150,8 @@ docker run -d --name target-ssh-lynis --net lab_seguridad --ip 172.20.0.20 \
   linuxserver/openssh-server
 
 # .30 Servidor SMB (elswork/samba - requiere volumen + args runtime)
+docker rm -f target-windows 2>/dev/null
+
 sudo mkdir -p /srv/lab_smb/Public
 sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb
 docker run -d --name target-windows --net lab_seguridad --ip 172.20.0.30 \
