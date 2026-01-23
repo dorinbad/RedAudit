@@ -30,6 +30,21 @@ check_docker() {
     fi
 }
 
+deploy_target_windows() {
+    echo -e "${YELLOW}[*] Installing target-windows (.30) - SMB Server...${NC}"
+    docker rm -f target-windows 2>/dev/null
+
+    sudo mkdir -p /srv/lab_smb/Public
+    sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb
+
+    docker run -d --name target-windows --net "$LAB_NET" --ip 172.20.0.30 \
+        "${LOG_OPTS[@]}" \
+        -v /srv/lab_smb/Public:/share/public \
+        elswork/samba \
+        -u "$(id -u):$(id -g):docker:docker:password123" \
+        -s "Public:/share/public:rw:docker"
+}
+
 create_network() {
     if ! docker network ls | grep -q "$LAB_NET"; then
         echo -e "${GREEN}[+] Creating network $LAB_NET ($LAB_SUBNET)...${NC}"
@@ -95,18 +110,7 @@ install_targets() {
         linuxserver/openssh-server >/dev/null 2>&1 || echo "target-ssh-lynis exists"
 
     # .30 SMB Server (RedAudit v4.5.18 Hotfix: Force recreate with correct Samba config)
-    echo -e "${YELLOW}[*] Installing target-windows (.30) - SMB Server...${NC}"
-    docker rm -f target-windows 2>/dev/null
-
-    sudo mkdir -p /srv/lab_smb/Public
-    sudo chown -R "$(id -u):$(id -g)" /srv/lab_smb
-
-    docker run -d --name target-windows --net "$LAB_NET" --ip 172.20.0.30 \
-        "${LOG_OPTS[@]}" \
-        -v /srv/lab_smb/Public:/share/public \
-        elswork/samba \
-        -u "$(id -u):$(id -g):docker:docker:password123" \
-        -s "Public:/share/public:rw:docker"
+    deploy_target_windows
 
     # .40 SNMP v3 Target
     echo -e "${YELLOW}[*] Installing target-snmp (.40)...${NC}"
