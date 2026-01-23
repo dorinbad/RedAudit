@@ -14,6 +14,17 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 - Ninguno.
 
+## [4.18.9] - 2026-01-23
+
+### Mejorado
+
+- **Trazabilidad de Nuclei**: Los resúmenes del informe incluyen el perfil y la cobertura completa de Nuclei en los HTML.
+- **Reducción de ruido de topología**: El descubrimiento ARP deduplica entradas IP/MAC idénticas para reducir el ruido.
+
+### Corregido
+
+- **Filtrado de redes ocultas**: Se filtran los objetivos en alcance de forma consistente para evitar falsos positivos de fuga de red.
+
 ## [4.18.8] - 2026-01-22
 
 ### Mejorado

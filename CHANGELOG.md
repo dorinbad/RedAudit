@@ -14,6 +14,17 @@ Release notes live under `docs/releases/` for additional context.
 
 - None.
 
+## [4.18.9] - 2026-01-23
+
+### Improved
+
+- **Nuclei Traceability**: Report summaries now include Nuclei profile and full-coverage metadata in HTML outputs.
+- **Topology Noise Reduction**: ARP discovery deduplicates identical IP/MAC entries to reduce report clutter.
+
+### Fixed
+
+- **Hidden Network Filtering**: In-scope targets are now filtered consistently to avoid false network leak flags.
+
 ## [4.18.8] - 2026-01-22
 
 ### Improved
