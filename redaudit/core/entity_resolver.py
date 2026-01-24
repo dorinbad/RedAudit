@@ -9,8 +9,10 @@ that represent the same physical device with multiple network interfaces.
 """
 
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from collections import defaultdict
+
+from redaudit.core.signature_store import load_device_hostname_hints
 
 
 def normalize_hostname(hostname: str) -> str:
@@ -274,6 +276,41 @@ def guess_asset_type(host: Dict) -> str:
         "",
         hostname,
     )
+    hostname_hints = load_device_hostname_hints()
+    hints_by_type: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for hint in hostname_hints:
+        device_type = hint.get("device_type")
+        if device_type:
+            hints_by_type[device_type].append(hint)
+
+    def _hostname_matches(device_type: str, *, include_media_override: bool = True) -> bool:
+        if not hostname_base:
+            return False
+        for hint in hints_by_type.get(device_type, []):
+            keywords = hint.get("hostname_keywords") or []
+            regexes = hint.get("hostname_regex") or []
+            if include_media_override:
+                keywords = list(keywords) + (hint.get("hostname_keywords_media_override") or [])
+            if any(x in hostname_base for x in keywords):
+                return True
+            for pattern in regexes:
+                try:
+                    if re.search(pattern, hostname_base):
+                        return True
+                except re.error:
+                    continue
+        return False
+
+    def _hostname_matches_media_override(device_type: str) -> bool:
+        if not hostname_base:
+            return False
+        for hint in hints_by_type.get(device_type, []):
+            if any(
+                x in hostname_base for x in (hint.get("hostname_keywords_media_override") or [])
+            ):
+                return True
+        return False
+
     ports = host.get("ports", [])
     deep = host.get("deep_scan", {})
     vendor = (deep.get("vendor") or "").lower()
@@ -329,7 +366,7 @@ def guess_asset_type(host: Dict) -> str:
             return "vpn"
 
     # Heuristic 3: VPN hostname patterns
-    if any(x in hostname_base for x in ["vpn", "ipsec", "wireguard", "openvpn", "tunnel"]):
+    if _hostname_matches("vpn"):
         return "vpn"
 
     # Heuristic 4: VPN/Firewall Vendor OUI
@@ -355,40 +392,21 @@ def guess_asset_type(host: Dict) -> str:
         if port_nums & {80, 443, 8443}:
             return "firewall"
 
-    if any(
-        x in hostname_base
-        for x in (
-            "printer",
-            "laserjet",
-            "officejet",
-            "deskjet",
-            "pixma",
-            "imageclass",
-            "canon",
-            "epson",
-        )
-    ):
+    if _hostname_matches("printer"):
         return "printer"
 
     # Check hostname patterns (generic first, avoid brand-specific assumptions).
-    if any(x in hostname_base for x in ["iphone", "ipad", "phone"]):
-        return "mobile"
-    if "android" in hostname_base:
-        if media_signal or any(token in http_hint for token in ("ssdp", "iot")):
+    if _hostname_matches("mobile", include_media_override=False):
+        if _hostname_matches_media_override("mobile") and (
+            media_signal or any(token in http_hint for token in ("ssdp", "iot"))
+        ):
             return "media"
         return "mobile"
-    if any(x in hostname_base for x in ["macbook", "imac", "laptop", "desktop", "workstation"]):
+    if _hostname_matches("workstation"):
         return "workstation"
-    if re.search(r"\bpc\b", hostname_base):
-        return "workstation"
-    if any(
-        x in hostname_base
-        for x in ("msi", "lenovo", "thinkpad", "dell", "hp", "hewlett", "asus", "acer")
-    ):
-        return "workstation"
-    if any(x in hostname_base for x in ["tv", "chromecast", "roku", "firetv", "shield"]):
+    if _hostname_matches("smart_tv"):
         return "media"
-    if any(x in hostname_base for x in ["router", "gateway", "modem", "ont", "cpe", "firewall"]):
+    if _hostname_matches("router"):
         return "router"
 
     # Samsung devices can be phones or TVs; avoid defaulting to mobile without signals.
