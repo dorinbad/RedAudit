@@ -410,7 +410,9 @@ class InteractiveNetworkAuditor:
             iface_ip = iface.get("ip")
             if iface_ip:
                 iface_name = iface.get("interface")
-                reason = f"topology.interface_ip:{iface_name}" if iface_name else "topology.interface_ip"
+                reason = (
+                    f"topology.interface_ip:{iface_name}" if iface_name else "topology.interface_ip"
+                )
                 _add_reason(iface_ip, reason)
 
         auditor_ips = set(auditor_ip_reasons)
