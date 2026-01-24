@@ -14,6 +14,16 @@ Release notes live under `docs/releases/` for additional context.
 
 - None.
 
+## [4.18.16] - 2026-01-24
+
+### Added
+
+- **Coverage Guardrail**: The engineering workflow now requires 100% test coverage for modified code paths.
+
+### Improved
+
+- **Test Coverage**: Expanded automated tests to raise overall coverage to 98% and exercise updater flows.
+
 ## [4.18.15] - 2026-01-24
 
 ### Improved

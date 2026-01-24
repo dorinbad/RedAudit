@@ -14,6 +14,16 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 - Ninguno.
 
+## [4.18.16] - 2026-01-24
+
+### Añadido
+
+- **Regla de cobertura**: El workflow exige cobertura del 100% para el codigo modificado y rutas nuevas.
+
+### Mejorado
+
+- **Cobertura de tests**: Se amplio la bateria de tests hasta 98% y se cubrieron flujos del updater.
+
 ## [4.18.15] - 2026-01-24
 
 ### Mejorado

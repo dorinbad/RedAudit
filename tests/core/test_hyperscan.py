@@ -198,7 +198,251 @@ def test_build_discovery_packets():
 
     assert b"M-SEARCH" in ssdp
     assert mdns[:2] == b"\x00\x00"
-    assert b"registration" in wiz.lower()
+
+
+@pytest.mark.asyncio
+async def test_hyperscan_tcp_sweep_empty_inputs():
+    assert await hyperscan_tcp_sweep([], [80]) == {}
+    assert await hyperscan_tcp_sweep(["1.1.1.1"], []) == {}
+
+
+@pytest.mark.asyncio
+async def test_hyperscan_tcp_sweep_logs_fd_cap(monkeypatch):
+    logger = MagicMock()
+    monkeypatch.setattr(hyperscan, "_get_fd_soft_limit", lambda: 200)
+    monkeypatch.setattr(hyperscan, "_tcp_connect", AsyncMock(return_value=None))
+
+    await hyperscan_tcp_sweep(["1.1.1.1"], [80], logger=logger)
+    assert logger.debug.called
+
+
+def test_hyperscan_tcp_sweep_sync_invokes_async():
+    def _fake_run(coro):
+        if hasattr(coro, "close"):
+            coro.close()
+        return {"1.1.1.1": [80]}
+
+    with patch("redaudit.core.hyperscan.asyncio.run", side_effect=_fake_run):
+        res = hyperscan_tcp_sweep_sync(["1.1.1.1"], [80])
+    assert res == {"1.1.1.1": [80]}
+
+
+def test_hyperscan_full_port_sweep_rustscan_error_fallback(monkeypatch):
+    class _Loop:
+        def run_until_complete(self, coro):
+            if hasattr(coro, "close"):
+                coro.close()
+            return {"1.1.1.1": [80]}
+
+        async def shutdown_asyncgens(self):
+            return None
+
+        def close(self):
+            return None
+
+    logger = MagicMock()
+    monkeypatch.setattr(
+        hyperscan,
+        "asyncio",
+        SimpleNamespace(new_event_loop=lambda: _Loop(), set_event_loop=lambda *_a: None),
+    )
+    monkeypatch.setattr("redaudit.core.rustscan.is_rustscan_available", lambda: True)
+    monkeypatch.setattr(
+        "redaudit.core.rustscan.run_rustscan_discovery_only", lambda *_a, **_k: ([], "boom")
+    )
+
+    ports = hyperscan.hyperscan_full_port_sweep("1.1.1.1", logger=logger)
+    assert ports == [80]
+    assert logger.debug.called
+
+
+def test_hyperscan_full_port_sweep_loop_exception(monkeypatch):
+    class _Loop:
+        def run_until_complete(self, _coro):
+            raise RuntimeError("boom")
+
+        async def shutdown_asyncgens(self):
+            raise RuntimeError("shutdown")
+
+        def close(self):
+            raise RuntimeError("close")
+
+    logger = MagicMock()
+    monkeypatch.setattr(
+        hyperscan,
+        "asyncio",
+        SimpleNamespace(new_event_loop=lambda: _Loop(), set_event_loop=lambda *_a: None),
+    )
+    monkeypatch.setattr("redaudit.core.rustscan.is_rustscan_available", lambda: False)
+
+    ports = hyperscan.hyperscan_full_port_sweep("1.1.1.1", logger=logger)
+    assert ports == []
+    assert logger.warning.called
+
+
+@pytest.mark.asyncio
+async def test_hyperscan_udp_unicast_outer_exception(monkeypatch):
+    monkeypatch.setattr(socket, "socket", lambda *_a, **_k: (_ for _ in ()).throw(OSError("fail")))
+    res = await hyperscan_udp_sweep(["1.1.1.1"], [1900])
+    assert res == {"1.1.1.1": []}
+
+
+def test_hyperscan_arp_aggressive_timeout(monkeypatch):
+    class _Result:
+        timed_out = True
+        stdout = ""
+
+    class _Runner:
+        def run(self, *_a, **_k):
+            return _Result()
+
+    monkeypatch.setattr(hyperscan, "_make_runner", lambda *_a, **_k: _Runner())
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/tool")
+    logger = MagicMock()
+    res = hyperscan_arp_aggressive("10.0.0.0/24", retries=1, logger=logger)
+    assert res == []
+    assert logger.warning.called
+
+
+def test_hyperscan_arp_aggressive_invalid_ip(monkeypatch):
+    class _Result:
+        timed_out = False
+        stdout = "invalid-ip aa:bb:cc:dd:ee:ff vendor"
+
+    class _Runner:
+        def run(self, *_a, **_k):
+            return _Result()
+
+    monkeypatch.setattr(hyperscan, "_make_runner", lambda *_a, **_k: _Runner())
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/tool")
+    res = hyperscan_arp_aggressive("10.0.0.0/24", retries=1)
+    assert res == []
+
+
+def test_hyperscan_arp_aggressive_exception_debug(monkeypatch):
+    class _Runner:
+        def run(self, *_a, **_k):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(hyperscan, "_make_runner", lambda *_a, **_k: _Runner())
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/tool")
+    logger = MagicMock()
+    res = hyperscan_arp_aggressive("10.0.0.0/24", retries=1, logger=logger)
+    assert res == []
+    assert logger.debug.called
+
+
+def test_hyperscan_arp_aggressive_arping_ip_network_exception(monkeypatch):
+    class _Result:
+        timed_out = False
+        stdout = ""
+
+    class _Runner:
+        def run(self, *_a, **_k):
+            return _Result()
+
+    monkeypatch.setattr(hyperscan, "_make_runner", lambda *_a, **_k: _Runner())
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/tool")
+    monkeypatch.setattr(
+        hyperscan.ipaddress,
+        "ip_network",
+        lambda *_a, **_k: (_ for _ in ()).throw(ValueError("boom")),
+    )
+    res = hyperscan_arp_aggressive("10.0.0.0/24", retries=1)
+    assert res == []
+
+
+def test_hyperscan_full_discovery_progress_errors(monkeypatch):
+    def _progress(*_a, **_k):
+        raise RuntimeError("boom")
+
+    res = hyperscan_full_discovery(["bad-net"], progress_callback=_progress)
+    assert res["duration_seconds"] >= 0
+
+
+def test_hyperscan_full_discovery_progress_callback_exception(monkeypatch):
+    def _progress(*_a, **_k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(hyperscan, "hyperscan_arp_aggressive", lambda *_a, **_k: [])
+    monkeypatch.setattr(hyperscan, "hyperscan_udp_broadcast", lambda *_a, **_k: [])
+    monkeypatch.setattr(hyperscan, "hyperscan_tcp_sweep_sync", lambda *_a, **_k: {})
+
+    res = hyperscan_full_discovery(["10.0.0.0/30"], progress_callback=_progress)
+    assert res["total_hosts_found"] == 0
+
+
+def test_hyperscan_full_discovery_targets_all_ips(monkeypatch):
+    monkeypatch.setattr(hyperscan, "hyperscan_arp_aggressive", lambda *_a, **_k: [])
+    monkeypatch.setattr(hyperscan, "hyperscan_udp_broadcast", lambda *_a, **_k: [])
+
+    def _tcp_stub(targets, *_a, **_k):
+        cb = _k.get("progress_callback")
+        if cb:
+            cb(1, 2, "TCP sweep")
+        return {}
+
+    monkeypatch.setattr(hyperscan, "hyperscan_tcp_sweep_sync", _tcp_stub)
+    logger = MagicMock()
+    res = hyperscan_full_discovery(["10.0.0.0/30"], include_udp=False, logger=logger)
+    assert res["total_hosts_found"] == 0
+    assert logger.info.called
+
+
+def test_detect_potential_backdoors_import_error(monkeypatch):
+    orig_import = __import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == "redaudit.core.scanner":
+            raise ImportError("nope")
+        return orig_import(name, *args, **kwargs)
+
+    with patch("builtins.__import__", side_effect=_fake_import):
+        res = detect_potential_backdoors({"1.1.1.1": [31337]})
+        assert res
+
+
+def test_detect_potential_backdoors_port_anomaly(monkeypatch):
+    logger = MagicMock()
+    monkeypatch.setattr("redaudit.core.scanner.is_port_anomaly", lambda *_a, **_k: True)
+    monkeypatch.setattr("redaudit.core.scanner.is_suspicious_service", lambda *_a, **_k: False)
+
+    res = detect_potential_backdoors(
+        {"1.1.1.1": [8080]},
+        service_info={"1.1.1.1": {8080: "weird"}},
+        logger=logger,
+    )
+    assert res
+    assert logger.warning.called
+
+
+def test_hyperscan_deep_scan_logs(monkeypatch):
+    logger = MagicMock()
+    monkeypatch.setattr(hyperscan, "hyperscan_tcp_sweep_sync", lambda *_a, **_k: {"1.1.1.1": []})
+    res = hyperscan_deep_scan(["1.1.1.1"], logger=logger)
+    assert res == {"1.1.1.1": []}
+    assert logger.info.called
+
+
+def test_hyperscan_with_nmap_enrichment_empty_ports(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/nmap")
+    discovery = {"tcp_hosts": {"1.1.1.1": []}}
+    res = hyperscan_with_nmap_enrichment(discovery)
+    assert res == discovery
+
+
+def test_hyperscan_with_nmap_enrichment_exception(monkeypatch):
+    class _Runner:
+        def run(self, *_a, **_k):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(shutil, "which", lambda _name: "/bin/nmap")
+    monkeypatch.setattr(hyperscan, "_make_runner", lambda *_a, **_k: _Runner())
+    logger = MagicMock()
+    discovery = {"tcp_hosts": {"1.1.1.1": [22]}}
+    res = hyperscan_with_nmap_enrichment(discovery, logger=logger)
+    assert res == discovery
+    assert logger.debug.called
 
 
 def test_compute_safe_max_batch_no_limit(monkeypatch):

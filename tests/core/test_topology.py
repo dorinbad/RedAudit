@@ -99,6 +99,13 @@ class TestTopologyParsing(unittest.TestCase):
         data = {"lldp": {"interface": {"e0": {"chassis": {}, "port": {}}}}}
         self.assertEqual(len(_extract_lldp_neighbors(data, "e0")), 0)
 
+    def test_extract_lldp_neighbors_get_exception(self):
+        class _Bad:
+            def get(self, *_args, **_kwargs):
+                raise Exception("boom")
+
+        self.assertEqual(_extract_lldp_neighbors(_Bad(), "e0"), [])
+
     def test_networks_from_route_table(self):
         # 234 continue (default/none), 236 continue (no /), 241 continue (invalid)
         routes = [
@@ -172,6 +179,77 @@ class TestTopologyAsyncScenarios(unittest.TestCase):
                 topo = asyncio.run(_discover_topology_async([], [{"interface": "eth0"}]))
                 self.assertTrue(topo["interfaces"][0]["arp"]["error"])
                 self.assertTrue(topo["interfaces"][0]["neighbor_cache"]["error"])
+
+    def test_async_lldpctl_invalid_json(self):
+        async def mock_run_async(args, **_kwargs):
+            if "route" in args:
+                return 0, "default via 1.1.1.1 dev eth0", ""
+            if "lldpctl" in args:
+                return 0, "{not-json", ""
+            return 0, "", ""
+
+        with patch("redaudit.core.topology._run_cmd_async", side_effect=mock_run_async):
+            with patch("shutil.which", return_value="/bin/tool"):
+                topo = asyncio.run(
+                    _discover_topology_async(["10.0.0.0/8"], [{"interface": "eth0"}])
+                )
+                self.assertIn("routes", topo)
+
+    def test_async_lldpctl_socket_hint(self):
+        async def mock_run_async(args, **_kwargs):
+            if "route" in args:
+                return 0, "default via 1.1.1.1 dev eth0", ""
+            if "lldpctl" in args:
+                return 1, "", "socket unable to connect"
+            return 0, "", ""
+
+        with patch("redaudit.core.topology._run_cmd_async", side_effect=mock_run_async):
+            with patch("shutil.which", return_value="/bin/tool"):
+                topo = asyncio.run(_discover_topology_async([], [{"interface": "eth0"}]))
+                self.assertTrue(any("Hint" in e for e in topo["errors"]))
+
+    def test_async_lldp_tcpdump_and_cdp_limits(self):
+        async def mock_run_async(args, **_kwargs):
+            if args[:2] == ["ip", "route"]:
+                return 0, "default via 1.1.1.1 dev eth0\n127.0.0.0/8 dev lo", ""
+            if args[0] == "arp-scan":
+                return 0, "1.1.1.1\tAA:BB:CC:DD:EE:FF\tVendor", ""
+            if args[0:2] == ["ip", "neigh"]:
+                return 0, "1.1.1.1 dev eth0 lladdr AA:BB:CC:DD:EE:FF REACHABLE", ""
+            if args[0:2] == ["ip", "-d"]:
+                return 0, "vlan id 10", ""
+            if args[0] == "tcpdump" and "vlan" in args:
+                return 0, "vlan 20", ""
+            if args[0] == "tcpdump" and "01:00:0c:cc:cc:cc" in args:
+                lines = [f"line {i}" for i in range(12)]
+                return 0, "\n".join(lines), ""
+            if args[0] == "tcpdump" and "0x88cc" in args:
+                out = "\n".join(
+                    [
+                        "System Name TLV (5), length 18: Switch-01",
+                        "Port ID TLV (2), length 11: Gi1/0/1",
+                    ]
+                )
+                return 0, out, ""
+            if args[0] == "ifconfig":
+                return 0, "vlan: 100 parent interface: en0", ""
+            return 0, "", ""
+
+        def _which(name):
+            if name == "lldpctl":
+                return None
+            return "/bin/tool"
+
+        with patch("redaudit.core.topology._run_cmd_async", side_effect=mock_run_async):
+            with patch("shutil.which", side_effect=_which):
+                topo = asyncio.run(
+                    _discover_topology_async(
+                        ["10.0.0.0/8", "bad-net"], [{"interface": "eth0", "network": "10.0.0.0/8"}]
+                    )
+                )
+                iface = topo["interfaces"][0]
+                self.assertTrue(iface["lldp"]["neighbors"])
+                self.assertLessEqual(len(iface["cdp"]["observations"]), 10)
 
     def test_async_results_basesexception(self):
         # Line 564
@@ -299,6 +377,42 @@ class TestTopologySyncScenarios(unittest.TestCase):
                     )
                     # Exception handled, falls back to gateway eth0
                     self.assertEqual(len(topo["interfaces"]), 1)
+
+    def test_sync_tcpdump_and_vlan_paths(self):
+        def mock_sync(args, **kwargs):
+            if args[:2] == ["ip", "route"]:
+                return 0, "default via 1.1.1.1 dev eth0\n10.0.0.0/8 dev eth0", ""
+            if args[:2] == ["arp-scan", "--localnet"]:
+                return 0, "1.1.1.1\tAA:BB:CC:DD:EE:FF\tVendor", ""
+            if args[:2] == ["ip", "neigh"]:
+                return 0, "1.1.1.1 dev eth0 lladdr AA:BB:CC:DD:EE:FF REACHABLE", ""
+            if args[:2] == ["ifconfig", "eth0"]:
+                return 0, "vlan: 10 parent interface: en0", ""
+            if args[:3] == ["ip", "-d", "link"]:
+                return 0, "vlan id 20", ""
+            if args[0] == "tcpdump" and "vlan" in args:
+                return 0, "vlan 30", ""
+            if args[0] == "tcpdump" and "0x88cc" in args:
+                return 0, "System Name TLV (5), length 18: Switch-01", ""
+            if args[0] == "tcpdump" and "01:00:0c:cc:cc:cc" in args:
+                lines = [f"line {i}" for i in range(12)]
+                return 0, "\n".join(lines), ""
+            return 0, "", ""
+
+        def _which(name):
+            if name == "lldpctl":
+                return None
+            return "/bin/tool"
+
+        with patch("shutil.which", side_effect=_which):
+            with patch("redaudit.core.topology._run_cmd", side_effect=mock_sync):
+                topo = _discover_topology_sync(
+                    ["10.0.0.0/8", "bad"], [{"interface": "eth0", "network": "bad"}]
+                )
+                iface = topo["interfaces"][0]
+                self.assertTrue(iface["vlan"]["ids"])
+                self.assertTrue(iface["lldp"]["neighbors"])
+                self.assertLessEqual(len(iface["cdp"]["observations"]), 10)
 
 
 class TestTopologyRunCmdDirect(unittest.TestCase):

@@ -559,29 +559,44 @@ def ssl_deep_analysis(
             "protocols": [],
         }
 
+        ansi_re = re.compile(r"\x1b\[[0-9;]*m")
         lines = output.splitlines()
         for line in lines:
-            line_lower = line.lower()
+            clean_line = ansi_re.sub("", line).strip()
+            line_lower = clean_line.lower()
+            skip_vuln_line = any(
+                marker in line_lower
+                for marker in [
+                    "not having provided client certificate",
+                    "prevents this from being tested",
+                    "not tested",
+                    "test could not be performed",
+                ]
+            )
 
             # Detect vulnerabilities
             if any(
                 vuln in line_lower
                 for vuln in ["vulnerable", "heartbleed", "poodle", "beast", "crime", "breach"]
             ):
-                if "not vulnerable" not in line_lower and "ok" not in line_lower:
-                    findings["vulnerabilities"].append(line.strip()[:200])
+                if (
+                    "not vulnerable" not in line_lower
+                    and "ok" not in line_lower
+                    and not skip_vuln_line
+                ):
+                    findings["vulnerabilities"].append(clean_line[:200])
 
             # Detect weak ciphers
             if "weak" in line_lower or "insecure" in line_lower:
                 if "cipher" in line_lower or "encryption" in line_lower:
-                    findings["weak_ciphers"].append(line.strip()[:150])
+                    findings["weak_ciphers"].append(clean_line[:150])
 
             # Detect protocols
             if any(
                 proto in line_lower
                 for proto in ["sslv2", "sslv3", "tls 1.0", "tls 1.1", "tls 1.2", "tls 1.3"]
             ):
-                findings["protocols"].append(line.strip()[:100])
+                findings["protocols"].append(clean_line[:100])
 
         # Generate summary
         vuln_count = len(findings["vulnerabilities"])

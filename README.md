@@ -2,7 +2,7 @@
 
 [![Ver en Español](https://img.shields.io/badge/Ver_en_Español-red?style=flat-square)](ES/README_ES.md)
 
-[![Version](https://img.shields.io/badge/version-4.18.15-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
+[![Version](https://img.shields.io/badge/version-4.18.16-blue.svg?style=flat-square)](https://github.com/dorinbadea/RedAudit/releases/latest)
 ![Python](https://img.shields.io/badge/python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/GPLv3-green?style=flat-square)
 [![CI](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml/badge.svg)](https://github.com/dorinbadea/RedAudit/actions/workflows/tests.yml)
@@ -372,34 +372,14 @@ redaudit --diff ~/reports/monday.json ~/reports/friday.json
 | `-m, --mode` | Scan mode: `fast` / `normal` / `full` (default: normal) |
 | `-j, --threads` | Concurrent threads (1-100, auto-detected; fallback 6) |
 | `--rate-limit` | Delay between hosts in seconds (±30% jitter applied) |
-| `-e, --encrypt` | Encrypt reports with AES-128 |
 | `-o, --output` | Output directory |
-| `--topology` | Enable network topology discovery |
-| `--net-discovery` | Enhanced L2/broadcast discovery |
-| `--redteam` | Enable Red Team discovery techniques |
-| `--agentless-verify` | Agentless verification (SMB/RDP/LDAP/SSH/HTTP) |
-| `--nuclei` | Enable Nuclei template scanning (full mode only) |
-| `--proxy URL` | SOCKS5 proxy for pivoting (requires proxychains4; TCP only) |
-| `--ipv6` | IPv6-only scanning mode |
-| `--deep-scan-budget N` | Budget for aggressive deep scans (0 = unlimited) |
-| `--identity-threshold N` | Minimum identity score to skip deep scan (0-100) |
-| `--cve-lookup` | CVE correlation via NVD API |
-| `--nvd-key KEY` | NVD API key for faster rate limits |
-| `--diff OLD NEW` | Differential analysis between scans |
-| `--html-report` | Generate interactive HTML dashboard |
-| `--stealth` | Enable paranoid timing for IDS-sensitive environments |
-| `--hyperscan-mode MODE` | HyperScan discovery mode: `auto`, `connect`, or `syn` |
-| `--max-hosts N` | Limit number of hosts to scan |
-| `--no-deep-scan` | Disable adaptive deep scan |
-| `--no-txt-report` | Skip TXT report generation |
 | `-y, --yes` | Skip confirmations (automation mode) |
-| `--webhook URL` | Webhook URL for real-time alerts |
-| `--dry-run` | Print commands without executing them |
-| `--allow-non-root` | Allow limited functionality without sudo |
-| `--save-defaults` | Save current CLI settings as persistent defaults |
-| `--auth-provider` | Credential backend (`env` or `keyring`) |
-| `--credentials-file` | Load multiple credentials from JSON file |
-| `--lynis` | Enable Lynis hardening audit (Linux/SSH) |
+| `-e, --encrypt` | Encrypt reports with AES-128 |
+| `--net-discovery` | Enhanced L2/broadcast discovery |
+| `--topology` | Enable network topology discovery |
+| `--nuclei` | Enable Nuclei template scanning (full mode only) |
+| `--html-report` | Generate interactive HTML dashboard |
+| `--diff OLD NEW` | Differential analysis between scans |
 
 See `redaudit --help` or [USAGE.md](docs/USAGE.en.md) for the complete option list.
 
