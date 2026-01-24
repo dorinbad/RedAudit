@@ -214,19 +214,32 @@ class Wizard:
     def _style_prompt_text(self, text: str) -> str:
         if not text:
             return text
-        return f"{self.ui.colors['BOLD']}{self.ui.colors['OKBLUE']}{text}{self.ui.colors['ENDC']}"
+        bold = self.ui.colors.get("BOLD", "")
+        okblue = self.ui.colors.get("OKBLUE", "")
+        endc = self.ui.colors.get("ENDC", "")
+        if not (bold or okblue or endc):
+            return text
+        return f"{bold}{okblue}{text}{endc}"
 
     def _style_default_hint(self, text: str, color_key: str) -> str:
         if not text:
             return text
         color = self.ui.colors.get(color_key, "")
         bold = self.ui.colors.get("BOLD", "")
-        return f"{bold}{color}{text}{self.ui.colors['ENDC']}"
+        endc = self.ui.colors.get("ENDC", "")
+        if not (color or bold or endc):
+            return text
+        return f"{bold}{color}{text}{endc}"
 
     def _style_default_value(self, text: str) -> str:
         if not text:
             return text
-        return f"{self.ui.colors['BOLD']}{self.ui.colors['OKGREEN']}{text}{self.ui.colors['ENDC']}"
+        bold = self.ui.colors.get("BOLD", "")
+        okgreen = self.ui.colors.get("OKGREEN", "")
+        endc = self.ui.colors.get("ENDC", "")
+        if not (bold or okgreen or endc):
+            return text
+        return f"{bold}{okgreen}{text}{endc}"
 
     def _arrow_menu(
         self,
