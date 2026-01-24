@@ -29,7 +29,10 @@ from redaudit.utils.dry_run import is_dry_run
 from redaudit.core.config_context import ConfigurationContext
 from redaudit.core.models import Host
 from redaudit.core.network import detect_all_networks
-from redaudit.core.signature_store import load_device_vendor_hints
+from redaudit.core.signature_store import (
+    load_device_hostname_hints,
+    load_device_vendor_hints,
+)
 from redaudit.core.ui_manager import UIManager
 from redaudit.utils.constants import (
     STATUS_DOWN,
@@ -132,12 +135,27 @@ class NetworkScanner:
                     break
 
         hostname_lower = str(host_record.get("hostname") or "").lower()
-        if any(x in hostname_lower for x in ("iphone", "ipad", "ipod", "macbook", "imac")):
-            if "mobile" not in device_type_hints:
-                device_type_hints.append("mobile")
-        elif any(x in hostname_lower for x in ("android", "galaxy", "pixel", "oneplus")):
-            if "mobile" not in device_type_hints:
-                device_type_hints.append("mobile")
+        if hostname_lower:
+            for hint in load_device_hostname_hints():
+                device_type = hint.get("device_type")
+                if not device_type:
+                    continue
+                keywords = list(hint.get("hostname_keywords") or [])
+                keywords += hint.get("hostname_keywords_identity") or []
+                keywords += hint.get("hostname_keywords_media_override") or []
+                regexes = hint.get("hostname_regex") or []
+                if any(x in hostname_lower for x in keywords):
+                    if device_type not in device_type_hints:
+                        device_type_hints.append(device_type)
+                    continue
+                for pattern in regexes:
+                    try:
+                        if re.search(pattern, hostname_lower):
+                            if device_type not in device_type_hints:
+                                device_type_hints.append(device_type)
+                            break
+                    except re.error:
+                        continue
 
         if host_record.get("os_detected") or deep_meta.get("os_detected"):
             score += 1
