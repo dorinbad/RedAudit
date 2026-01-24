@@ -30,6 +30,7 @@ See the **Versioning & Release Checklist** section for detailed steps and comman
 
 ## Contributor Workflow Guidelines
 
+- Treat the repository as the source of truth; do not rely on conversation summaries.
 - Use `rg` for searching and `rg --files` for file discovery (fallback only if unavailable).
 - Default to ASCII in edits/creates; only add non-ASCII when the file already uses it and there is clear justification.
 - Prefer patch-style edits for single-file changes; avoid it for auto-generated changes or large scripted replacements.
