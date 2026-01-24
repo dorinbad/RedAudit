@@ -465,6 +465,7 @@ def calculate_severity(finding: str) -> str:
         "host(s) tested",
         "server: no banner retrieved",
         "scan terminated:",
+        "no web server found",
         "no cgi directories found",
     )
     if any(s in finding_lower for s in benign_substrings):
