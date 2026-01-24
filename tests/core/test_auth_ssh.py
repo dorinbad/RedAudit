@@ -4,6 +4,7 @@ Unit tests for redaudit.core.auth_ssh module.
 These tests use mocking to avoid requiring actual SSH connections.
 """
 
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -63,6 +64,12 @@ class TestSSHScanner(unittest.TestCase):
                     SSHScanner(self.credential)
                 self.assertIn("paramiko", str(ctx.exception))
 
+    def test_init_with_paramiko_sets_module(self):
+        fake_paramiko = MagicMock()
+        with patch.dict(sys.modules, {"paramiko": fake_paramiko}):
+            scanner = SSHScanner(self.credential)
+        assert scanner._paramiko is fake_paramiko
+
     def test_connect_with_password(self):
         """Test SSH connection with password authentication."""
         scanner = self._create_mock_scanner(credential=self.credential)
@@ -92,29 +99,70 @@ class TestSSHScanner(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_connect_trust_unknown_keys_sets_policy(self):
+        scanner = self._create_mock_scanner(credential=self.credential)
+        scanner.trust_unknown_keys = True
+        scanner._paramiko.MissingHostKeyPolicy = object
+
+        result = scanner.connect("192.168.1.1", 22)
+
+        self.assertTrue(result)
+        scanner._client.set_missing_host_key_policy.assert_called()
+
     def test_connect_no_auth_raises_error(self):
         """Test that connection without auth method raises error."""
         empty_cred = Credential(username="user")
         scanner = self._create_mock_scanner(credential=empty_cred)
-        mock_client = MagicMock()
-        scanner._client = mock_client
+        scanner._paramiko.AuthenticationException = type("AuthExc", (Exception,), {})
+        scanner._paramiko.SSHException = type("SSHExc", (Exception,), {})
+        scanner._client = MagicMock()
 
-        # The error should be raised before try/except block catches it
         with self.assertRaises(SSHConnectionError) as ctx:
-            # Need to set _connected to False before connect
-            scanner._connected = False
-            # Call the connect method directly with our mocked scanner
-            if scanner._connected:
-                scanner.close()
-            scanner._client = scanner._paramiko.SSHClient()
-            scanner._client.set_missing_host_key_policy(scanner._paramiko.AutoAddPolicy())
-
-            # Check auth method - this should raise
-            if not scanner.credential.private_key and not scanner.credential.password:
-                raise SSHConnectionError(
-                    "No authentication method provided (need password or private_key)"
-                )
+            scanner.connect("192.168.1.1", 22)
         self.assertIn("No authentication method", str(ctx.exception))
+
+    def test_connect_authentication_exception(self):
+        scanner = self._create_mock_scanner(credential=self.credential)
+        scanner._paramiko.AuthenticationException = type("AuthExc", (Exception,), {})
+        scanner._paramiko.SSHException = type("SSHExc", (Exception,), {})
+        scanner._paramiko.SSHClient.return_value.connect.side_effect = (
+            scanner._paramiko.AuthenticationException("bad auth")
+        )
+
+        with self.assertRaises(SSHConnectionError) as ctx:
+            scanner.connect("192.168.1.1", 22)
+        self.assertIn("Authentication failed", str(ctx.exception))
+
+    def test_connect_ssh_exception(self):
+        scanner = self._create_mock_scanner(credential=self.credential)
+        scanner._paramiko.AuthenticationException = type("AuthExc", (Exception,), {})
+        scanner._paramiko.SSHException = type("SSHExc", (Exception,), {})
+        scanner._paramiko.SSHClient.return_value.connect.side_effect = (
+            scanner._paramiko.SSHException("ssh error")
+        )
+
+        with self.assertRaises(SSHConnectionError) as ctx:
+            scanner.connect("192.168.1.1", 22)
+        self.assertIn("SSH error", str(ctx.exception))
+
+    def test_connect_generic_exception(self):
+        scanner = self._create_mock_scanner(credential=self.credential)
+        scanner._paramiko.AuthenticationException = type("AuthExc", (Exception,), {})
+        scanner._paramiko.SSHException = type("SSHExc", (Exception,), {})
+        scanner._paramiko.SSHClient.return_value.connect.side_effect = RuntimeError("boom")
+
+        with self.assertRaises(SSHConnectionError) as ctx:
+            scanner.connect("192.168.1.1", 22)
+        self.assertIn("Connection failed", str(ctx.exception))
+
+    def test_close_handles_exception(self):
+        scanner = self._create_mock_scanner()
+        scanner._connected = True
+        scanner._client = MagicMock()
+        scanner._client.close.side_effect = RuntimeError("boom")
+        scanner.close()
+        self.assertFalse(scanner._connected)
+        self.assertIsNone(scanner._client)
 
     def test_run_command_not_connected_raises_error(self):
         """Test that running command when not connected raises error."""
@@ -146,6 +194,15 @@ class TestSSHScanner(unittest.TestCase):
         self.assertEqual(stdout, "command output\n")
         self.assertEqual(stderr, "")
         self.assertEqual(code, 0)
+
+    def test_run_command_exception(self):
+        scanner = self._create_mock_scanner()
+        scanner._connected = True
+        scanner._client = MagicMock()
+        scanner._client.exec_command.side_effect = RuntimeError("fail")
+
+        with self.assertRaises(SSHCommandError):
+            scanner.run_command("ls")
 
     def test_get_os_info_parses_os_release(self):
         """Test OS info parsing from /etc/os-release."""

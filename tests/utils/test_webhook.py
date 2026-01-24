@@ -88,6 +88,38 @@ def test_send_webhook_success(monkeypatch):
     assert timeout == 5
 
 
+def test_send_webhook_custom_headers(monkeypatch):
+    class _Response:
+        ok = True
+        status_code = 200
+        reason = "OK"
+        text = "ok"
+
+    class _Requests:
+        class exceptions:
+            Timeout = type("Timeout", (Exception,), {})
+            RequestException = type("RequestException", (Exception,), {})
+
+        def __init__(self):
+            self.calls = []
+
+        def post(self, url, json, headers, timeout):
+            self.calls.append((url, json, headers, timeout))
+            return _Response()
+
+    dummy = _Requests()
+    monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", True)
+    monkeypatch.setattr(webhook, "requests", dummy)
+
+    payload = {"k": "v"}
+    assert (
+        webhook.send_webhook("https://example.com", payload, timeout=5, headers={"X-Test": "1"})
+        is True
+    )
+    sent_headers = dummy.calls[0][2]
+    assert sent_headers["X-Test"] == "1"
+
+
 def test_send_webhook_requests_unavailable(monkeypatch):
     monkeypatch.setattr(webhook, "REQUESTS_AVAILABLE", False)
     monkeypatch.setattr(webhook, "requests", None)
@@ -177,3 +209,9 @@ def test_process_findings_for_alerts_counts_sent(monkeypatch):
     )
     assert count == 2
     assert len(sent) == 2
+
+
+def test_process_findings_for_alerts_skips_without_url():
+    results = {"vulnerabilities": []}
+    count = webhook.process_findings_for_alerts(results, webhook_url="", config={})
+    assert count == 0

@@ -7,12 +7,14 @@ v2.9 Professional SIEM integration tests
 import sys
 import os
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from redaudit.core.siem import (
     calculate_severity,
     calculate_risk_score,
+    calculate_risk_score_with_breakdown,
     generate_observable_hash,
     generate_host_tags,
     build_ecs_event,
@@ -20,6 +22,10 @@ from redaudit.core.siem import (
     enrich_vulnerability_severity,
     enrich_report_for_siem,
     consolidate_findings,
+    generate_cef_line,
+    _build_evidence_meta,
+    extract_finding_title,
+    _severity_from_label,
     ECS_VERSION,
 )
 
@@ -1105,6 +1111,206 @@ class TestFTPCVEInjection(unittest.TestCase):
         cve = next((c for c in port.get("cves", []) if c.get("cve_id") == "CVE-2011-2523"), None)
         self.assertIsNotNone(cve)
         self.assertEqual(cve.get("cvss_score"), 9.8)
+
+
+class TestSIEMAdditionalCoverage(unittest.TestCase):
+    def test_severity_from_label_unknown(self):
+        label, score = _severity_from_label("weird")
+        self.assertEqual(label, "info")
+        self.assertEqual(score, 10)
+
+    def test_generate_descriptive_title_template_ids(self):
+        vuln = {"template_id": "CVE-2024-1234"}
+        self.assertEqual(extract_finding_title(vuln), "Nuclei: CVE-2024-1234")
+        vuln = {"template_id": "test_issue"}
+        self.assertEqual(extract_finding_title(vuln), "Nuclei: Test Issue")
+
+    def test_generate_descriptive_title_cve_ids(self):
+        vuln = {"cve_ids": ["cve-2020-9999"]}
+        self.assertEqual(extract_finding_title(vuln), "Known Vulnerability: CVE-2020-9999")
+
+    def test_generate_descriptive_title_ssl_mismatch(self):
+        vuln = {"parsed_observations": ["SSL hostname mismatch detected"], "port": 443}
+        self.assertEqual(extract_finding_title(vuln), "SSL Certificate Hostname Mismatch")
+
+    def test_generate_descriptive_title_beast(self):
+        vuln = {"parsed_observations": ["BEAST vulnerability observed"]}
+        self.assertEqual(extract_finding_title(vuln), "BEAST Vulnerability (SSL/TLS)")
+
+    def test_generate_descriptive_title_poodle(self):
+        vuln = {"parsed_observations": ["POODLE attack possible"]}
+        self.assertEqual(extract_finding_title(vuln), "POODLE Vulnerability (SSL 3.0)")
+
+    def test_generate_descriptive_title_rfc1918(self):
+        vuln = {"parsed_observations": ["rfc-1918 private ip leak"]}
+        self.assertEqual(extract_finding_title(vuln), "Internal IP Address Disclosed in Headers")
+
+    def test_generate_descriptive_title_directory_listing(self):
+        vuln = {"parsed_observations": ["Directory listing enabled"]}
+        self.assertEqual(extract_finding_title(vuln), "Directory Listing Enabled")
+
+    def test_generate_descriptive_title_etag_inode(self):
+        vuln = {"parsed_observations": ["ETag inode leakage detected"]}
+        self.assertEqual(extract_finding_title(vuln), "ETag Inode Disclosure")
+
+    def test_generate_descriptive_title_dangerous_methods(self):
+        vuln = {"parsed_observations": ["PUT method allowed"]}
+        self.assertEqual(extract_finding_title(vuln), "Dangerous HTTP Methods Enabled")
+
+    def test_generate_descriptive_title_nikto_fallback(self):
+        vuln = {
+            "nikto_findings": [
+                {"bad": "entry"},
+                "Target IP: 1.1.1.1",
+                "X" * 90,
+            ],
+            "port": 80,
+        }
+        title = extract_finding_title(vuln)
+        self.assertTrue(title.endswith("..."))
+
+    def test_generate_descriptive_title_fallback_sources(self):
+        vuln = {"source": "testssl", "port": 443}
+        self.assertEqual(
+            extract_finding_title(vuln),
+            "SSL/TLS Configuration Issue on Port 443",
+        )
+        vuln = {"source": "nikto", "port": 80, "url": "http://example.com"}
+        self.assertEqual(
+            extract_finding_title(vuln),
+            "Web Security Finding on Port 80",
+        )
+
+    def test_calculate_severity_empty_keyword(self):
+        with patch.dict(
+            "redaudit.core.siem.SEVERITY_KEYWORDS",
+            {"critical": [""], "high": [], "medium": [], "low": []},
+            clear=True,
+        ):
+            self.assertEqual(calculate_severity("no match"), "info")
+
+    def test_calculate_risk_score_with_breakdown_services(self):
+        host = {
+            "ip": "192.168.1.1",
+            "ports": [
+                {"port": 21, "service": "ftp"},
+                {"port": 444, "service": "ssl"},
+                {"port": 80, "service": "http", "known_exploits": ["CVE-1"]},
+            ],
+        }
+        result = calculate_risk_score_with_breakdown(host)
+        self.assertGreater(result["breakdown"]["max_cvss"], 0)
+
+    def test_calculate_risk_score_with_breakdown_normalized(self):
+        host = {
+            "ip": "192.168.1.1",
+            "ports": [{"port": 123, "service": "http"}],
+            "findings": [{"severity": "low", "normalized_severity": 9.0}],
+        }
+        result = calculate_risk_score_with_breakdown(host)
+        self.assertEqual(result["breakdown"]["max_cvss"], 9.0)
+
+    def test_generate_host_tags_filtered_and_exploitable(self):
+        host = {
+            "ip": "192.168.1.1",
+            "status": "filtered",
+            "ports": [{"port": 80, "service": "http"}],
+            "known_exploits": ["CVE-1"],
+            "deep_scan": {"mac_address": "AA:BB"},
+            "smart_scan": {"deep_scan_executed": True},
+        }
+        tags = generate_host_tags(host)
+        self.assertIn("firewall-protected", tags)
+        self.assertIn("exploitable", tags)
+        self.assertIn("deep-scanned", tags)
+        self.assertIn("mac-identified", tags)
+
+    def test_enrich_vulnerability_severity_explicit(self):
+        vuln = {
+            "severity": "high",
+            "source": "nuclei",
+            "name": "SQL injection possible",
+        }
+        enriched = enrich_vulnerability_severity(vuln, asset_id="asset")
+        self.assertEqual(enriched["severity"], "high")
+        self.assertEqual(enriched["category"], "vuln")
+
+    def test_enrich_vulnerability_severity_testssl_and_rfc1918(self):
+        vuln = {
+            "nikto_findings": ["RFC-1918 IP address found in response"],
+            "testssl_analysis": {"vulnerabilities": ["BREACH"], "weak_ciphers": ["TLS1.0"]},
+            "url": "http://192.168.1.1",
+        }
+        enriched = enrich_vulnerability_severity(vuln, asset_id="asset")
+        self.assertEqual(enriched["severity"], "low")
+        self.assertIn("RFC-1918", enriched.get("severity_note", ""))
+
+    def test_enrich_vulnerability_severity_verified_boost(self):
+        vuln = {"verified": True}
+        enriched = enrich_vulnerability_severity(vuln, asset_id="asset")
+        self.assertGreaterEqual(enriched["confidence_score"], 0.5)
+
+    def test_build_evidence_meta_fields(self):
+        vuln = {
+            "raw_tool_output_ref": "ref.txt",
+            "extracted_results": [{"a": 1}],
+        }
+        meta = _build_evidence_meta(vuln)
+        self.assertEqual(meta["raw_output_ref"], "ref.txt")
+        self.assertIn("extracted_results", meta["signals"])
+
+    def test_consolidate_findings_merges_ports_and_testssl(self):
+        entries = [
+            {
+                "host": "1.1.1.1",
+                "vulnerabilities": [
+                    {
+                        "descriptive_title": "Issue",
+                        "port": 80,
+                        "affected_ports": [443],
+                        "testssl_analysis": {"summary": "a", "vulnerabilities": ["v1"]},
+                    },
+                    {
+                        "descriptive_title": "Issue",
+                        "port": 8080,
+                        "affected_ports": [8443],
+                        "testssl_analysis": {"summary": "b", "vulnerabilities": ["v2"]},
+                    },
+                ],
+            }
+        ]
+        consolidated = consolidate_findings(entries)
+        vulns = consolidated[0]["vulnerabilities"]
+        self.assertEqual(len(vulns), 1)
+        self.assertIn(8443, vulns[0]["affected_ports"])
+        self.assertIn("summary", vulns[0]["testssl_analysis"])
+
+    def test_generate_cef_line_fields(self):
+        host = {
+            "ip": "192.168.1.1",
+            "hostname": "host",
+            "ports": [{"port": 22}],
+            "deep_scan": {"mac_address": "AA:BB"},
+        }
+        line = generate_cef_line(host)
+        self.assertIn("src=192.168.1.1", line)
+        self.assertIn("shost=host", line)
+        self.assertIn("smac=AA:BB", line)
+
+    def test_enrich_report_for_siem_handles_import_error(self):
+        report = {"hosts": [{"ip": "1.1.1.1", "ports": []}], "vulnerabilities": []}
+
+        orig_import = __import__
+
+        def _fake_import(name, *args, **kwargs):
+            if name == "redaudit.core.evidence_parser":
+                raise ImportError("nope")
+            return orig_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=_fake_import):
+            with patch("redaudit.core.siem.generate_observable_hash", return_value="hash"):
+                enriched = enrich_report_for_siem(report, {})
+        self.assertIn("hosts", enriched)
 
 
 if __name__ == "__main__":

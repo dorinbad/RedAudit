@@ -211,6 +211,18 @@ def test_parse_arguments_handles_persisted_error(monkeypatch):
     assert args.threads == suggest_threads()
 
 
+def test_parse_arguments_help_lang_es(monkeypatch):
+    with patch.object(sys, "argv", ["redaudit", "--lang", "es"]):
+        args = cli.parse_arguments()
+    assert args.lang == "es"
+
+
+def test_parse_arguments_help_lang_equals(monkeypatch):
+    with patch.object(sys, "argv", ["redaudit", "--lang=es"]):
+        args = cli.parse_arguments()
+    assert args.lang == "es"
+
+
 def test_configure_from_args_sets_lang():
     app = _DummyApp()
     args = _base_args(lang="es")
@@ -256,6 +268,183 @@ def test_configure_from_args_sets_dry_run_env(monkeypatch):
     assert cli.configure_from_args(app, args) is True
     assert os.environ["REDAUDIT_DRY_RUN"] == "1"
     os.environ.pop("REDAUDIT_DRY_RUN", None)
+
+
+def test_configure_from_args_scan_routed_import_error(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(scan_routed=True)
+    real_import = builtins.__import__
+
+    def _blocked_import(name, *args, **kwargs):
+        if name == "redaudit.core.net_discovery":
+            raise ImportError("blocked")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _blocked_import)
+    assert cli.configure_from_args(app, args) is True
+
+
+def test_configure_from_args_invalid_deep_scan_budget_and_threshold():
+    app = _DummyApp()
+    args = _base_args(deep_scan_budget=-1, identity_threshold=200)
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["deep_scan_budget"] >= 0
+    assert app.config["identity_threshold"] <= 100
+
+
+def test_configure_from_args_invalid_nuclei_settings():
+    app = _DummyApp()
+    args = _base_args(nuclei_timeout=10, nuclei_profile="bad")
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["nuclei_timeout"] == 300
+    assert app.config["nuclei_profile"] == "balanced"
+
+
+def test_configure_from_args_invalid_dead_host_retries():
+    app = _DummyApp()
+    args = _base_args(dead_host_retries=-1)
+    assert cli.configure_from_args(app, args) is True
+    assert app.config["dead_host_retries"] >= 0
+
+
+def test_configure_from_args_credentials_file_loaded(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(credentials_file="~/creds.json")
+
+    class _Cred:
+        def __init__(self, user, password):
+            self.user = user
+            self.password = password
+
+    class _Mgr:
+        def __init__(self):
+            self.credentials = [_Cred("u1", "p1"), _Cred("u2", "p2")]
+
+        def load_from_file(self, _path):
+            return None
+
+    monkeypatch.setattr(cli, "expand_user_path", lambda p: p)
+    monkeypatch.setattr("redaudit.core.credentials_manager.CredentialsManager", _Mgr)
+
+    assert cli.configure_from_args(app, args) is True
+    assert len(app.config["auth_credentials"]) == 2
+
+
+def test_configure_from_args_credentials_file_missing(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(credentials_file="~/missing.json")
+
+    class _Mgr:
+        def __init__(self):
+            self.credentials = []
+
+        def load_from_file(self, _path):
+            raise FileNotFoundError("missing")
+
+    monkeypatch.setattr(cli, "expand_user_path", lambda p: p)
+    monkeypatch.setattr("redaudit.core.credentials_manager.CredentialsManager", _Mgr)
+
+    assert cli.configure_from_args(app, args) is False
+
+
+def test_configure_from_args_credentials_file_error(monkeypatch):
+    app = _DummyApp()
+    args = _base_args(credentials_file="~/broken.json")
+
+    class _Mgr:
+        def __init__(self):
+            self.credentials = []
+
+        def load_from_file(self, _path):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(cli, "expand_user_path", lambda p: p)
+    monkeypatch.setattr("redaudit.core.credentials_manager.CredentialsManager", _Mgr)
+
+    assert cli.configure_from_args(app, args) is False
+
+
+def test_main_generate_credentials_template(monkeypatch):
+    monkeypatch.setattr(
+        cli, "parse_arguments", lambda: _base_args(generate_credentials_template=True)
+    )
+    monkeypatch.setattr(
+        "redaudit.core.credentials_manager.CredentialsManager.generate_template", lambda _p: None
+    )
+    with pytest.raises(SystemExit):
+        cli.main()
+
+
+def test_main_proxy_success(monkeypatch):
+    class _Proxy:
+        def __init__(self, _url):
+            pass
+
+        def is_valid(self):
+            return True
+
+        def test_connection(self):
+            return True, "ok"
+
+    args = _base_args(proxy="socks5://localhost:9050", target=None)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    _patch_auditor(monkeypatch, choices=[0])
+    monkeypatch.setattr("redaudit.core.proxy.ProxyManager", _Proxy)
+    monkeypatch.setattr("redaudit.core.proxy.is_proxychains_available", lambda: True)
+    with pytest.raises(SystemExit):
+        cli.main()
+
+
+def test_main_interactive_start_scan_success(monkeypatch):
+    class _ScanAuditor(_DummyAuditor):
+        def show_main_menu(self):
+            return 1
+
+        def interactive_setup(self):
+            return True
+
+        def run_complete_scan(self):
+            return False
+
+    args = _base_args(target=None)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr("redaudit.core.auditor.InteractiveNetworkAuditor", _ScanAuditor)
+    monkeypatch.setattr("redaudit.core.updater.interactive_update_check", lambda **_k: False)
+    with pytest.raises(SystemExit):
+        cli.main()
+
+
+def test_main_interactive_start_scan_keyboard_interrupt(monkeypatch):
+    class _ScanAuditor(_DummyAuditor):
+        def show_main_menu(self):
+            return 1
+
+        def interactive_setup(self):
+            raise KeyboardInterrupt()
+
+    args = _base_args(target=None)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr("redaudit.core.auditor.InteractiveNetworkAuditor", _ScanAuditor)
+    monkeypatch.setattr("redaudit.core.updater.interactive_update_check", lambda **_k: False)
+    with pytest.raises(SystemExit):
+        cli.main()
+
+
+def test_main_interactive_diff_keyboard_interrupt(monkeypatch):
+    class _DiffAuditor(_DummyAuditor):
+        def show_main_menu(self):
+            return self.choices.pop(0)
+
+    _DiffAuditor.choices = [3, 0]
+    args = _base_args(target=None)
+    monkeypatch.setattr(cli, "parse_arguments", lambda: args)
+    monkeypatch.setattr("redaudit.core.auditor.InteractiveNetworkAuditor", _DiffAuditor)
+    monkeypatch.setattr("redaudit.core.updater.interactive_update_check", lambda **_k: False)
+    monkeypatch.setattr(
+        builtins, "input", lambda *_a, **_k: (_ for _ in ()).throw(KeyboardInterrupt())
+    )
+    with pytest.raises(SystemExit):
+        cli.main()
 
 
 def test_configure_from_args_sets_max_hosts_all():

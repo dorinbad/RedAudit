@@ -6,6 +6,7 @@ RedAudit - Tests for updater helper functions.
 import hashlib
 import os
 import time
+import shutil
 from unittest.mock import patch
 
 from redaudit.core import updater
@@ -85,6 +86,12 @@ def test_format_release_notes_for_cli_and_summary():
     assert "update_release_url:https://example.com" in summary
 
 
+def test_format_release_notes_trims_leading_blank_lines():
+    notes = "\n\n- Item\n"
+    formatted = updater.format_release_notes_for_cli(notes, width=60)
+    assert formatted.startswith("- Item")
+
+
 def test_compute_file_hash_and_iter_files(tmp_path):
     target = tmp_path / "sample.txt"
     target.write_text("hello", encoding="utf-8")
@@ -138,6 +145,23 @@ def test_restart_terminal_notice_and_pause(monkeypatch, capsys):
     monkeypatch.setattr(time, "sleep", _fake_sleep)
     updater._pause_for_restart_terminal(t_fn=_t)
     assert called["sleep"] == 1.0
+
+
+def test_restart_terminal_notice_width_exception(monkeypatch, capsys):
+    def _t(key, *args):
+        return key
+
+    class _DummyStdout:
+        def isatty(self):
+            raise Exception("boom")
+
+    class _DummySys:
+        stdout = _DummyStdout()
+
+    monkeypatch.setattr(updater, "sys", _DummySys())
+    updater._show_restart_terminal_notice(t_fn=_t, lang="en")
+    output = capsys.readouterr().out
+    assert "update_restart_terminal_title" in output
 
 
 def test_pause_for_restart_terminal_tty(monkeypatch):
@@ -195,6 +219,34 @@ def test_maybe_sync_local_repo_main_branch(tmp_path):
         t_fn=_t,
     )
     assert any("update_repo_sync_ok" in msg for msg in messages)
+
+
+def test_maybe_sync_local_repo_same_path(tmp_path):
+    path = tmp_path / "repo"
+    path.mkdir()
+    updater._maybe_sync_local_repo(
+        cwd_path=str(path),
+        home_redaudit_path=str(path),
+        target_ref="v1.2.3",
+        runner=_SyncRunner(),
+        print_fn=lambda *_a, **_k: None,
+        t_fn=lambda key, *args: key,
+    )
+
+
+def test_maybe_sync_local_repo_missing_git_dir(tmp_path):
+    cwd = tmp_path / "cwd"
+    home = tmp_path / "home"
+    cwd.mkdir()
+    home.mkdir()
+    updater._maybe_sync_local_repo(
+        cwd_path=str(cwd),
+        home_redaudit_path=str(home),
+        target_ref="v1.2.3",
+        runner=_SyncRunner(),
+        print_fn=lambda *_a, **_k: None,
+        t_fn=lambda key, *args: key,
+    )
 
 
 def test_maybe_sync_local_repo_branch_skip(tmp_path):
@@ -389,6 +441,19 @@ def test_format_release_notes_spanish_heading_and_trim():
 def test_format_release_notes_only_noise_returns_empty():
     notes = "[![badge](url)](url)\n---\n"
     assert updater.format_release_notes_for_cli(notes) == ""
+
+
+def test_format_release_notes_trims_leading_empty_after_strip():
+    notes = "**\n## Added\n- Item\n"
+    result = updater.format_release_notes_for_cli(notes, width=80)
+    assert result.splitlines()[0] == "Added:"
+
+
+def test_format_release_notes_handles_empty_wrap_segments():
+    notes = "Single line"
+    with patch.object(updater.textwrap, "wrap", return_value=[]):
+        result = updater.format_release_notes_for_cli(notes, width=80)
+    assert result == "Single line"
 
 
 def test_restart_self_empty_argv():

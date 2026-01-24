@@ -189,6 +189,8 @@ def test_is_locally_administered_false():
     # Empty
     assert not oui_lookup.is_locally_administered("")
     assert not oui_lookup.is_locally_administered(None)
+    assert not oui_lookup.is_locally_administered("ZZ:00:00:00:00:00")
+    assert not oui_lookup.is_locally_administered("0")
 
 
 def test_get_vendor_returns_private_label():
@@ -209,3 +211,9 @@ def test_get_vendor_returns_private_label():
     assert (
         oui_lookup.get_vendor_with_fallback("00:50:56:00:00:01", local_vendor="VMware") == "VMware"
     )
+
+
+def test_get_vendor_with_fallback_online(monkeypatch):
+    monkeypatch.setattr(oui_lookup, "lookup_vendor_online", lambda _m: "OnlineVendor")
+    result = oui_lookup.get_vendor_with_fallback("00:11:22:33:44:55", local_vendor=None)
+    assert result == "OnlineVendor"

@@ -56,3 +56,23 @@ def test_lookup_vendor_online_uses_offline_fallback(monkeypatch):
 
     vendor = oui_lookup.lookup_vendor_online("aa:bb:cc:11:22:33")
     assert vendor == "Offline Vendor"
+
+
+def test_load_offline_db_missing_file(monkeypatch):
+    monkeypatch.setattr(oui_lookup, "_OFFLINE_CACHE", {})
+    monkeypatch.setattr(oui_lookup, "__file__", "/tmp/redaudit/utils/oui_lookup.py")
+    monkeypatch.setattr("os.path.exists", lambda _p: False)
+    oui_lookup._load_offline_db()
+    assert oui_lookup._OFFLINE_CACHE == {}
+
+
+def test_load_offline_db_read_error(monkeypatch):
+    monkeypatch.setattr(oui_lookup, "_OFFLINE_CACHE", {})
+    monkeypatch.setattr(oui_lookup, "__file__", "/tmp/redaudit/utils/oui_lookup.py")
+    monkeypatch.setattr("os.path.exists", lambda _p: True)
+
+    def _boom(*_args, **_kwargs):
+        raise OSError("nope")
+
+    monkeypatch.setattr("builtins.open", _boom)
+    oui_lookup._load_offline_db()

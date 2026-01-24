@@ -147,6 +147,211 @@ class TestWizard(unittest.TestCase):
         self.assertTrue(self.wizard._is_cancel_input("cancel"))
         self.assertTrue(self.wizard._is_cancel_input("c"))
         self.assertFalse(self.wizard._is_cancel_input("no"))
+        self.assertFalse(self.wizard._is_cancel_input(""))
+        self.assertFalse(self.wizard._is_cancel_input(None))
+
+    @patch("builtins.input", side_effect=["", "bad", "10.0.0.0/24"])
+    def test_ask_manual_network_invalid_then_valid(self, mock_input):
+        with patch(
+            "redaudit.core.wizard.parse_target_tokens",
+            side_effect=[([], ["bad"]), (["10.0.0.0/24"], [])],
+        ):
+            res = self.wizard.ask_manual_network()
+        self.assertEqual(res, ["10.0.0.0/24"])
+
+    @patch("builtins.input", side_effect=["10.0.0.0/24", "10.0.0.0/24"])
+    def test_ask_manual_network_empty_parse_then_valid(self, mock_input):
+        with patch(
+            "redaudit.core.wizard.parse_target_tokens",
+            side_effect=[([], []), (["10.0.0.0/24"], [])],
+        ):
+            res = self.wizard.ask_manual_network()
+        self.assertEqual(res, ["10.0.0.0/24"])
+
+    def test_load_keyring_from_invoking_user_none(self):
+        self.assertIsNone(self.wizard._load_keyring_from_invoking_user(""))
+        self.assertIsNone(self.wizard._load_keyring_from_invoking_user(None))
+
+    def test_load_keyring_from_invoking_user_env_error(self):
+        dummy = type("Dummy", (), {"pw_uid": 1000})
+        with (
+            patch("redaudit.core.wizard.shutil.which", return_value="/usr/bin/sudo"),
+            patch("pwd.getpwnam", return_value=dummy),
+            patch("os.path.isdir", return_value=True),
+            patch("os.path.exists", return_value=True),
+            patch("subprocess.run", return_value=type("R", (), {"returncode": 1, "stdout": ""})()),
+        ):
+            self.assertIsNone(self.wizard._load_keyring_from_invoking_user("alice"))
+
+    def test_load_keyring_from_invoking_user_pwd_error(self):
+        with (
+            patch("redaudit.core.wizard.shutil.which", return_value="/usr/bin/sudo"),
+            patch("pwd.getpwnam", side_effect=Exception("boom")),
+            patch("subprocess.run", return_value=type("R", (), {"returncode": 1, "stdout": ""})()),
+        ):
+            self.assertIsNone(self.wizard._load_keyring_from_invoking_user("alice"))
+
+    def test_load_keyring_from_invoking_user_empty_payload(self):
+        dummy = type("Dummy", (), {"pw_uid": 1000})
+        with (
+            patch("redaudit.core.wizard.shutil.which", return_value="/usr/bin/sudo"),
+            patch("pwd.getpwnam", return_value=dummy),
+            patch("os.path.isdir", return_value=True),
+            patch("os.path.exists", return_value=True),
+            patch("subprocess.run", return_value=type("R", (), {"returncode": 0, "stdout": ""})()),
+        ):
+            self.assertIsNone(self.wizard._load_keyring_from_invoking_user("alice"))
+
+    def test_load_keyring_from_invoking_user_non_dict_payload(self):
+        dummy = type("Dummy", (), {"pw_uid": 1000})
+        with (
+            patch("redaudit.core.wizard.shutil.which", return_value="/usr/bin/sudo"),
+            patch("pwd.getpwnam", return_value=dummy),
+            patch("os.path.isdir", return_value=True),
+            patch("os.path.exists", return_value=True),
+            patch(
+                "subprocess.run",
+                return_value=type("R", (), {"returncode": 0, "stdout": "[]"})(),
+            ),
+        ):
+            self.assertIsNone(self.wizard._load_keyring_from_invoking_user("alice"))
+
+    def test_apply_keyring_credentials_skips_non_dict(self):
+        auth_config = {}
+        loaded = self.wizard._apply_keyring_credentials(
+            auth_config,
+            ["bad", {"protocol": "SSH", "username": "u", "password": "p"}],
+        )
+        self.assertEqual(loaded, 1)
+        self.assertEqual(auth_config["auth_ssh_user"], "u")
+
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)
+    def test_check_and_load_saved_credentials_invoking_user(self, mock_yes_no):
+        payload = {"summary": [("SSH", "u")], "creds": [{"protocol": "SSH", "username": "u"}]}
+        with (
+            patch(
+                "redaudit.core.credentials.KeyringCredentialProvider.get_saved_credential_summary",
+                return_value=[],
+            ),
+            patch("redaudit.core.wizard.get_invoking_user", return_value="alice"),
+            patch(
+                "redaudit.core.wizard.Wizard._load_keyring_from_invoking_user", return_value=payload
+            ),
+            patch("redaudit.core.wizard.Wizard._apply_keyring_credentials", return_value=1),
+        ):
+            auth_config = {"auth_enabled": True}
+            self.assertTrue(self.wizard._check_and_load_saved_credentials(auth_config))
+
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)
+    def test_check_and_load_saved_credentials_snmp(self, mock_yes_no):
+        cred = type(
+            "Cred",
+            (),
+            {
+                "username": "snmp",
+                "snmp_auth_proto": "SHA",
+                "snmp_auth_pass": "auth",
+                "snmp_priv_proto": "AES",
+                "snmp_priv_pass": "priv",
+                "domain": None,
+                "password": None,
+                "private_key": None,
+                "private_key_passphrase": None,
+            },
+        )()
+        with (
+            patch(
+                "redaudit.core.credentials.KeyringCredentialProvider.get_saved_credential_summary",
+                return_value=[("SNMP", "snmp")],
+            ),
+            patch(
+                "redaudit.core.credentials.KeyringCredentialProvider.get_credential",
+                return_value=cred,
+            ),
+        ):
+            auth_config = {"auth_enabled": True}
+            self.assertTrue(self.wizard._check_and_load_saved_credentials(auth_config))
+            self.assertEqual(auth_config["auth_snmp_user"], "snmp")
+
+    def test_check_and_load_saved_credentials_exception(self):
+        with patch(
+            "redaudit.core.credentials.KeyringCredentialProvider",
+            side_effect=Exception("boom"),
+        ):
+            auth_config = {"auth_enabled": True}
+            self.assertFalse(self.wizard._check_and_load_saved_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["cancel"])
+    def test_collect_universal_credentials_cancel(self, mock_input):
+        self.assertIsNone(self.wizard._collect_universal_credentials())
+
+    @patch("builtins.input", side_effect=[""])
+    def test_collect_universal_credentials_empty_user(self, mock_input):
+        creds = self.wizard._collect_universal_credentials()
+        self.assertEqual(creds, [])
+
+    @patch("builtins.input", side_effect=["user"])
+    @patch("getpass.getpass", side_effect=Exception("boom"))
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=False)
+    def test_collect_universal_credentials_getpass_exception(self, mock_yes, mock_pass, mock_input):
+        creds = self.wizard._collect_universal_credentials()
+        self.assertEqual(creds[0]["pass"], "")
+
+    @patch("builtins.input", side_effect=["cancel"])
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)
+    def test_collect_advanced_credentials_ssh_cancel(self, mock_yes, mock_input):
+        auth_config = {"auth_enabled": True}
+        self.assertTrue(self.wizard._collect_advanced_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["root"])
+    @patch("getpass.getpass", side_effect=Exception("boom"))
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[True, False, False])
+    @patch("redaudit.core.wizard.Wizard.ask_choice", return_value=1)
+    def test_collect_advanced_credentials_ssh_pass_exception(
+        self, mock_choice, mock_yes, mock_pass, mock_input
+    ):
+        auth_config = {"auth_enabled": True}
+        self.assertFalse(self.wizard._collect_advanced_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["root"])
+    @patch("getpass.getpass", return_value="pw")
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[True, False, False])
+    @patch("redaudit.core.wizard.Wizard.ask_choice", return_value=1)
+    def test_collect_advanced_credentials_ssh_password(
+        self, mock_choice, mock_yes, mock_pass, mock_input
+    ):
+        auth_config = {"auth_enabled": True}
+        self.assertFalse(self.wizard._collect_advanced_credentials(auth_config))
+        self.assertEqual(auth_config["auth_ssh_pass"], "pw")
+
+    @patch("builtins.input", side_effect=["cancel"])
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[False, True])
+    def test_collect_advanced_credentials_smb_cancel(self, mock_yes, mock_input):
+        auth_config = {"auth_enabled": True}
+        self.assertTrue(self.wizard._collect_advanced_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["Admin", ""])
+    @patch("getpass.getpass", side_effect=Exception("boom"))
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[False, True, False])
+    def test_collect_advanced_credentials_smb_pass_exception(self, mock_yes, mock_pass, mock_input):
+        auth_config = {"auth_enabled": True}
+        self.assertFalse(self.wizard._collect_advanced_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["cancel"])
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[False, False, True])
+    def test_collect_advanced_credentials_snmp_cancel(self, mock_yes, mock_input):
+        auth_config = {"auth_enabled": True}
+        self.assertTrue(self.wizard._collect_advanced_credentials(auth_config))
+
+    @patch("builtins.input", side_effect=["snmp"])
+    @patch("getpass.getpass", side_effect=[Exception("auth"), Exception("priv")])
+    @patch("redaudit.core.wizard.Wizard.ask_choice", side_effect=[0, 0])
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[False, False, True])
+    def test_collect_advanced_credentials_snmp_pass_exceptions(
+        self, mock_yes, mock_choice, mock_pass, mock_input
+    ):
+        auth_config = {"auth_enabled": True}
+        self.assertFalse(self.wizard._collect_advanced_credentials(auth_config))
 
     @patch("builtins.input", side_effect=["back"])
     @patch("redaudit.core.wizard.Wizard._use_arrow_menu", return_value=False)
@@ -183,6 +388,16 @@ class TestWizard(unittest.TestCase):
         res = self.wizard.ask_auth_config()
         self.assertTrue(res["auth_enabled"])
         self.assertEqual(res["auth_credentials"], [{"user": "u", "pass": "p"}])
+
+    @patch("redaudit.core.wizard.Wizard._check_and_load_saved_credentials", return_value=True)
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", side_effect=[True, True])
+    @patch("redaudit.core.wizard.Wizard.ask_choice_with_back", return_value=1)  # Advanced
+    @patch("redaudit.core.wizard.Wizard._collect_advanced_credentials", return_value=True)
+    def test_ask_auth_config_keyring_advanced_cancel(
+        self, mock_coll, mock_choice, mock_ask, mock_keyring
+    ):
+        res = self.wizard.ask_auth_config()
+        self.assertTrue(res["auth_enabled"])
 
     @patch("builtins.input", side_effect=["u1", "u2"])
     @patch("getpass.getpass", side_effect=["p1", "p2"])
@@ -236,6 +451,26 @@ class TestWizard(unittest.TestCase):
             self.assertIsNotNone(pl)
             self.assertEqual(pl["summary"][0][1], "u1")
 
+    @patch("shutil.which", return_value="/usr/bin/sudo")
+    @patch("subprocess.run")
+    def test_load_keyring_invoking_user_env_vars(self, mock_run, mock_which):
+        mock_res = MagicMock()
+        mock_res.returncode = 0
+        mock_res.stdout = '{"summary": [["SSH", "u1"]], "creds": []}'
+        mock_run.return_value = mock_res
+
+        dummy = type("Dummy", (), {"pw_uid": 1000})
+        with (
+            patch("pwd.getpwnam", return_value=dummy),
+            patch("os.path.isdir", return_value=True),
+            patch("os.path.exists", return_value=True),
+        ):
+            payload = self.wizard._load_keyring_from_invoking_user("user")
+        self.assertIsNotNone(payload)
+        cmd = mock_run.call_args[0][0]
+        self.assertTrue(any("XDG_RUNTIME_DIR=" in item for item in cmd))
+        self.assertTrue(any("DBUS_SESSION_BUS_ADDRESS=" in item for item in cmd))
+
     @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)
     def test_check_and_load_saved_credentials(self, mock_ask):
         with patch("redaudit.core.credentials.KeyringCredentialProvider") as mock_kv:
@@ -254,6 +489,32 @@ class TestWizard(unittest.TestCase):
                 res = self.wizard._check_and_load_saved_credentials(config)
                 self.assertTrue(res)
                 self.assertEqual(config["auth_ssh_user"], "user")
+
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=False)
+    def test_check_and_load_saved_credentials_declined(self, mock_ask):
+        payload = {"summary": [["SSH", "u1"]], "creds": []}
+        with (
+            patch(
+                "redaudit.core.credentials.KeyringCredentialProvider.get_saved_credential_summary",
+                return_value=[],
+            ),
+            patch("redaudit.core.wizard.get_invoking_user", return_value="user"),
+            patch(
+                "redaudit.core.wizard.Wizard._load_keyring_from_invoking_user",
+                return_value=payload,
+            ),
+        ):
+            auth_config = {"auth_enabled": True}
+            self.assertFalse(self.wizard._check_and_load_saved_credentials(auth_config))
+
+    @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)
+    def test_check_and_load_saved_credentials_no_loaded(self, mock_ask):
+        with patch("redaudit.core.credentials.KeyringCredentialProvider") as mock_kv:
+            mock_inst = mock_kv.return_value
+            mock_inst.get_saved_credential_summary.return_value = [("SSH", "user", 0)]
+            mock_inst.get_credential.return_value = None
+            auth_config = {"auth_enabled": True}
+            self.assertFalse(self.wizard._check_and_load_saved_credentials(auth_config))
 
     @patch("builtins.input", side_effect=["private", "corp.local", "100"])  # SNMP, DNS, MaxTargets
     @patch("redaudit.core.wizard.Wizard.ask_yes_no", return_value=True)  # Yes to advanced
