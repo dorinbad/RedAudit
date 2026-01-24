@@ -198,6 +198,7 @@
                         <li>Protocolos <span>{{ (pipeline.net_discovery.protocols_used or [])|join(', ') }}</span></li>
                         <li>Hosts ARP <span>{{ pipeline.net_discovery.counts.arp_hosts or 0 }}</span></li>
                         <li>HyperScan TCP <span>{{ pipeline.net_discovery.counts.hyperscan_tcp_hosts or 0 }}</span></li>
+                        <li>Puertos UDP HyperScan <span>{{ pipeline.net_discovery.counts.hyperscan_udp_ports or 0 }}</span></li>
                         <li>Red Team <span>{{ 'Sí' if pipeline.net_discovery.redteam_enabled else 'No' }}</span></li>
                         {% if pipeline.net_discovery.errors %}
                         <li>Errores <span>{{ pipeline.net_discovery.errors|join('; ') }}</span></li>

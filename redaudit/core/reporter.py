@@ -99,6 +99,8 @@ def _summarize_net_discovery(net_discovery: Dict[str, Any]) -> Dict[str, Any]:
     l2_note = net_discovery.get("l2_warning_note")
     if l2_note:
         summary["network_topology_notes"] = [l2_note]
+    udp_ports_map = net_discovery.get("hyperscan_udp_ports") or {}
+    udp_ports_total = sum(len(ports or []) for ports in udp_ports_map.values())
     summary["counts"] = {
         "dhcp_servers": len(net_discovery.get("dhcp_servers", []) or []),
         "alive_hosts": len(net_discovery.get("alive_hosts", []) or []),
@@ -108,6 +110,7 @@ def _summarize_net_discovery(net_discovery: Dict[str, Any]) -> Dict[str, Any]:
         "upnp_devices": len(net_discovery.get("upnp_devices", []) or []),
         "candidate_vlans": len(net_discovery.get("candidate_vlans", []) or []),
         "hyperscan_tcp_hosts": len(net_discovery.get("hyperscan_tcp_hosts", {}) or {}),
+        "hyperscan_udp_ports": udp_ports_total,
         "potential_backdoors": len(net_discovery.get("potential_backdoors", []) or []),
     }
 
@@ -151,12 +154,12 @@ def _summarize_hyperscan_vs_final(
     if not isinstance(net_discovery, dict) or not net_discovery:
         return {}
 
-    hyperscan_tcp = (
-        net_discovery.get("hyperscan_first_tcp_hosts")
-        or net_discovery.get("hyperscan_tcp_hosts")
-        or {}
-    )
+    hyperscan_first = net_discovery.get("hyperscan_first_tcp_hosts") or {}
+    hyperscan_tcp = hyperscan_first or net_discovery.get("hyperscan_tcp_hosts") or {}
     hyperscan_udp = net_discovery.get("hyperscan_udp_ports") or {}
+    if hyperscan_first:
+        # HyperScan-First only covers TCP; avoid mixing UDP IoT signals from net discovery.
+        hyperscan_udp = {}
 
     if not hyperscan_tcp and not hyperscan_udp:
         return {}
