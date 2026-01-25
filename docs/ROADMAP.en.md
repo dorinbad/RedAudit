@@ -49,6 +49,14 @@ These items represent the current backlog of planned or deferred work for the re
 
 These items are ordered chronologically (most recent first).
 
+### v4.18.19 UI Consistency and Snapshot Coverage (Done)
+
+| Feature | Status | Description |
+| --- | --- | --- |
+| **UI Language Sync** | Done (v4.18.19) | UI manager language now follows CLI language to prevent mixed EN/ES output. |
+| **Progress Line Styling** | Done (v4.18.19) | Rich progress output applies status color to all message lines. |
+| **Config Snapshot Fields** | Done (v4.18.19) | Report snapshots now include `deep_id_scan`, `trust_hyperscan`, and `nuclei_timeout`. |
+
 ### v4.18.18 Wizard Contrast and Low-Impact Enrichment (Done)
 
 | Feature | Status | Description |

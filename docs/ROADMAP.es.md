@@ -49,6 +49,14 @@ Estos elementos representan el backlog actual de trabajo planificado o aplazado 
 
 Estos elementos están ordenados cronológicamente (el más reciente primero).
 
+### v4.18.19 Consistencia de UI y Snapshot de Configuracion (Hecho)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
+| **Sincronizacion de idioma UI** | Hecho (v4.18.19) | El idioma del UI manager sigue el idioma del CLI para evitar mezcla EN/ES. |
+| **Estilo de lineas en progreso** | Hecho (v4.18.19) | La salida Rich aplica el color de estado a todas las lineas del mensaje. |
+| **Campos de snapshot** | Hecho (v4.18.19) | El snapshot de reporte incluye `deep_id_scan`, `trust_hyperscan` y `nuclei_timeout`. |
+
 ### v4.18.18 Contraste del Wizard y Enriquecimiento de Bajo Impacto (Hecho)
 
 | Funcionalidad | Estado | Descripción |

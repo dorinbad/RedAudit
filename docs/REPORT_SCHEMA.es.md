@@ -81,6 +81,16 @@ El contenedor de nivel superior para la sesión de escaneo.
 | `vulnerabilities` | `array` | Lista de hallazgos de vulnerabilidades |
 | `summary` | `object` | Estadísticas agregadas |
 
+### Snapshot de Configuracion (Campos Seleccionados) (v4.18.19+)
+
+El objeto `config_snapshot` guarda la configuracion de ejecucion (sin secretos).
+
+| Campo | Tipo | Descripcion |
+| :--- | :--- | :--- |
+| `deep_id_scan` | `boolean` | Indica si el deep identity scan esta activo. |
+| `trust_hyperscan` | `boolean` | Indica si DeepScan confia solo en los puertos de HyperScan. |
+| `nuclei_timeout` | `integer` | Timeout de Nuclei por objetivo en segundos. |
+
 ### summary.json (Resumen para dashboards)
 
 Resumen compacto para dashboards y automatización (se genera solo cuando el cifrado de informes está deshabilitado).

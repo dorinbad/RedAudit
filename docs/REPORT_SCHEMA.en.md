@@ -81,6 +81,16 @@ The top-level container for the scan session.
 | `vulnerabilities` | `array` | List of vulnerability findings |
 | `summary` | `object` | Aggregated statistics |
 
+### Config Snapshot (Selected Fields) (v4.18.19+)
+
+The `config_snapshot` object stores sanitized run configuration (no secrets).
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `deep_id_scan` | `boolean` | Whether deep identity scan is enabled for the run. |
+| `trust_hyperscan` | `boolean` | Whether DeepScan trusts HyperScan discovery ports only. |
+| `nuclei_timeout` | `integer` | Nuclei timeout per target in seconds. |
+
 ### summary.json (Dashboard Summary)
 
 Compact, flattened summary for dashboards and automation (generated only when report encryption is disabled).
