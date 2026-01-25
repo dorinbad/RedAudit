@@ -512,11 +512,23 @@ def run_nuclei_scan(
                 if completed_targets > max_progress_targets:
                     max_progress_targets = completed_targets
 
+        max_parallel = min(4, max(1, len(batches)))  # Up to 4 parallel batches
+        try:
+            timeout_val = float(timeout)
+        except Exception:
+            timeout_val = None
+        if timeout_val is not None and timeout_val >= 900 and max_parallel > 2:
+            max_parallel = 2
+            if logger:
+                logger.info(
+                    "Nuclei parallelism clamped to %d for long batch timeouts",
+                    max_parallel,
+                )
+
         if progress_callback is not None:
             # v4.6.24: Parallel batch execution with ThreadPoolExecutor
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
-            max_parallel = min(4, max(1, len(batches)))  # Up to 4 parallel batches
             batch_lock = threading.Lock()
 
             def _run_batch_wrapper(idx_batch):
@@ -582,7 +594,6 @@ def run_nuclei_scan(
                     # v4.6.25: Parallel execution for CLI (Rich) too
                     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-                    max_parallel = min(4, max(1, len(batches)))
                     batch_lock = threading.Lock()
 
                     def _run_batch_wrapper(idx_batch):

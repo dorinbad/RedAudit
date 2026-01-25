@@ -169,6 +169,25 @@ class AuditorUI:
                 colors=getattr(self, "COLORS", None),
                 logger=getattr(self, "logger", None),
             )
+        else:
+            manager = self._ui_manager
+            if hasattr(manager, "lang"):
+                try:
+                    manager.lang = getattr(self, "lang", "en")
+                except Exception:
+                    pass
+            colors = getattr(self, "COLORS", None)
+            if colors is not None and hasattr(manager, "colors"):
+                try:
+                    manager.colors = colors
+                except Exception:
+                    pass
+            logger = getattr(self, "logger", None)
+            if logger is not None and hasattr(manager, "logger"):
+                try:
+                    manager.logger = logger
+                except Exception:
+                    pass
         return self._ui_manager
 
     def t(self, key, *args):

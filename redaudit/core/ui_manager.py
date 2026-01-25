@@ -187,9 +187,9 @@ class UIManager:
 
     def _print_ansi(self, ts: str, status_display: str, color: str, endc: str, lines: list) -> None:
         """Print using standard ANSI codes."""
-        print(f"{color}[{ts}] [{status_display}]{endc} {lines[0]}")
+        print(f"{color}[{ts}] [{status_display}]{endc} {color}{lines[0]}{endc}")
         for line in lines[1:]:
-            print(f"  {line}")
+            print(f"  {color}{line}{endc}")
 
     def _should_emit_during_progress(self, msg: str, status_display: str) -> bool:
         """
