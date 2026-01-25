@@ -1122,10 +1122,9 @@ def perform_git_update(
                 if status:
                     if system_install_updated:
                         print_fn(
-                            f"  → {t_fn('update_home_changes_detected_skip', home_redaudit_path)}",
+                            f"  → {t_fn('update_home_changes_detected_backup', home_redaudit_path)}",
                             "WARNING",
                         )
-                        update_home_copy = False
                     else:
                         shutil.rmtree(temp_dir, ignore_errors=True)
                         return (
@@ -1135,10 +1134,9 @@ def perform_git_update(
             except Exception:
                 if system_install_updated:
                     print_fn(
-                        f"  → {t_fn('update_home_changes_verify_failed_skip', home_redaudit_path)}",
+                        f"  → {t_fn('update_home_changes_verify_failed_backup', home_redaudit_path)}",
                         "WARNING",
                     )
-                    update_home_copy = False
                 else:
                     shutil.rmtree(temp_dir, ignore_errors=True)
                     return (
@@ -1147,7 +1145,7 @@ def perform_git_update(
                     )
 
         # Step 5: Copy to user's home folder with documentation (STAGED/ATOMIC)
-        # (Optional when system install was updated; skip if home repo has local changes.)
+        # (Optional when system install was updated; local changes are preserved via backup.)
         staged_home_path = f"{home_redaudit_path}.new"
         backup_path = None
 

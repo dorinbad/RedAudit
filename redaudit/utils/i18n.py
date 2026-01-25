@@ -243,11 +243,17 @@ TRANSLATIONS = {
         "update_restart_terminal_prompt": "RedAudit will exit now to prevent running mixed versions.",
         "update_restart_terminal_press_enter": "Press Enter to exit...",
         "update_home_changes_detected_skip": "Local changes detected in {}. Skipping home folder update.",
+        "update_home_changes_detected_backup": (
+            "Local changes detected in {}. Backing up and refreshing the home folder copy."
+        ),
         "update_home_changes_detected_abort": (
             "Local changes detected in {}. Commit/stash or remove the folder before updating."
         ),
         "update_home_changes_verify_failed_skip": (
             "Could not verify local changes in {}. Skipping home folder update for safety."
+        ),
+        "update_home_changes_verify_failed_backup": (
+            "Could not verify local changes in {}. Backing up and refreshing the home folder copy."
         ),
         "update_home_changes_verify_failed_abort": (
             "Could not verify local changes in {}. Update aborted for safety."
@@ -706,11 +712,17 @@ TRANSLATIONS = {
         "update_home_changes_detected_skip": (
             "Detectados cambios locales en {}. Omitiendo la actualización de la carpeta en home."
         ),
+        "update_home_changes_detected_backup": (
+            "Detectados cambios locales en {}. Se creara una copia de seguridad y se actualizara la carpeta en home."
+        ),
         "update_home_changes_detected_abort": (
             "Detectados cambios locales en {}. Haz commit/stash o elimina la carpeta antes de actualizar."
         ),
         "update_home_changes_verify_failed_skip": (
             "No se pudieron verificar cambios locales en {}. Omitiendo la actualización de la carpeta en home por seguridad."
+        ),
+        "update_home_changes_verify_failed_backup": (
+            "No se pudieron verificar cambios locales en {}. Se creara una copia de seguridad y se actualizara la carpeta en home."
         ),
         "update_home_changes_verify_failed_abort": (
             "No se pudieron verificar cambios locales en {}. Actualización abortada por seguridad."
