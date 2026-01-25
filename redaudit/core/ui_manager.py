@@ -176,10 +176,12 @@ class UIManager:
             # This avoids markup escaping issues with brackets in [WARN], [INFO] etc
             prefix = Text()
             prefix.append(f"[{ts}] [{status_display}] ", style=rich_style)
-            prefix.append(lines[0] if lines else "")
+            prefix.append(lines[0] if lines else "", style=rich_style)
             console.print(prefix)
             for line in lines[1:]:
-                console.print(f"  {line}")
+                line_text = Text()
+                line_text.append(f"  {line}", style=rich_style)
+                console.print(line_text)
         except ImportError:
             self._print_ansi(ts, status_display, "", "", lines)
 
@@ -200,12 +202,19 @@ class UIManager:
 
         signal_patterns = (
             "deep identity scan",
+            "escaneo de identidad",
             "finished",
+            "finalizado",
             "complete",
+            "completado",
             "detected",
+            "detectado",
             "found",
+            "encontrado",
             "backdoor",
+            "puerta trasera",
             "suspicious",
+            "sospechoso",
         )
         if status_display in ("WARN", "WARNING"):
             msg_lower = msg.lower()

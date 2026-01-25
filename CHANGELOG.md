@@ -14,6 +14,19 @@ Release notes live under `docs/releases/` for additional context.
 
 - None.
 
+## [4.18.19] - 2026-01-25
+
+### Improved
+
+- **UI Progress Styling**: Rich progress output now applies the status color to all message lines for consistent contrast.
+- **Config Snapshot Coverage**: Report snapshots now include `deep_id_scan`, `trust_hyperscan`, and `nuclei_timeout`.
+
+### Fixed
+
+- **UI Language Sync**: Language changes now update the UI manager to prevent mixed EN/ES output.
+- **Progress Signal Filtering**: WARN signal detection recognizes Spanish keywords during progress rendering.
+- **i18n Status Messages**: Dependency, auth-failure, and scan-error messages now use localized strings.
+
 ## [4.18.18] - 2026-01-24
 
 ### Added

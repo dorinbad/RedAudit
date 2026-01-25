@@ -67,8 +67,19 @@ class InteractiveNetworkAuditor:
             return getattr(runtime, name)
         raise AttributeError(f"{self.__class__.__name__} has no attribute {name}")
 
+    @property
+    def lang(self) -> str:
+        return self._lang
+
+    @lang.setter
+    def lang(self, value: str) -> None:
+        normalized = value if value in TRANSLATIONS else "en"
+        self._lang = normalized
+        if hasattr(self, "_ui_manager"):
+            self._ui_manager.lang = normalized
+
     def __init__(self):
-        self.lang = DEFAULT_LANG if DEFAULT_LANG in TRANSLATIONS else "en"
+        self._lang = DEFAULT_LANG if DEFAULT_LANG in TRANSLATIONS else "en"
         # How to apply persisted defaults: ask/use/ignore (CLI may override).
         self.defaults_mode = "ask"
         self.results = {
@@ -1721,7 +1732,8 @@ class InteractiveNetworkAuditor:
 
             if targets_to_scan:
                 self.ui.print_status(
-                    f"Discovered {len(targets_to_scan)} new hosts. Starting Deep Scan...", "INFO"
+                    self.ui.t("deep_scan_new_hosts", len(targets_to_scan)),
+                    "INFO",
                 )
 
                 # B) Port Scan (Phase 2) using existing concurrency logic
@@ -1739,7 +1751,8 @@ class InteractiveNetworkAuditor:
                 # Since these skipped the main loop, we must enrich them explicitly.
                 if new_results:
                     self.ui.print_status(
-                        f"Enriching {len(new_results)} new hosts with CVE data...", "INFO"
+                        self.ui.t("cve_enrich_new_hosts", len(new_results)),
+                        "INFO",
                     )
                     for h in new_results:
                         try:

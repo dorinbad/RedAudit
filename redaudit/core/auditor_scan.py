@@ -250,22 +250,17 @@ class AuditorScan:
             try:
                 import impacket  # noqa: F401
 
-                # self.ui.print_status(self.ui.t("impacket_avail"), "OKGREEN")  # Generic msg
-                self.ui.print_status("Impacket available (SMB/WMI)", "OKGREEN")
+                self.ui.print_status(self.ui.t("impacket_available"), "OKGREEN")
             except ImportError:
-                self.ui.print_status(
-                    "Impacket missing (pip install impacket) - SMB/WMI auth disabled", "WARN"
-                )
+                self.ui.print_status(self.ui.t("impacket_missing"), "WARN")
 
             # v4.3: PySNMP check
             try:
                 import pysnmp  # noqa: F401
 
-                self.ui.print_status("PySNMP available (SNMP v3)", "OKGREEN")
+                self.ui.print_status(self.ui.t("pysnmp_available"), "OKGREEN")
             except ImportError:
-                self.ui.print_status(
-                    "PySNMP missing (pip install pysnmp) - SNMP v3 auth disabled", "WARN"
-                )
+                self.ui.print_status(self.ui.t("pysnmp_missing"), "WARN")
         except ImportError:
             self.ui.print_status(self.ui.t("nmap_missing"), "FAIL")
             return False
@@ -1774,7 +1769,9 @@ class AuditorScan:
                             if ssh_scanner.connect(safe_ip, port=ssh_port):
                                 ssh_auth_success = True
                                 if hasattr(self, "ui") and self.ui:
-                                    self.ui.print_status(self.ui.t("auth_scan_connected"), "OKBLUE")
+                                    self.ui.print_status(
+                                        self.ui.t("auth_scan_connected", "SSH"), "OKBLUE"
+                                    )
 
                                 info = ssh_scanner.gather_host_info()
                                 host_obj.auth_scan = asdict(info)
@@ -1843,7 +1840,7 @@ class AuditorScan:
                     if not ssh_auth_success and last_error:
                         if hasattr(self, "ui") and self.ui:
                             self.ui.print_status(self.ui.t("auth_scan_failed", last_error), "WARN")
-                            self.ui.print_status(f"{safe_ip}: SSH auth failed (all creds)", "WARN")
+                            self.ui.print_status(self.ui.t("ssh_auth_failed_all", safe_ip), "WARN")
                         host_obj.auth_scan = {"error": last_error}
 
             # v4.2: SMB/WMI Authenticated Scan (Impacket)
@@ -1879,7 +1876,7 @@ class AuditorScan:
                         smb_scanner = SMBScanner(smb_cred)
 
                         if smb_scanner.connect(safe_ip, 445):
-                            self._set_ui_detail(self.ui.t("auth_scan_connected", safe_ip, "SMB"))
+                            self._set_ui_detail(self.ui.t("auth_scan_connected", "SMB"))
                             smb_auth_success = True
                             successful_user = smb_cred.username
 
@@ -1924,7 +1921,7 @@ class AuditorScan:
                 # Report failure if all credentials failed
                 if not smb_auth_success and smb_credentials and last_error:
                     if hasattr(self, "ui") and self.ui:
-                        self.ui.print_status(f"{safe_ip}: SMB auth failed (all creds)", "WARN")
+                        self.ui.print_status(self.ui.t("smb_auth_failed_all", safe_ip), "WARN")
 
             # v4.3: SNMP v3 Authenticated Scan (PySNMP)
             snmp_open = False
@@ -2125,6 +2122,7 @@ class AuditorScan:
             if is_full_mode and identity_threshold < 4:
                 identity_threshold = 4
 
+            deep_id_enabled = bool(self.config.get("deep_id_scan", True))
             trigger_deep, deep_reasons = self._should_trigger_deep(
                 total_ports=total_ports,
                 any_version=any_version,
@@ -2141,17 +2139,18 @@ class AuditorScan:
                 self.results.get("net_discovery", {}) if isinstance(self.results, dict) else {}
             )
             hyperscan_ports = (nd_results.get("hyperscan_tcp_hosts") or {}).get(safe_ip, [])
-            if hyperscan_ports and not trigger_deep:
-                # HyperScan found ports but we decided not to deep scan - override
-                if total_ports == 0:
-                    trigger_deep = True
-                    deep_reasons.append("hyperscan_ports_detected")
-                    if self.logger:
-                        self.logger.info(
-                            "HyperScan detected %d ports on %s, forcing deep scan",
-                            len(hyperscan_ports),
-                            safe_ip,
-                        )
+            if hyperscan_ports:
+                if deep_id_enabled and not trigger_deep:
+                    # HyperScan found ports but we decided not to deep scan - override
+                    if total_ports == 0:
+                        trigger_deep = True
+                        deep_reasons.append("hyperscan_ports_detected")
+                        if self.logger:
+                            self.logger.info(
+                                "HyperScan detected %d ports on %s, forcing deep scan",
+                                len(hyperscan_ports),
+                                safe_ip,
+                            )
                 # Check for web ports in HyperScan results
                 from redaudit.utils.constants import WEB_LIKELY_PORTS
 
@@ -2185,7 +2184,7 @@ class AuditorScan:
                             safe_ip,
                             agentless_fp.get("http_title") or agentless_fp.get("http_server"),
                         )
-                if not trigger_deep and total_ports == 0:
+                if deep_id_enabled and not trigger_deep and total_ports == 0:
                     # Force deep scan to discover ports when we know HTTP is present
                     trigger_deep = True
                     deep_reasons.append("http_fingerprint_present")
@@ -2193,7 +2192,8 @@ class AuditorScan:
             open_tcp_ports = sum(1 for p in ports if p.get("protocol") == "tcp")
             open_tcp_ports = sum(1 for p in ports if p.get("protocol") == "tcp")
             if (
-                trigger_deep
+                deep_id_enabled
+                and trigger_deep
                 and not self.config.get("stealth_mode")
                 and open_tcp_ports <= 1
                 and identity_score < 2
@@ -2224,7 +2224,7 @@ class AuditorScan:
                         if "udp_resolved_identity" not in deep_reasons:
                             deep_reasons.append("udp_resolved_identity")
 
-            if trigger_deep:
+            if deep_id_enabled and trigger_deep:
                 budget = self.config.get("deep_scan_budget", 0)
                 reserved, deep_count = self._reserve_deep_scan_slot(budget)
                 if not reserved:
@@ -2373,7 +2373,7 @@ class AuditorScan:
         except Exception as exc:
             self.logger.error("Scan error %s: %s", safe_ip, exc, exc_info=True)
             # Keep terminal output clean while progress UIs are active.
-            self.ui.print_status(f"⚠  Scan error {safe_ip}: {exc}", "FAIL", force=True)
+            self.ui.print_status(self.ui.t("scan_error_host", safe_ip, exc), "FAIL", force=True)
 
             # v4.0: Return Host object on error
             host_obj = self.scanner.get_or_create_host(safe_ip)
@@ -2714,7 +2714,7 @@ class AuditorScan:
 
                                     heartbeat_msg = Text()
                                     heartbeat_msg.append(
-                                        f"Deep Scan... {done}/{total} ({mins}:{secs:02d})",
+                                        self.ui.t("deep_scan_heartbeat", done, total, mins, secs),
                                         style="dim",
                                     )
                                     progress.console.print(heartbeat_msg)
@@ -2762,7 +2762,11 @@ class AuditorScan:
                             pass
                         done += 1
                         if total and done % max(1, total // 10) == 0:
-                            self.ui.print_status(f"Deep Scan: {done}/{total}", "INFO", force=True)
+                            self.ui.print_status(
+                                self.ui.t("deep_scan_progress", done, total),
+                                "INFO",
+                                force=True,
+                            )
 
     def scan_hosts_concurrent(self, hosts):
         """Scan multiple hosts concurrently with progress bar."""

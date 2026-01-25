@@ -92,3 +92,81 @@ def test_hyperscan_start_sequential_key_es():
     assert "SYN" in result
     assert "secuencial" in result
     assert "{}" in result  # placeholder for host count
+
+
+def test_deep_scan_heartbeat_key_en():
+    """Ensure deep scan heartbeat formats in English."""
+    result = get_text("deep_scan_heartbeat", "en", 1, 2, 3, 4)
+    assert "DeepScan" in result
+    assert "1/2" in result
+    assert "3:04" in result
+
+
+def test_deep_scan_heartbeat_key_es():
+    """Ensure deep scan heartbeat formats in Spanish."""
+    result = get_text("deep_scan_heartbeat", "es", 1, 2, 3, 4)
+    assert "DeepScan" in result
+    assert "1/2" in result
+    assert "3:04" in result
+
+
+def test_deep_scan_progress_key():
+    """Ensure deep scan progress formats consistently."""
+    result_en = get_text("deep_scan_progress", "en", 1, 2)
+    result_es = get_text("deep_scan_progress", "es", 1, 2)
+    assert "DeepScan" in result_en
+    assert "1/2" in result_en
+    assert "DeepScan" in result_es
+    assert "1/2" in result_es
+
+
+def test_auth_scan_connected_formats_protocol():
+    """Ensure auth_scan_connected formats protocol label."""
+    result_en = get_text("auth_scan_connected", "en", "SSH")
+    result_es = get_text("auth_scan_connected", "es", "SMB")
+    assert "SSH" in result_en
+    assert "SMB" in result_es
+    assert "{" not in result_en
+    assert "{" not in result_es
+
+
+def test_scan_error_host_format():
+    """Ensure scan_error_host formats host and error."""
+    result_en = get_text("scan_error_host", "en", "10.0.0.1", "boom")
+    result_es = get_text("scan_error_host", "es", "10.0.0.1", "boom")
+    assert "10.0.0.1" in result_en
+    assert "boom" in result_en
+    assert "10.0.0.1" in result_es
+    assert "boom" in result_es
+
+
+def test_deep_scan_new_hosts_format():
+    """Ensure deep_scan_new_hosts formats count."""
+    result_en = get_text("deep_scan_new_hosts", "en", 2)
+    result_es = get_text("deep_scan_new_hosts", "es", 2)
+    assert "2" in result_en
+    assert "2" in result_es
+
+
+def test_cve_enrich_new_hosts_format():
+    """Ensure cve_enrich_new_hosts formats count."""
+    result_en = get_text("cve_enrich_new_hosts", "en", 3)
+    result_es = get_text("cve_enrich_new_hosts", "es", 3)
+    assert "3" in result_en
+    assert "3" in result_es
+
+
+def test_auth_failed_all_formats():
+    """Ensure auth failed messages format IP."""
+    result_en = get_text("ssh_auth_failed_all", "en", "10.0.0.2")
+    result_es = get_text("smb_auth_failed_all", "es", "10.0.0.2")
+    assert "10.0.0.2" in result_en
+    assert "10.0.0.2" in result_es
+
+
+def test_dependency_i18n_keys_exist():
+    """Ensure dependency status keys are present in both languages."""
+    assert "Impacket" in get_text("impacket_available", "en")
+    assert "Impacket" in get_text("impacket_available", "es")
+    assert "PySNMP" in get_text("pysnmp_available", "en")
+    assert "PySNMP" in get_text("pysnmp_available", "es")
