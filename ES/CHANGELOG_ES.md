@@ -14,6 +14,17 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 - Ninguno.
 
+## [4.18.20] - 2026-01-25
+
+### Mejorado
+
+- **Contraste ANSI**: Las lineas de estado ahora aplican el color al texto completo para un contraste consistente fuera de Rich.
+
+### Corregido
+
+- **Sincronizacion de idioma UI**: El UI manager se resincroniza cuando cambia el idioma del CLI para evitar mezclas EN/ES.
+- **Limite de paralelismo en Nuclei**: Los timeouts largos reducen los lotes paralelos para evitar timeouts del escaneo completo.
+
 ## [4.18.19] - 2026-01-25
 
 ### Mejorado

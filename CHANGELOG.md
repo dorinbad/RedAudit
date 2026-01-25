@@ -14,6 +14,17 @@ Release notes live under `docs/releases/` for additional context.
 
 - None.
 
+## [4.18.20] - 2026-01-25
+
+### Improved
+
+- **ANSI Status Contrast**: Status lines now apply the status color to full message text for consistent contrast outside Rich.
+
+### Fixed
+
+- **UI Language Sync**: UI manager now re-syncs when CLI language changes to prevent mixed EN/ES output.
+- **Nuclei Parallel Clamp**: Long Nuclei timeouts now reduce parallel batches to avoid full-scan timeouts.
+
 ## [4.18.19] - 2026-01-25
 
 ### Improved
