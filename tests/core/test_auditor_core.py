@@ -1092,8 +1092,7 @@ class TestHostPortScan:
         host_data = _FakeNmapHost(protocols={}, hostnames=[{"name": "host.local"}], state="up")
         nm = _FakePortScanner({"1.1.1.1": host_data})
         auditor.scanner.run_nmap_scan.return_value = (nm, "")
-        host_obj = MagicMock()
-        host_obj.ip = "1.1.1.1"
+        host_obj = Host(ip="1.1.1.1")
         auditor.scanner.get_or_create_host.return_value = host_obj
 
         def apply_identity(host_record):
@@ -1101,18 +1100,16 @@ class TestHostPortScan:
 
         with (
             patch.object(auditor, "_apply_net_discovery_identity", side_effect=apply_identity),
-            patch(
-                "redaudit.core.auditor_scan.http_identity_probe",
-                return_value={"http_title": "T", "http_server": "S"},
-            ),
+            patch("redaudit.core.auditor_scan.http_identity_probe") as probe,
             patch("redaudit.core.auditor_scan.enrich_host_with_dns"),
             patch("redaudit.core.auditor_scan.enrich_host_with_whois"),
             patch("redaudit.core.auditor_scan.finalize_host_status", return_value=STATUS_UP),
         ):
             res = auditor.scan_host_ports("1.1.1.1")
 
-        assert res.agentless_fingerprint["http_title"] == "T"
+        assert res.agentless_fingerprint == {}
         assert res.agentless_probe["ip"] == "1.1.1.1"
+        probe.assert_not_called()
 
     def test_scan_host_ports_identity_metadata_exception(self):
         auditor = MockAuditorScan()
@@ -1383,6 +1380,76 @@ class TestHostPortScan:
         assert agentless["http_title"] == "Portal"
         assert agentless["http_server"] == "Server/1.0"
         assert agentless["device_vendor"] == "VendorX"
+
+    def test_scan_host_ports_vendor_only_http_probe(self):
+        auditor = MockAuditorScan()
+        auditor.config["deep_id_scan"] = True
+        auditor.config["low_impact_enrichment"] = True
+
+        host_data = _FakeNmapHost(protocols={}, hostnames=[], state="up")
+        nm = _FakePortScanner({"1.1.1.1": host_data})
+        auditor.scanner.run_nmap_scan.return_value = (nm, "")
+        auditor.scanner.compute_identity_score.return_value = (0, [])
+        host_obj = Host(ip="1.1.1.1")
+        auditor.scanner.get_or_create_host.return_value = host_obj
+
+        def apply_identity(host_record):
+            host_record["deep_scan"] = {
+                "vendor": "VendorX",
+                "mac_address": "aa:bb:cc:dd:ee:ff",
+            }
+
+        with (
+            patch.object(auditor, "_apply_net_discovery_identity", side_effect=apply_identity),
+            patch(
+                "redaudit.core.auditor_scan.http_identity_probe",
+                return_value={"http_title": "Device", "http_server": "Server/1.0"},
+            ) as probe,
+            patch.object(auditor, "_should_trigger_deep", return_value=(False, [])),
+            patch.object(auditor, "_run_udp_priority_probe", return_value=False),
+            patch("redaudit.core.auditor_scan.enrich_host_with_dns"),
+            patch("redaudit.core.auditor_scan.enrich_host_with_whois"),
+            patch("redaudit.core.auditor_scan.finalize_host_status", return_value=STATUS_UP),
+        ):
+            res = auditor.scan_host_ports("1.1.1.1")
+
+        agentless = res.agentless_fingerprint
+        assert agentless["http_source"] == "probe"
+        assert agentless["http_title"] == "Device"
+        assert agentless["http_server"] == "Server/1.0"
+        probe.assert_called_once()
+
+    def test_scan_host_ports_vendor_only_http_probe_requires_low_impact(self):
+        auditor = MockAuditorScan()
+        auditor.config["deep_id_scan"] = True
+        auditor.config["low_impact_enrichment"] = False
+
+        host_data = _FakeNmapHost(protocols={}, hostnames=[], state="up")
+        nm = _FakePortScanner({"1.1.1.1": host_data})
+        auditor.scanner.run_nmap_scan.return_value = (nm, "")
+        auditor.scanner.compute_identity_score.return_value = (0, [])
+        host_obj = Host(ip="1.1.1.1")
+        auditor.scanner.get_or_create_host.return_value = host_obj
+
+        def apply_identity(host_record):
+            host_record["deep_scan"] = {
+                "vendor": "VendorX",
+                "mac_address": "aa:bb:cc:dd:ee:ff",
+            }
+
+        with (
+            patch.object(auditor, "_apply_net_discovery_identity", side_effect=apply_identity),
+            patch("redaudit.core.auditor_scan.http_identity_probe") as probe,
+            patch.object(auditor, "_should_trigger_deep", return_value=(False, [])),
+            patch.object(auditor, "_run_udp_priority_probe", return_value=False),
+            patch("redaudit.core.auditor_scan.enrich_host_with_dns"),
+            patch("redaudit.core.auditor_scan.enrich_host_with_whois"),
+            patch("redaudit.core.auditor_scan.finalize_host_status", return_value=STATUS_UP),
+        ):
+            res = auditor.scan_host_ports("1.1.1.1")
+
+        assert res.agentless_fingerprint == {}
+        probe.assert_not_called()
 
     def test_scan_host_ports_hyperscan_override_sets_web_count(self):
         auditor = MockAuditorScan()
