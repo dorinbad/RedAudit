@@ -1010,6 +1010,20 @@ class InteractiveNetworkAuditor:
                             nuclei_request_timeout_s = 10
                             nuclei_retries = 1
                             total_targets = len(nuclei_targets)
+                            try:
+                                nuclei_timeout_s = int(nuclei_timeout_s)
+                            except Exception:
+                                nuclei_timeout_s = 300
+                            if nuclei_timeout_s < 60:
+                                nuclei_timeout_s = 300
+                            if nuclei_full_coverage and nuclei_timeout_s < 900:
+                                nuclei_timeout_s = 900
+                                if self.logger:
+                                    self.logger.info(
+                                        "Nuclei timeout raised to %ss for full coverage (%d targets)",
+                                        nuclei_timeout_s,
+                                        total_targets,
+                                    )
                             total_batches = max(1, int(math.ceil(total_targets / batch_size)))
                             progress_start_t = time.time()
                             self._nuclei_progress_state = {
