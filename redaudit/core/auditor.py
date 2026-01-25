@@ -1910,10 +1910,13 @@ class InteractiveNetworkAuditor:
         # Auditor name
         auditor_default = defaults_for_run.get("auditor_name", "") if defaults_for_run else ""
         auditor_default = auditor_default or ""
-        auditor_prompt = self.ui.t("auditor_name_q")
+        auditor_prompt = self._style_prompt_text(self.ui.t("auditor_name_q"))
+        auditor_default_display = (
+            self._style_default_value(auditor_default) if auditor_default else ""
+        )
         auditor_name = input(
             f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {auditor_prompt} "
-            f"[{auditor_default}]: "
+            f"[{auditor_default_display}]: "
         ).strip()
         if not auditor_name:
             auditor_name = auditor_default
@@ -1927,10 +1930,11 @@ class InteractiveNetworkAuditor:
         else:
             default_output = default_reports
 
-        output_prompt = self.ui.t("output_dir_q")
+        output_prompt = self._style_prompt_text(self.ui.t("output_dir_q"))
+        default_output_display = self._style_default_value(default_output)
         output_dir = input(
             f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} {output_prompt} "
-            f"[{default_output}]: "
+            f"[{default_output_display}]: "
         ).strip()
         if not output_dir:
             output_dir = default_output

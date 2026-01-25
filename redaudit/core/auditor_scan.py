@@ -2276,13 +2276,34 @@ class AuditorScan:
 
             if total_ports == 0 and self.config.get("deep_id_scan", True):
                 identity_source = host_record.get("deep_scan") or {}
-                has_identity_hint = bool(
-                    identity_source.get("vendor")
-                    or identity_source.get("mac_address")
-                    or host_record.get("hostname")
-                    or host_record.get("device_type_hints")
+                phase0 = host_record.get("phase0_enrichment") or {}
+                agentless_fp = host_record.get("agentless_fingerprint") or {}
+                has_http_identity = bool(
+                    agentless_fp.get("http_title") or agentless_fp.get("http_server")
                 )
-                if has_identity_hint and host_record.get("status") != STATUS_DOWN:
+                vendor_hint = (
+                    identity_source.get("vendor")
+                    or phase0.get("vendor")
+                    or host_record.get("vendor")
+                )
+                mac_hint = (
+                    identity_source.get("mac_address")
+                    or host_record.get("mac")
+                    or host_record.get("mac_address")
+                )
+                hostname_hint = host_record.get("hostname")
+                device_hints = host_record.get("device_type_hints") or []
+                has_identity_hint = bool(vendor_hint or mac_hint or hostname_hint or device_hints)
+                vendor_only = bool(vendor_hint or mac_hint) and not (hostname_hint or device_hints)
+                allow_probe = bool(self.config.get("low_impact_enrichment"))
+
+                if (
+                    allow_probe
+                    and has_identity_hint
+                    and vendor_only
+                    and not has_http_identity
+                    and host_record.get("status") != STATUS_DOWN
+                ):
                     http_probe = http_identity_probe(
                         safe_ip,
                         self.extra_tools,
@@ -2295,6 +2316,8 @@ class AuditorScan:
                         for key in ("http_title", "http_server"):
                             if http_probe.get(key) and not agentless_fp.get(key):
                                 agentless_fp[key] = http_probe[key]
+                        if http_probe.get("http_title") or http_probe.get("http_server"):
+                            agentless_fp["http_source"] = "probe"
                         smart = host_record.get("smart_scan")
                         if isinstance(smart, dict):
                             signals = list(smart.get("signals") or [])

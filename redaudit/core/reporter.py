@@ -274,9 +274,12 @@ def _summarize_smart_scan(hosts: list, config: Optional[Dict[str, Any]] = None) 
     signals: Dict[str, int] = {}
     reasons: Dict[str, int] = {}
     phase0_signals_collected = 0
-    phase0_enabled = (
-        bool(config.get("low_impact_enrichment", False)) if isinstance(config, dict) else False
-    )
+    phase0_enabled = False
+    if config is not None:
+        try:
+            phase0_enabled = bool(config.get("low_impact_enrichment", False))
+        except Exception:
+            phase0_enabled = False
 
     for host in hosts or []:
         smart = host.get("smart_scan")
@@ -308,7 +311,7 @@ def _summarize_smart_scan(hosts: list, config: Optional[Dict[str, Any]] = None) 
                 phase0_signals_collected += 1
 
     budget = 0
-    if isinstance(config, dict):
+    if config is not None:
         try:
             budget = int(config.get("deep_scan_budget", 0))
             if budget < 0:

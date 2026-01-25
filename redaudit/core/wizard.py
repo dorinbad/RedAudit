@@ -349,7 +349,10 @@ class Wizard:
                 dim = self.ui.colors.get("DIM", "")
                 bold = self.ui.colors.get("BOLD", "")
                 if color == "WARNING":
-                    return f"{dim}{self.ui.colors.get(color, '')}{option}{self.ui.colors['ENDC']}"
+                    tone = self.ui.colors.get(color, "")
+                    if dim:
+                        return f"{dim}{tone}{option}{self.ui.colors['ENDC']}"
+                    return f"{tone}{option}{self.ui.colors['ENDC']}"
                 if is_default:
                     return f"{bold}{self.ui.colors.get(color, '')}{option}{self.ui.colors['ENDC']}"
                 return f"{dim}{self.ui.colors.get(color, '')}{option}{self.ui.colors['ENDC']}"
@@ -361,10 +364,9 @@ class Wizard:
                 f"{option}{self.ui.colors['ENDC']}"
             )
 
-        dim = self.ui.colors.get("DIM", "")
         accent = self.ui.colors.get("OKBLUE", "")
-        if dim or accent:
-            return f"{dim}{accent}{option}{self.ui.colors['ENDC']}"
+        if accent:
+            return f"{accent}{option}{self.ui.colors['ENDC']}"
         return option
 
     def show_main_menu(self) -> int:
@@ -601,8 +603,9 @@ class Wizard:
         while True:
             try:
                 prompt_range = f"1-{len(display_options)}"
+                default_choice = self._style_default_value(str(default + 1))
                 ans = input(
-                    f"\n{self.ui.t('select_opt')} [{prompt_range}] ({default + 1}): "
+                    f"\n{self.ui.t('select_opt')} [{prompt_range}] ({default_choice}): "
                 ).strip()
                 if ans == "":
                     return default
@@ -832,7 +835,7 @@ class Wizard:
             snmp = input(
                 f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
                 f"{self._style_prompt_text(self.ui.t('net_discovery_snmp_prompt'))} "
-                f"[{options['snmp_community']}]: "
+                f"[{self._style_default_value(str(options['snmp_community']))}]: "
             ).strip()
             if snmp:
                 options["snmp_community"] = snmp[:64]  # Safety limit
@@ -1257,10 +1260,11 @@ class Wizard:
         if self.ask_yes_no(self.ui.t("auth_ssh_configure_q"), default="yes"):
             print(f"\n{self.ui.colors['OKBLUE']}--- SSH ---{self.ui.colors['ENDC']}")
             default_user = "root"
+            default_user_display = self._style_default_value(default_user)
             u = input(
                 f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
                 f"{self._style_prompt_text(self.ui.t('auth_ssh_user_prompt'))} "
-                f"[{default_user}]: "
+                f"[{default_user_display}]: "
             ).strip()
             if self._is_cancel_input(u):
                 self.ui.print_status(self.ui.t("config_cancel"), "WARNING")
@@ -1275,10 +1279,11 @@ class Wizard:
 
             if choice == 0:
                 default_key = "~/.ssh/id_rsa"
+                default_key_display = self._style_default_value(default_key)
                 k = input(
                     f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
                     f"{self._style_prompt_text(self.ui.t('auth_ssh_key_prompt'))} "
-                    f"[{default_key}]: "
+                    f"[{default_key_display}]: "
                 ).strip()
                 auth_config["auth_ssh_key"] = expand_user_path(k if k else default_key)
             else:
@@ -1299,10 +1304,11 @@ class Wizard:
         if self.ask_yes_no(self.ui.t("auth_smb_configure_q"), default="no"):
             print(f"\n{self.ui.colors['OKBLUE']}--- SMB ---{self.ui.colors['ENDC']}")
             default_user = "Administrator"
+            default_user_display = self._style_default_value(default_user)
             u = input(
                 f"{self.ui.colors['CYAN']}?{self.ui.colors['ENDC']} "
                 f"{self._style_prompt_text(self.ui.t('auth_smb_user_prompt'))} "
-                f"[{default_user}]: "
+                f"[{default_user_display}]: "
             ).strip()
             if self._is_cancel_input(u):
                 self.ui.print_status(self.ui.t("config_cancel"), "WARNING")
