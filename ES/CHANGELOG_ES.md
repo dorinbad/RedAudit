@@ -14,6 +14,19 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 - Ninguno.
 
+## [4.18.19] - 2026-01-25
+
+### Mejorado
+
+- **Estilo en progreso**: La salida Rich aplica el color de estado a todas las lineas para mantener el contraste.
+- **Snapshot de configuracion**: El snapshot incluye `deep_id_scan`, `trust_hyperscan` y `nuclei_timeout`.
+
+### Corregido
+
+- **Sincronizacion de idioma**: Los cambios de idioma actualizan el UI manager para evitar mezclas EN/ES.
+- **Filtrado de senales en progreso**: WARN detecta palabras clave en espanol durante el render.
+- **Mensajes i18n**: Dependencias, fallos de autenticacion y errores de escaneo usan cadenas localizadas.
+
 ## [4.18.18] - 2026-01-24
 
 ### Añadido
