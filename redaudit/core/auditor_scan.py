@@ -250,22 +250,17 @@ class AuditorScan:
             try:
                 import impacket  # noqa: F401
 
-                # self.ui.print_status(self.ui.t("impacket_avail"), "OKGREEN")  # Generic msg
-                self.ui.print_status("Impacket available (SMB/WMI)", "OKGREEN")
+                self.ui.print_status(self.ui.t("impacket_available"), "OKGREEN")
             except ImportError:
-                self.ui.print_status(
-                    "Impacket missing (pip install impacket) - SMB/WMI auth disabled", "WARN"
-                )
+                self.ui.print_status(self.ui.t("impacket_missing"), "WARN")
 
             # v4.3: PySNMP check
             try:
                 import pysnmp  # noqa: F401
 
-                self.ui.print_status("PySNMP available (SNMP v3)", "OKGREEN")
+                self.ui.print_status(self.ui.t("pysnmp_available"), "OKGREEN")
             except ImportError:
-                self.ui.print_status(
-                    "PySNMP missing (pip install pysnmp) - SNMP v3 auth disabled", "WARN"
-                )
+                self.ui.print_status(self.ui.t("pysnmp_missing"), "WARN")
         except ImportError:
             self.ui.print_status(self.ui.t("nmap_missing"), "FAIL")
             return False
@@ -1845,7 +1840,7 @@ class AuditorScan:
                     if not ssh_auth_success and last_error:
                         if hasattr(self, "ui") and self.ui:
                             self.ui.print_status(self.ui.t("auth_scan_failed", last_error), "WARN")
-                            self.ui.print_status(f"{safe_ip}: SSH auth failed (all creds)", "WARN")
+                            self.ui.print_status(self.ui.t("ssh_auth_failed_all", safe_ip), "WARN")
                         host_obj.auth_scan = {"error": last_error}
 
             # v4.2: SMB/WMI Authenticated Scan (Impacket)
@@ -1926,7 +1921,7 @@ class AuditorScan:
                 # Report failure if all credentials failed
                 if not smb_auth_success and smb_credentials and last_error:
                     if hasattr(self, "ui") and self.ui:
-                        self.ui.print_status(f"{safe_ip}: SMB auth failed (all creds)", "WARN")
+                        self.ui.print_status(self.ui.t("smb_auth_failed_all", safe_ip), "WARN")
 
             # v4.3: SNMP v3 Authenticated Scan (PySNMP)
             snmp_open = False
@@ -2378,7 +2373,7 @@ class AuditorScan:
         except Exception as exc:
             self.logger.error("Scan error %s: %s", safe_ip, exc, exc_info=True)
             # Keep terminal output clean while progress UIs are active.
-            self.ui.print_status(f"⚠  Scan error {safe_ip}: {exc}", "FAIL", force=True)
+            self.ui.print_status(self.ui.t("scan_error_host", safe_ip, exc), "FAIL", force=True)
 
             # v4.0: Return Host object on error
             host_obj = self.scanner.get_or_create_host(safe_ip)
