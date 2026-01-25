@@ -399,6 +399,8 @@ TRANSLATIONS = {
         "hyperscan_masscan_reuse": "[{}/{}] {}: reusing {} discovered ports",
         "udp_probes_progress": "UDP probes ({})",
         "deep_scan_running": "Running DeepScan on {} hosts...",
+        "deep_scan_heartbeat": "DeepScan... {0}/{1} ({2}:{3:02d})",
+        "deep_scan_progress": "DeepScan: {0}/{1}",
         "auditor_ip_excluded": "ℹ️  Auto-excluded {} auditor IP(s) from target list to prevent self-scanning.",
         # v4.3: HyperScan mode wizard
         "hyperscan_mode_q": "HyperScan discovery method:",
@@ -416,7 +418,7 @@ TRANSLATIONS = {
         "auth_ssh_key_prompt": "Private Key Path",
         "auth_ssh_pass_hint": "Input SSH password (hidden)",
         "auth_scan_start": "Starting authenticated scan on {0} as user {1}...",
-        "auth_scan_connected": "Authentication successful ({1})! Gathering host info...",
+        "auth_scan_connected": "Authentication successful ({0})! Gathering host info...",
         "auth_scan_failed": "Authenticated scan failed: {0}",
         # v4.2: SMB
         "auth_smb_configure_q": "Configure Windows/SMB credentials?",
@@ -857,6 +859,8 @@ TRANSLATIONS = {
         "hyperscan_masscan_reuse": "[{}/{}] {}: reutilizando {} puertos descubiertos",
         "udp_probes_progress": "Sondas UDP ({})",
         "deep_scan_running": "Ejecutando DeepScan en {} hosts...",
+        "deep_scan_heartbeat": "DeepScan... {0}/{1} ({2}:{3:02d})",
+        "deep_scan_progress": "DeepScan: {0}/{1}",
         "auditor_ip_excluded": "ℹ️  Auto-excluidas {} IP(s) del auditor para evitar auto-escaneo.",
         # v4.3: HyperScan mode wizard
         "hyperscan_mode_q": "Método de descubrimiento HyperScan:",
@@ -873,7 +877,7 @@ TRANSLATIONS = {
         "auth_ssh_key_prompt": "Ruta a la Clave Privada",
         "auth_ssh_pass_hint": "Introduce contraseña SSH (oculta)",
         "auth_scan_start": "Iniciando escaneo autenticado en {0} como usuario {1}...",
-        "auth_scan_connected": "¡Autenticación SSH exitosa! Recopilando información del host...",
+        "auth_scan_connected": "¡Autenticación exitosa ({0})! Recopilando información del host...",
         "auth_scan_failed": "Fallo en escaneo autenticado: {0}",
         # v4.2: SMB
         "auth_smb_configure_q": "¿Configurar credenciales Windows/SMB?",
