@@ -807,7 +807,7 @@ def test_format_menu_option_colors():
     assert wiz._format_menu_option(wiz.t("yes_option")) == "<D><G>yes_option<E>"
     assert wiz._format_menu_option(wiz.t("no_default")) == "<BO><F>no_default<E>"
     assert wiz._format_menu_option(wiz.t("no_option")) == "<D><F>no_option<E>"
-    assert wiz._format_menu_option("Option") == "<D><B>Option<E>"
+    assert wiz._format_menu_option("Option") == "<B>Option<E>"
     assert wiz._format_menu_option("Selected", is_selected=True) == "<BO><C>Selected<E>"
 
     colored = "\x1b[31mAlready colored\x1b[0m"

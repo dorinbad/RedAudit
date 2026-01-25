@@ -582,6 +582,34 @@ def test_run_nuclei_scan_batch_timeout_sets_error(tmp_path):
     assert res["error"] == "timeout"
 
 
+def test_run_nuclei_scan_split_reduces_timeout(tmp_path):
+    timeouts = []
+
+    class _Runner:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, cmd, *args, **kwargs):
+            timeouts.append(kwargs.get("timeout"))
+            timed_out = len(timeouts) == 1
+            return SimpleNamespace(returncode=0, stdout="", stderr="", timed_out=timed_out)
+
+    with patch("redaudit.core.nuclei.is_nuclei_available", return_value=True):
+        with patch("redaudit.core.nuclei.CommandRunner", _Runner):
+            with patch("redaudit.core.nuclei._nuclei_supports_flag", return_value=False):
+                res = run_nuclei_scan(
+                    ["http://1", "http://2"],
+                    output_dir=str(tmp_path),
+                    batch_size=2,
+                    timeout=600,
+                    request_timeout=10,
+                    use_internal_progress=False,
+                )
+    assert res["success"] is True
+    assert len(timeouts) >= 2
+    assert timeouts[0] > timeouts[1]
+
+
 def test_run_nuclei_scan_fallback_print_status(tmp_path):
     calls = []
 

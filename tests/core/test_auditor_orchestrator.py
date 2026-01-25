@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from redaudit.core.auditor import InteractiveNetworkAuditor
+from redaudit.core.auditor_runtime import AuditorRuntime
 from redaudit.core.config_context import ConfigurationContext
 from redaudit.core.models import Host
 from redaudit.utils.constants import COLORS, MAX_THREADS
@@ -337,6 +338,40 @@ class TestAuditorOrchestrator(unittest.TestCase):
         self.auditor.config["target_networks"] = ["", "10.0.0.0/30"]
         self.auditor._show_target_summary()
         self.assertTrue(self.auditor.ui.print_status.called)
+
+
+def test_auditor_runtime_getattr_reads_auditor_dict():
+    class _Dummy:
+        def __init__(self):
+            self.value = "ok"
+
+    auditor = _Dummy()
+    runtime = AuditorRuntime(auditor)
+    assert runtime.__getattr__("value") == "ok"
+
+
+def test_auditor_runtime_setattr_auditor():
+    class _Dummy:
+        pass
+
+    auditor = _Dummy()
+    runtime = AuditorRuntime(auditor)
+    replacement = _Dummy()
+    runtime._auditor = replacement
+    assert runtime._auditor is replacement
+
+
+class TestAuditorOrchestratorExtras(unittest.TestCase):
+    def setUp(self):
+        self.mock_ui_manager = MagicMock()
+        self.mock_ui_manager.colors = COLORS
+        self.mock_ui_manager.t.side_effect = lambda key, *args: key
+        # Patch UIManager before instantiating Auditor
+        with patch("redaudit.core.ui_manager.UIManager", return_value=self.mock_ui_manager):
+            self.auditor = InteractiveNetworkAuditor()
+        # Disable logging to stdout/file during tests
+        self.auditor.logger = MagicMock()
+        self.auditor.print_status = MagicMock()
 
     def test_show_legal_warning_calls_prompt(self):
         self.auditor.ask_yes_no = MagicMock(return_value=True)

@@ -34,6 +34,7 @@ from redaudit.core.reporter import (
     show_config_summary,
     show_results_summary,
 )
+from redaudit.core.config_context import ConfigurationContext
 from redaudit.utils.constants import VERSION, SECURE_FILE_MODE
 
 
@@ -742,6 +743,26 @@ def test_summarize_smart_scan_phase0_invalid_budget():
     )
     assert summary["identity_score_avg"] == 0
     assert summary["phase0_signals_collected"] == 1
+
+
+def test_summarize_smart_scan_phase0_config_context():
+    hosts = [
+        {
+            "smart_scan": {
+                "identity_score": 1,
+                "trigger_deep": False,
+                "deep_scan_executed": False,
+                "signals": ["dns_reverse"],
+                "reasons": [],
+            },
+            "phase0_enrichment": {"dns_reverse": "x"},
+        }
+    ]
+    config = ConfigurationContext({"low_impact_enrichment": True, "deep_scan_budget": 3})
+    summary = _summarize_smart_scan(hosts, config)
+    assert summary["phase0_enrichment_enabled"] is True
+    assert summary["phase0_signals_collected"] == 1
+    assert summary["deep_scan_budget"] == 3
 
 
 def test_summarize_smart_scan_negative_budget():
