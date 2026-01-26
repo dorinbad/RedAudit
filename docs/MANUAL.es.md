@@ -411,7 +411,7 @@ Las credenciales se usan ÚNICAMENTE para el escaneo y no se almacenan en los in
 
 ## 7. Referencia CLI (Completa)
 
-Flags verificadas contra `redaudit --help` (v4.5.2):
+Flags verificadas contra `redaudit --help` (v4.19.2):
 
 ### Core
 
@@ -427,7 +427,7 @@ Flags verificadas contra `redaudit --help` (v4.5.2):
 
 | Flag | Descripción |
 | :--- | :--- |
-| `-j, --threads 1-100` | Workers concurrentes por host (autodetectado) |
+| `-j, --threads 1-100` | Workers concurrentes por host (autodetectado, capado a 12 por heuristica) |
 | `--rate-limit SECONDS` | Retardo entre hosts (se aplica jitter ±30%) |
 | `--max-hosts N` | Limitar hosts a escanear |
 | `--no-deep-scan` | Deshabilitar deep scan adaptativo |

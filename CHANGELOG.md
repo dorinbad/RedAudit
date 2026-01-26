@@ -10,9 +10,14 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+### Improved
+
+- **CI Quality Gate**: Coverage threshold raised to 80% and ShellCheck enforced.
+
 ### Fixed
 
-- None.
+- **Manual Flag Consistency**: Thread range and CLI help version references aligned with current behavior.
+- **Audit Test Coverage**: Added tests for Docker interface exclusion and Masscan-seeded HyperScan fallback.
 
 ## [4.19.2] - 2026-01-26
 
@@ -390,7 +395,7 @@ Release notes live under `docs/releases/` for additional context.
 - Fixed interaction between Nuclei profile defaults and explicit parameters (explicit parameters now correctly override profile defaults).
 - Fixed typing issues (mypy) in Nuclei module with proper `TypedDict` for profiles.
 
-## [v4.12.0] - 2026-01-17
+## [4.12.0] - 2026-01-17
 
 ### Added
 
@@ -405,7 +410,7 @@ Release notes live under `docs/releases/` for additional context.
 - **Performance Optimization**: Vuln scan phase now respects the Nuclei profile to reduce scan time on networks with many infrastructure devices.
 - **Nikto Gating Logic**: Moved from `_should_run_app_scans()` to dedicated `_should_run_nikto()` method for clearer separation of concerns.
 
-## [v4.11.0] - 2026-01-17
+## [4.11.0] - 2026-01-17
 
 ### Added
 
@@ -427,7 +432,7 @@ Release notes live under `docs/releases/` for additional context.
   - Implemented "partial success" logic: findings are reported even if some batches timeout.
 - **Timeouts**: Confirmed satisfactory timeouts for Nikto (330s) and TestSSL (90s).
 
-## [v4.10.1] - 2026-01-16
+## [4.10.1] - 2026-01-16
 
 ### Fixed
 
@@ -435,7 +440,7 @@ Release notes live under `docs/releases/` for additional context.
 - **Import Error**: Resolved a potential `NameError` related to local imports of `enrich_host_with_cves` in the auditor module.
 - **Code Cleanup**: Moved local imports to top-level for better maintainability and scope visibility.
 
-## [v4.10.0] - 2026-01-16
+## [4.10.0] - 2026-01-16
 
 ### Added
 
@@ -452,7 +457,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Critical**: Resolved `AttributeError: 'set' object has no attribute 'append'` in `Host.tags` handling during HyperScan enhancement.
 
-## [v4.9.1] - 2026-01-16
+## [4.9.1] - 2026-01-16
 
 ### Added
 
@@ -473,7 +478,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - **VLAN Limitations**: Added 802.1Q VLAN detection limitations to USAGE docs (EN/ES).
 
-## [v4.9.0] - 2026-01-16
+## [4.9.0] - 2026-01-16
 
 ### Added
 
@@ -491,13 +496,13 @@ Release notes live under `docs/releases/` for additional context.
 - Documented VLAN isolation limitations (802.1Q VLANs not discoverable without SNMP/switch access).
 - Updated `task.md` with user network topology (Vodafone VLAN 100/105 via Zyxel switch).
 
-## [v4.8.1] - 2026-01-16
+## [4.8.1] - 2026-01-16
 
 ### Fixed
 
 - Restore interactive Nuclei enable prompt in Exhaustive profile (wizard).
 
-## [v4.8.3] - 2026-01-16
+## [4.8.3] - 2026-01-16
 
 ### Fixed
 
@@ -505,7 +510,7 @@ Release notes live under `docs/releases/` for additional context.
   - Previously attempted to download amd64 .deb on all platforms.
   - Now gracefully falls back to nmap/apt if RustScan release asset is missing for the architecture.
 
-## [v4.8.2] - 2026-01-16
+## [4.8.2] - 2026-01-16
 
 ### Fixed
 
@@ -513,7 +518,7 @@ Release notes live under `docs/releases/` for additional context.
   - Previously defaulted to RustScan's top 1000 ports, missing services on non-standard ports.
   - Added range parameter to `rustscan.py` and `hyperscan.py`.
 
-## [v4.8.0] - 2026-01-16
+## [4.8.0] - 2026-01-16
 
 ### Added
 
@@ -537,14 +542,14 @@ Release notes live under `docs/releases/` for additional context.
 
 - Added `scan_results_private/HYPERSCAN_INVESTIGATION_2026-01-16.md` with full benchmark data.
 
-## [v4.7.2] - 2026-01-15
+## [4.7.2] - 2026-01-15
 
 ### Fixed
 
 - **Nuclei Timeout (Critical)**: Fixed batch timeout minimum in nuclei.py from 60s to 300s, and base timeout from 300s to 600s. The 60s minimum was causing 100% batch timeout rate. Also added nuclei-specific timeout (600s) in command_runner.py as fallback.
 - **NVD API 404**: Skip retries immediately on 404 responses (CPE not found is not retryable). Reduces unnecessary API calls and log spam.
 
-## [v4.7.1] - 2026-01-15
+## [4.7.1] - 2026-01-15
 
 ### Fixed
 
@@ -554,7 +559,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - Added "Masscan and Docker Bridge Networks" troubleshooting section to `DOCKER.md` and `DOCKER.es.md` explaining the automatic scapy fallback behavior.
 
-## [v4.7.0] - 2026-01-15
+## [4.7.0] - 2026-01-15
 
 ### Added
 
@@ -564,7 +569,7 @@ Release notes live under `docs/releases/` for additional context.
   - Automatic fallback to asyncio TCP connect if masscan unavailable.
   - Reduces HyperScan-First from ~30 minutes to ~10 seconds for 36 hosts.
 
-## [v4.6.34] - 2026-01-15
+## [4.6.34] - 2026-01-15
 
 ### Fixed
 
@@ -574,33 +579,33 @@ Release notes live under `docs/releases/` for additional context.
 - **HyperScan SYN Contention Fix**: Added `threading.Lock()` to serialize scapy SYN scans, fixing critical regression where parallel workers caused raw socket conflicts (0 ports detected on Docker networks).
 - **Net Discovery**: Parallelized `_redteam_rpc_enum`, `_redteam_snmp_walk`, `_redteam_ldap_enum`, and `_redteam_smb_enum` (enum4linux) to eliminate serial blocking (10+ minute delays on large networks).
 
-## [v4.6.33] - 2026-01-15
+## [4.6.33] - 2026-01-15
 
 ### Fixed
 
 - **Net Discovery**: Fixed Net Discovery duration (timeouts reduced), HyperScan accuracy (timeout increased), and "UDP probes" localization.
 - **Parallel Discovery**: Fixed thread safety in parallel discovery progress bars and removed unsafe CLI printing.
 
-## [v4.6.32] - 2026-01-15
+## [4.6.32] - 2026-01-15
 
 ### Performance
 
 - **Parallel Net Discovery**: All discovery protocols (DHCP, ARP, mDNS, etc.) now run concurrently.
 
-## [v4.6.31] - 2026-01-15
+## [4.6.31] - 2026-01-15
 
 ### Performance
 
 - **HyperScan Parallelism**: Converted sequential pre-scan to parallel (up to 8 workers) with adaptive FD batching.
 
-## [v4.6.30] - 2026-01-15
+## [4.6.30] - 2026-01-15
 
 ### Safety
 
 - **Zombie Reaper**: Implemented native `pkill` cleanup to prevent orphaned Nmap/Nuclei processes on interruption.
 - **Resource Audit**: Verified FD safety and thread exception handling.
 
-## [v4.6.29] - 2026-01-15
+## [4.6.29] - 2026-01-15
 
 ### Performance
 
@@ -611,59 +616,59 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Config**: Added missing `nuclei_timeout` to `ConfigurationContext`.
 
-## [v4.6.28] - 2026-01-15
+## [4.6.28] - 2026-01-15
 
 ### Fixed
 
 - **Critical Stability**: Removed global `socket.setdefaulttimeout()` usage in `network_scanner.py`. Previously, reverse DNS lookups could inadvertently set a timeout for ALL active threads and sockets in the application, causing random timeouts in Nuclei, SSH, and HTTP connections.
 
-## [v4.6.27] - 2026-01-15
+## [4.6.27] - 2026-01-15
 
 ### Fixed
 
 - **HyperScan Performance**: Fixed a critical logic flaw where closed ports (RST) were treated as "timeouts" by the adaptive throttler. This caused the scan speed to throttle down to minimum (100 batch) instead of accelerating (20k batch), explaining the "1 minute per host" delay. Scans are now substantially faster.
 
-## [v4.6.26] - 2026-01-15
+## [4.6.26] - 2026-01-15
 
 ### Fixed
 
 - **Progress Bar Jitter**: Fixed a UI bug where parallel Nuclei batches would overwrite each other's progress, causing the progress bar to jump erratically. Implemented centralized progress aggregation for smooth tracking.
 
-## [v4.6.25] - 2026-01-15
+## [4.6.25] - 2026-01-15
 
 ### Fixed
 
 - **Parallel Concurrency Fix**: Added thread locking for shared file I/O and statistics in Nuclei scans to prevent race conditions during parallel execution.
 - **CLI Parallelism**: Enabled parallel batch execution for standard CLI users (Rich progress bar), previously limited to API consumers.
 
-## [v4.6.24] - 2026-01-15
+## [4.6.24] - 2026-01-15
 
 ### Changed
 
 - **Nuclei Performance Overhaul**: Reduced default batch size 25->10, removed infinite retry loop bug, added up to 4 parallel batch execution via ThreadPoolExecutor. Expect ~4x faster Nuclei scans on large networks.
 
-## [v4.6.23] - 2026-01-14
+## [4.6.23] - 2026-01-14
 
 ### Added
 
 - **Nuclei Retry on Timeout**: On first timeout, retry batch with 1.5x timeout before splitting. Reduces false failures on slow networks.
 - **Test Coverage**: Added 8 new tests for v4.6.21-23 features (X-Frame-Options, IoT lwIP, FTP CVE injection).
 
-## [v4.6.22] - 2026-01-14
+## [4.6.22] - 2026-01-14
 
 ### Added
 
 - **FTP CVE Tagging**: Detected backdoors (vsftpd 2.3.4, etc.) now inject CVE records into `port.cves` for automatic JSONL propagation.
 - **SMB Credential Spray**: Try all keyring SMB credentials until one succeeds, matching SSH spray pattern. Uses new `_resolve_all_smb_credentials()` method.
 
-## [v4.6.21] - 2026-01-14
+## [4.6.21] - 2026-01-14
 
 ### Fixed
 
 - **X-Frame-Options Severity**: Added `anti-clickjacking.*x-frame-options` and `x-frame-options.*not present` patterns to SEVERITY_OVERRIDES. Nikto findings now correctly classified as Low instead of High.
 - **IoT lwIP False Positive**: Added heuristic in `calculate_risk_score` to detect IoT devices with >20 open ports (lwIP stack responds SYN-ACK to all probes). Risk capped at 30 for manual review.
 
-## [v4.6.20] - 2026-01-14
+## [4.6.20] - 2026-01-14
 
 ### Added
 
@@ -679,7 +684,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Code Quality**: Added `extract_finding_title` with proper fallback chain: descriptive_title, Nuclei template_id, CVE IDs, parsed_observations, nikto_findings, port-based fallback.
 
-## [v4.6.19] - 2026-01-14
+## [4.6.19] - 2026-01-14
 
 ### Added
 
@@ -694,7 +699,7 @@ Release notes live under `docs/releases/` for additional context.
 - **Wizard UI**: Credential summary now displays the count of spray list entries (e.g., `(+5 spray)`).
 - **Severity Mapping**: Refined mapping for generic scanner findings to reduce noise (e.g., lowering severity for version disclosures).
 
-## [v4.6.18] - 2026-01-13
+## [4.6.18] - 2026-01-13
 
 ### Added
 
@@ -705,19 +710,19 @@ Release notes live under `docs/releases/` for additional context.
 - **Nuclei Partial Output**: Persist partial findings when batches timeout at maximum split depth instead of leaving output empty.
 - **NVD URL Encoding**: URL-encode keyword search parameters to fix queries with spaces.
 
-## [v4.6.17] - 2026-01-13
+## [4.6.17] - 2026-01-13
 
 ### Fixed
 
 - **Keyring Under Sudo**: Preserve DBus context when loading the invoking user's keyring to surface saved credentials.
 
-## [v4.6.16] - 2026-01-13
+## [4.6.16] - 2026-01-13
 
 ### Improved
 
 - **Nuclei Reliability**: Adaptive batch timeouts, recursive splits, and optional per-request timeout/retries to reduce partial runs.
 
-## [v4.6.15] - 2026-01-13
+## [4.6.15] - 2026-01-13
 
 ### Improved
 
@@ -727,7 +732,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Host Report Consistency**: Populate `hosts[].asset_name` and `hosts[].interfaces` from unified assets.
 
-## [v4.6.14] - 2026-01-13
+## [4.6.14] - 2026-01-13
 
 ### Added
 
@@ -742,7 +747,7 @@ Release notes live under `docs/releases/` for additional context.
 - **Keyring Under Sudo**: Detect saved credentials from the invoking user when running with sudo.
 - **Report Footer Year**: Update HTML report license footer to 2026.
 
-## [v4.6.13] - 2026-01-12
+## [4.6.13] - 2026-01-12
 
 ### Added
 
@@ -759,13 +764,13 @@ Release notes live under `docs/releases/` for additional context.
 - **Web Identity**: Recognize OWASP Juice Shop titles as server-class assets.
 - **Run Manifest**: Mark `run_manifest.json` as partial when Nuclei timeouts occur.
 
-## [v4.6.12] - 2026-01-12
+## [4.6.12] - 2026-01-12
 
 ### Improved
 
 - **Nuclei Progress**: Show time-based progress movement within each batch, including elapsed time, to avoid frozen bars.
 
-## [v4.6.11] - 2026-01-12
+## [4.6.11] - 2026-01-12
 
 ### Added
 
@@ -780,7 +785,7 @@ Release notes live under `docs/releases/` for additional context.
 - **HTTP Identity Gating**: Ignore UPnP-only titles for web scan gating and identity scoring; allow HTTP probes to override UPnP hints.
 - **Web Enrichment**: Propagate HTTP server headers from web vuln enrichment into agentless fingerprints.
 
-## [v4.6.10] - 2026-01-12
+## [4.6.10] - 2026-01-12
 
 ### Added
 
@@ -791,7 +796,7 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Docs**: Updated README/usage/manual and cleaned roadmap ordering with emoji removal.
 
-## [v4.6.9] - 2026-01-12
+## [4.6.9] - 2026-01-12
 
 ### Changed
 
@@ -802,27 +807,27 @@ Release notes live under `docs/releases/` for additional context.
 
 - **Nuclei Reporting**: Mark partial runs when batches time out and surface timeout/failed batch indexes in reports.
 
-## [v4.6.8] - 2026-01-12
+## [4.6.8] - 2026-01-12
 
 ### Fixed
 
 - **Vuln Progress**: Stop updating progress bars after a host finishes to avoid misleading movement.
 - **Web Tags**: Add the `web` tag when `web_ports_count` is present, even if port flags are missing.
 
-## [v4.6.7] - 2026-01-11
+## [4.6.7] - 2026-01-11
 
 ### Fixed
 
 - **Auth Scans**: Avoid keyring credential lookups during port scans when auth is disabled.
 - **Session Logs**: Deduplicate rich progress-bar redraws to reduce log noise.
 
-## [v4.6.6] - 2026-01-11
+## [4.6.6] - 2026-01-11
 
 ### Changed
 
 - **UX**: Added "Trust HyperScan" prompt to the Exhaustive profile (default: No).
 
-## [v4.6.5] - 2026-01-11
+## [4.6.5] - 2026-01-11
 
 ### Fixed
 
@@ -830,18 +835,18 @@ Release notes live under `docs/releases/` for additional context.
 - **Version Resolution**: Prefer packaged `VERSION` over installed metadata to prevent pip shadowing.
 - **Update Flow**: Block non-root system updates for `/usr/local/bin/redaudit` to avoid partial installs.
 
-## [v4.6.4] - 2026-01-11
+## [4.6.4] - 2026-01-11
 
 - **UX**: Visible "Trust HyperScan" prompt in Standard profile (was hidden/auto-true).
 
-## [v4.6.3] - 2026-01-11
+## [4.6.3] - 2026-01-11
 
 ### Changed
 
 - **UX**: Added missing "Trust HyperScan" prompt to Wizard (Step 2).
 - **UX**: Enabled Trust HyperScan by default in "Express" and "Standard" profiles.
 
-## [v4.6.2] - 2026-01-11
+## [4.6.2] - 2026-01-11
 
 ### Added
 

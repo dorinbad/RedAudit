@@ -415,7 +415,7 @@ Credentials are used ONLY for scanning and are not stored in reports. If using `
 
 ## 7. CLI Reference (Complete)
 
-Flags verified against `redaudit --help` (v4.5.2):
+Flags verified against `redaudit --help` (v4.19.2):
 
 ### Core
 
@@ -431,7 +431,7 @@ Flags verified against `redaudit --help` (v4.5.2):
 
 | Flag | Description |
 | :--- | :--- |
-| `-j, --threads 1-16` | Concurrent host workers (auto-detected) |
+| `-j, --threads 1-100` | Concurrent host workers (auto-detected, capped at 12 by heuristic) |
 | `--rate-limit SECONDS` | Delay between hosts (±30% jitter applied) |
 | `--max-hosts N` | Limit hosts to scan |
 | `--no-deep-scan` | Disable adaptive deep scan |
