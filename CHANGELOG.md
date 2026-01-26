@@ -10,14 +10,23 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [4.19.3] - 2026-01-27
+
 ### Improved
 
 - **CI Quality Gate**: Coverage threshold raised to 80% and ShellCheck enforced.
+- **SNMP v3 Protocol Mapping**: Auth/priv protocol names now map to PySNMP objects and honor explicit auth/priv keys.
+- **Offline OUI Coverage**: Local manuf lookup now supports /28 and /36 prefixes.
+- **Audit Coverage**: Added tests for Docker interface exclusion and Masscan-seeded HyperScan fallback.
 
 ### Fixed
 
-- **Manual Flag Consistency**: Thread range and CLI help version references aligned with current behavior.
-- **Audit Test Coverage**: Added tests for Docker interface exclusion and Masscan-seeded HyperScan fallback.
+- **SNMP Topology CVE Enrichment**: SNMP topology processing no longer assumes an initialized NVD API key.
+- **Diff WhatWeb Counts**: Differential reports now count WhatWeb findings from the correct key.
+- **Nuclei Timeout Default**: Configuration context default aligned to 300s to match CLI behavior.
+- **Documentation Alignment**: ES timing presets and thread fallback details now match runtime behavior.
+- **Doc Emoji Cleanup**: Docker and security docs now remove emoji markers per documentation policy.
+- **ShellCheck Findings**: Install and docker helper scripts now pass ShellCheck without warnings.
 
 ## [4.19.2] - 2026-01-26
 

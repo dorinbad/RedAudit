@@ -10,14 +10,23 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Sin lanzar]
 
+## [4.19.3] - 2026-01-27
+
 ### Mejorado
 
 - **Calidad en CI**: Umbral de cobertura subido al 80% y ShellCheck aplicado.
+- **Mapeo de protocolos SNMP v3**: Nombres de protocolos auth/priv se mapean a objetos PySNMP y respetan claves auth/priv.
+- **Cobertura OUI offline**: El manuf local soporta prefijos /28 y /36.
+- **Cobertura de auditoria**: Tests para exclusion de interfaces Docker y fallback de HyperScan con Masscan.
 
 ### Corregido
 
-- **Coherencia en el manual**: Rango de threads y referencia de version de ayuda alineados con el comportamiento.
-- **Cobertura de pruebas**: Tests para exclusion de interfaces Docker y fallback de HyperScan con Masscan.
+- **Topologia SNMP y CVE**: El procesamiento de topologia SNMP ya no asume una API key NVD inicializada.
+- **Recuento WhatWeb en diff**: Los informes diferenciales cuentan WhatWeb con la clave correcta.
+- **Timeout por defecto de Nuclei**: El default del ConfigurationContext se alinea a 300s como el CLI.
+- **Alineacion documental**: Presets de velocidad ES y fallback de threads alineados al comportamiento.
+- **Limpieza de emojis**: Docker y seguridad eliminan emojis segun la politica de documentacion.
+- **ShellCheck**: Scripts de instalacion y Docker ahora pasan ShellCheck sin avisos.
 
 ## [4.19.2] - 2026-01-26
 
