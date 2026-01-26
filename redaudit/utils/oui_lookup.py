@@ -29,12 +29,17 @@ def normalize_oui(mac: str) -> str:
     Returns:
         Uppercase 6-character OUI string
     """
-    return mac.replace(":", "").replace("-", "").replace(".", "")[:6].upper()
+    return _normalize_mac_hex(mac)[:6]
 
 
 # v4.3.1: Offline fallback with local manuf database
 # Loads from redaudit/data/manuf (Wireshark format)
 _OFFLINE_CACHE: Dict[str, str] = {}
+_OFFLINE_CACHE_EXT: Dict[int, Dict[str, str]] = {}
+
+
+def _normalize_mac_hex(value: str) -> str:
+    return value.replace(":", "").replace("-", "").replace(".", "").upper()
 
 
 def _load_offline_db() -> None:
@@ -65,11 +70,28 @@ def _load_offline_db() -> None:
                     oui_raw = parts[0].strip()
                     name = parts[2].strip() if len(parts) > 2 else parts[1].strip()
 
-                    # Normalize OUI
-                    oui = normalize_oui(oui_raw)
-                    if len(oui) == 6:
-                        _OFFLINE_CACHE[oui] = name
-                        count += 1
+                    prefix_len = 24
+                    oui_part = oui_raw
+                    if "/" in oui_raw:
+                        oui_part, prefix_len_str = oui_raw.split("/", 1)
+                        try:
+                            prefix_len = int(prefix_len_str)
+                        except ValueError:
+                            continue
+
+                    if prefix_len % 4 != 0:
+                        continue
+
+                    hex_len = prefix_len // 4
+                    prefix = _normalize_mac_hex(oui_part)[:hex_len]
+                    if len(prefix) != hex_len:
+                        continue
+
+                    if prefix_len == 24:
+                        _OFFLINE_CACHE[prefix] = name
+                    else:
+                        _OFFLINE_CACHE_EXT.setdefault(prefix_len, {})[prefix] = name
+                    count += 1
 
         logger.debug("Loaded %d vendors from local OUI database", count)
 
@@ -99,11 +121,22 @@ def lookup_vendor_online(mac: str, timeout: float = 2.0) -> Optional[str]:
     if not mac:
         return None
 
-    oui = normalize_oui(mac)
-    if len(oui) < 6:
+    clean = _normalize_mac_hex(mac)
+    if len(clean) < 6:
         return None
 
     # Check offline cache first (optimization + reliability)
+    if _OFFLINE_CACHE_EXT:
+        for prefix_len in sorted(_OFFLINE_CACHE_EXT.keys(), reverse=True):
+            hex_len = prefix_len // 4
+            if len(clean) < hex_len:
+                continue
+            prefix = clean[:hex_len]
+            vendor = _OFFLINE_CACHE_EXT.get(prefix_len, {}).get(prefix)
+            if vendor:
+                return vendor
+
+    oui = clean[:6]
     if oui in _OFFLINE_CACHE:
         return _OFFLINE_CACHE[oui]
 
