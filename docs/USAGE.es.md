@@ -141,7 +141,7 @@ Agrupadas por función operativa. Verificadas contra el estado actual del códig
 | :--- | :--- |
 | `-t, --target CIDR` | IP, rango o CIDR (soporta lista separada por comas) |
 | `-m, --mode` | `fast` (descubrimiento de hosts), `normal` (top 100), `full` (todos los puertos + scripts/detección de SO) |
-| `-j, --threads N` | Hosts paralelos 1-100 (autodetectado; respaldo: 6) |
+| `-j, --threads N` | Hosts paralelos 1-100 (autodetectado; respaldo: 4) |
 | `--max-hosts N` | Número máximo de hosts a escanear (defecto: todos) |
 | `--rate-limit S` | Retardo entre hosts en segundos (jitter ±30%) |
 | `--deep-scan-budget N` | Máximo de hosts elegibles para deep scan agresivo (0 = sin límite) |

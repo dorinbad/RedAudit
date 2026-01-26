@@ -85,7 +85,7 @@ class ConfigurationContext(MutableMapping):
             "windows_verify_enabled": False,
             "windows_verify_max_targets": 20,
             "nuclei_enabled": False,
-            "nuclei_timeout": 600,
+            "nuclei_timeout": 300,
             "sqlmap_level": 1,
             "sqlmap_risk": 1,
             "zap_enabled": False,
@@ -204,7 +204,7 @@ class ConfigurationContext(MutableMapping):
     @property
     def nuclei_timeout(self) -> int:
         """Get Nuclei batch timeout."""
-        return int(self._config.get("nuclei_timeout", 600) or 600)
+        return int(self._config.get("nuclei_timeout", 300) or 300)
 
     @property
     def deep_id_scan(self) -> bool:

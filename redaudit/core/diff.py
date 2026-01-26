@@ -108,7 +108,7 @@ def extract_web_vulns_index(report: Dict) -> Dict[str, Dict]:
             counts["nikto_count"] += len(nikto) if isinstance(nikto, list) else 0
 
             # Count WhatWeb results
-            whatweb = finding.get("whatweb_results", {})
+            whatweb = finding.get("whatweb", {})
             if whatweb and isinstance(whatweb, dict):
                 counts["whatweb_count"] += 1
 

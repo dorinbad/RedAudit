@@ -139,7 +139,7 @@ Grouped by operational function. Verified against the current codebase.
 | :--- | :--- |
 | `-t, --target CIDR` | IP, range, or CIDR (comma-separated supported) |
 | `-m, --mode` | `fast` (host discovery), `normal` (top 100), `full` (all ports + scripts/OS detection) |
-| `-j, --threads N` | Parallel hosts 1-100 (auto-detected; fallback 6) |
+| `-j, --threads N` | Parallel hosts 1-100 (auto-detected; fallback 4) |
 | `--max-hosts N` | Maximum number of hosts to scan (default: all) |
 | `--rate-limit S` | Delay between hosts in seconds (±30% jitter applied) |
 | `--deep-scan-budget N` | Max hosts eligible for aggressive deep scan (0 = unlimited) |

@@ -142,13 +142,13 @@ RedAudit v3.2 introduce capacidades de **Reconocimiento Activo** (`--redteam`, `
 
 | Herramienta | Capacidad | Nivel de Riesgo | Autorización Requerida |
 | :--- | :--- | :--- | :--- |
-| `snmpwalk` | Consulta agentes SNMP para información de dispositivos red (VLANs, tablas ARP, configs interfaces) | **Medio** - Logs en dispositivos con SNMP | ✅ Aprobación admin interno |
-| `enum4linux` | Enumera recursos SMB Windows, usuarios, políticas contraseñas, info dominio | **Alto** - Activa logs seguridad, puede alertar SOC | ✅ Aprobación admin dominio |
-| `masscan` | Escáner puertos ultra-rápido (capacidad 1M paquetes/seg) | **Alto** - Alto ruido red, probable trigger IDS | ✅ Aprobación equipo red + seguridad |
-| `rpcclient` | Enumeración Windows RPC (usuarios, grupos, recursos) | **Alto** - Logs Active Directory, intentos auth | ✅ Aprobación admin dominio |
-| `ldapsearch` | Consultas LDAP/AD para estructura organizacional | **Medio** - Servidor LDAP registra consultas | ✅ Aprobación admin directorio |
-| `bettercap` | Framework multi-propósito ataques L2 (ARP spoofing, MITM, inyección) | **Crítico** - Ataques activos red, ilegal sin autorización | ✅ Aprobación ejecutiva + legal |
-| `scapy` (pasivo) | Sniffing pasivo de paquetes para etiquetas VLAN 802.1Q | **Bajo** - Solo pasivo (sin inyección) | ⚠️ Requiere modo promiscuo (root) |
+| `snmpwalk` | Consulta agentes SNMP para información de dispositivos red (VLANs, tablas ARP, configs interfaces) | **Medio** - Logs en dispositivos con SNMP | Aprobación admin interno |
+| `enum4linux` | Enumera recursos SMB Windows, usuarios, políticas contraseñas, info dominio | **Alto** - Activa logs seguridad, puede alertar SOC | Aprobación admin dominio |
+| `masscan` | Escáner puertos ultra-rápido (capacidad 1M paquetes/seg) | **Alto** - Alto ruido red, probable trigger IDS | Aprobación equipo red + seguridad |
+| `rpcclient` | Enumeración Windows RPC (usuarios, grupos, recursos) | **Alto** - Logs Active Directory, intentos auth | Aprobación admin dominio |
+| `ldapsearch` | Consultas LDAP/AD para estructura organizacional | **Medio** - Servidor LDAP registra consultas | Aprobación admin directorio |
+| `bettercap` | Framework multi-propósito ataques L2 (ARP spoofing, MITM, inyección) | **Crítico** - Ataques activos red, ilegal sin autorización | Aprobación ejecutiva + legal |
+| `scapy` (pasivo) | Sniffing pasivo de paquetes para etiquetas VLAN 802.1Q | **Bajo** - Solo pasivo (sin inyección) | Requiere modo promiscuo (root) |
 
 ### Mejores Prácticas para Características Red Team
 

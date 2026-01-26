@@ -12,6 +12,7 @@ from redaudit.core.credentials import Credential
 
 # Optional Dependency: PySNMP
 try:
+    import pysnmp.hlapi as hlapi
     from pysnmp.hlapi import (
         SnmpEngine,
         UsmUserData,
@@ -28,6 +29,7 @@ try:
     PYSNMP_AVAILABLE = True
 except ImportError:
     PYSNMP_AVAILABLE = False
+    hlapi = None
 
     class UsmUserData:  # type: ignore[no-redef]
         pass
@@ -76,21 +78,26 @@ class SNMPScanner:
         # Let's add them to `__init__` for flexibility.
 
         self.auth_proto = usmHMACSHAAuthProtocol
-        self.auth_key = credential.password
+        self.auth_key = getattr(credential, "snmp_auth_pass", None) or credential.password
 
         self.priv_proto = usmAesCfb128Protocol
-        self.priv_key = None  # Derived or same?
+        self.priv_key = getattr(credential, "snmp_priv_pass", None)
         # Wait, usually AuthPass and PrivPass differ.
         # We need a way to pass extended creds.
 
         # TODO: Refactor Credential to support extra fields, or pass them here.
         # For now, we will use attributes if they exist on credential, or defaults.
-        if hasattr(credential, "snmp_auth_proto"):
+        if hasattr(credential, "snmp_auth_proto") and credential.snmp_auth_proto:
             self.auth_proto = credential.snmp_auth_proto
-        if hasattr(credential, "snmp_priv_proto"):
+        if hasattr(credential, "snmp_priv_proto") and credential.snmp_priv_proto:
             self.priv_proto = credential.snmp_priv_proto
-        if hasattr(credential, "snmp_priv_pass"):
+        if hasattr(credential, "snmp_priv_pass") and credential.snmp_priv_pass:
             self.priv_key = credential.snmp_priv_pass
+        if hasattr(credential, "snmp_auth_pass") and credential.snmp_auth_pass:
+            self.auth_key = credential.snmp_auth_pass
+
+        self.auth_proto = self.auth_protocol_map(self.auth_proto)
+        self.priv_proto = self.priv_protocol_map(self.priv_proto)
 
         # Setup User Data
         # User, AuthKey, AuthProto, PrivKey, PrivProto
@@ -99,19 +106,77 @@ class SNMPScanner:
             self.auth_key,
             self.auth_proto,
             self.priv_key,
-            (
-                self.priv_protocol_map(self.priv_proto)
-                if hasattr(self, "priv_protocol_map")
-                else self.priv_proto
-            ),
+            self.priv_proto,
         )
 
+    @staticmethod
+    def _normalize_proto_name(name_or_obj) -> str:
+        if not isinstance(name_or_obj, str):
+            return ""
+        return name_or_obj.strip().upper().replace("-", "").replace("_", "")
+
+    def auth_protocol_map(self, name_or_obj):
+        if not name_or_obj:
+            return usmHMACSHAAuthProtocol
+        if not isinstance(name_or_obj, str):
+            return name_or_obj
+
+        normalized = self._normalize_proto_name(name_or_obj)
+        mapping = {
+            "SHA": usmHMACSHAAuthProtocol,
+            "SHA1": usmHMACSHAAuthProtocol,
+            "MD5": getattr(hlapi, "usmHMACMD5AuthProtocol", None),
+            "SHA224": getattr(hlapi, "usmHMACSHA224AuthProtocol", None),
+            "SHA256": getattr(hlapi, "usmHMACSHA256AuthProtocol", None),
+            "SHA384": getattr(hlapi, "usmHMACSHA384AuthProtocol", None),
+            "SHA512": getattr(hlapi, "usmHMACSHA512AuthProtocol", None),
+        }
+
+        mapped = mapping.get(normalized)
+        if mapped is None:
+            if normalized in mapping:
+                logger.warning(
+                    "SNMP auth protocol %s not supported by PySNMP; using SHA",
+                    normalized,
+                )
+            else:
+                logger.warning(
+                    "SNMP auth protocol %s not recognized; using SHA",
+                    normalized,
+                )
+            return usmHMACSHAAuthProtocol
+        return mapped
+
     def priv_protocol_map(self, name_or_obj):
-        # Helper to map string names to PySNMP objects if needed
-        # For MVP we assume correct objects passed or we use defaults.
-        # Implementation Detail:
-        # We need to map string args (from CLI) to PySNMP objects.
-        pass
+        if not name_or_obj:
+            return usmAesCfb128Protocol
+        if not isinstance(name_or_obj, str):
+            return name_or_obj
+
+        normalized = self._normalize_proto_name(name_or_obj)
+        mapping = {
+            "AES": usmAesCfb128Protocol,
+            "AES128": usmAesCfb128Protocol,
+            "AES192": getattr(hlapi, "usmAesCfb192Protocol", None),
+            "AES256": getattr(hlapi, "usmAesCfb256Protocol", None),
+            "DES": getattr(hlapi, "usmDESPrivProtocol", None),
+            "3DES": getattr(hlapi, "usm3DESEDEPrivProtocol", None),
+        }
+
+        mapped = mapping.get(normalized)
+        if mapped is None:
+            if normalized in mapping:
+                logger.warning(
+                    "SNMP privacy protocol %s not supported by PySNMP; using AES",
+                    normalized,
+                )
+            else:
+                logger.warning(
+                    "SNMP privacy protocol %s not recognized; using AES",
+                    normalized,
+                )
+            return usmAesCfb128Protocol
+        return mapped
 
     def get_system_info(self, host: str, port: int = 161) -> SNMPHostInfo:
         """Query system MIBs."""

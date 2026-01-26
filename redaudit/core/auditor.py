@@ -1276,6 +1276,7 @@ class InteractiveNetworkAuditor:
                         self.logger.warning("Nuclei scan failed: %s", e, exc_info=True)
                     self.ui.print_status(f"Nuclei: {e}", "WARNING")
 
+            api_key = None
             # v4.1: CVE correlation moved here AFTER Vuln Scan + Nuclei
             # This ensures all version data from nikto/whatweb/testssl/nuclei is available
             if self.config.get("cve_lookup_enabled") and not self.interrupted:

@@ -49,6 +49,17 @@ Estos elementos representan el backlog actual de trabajo planificado o aplazado 
 
 Estos elementos están ordenados cronológicamente (el más reciente primero).
 
+### v4.19.3 Ajustes de auditoría (Hecho)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
+| **Mapeo de protocolos SNMP v3** | Hecho (v4.19.3) | Nombres de protocolos auth/priv se mapean a objetos PySNMP y respetan claves auth/priv. |
+| **Topología SNMP y CVE** | Hecho (v4.19.3) | El procesamiento de topología SNMP ya no asume una API key NVD inicializada. |
+| **Alineación WhatWeb en diff** | Hecho (v4.19.3) | Los informes diff cuentan WhatWeb con la clave correcta. |
+| **OUI offline /28 y /36** | Hecho (v4.19.3) | El manuf offline resuelve prefijos de 28 y 36 bits. |
+| **Timeout por defecto de Nuclei** | Hecho (v4.19.3) | El default de configuración coincide con el timeout CLI de 300s. |
+| **Alineación documental** | Hecho (v4.19.3) | Presets de velocidad ES, fallback de threads y docs Docker/seguridad alineados con la política. |
+
 ### v4.19.2 Progreso en reanudacion de Nuclei (Hecho)
 
 | Funcionalidad | Estado | Descripción |

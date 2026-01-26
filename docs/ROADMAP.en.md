@@ -49,6 +49,17 @@ These items represent the current backlog of planned or deferred work for the re
 
 These items are ordered chronologically (most recent first).
 
+### v4.19.3 Audit Follow-ups (Done)
+
+| Feature | Status | Description |
+| --- | --- | --- |
+| **SNMP v3 Protocol Mapping** | Done (v4.19.3) | Auth/priv protocol names map to PySNMP objects and respect explicit auth/priv keys. |
+| **SNMP Topology CVE Safety** | Done (v4.19.3) | SNMP topology processing no longer assumes an initialized NVD API key. |
+| **WhatWeb Diff Alignment** | Done (v4.19.3) | Diff reports count WhatWeb findings using the correct key. |
+| **Offline OUI /28 and /36** | Done (v4.19.3) | Offline manuf lookups resolve 28- and 36-bit prefixes. |
+| **Nuclei Timeout Default** | Done (v4.19.3) | Configuration default matches the CLI 300s timeout. |
+| **Docs Alignment Cleanup** | Done (v4.19.3) | ES timing presets, thread fallback, and Docker/Security docs align with policy. |
+
 ### v4.19.2 Nuclei Resume Progress (Done)
 
 | Feature | Status | Description |
