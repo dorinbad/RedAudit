@@ -379,6 +379,8 @@ redaudit --diff ~/reports/monday.json ~/reports/friday.json
 | `--net-discovery` | Enhanced L2/broadcast discovery |
 | `--topology` | Enable network topology discovery |
 | `--nuclei` | Enable Nuclei template scanning (full mode only) |
+| `--nuclei-max-runtime` | Max Nuclei runtime in minutes (0 = unlimited; creates resume) |
+| `--nuclei-resume` | Resume pending Nuclei run from a scan folder or resume file |
 | `--html-report` | Generate interactive HTML dashboard |
 | `--diff OLD NEW` | Differential analysis between scans |
 

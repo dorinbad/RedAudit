@@ -381,6 +381,8 @@ redaudit --diff ~/reports/lunes.json ~/reports/viernes.json
 | `--net-discovery` | Descubrimiento L2/broadcast mejorado |
 | `--topology` | Activar descubrimiento de topología |
 | `--nuclei` | Habilitar escaneo de plantillas Nuclei (solo modo full) |
+| `--nuclei-max-runtime` | Tiempo maximo de Nuclei en minutos (0 = ilimitado; crea reanudacion) |
+| `--nuclei-resume` | Reanudar Nuclei pendiente desde carpeta o archivo de reanudacion |
 | `--html-report` | Generar dashboard HTML interactivo |
 | `--diff OLD NEW` | Análisis diferencial entre escaneos |
 
