@@ -2,24 +2,24 @@
 
 RedAudit es una herramienta para Linux, pero puedes ejecutarla en **Windows** o **macOS** usando Docker.
 
-> ⚠️ **Limitación Importante**: Docker en Windows/macOS **no permite descubrimiento L2 fiable** en tu red. Corre en una máquina virtual que no puede ver tu red real a nivel 2. Ver [Limitaciones](#limitaciones-en-windowsmacos) más abajo.
+> **Limitación Importante**: Docker en Windows/macOS **no permite descubrimiento L2 fiable** en tu red. Corre en una máquina virtual que no puede ver tu red real a nivel 2. Ver [Limitaciones](#limitaciones-en-windowsmacos) más abajo.
 
 ## Cuándo Usar Docker
 
 | Caso de Uso | Docker en Win/Mac | Linux Nativo |
 | :--- | :--- | :--- |
-| **Escanear servidores conocidos** | ✅ Funciona | ✅ Funciona |
-| **Demo/pruebas con IPs conocidas** | ✅ Funciona | ✅ Funciona |
-| **Descubrir todos los dispositivos** | ❌ Incompleto | ✅ Funciona |
-| **Auditoría profesional de red** | ❌ Limitado | ✅ Capacidad completa |
-| **Escaneo ARP/Nivel 2** | ❌ No es posible | ✅ Funciona |
-| **Detección VPN (MAC/GW)** | ❌ Limitada/Imprecisa | ✅ Funciona |
+| **Escanear servidores conocidos** | Funciona | Funciona |
+| **Demo/pruebas con IPs conocidas** | Funciona | Funciona |
+| **Descubrir todos los dispositivos** | Incompleto | Funciona |
+| **Auditoría profesional de red** | Limitado | Capacidad completa |
+| **Escaneo ARP/Nivel 2** | No es posible | Funciona |
+| **Detección VPN (MAC/GW)** | Limitada/Imprecisa | Funciona |
 
 **Recomendación para auditorías profesionales**: Usa Linux nativo, o una VM Linux con networking en modo puente (bridged).
 
 ---
 
-## 🚀 Inicio Rápido (Recomendado)
+## Inicio Rápido (Recomendado)
 
 Nuestros scripts de ayuda manejan todo automáticamente: detectar tu red, descargar la última imagen y ejecutar el escaneo.
 
@@ -38,7 +38,7 @@ chmod +x redaudit-docker.sh
 ./redaudit-docker.sh
 ```
 
-> 💡 El script **hace pull de la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
+> Nota: El script **hace pull de la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
 
 ## Windows (PowerShell)
 
@@ -54,15 +54,15 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 .\redaudit-docker.ps1
 ```
 
-> 💡 El script **descarga automáticamente la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
+> Nota: El script **descarga automáticamente la última imagen de RedAudit** antes de cada escaneo. No necesitas actualizar manualmente.
 
 ## Qué hacen los scripts
 
-- ✅ Verificar que Docker esté corriendo
-- ✅ Detectar tu red automáticamente
-- ✅ Hacer pull de la última imagen
-- ✅ Ejecutar el escaneo
-- ✅ Ofrecer abrir el informe cuando termine
+- Verificar que Docker esté corriendo
+- Detectar tu red automáticamente
+- Hacer pull de la última imagen
+- Ejecutar el escaneo
+- Ofrecer abrir el informe cuando termine
 
 ---
 
@@ -89,7 +89,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 
 8. Salta el tutorial/inicio de sesión (no es necesario)
 
-9. **Espera** hasta que el icono de la ballena en la barra de menú esté **verde** ✅
+9. **Espera** hasta que el icono de la ballena en la barra de menú esté **verde**
 
 ## macOS - 2. Abrir Terminal
 
@@ -179,9 +179,9 @@ open ~/RedAudit-Reports/report.html
 
 7. Salta el tutorial/inicio de sesión (no es necesario)
 
-8. **Espera** hasta que el icono de la ballena en la bandeja del sistema esté **verde** ✅
+8. **Espera** hasta que el icono de la ballena en la bandeja del sistema esté **verde**
 
-> ⚠️ **Windows 10/11 Home**: Docker puede pedirte que instales WSL2. Sigue las instrucciones - es necesario.
+> **Windows 10/11 Home**: Docker puede pedirte que instales WSL2. Sigue las instrucciones - es necesario.
 
 ## Windows - 2. Abrir PowerShell
 
@@ -297,10 +297,10 @@ sudo docker run --rm --network host \
 
 **Ventajas de `--network host` en Linux:**
 
-- ✅ Visibilidad completa de la red
-- ✅ Escaneo ARP funciona
-- ✅ Todos los protocolos de descubrimiento funcionan
-- ✅ Mismo rendimiento que nativo
+- Visibilidad completa de la red
+- Escaneo ARP funciona
+- Todos los protocolos de descubrimiento funcionan
+- Mismo rendimiento que nativo
 
 ---
 
@@ -440,8 +440,8 @@ Si ves texto como `[1m[95m` o `[0m[91m` en lugar de colores, tu terminal no sopo
 
 | Terminal | Colores ANSI |
 | :--- | :--- |
-| Windows Terminal | ✅ Sí |
-| PowerShell 7+ | ✅ Sí |
-| PowerShell 5 (negro) | ⚠️ Parcial |
-| PowerShell ISE (azul) | ❌ No |
-| CMD | ⚠️ Parcial |
+| Windows Terminal | Sí |
+| PowerShell 7+ | Sí |
+| PowerShell 5 (negro) | Parcial |
+| PowerShell ISE (azul) | No |
+| CMD | Parcial |

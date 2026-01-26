@@ -2,24 +2,24 @@
 
 RedAudit is a Linux tool, but you can run it on **Windows** or **macOS** using Docker.
 
-> ⚠️ **Important Limitation**: Docker on Windows/macOS **cannot perform reliable L2 discovery** on your network. It runs inside a virtual machine that cannot see your real network at Layer 2. See [Limitations](#limitations-on-windowsmacos) below.
+> **Important Limitation**: Docker on Windows/macOS **cannot perform reliable L2 discovery** on your network. It runs inside a virtual machine that cannot see your real network at Layer 2. See [Limitations](#limitations-on-windowsmacos) below.
 
 ## When to Use Docker
 
 | Use Case | Docker on Win/Mac | Linux Native |
 | :--- | :--- | :--- |
-| **Scan specific known servers** | ✅ Works | ✅ Works |
-| **Demo/testing with known IPs** | ✅ Works | ✅ Works |
-| **Discover all devices on network** | ❌ Incomplete | ✅ Works |
-| **Professional network audit** | ❌ Limited | ✅ Full capability |
-| **ARP/Layer 2 scanning** | ❌ Not possible | ✅ Works |
-| **VPN Detection (MAC/GW)** | ❌ Limited/Inaccurate | ✅ Works |
+| **Scan specific known servers** | Works | Works |
+| **Demo/testing with known IPs** | Works | Works |
+| **Discover all devices on network** | Incomplete | Works |
+| **Professional network audit** | Limited | Full capability |
+| **ARP/Layer 2 scanning** | Not possible | Works |
+| **VPN Detection (MAC/GW)** | Limited/Inaccurate | Works |
 
 **Recommendation for professional audits**: Use Linux natively, or a Linux VM with bridged networking.
 
 ---
 
-## 🚀 Quick Start (Recommended)
+## Quick Start (Recommended)
 
 Our helper scripts handle everything automatically: detecting your network, pulling the latest image, and running the scan.
 
@@ -38,7 +38,7 @@ chmod +x redaudit-docker.sh
 ./redaudit-docker.sh
 ```
 
-> 💡 The script **automatically pulls the latest RedAudit image** before each scan. You don't need to update manually.
+> Note: The script **automatically pulls the latest RedAudit image** before each scan. You don't need to update manually.
 
 ## Windows (PowerShell)
 
@@ -54,15 +54,15 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 .\redaudit-docker.ps1
 ```
 
-> 💡 The script **automatically downloads the latest RedAudit image** before each scan. You don't need to update manually.
+> Note: The script **automatically downloads the latest RedAudit image** before each scan. You don't need to update manually.
 
 ## What the scripts do
 
-- ✅ Check that Docker is running
-- ✅ Detect your network automatically
-- ✅ Pull the latest RedAudit image (best-effort)
-- ✅ Run the scan
-- ✅ Offer to open the report when finished
+- Check that Docker is running
+- Detect your network automatically
+- Pull the latest RedAudit image (best-effort)
+- Run the scan
+- Offer to open the report when finished
 
 ---
 
@@ -89,7 +89,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/dorinbadea/RedAudit/ma
 
 8. Skip the tutorial/sign-in (not required)
 
-9. **Wait** until the whale icon in the menu bar turns **green** ✅
+9. **Wait** until the whale icon in the menu bar turns **green**
 
 ## macOS - 2. Open Terminal
 
@@ -179,9 +179,9 @@ open ~/RedAudit-Reports/report.html
 
 7. Skip the tutorial/sign-in (not required)
 
-8. **Wait** until the whale icon in the system tray turns **green** ✅
+8. **Wait** until the whale icon in the system tray turns **green**
 
-> ⚠️ **Windows 10/11 Home**: Docker may ask you to install WSL2. Follow the prompts - this is required.
+> **Windows 10/11 Home**: Docker may ask you to install WSL2. Follow the prompts - this is required.
 
 ## Windows - 2. Open PowerShell
 
@@ -297,10 +297,10 @@ sudo docker run --rm --network host \
 
 **Advantages of `--network host` on Linux:**
 
-- ✅ Full network visibility
-- ✅ ARP scanning works
-- ✅ All discovery protocols work
-- ✅ Same performance as native
+- Full network visibility
+- ARP scanning works
+- All discovery protocols work
+- Same performance as native
 
 ---
 
@@ -440,8 +440,8 @@ If you see text like `[1m[95m` or `[0m[91m` instead of colors, your terminal doe
 
 | Terminal | ANSI Colors |
 | :--- | :--- |
-| Windows Terminal | ✅ Yes |
-| PowerShell 7+ | ✅ Yes |
-| PowerShell 5 (black) | ⚠️ Partial |
-| PowerShell ISE (blue) | ❌ No |
-| CMD | ⚠️ Partial |
+| Windows Terminal | Yes |
+| PowerShell 7+ | Yes |
+| PowerShell 5 (black) | Partial |
+| PowerShell ISE (blue) | No |
+| CMD | Partial |

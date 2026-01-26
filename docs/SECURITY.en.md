@@ -155,15 +155,15 @@ RedAudit v3.2 introduces **Active Reconnaissance** capabilities (`--redteam`, `-
 
 | Tool | Capability | Risk Level | Authorization Required |
 | :--- | :--- | :--- | :--- |
-| `snmpwalk` | Queries SNMP agents for network device information (VLANs, ARP tables, interface configs) | **Medium** - Logs on SNMP-enabled devices | ✅ Internal admin approval |
-| `enum4linux` | Enumerates Windows SMB shares, users, password policies, domain info | **High** - Triggers security logs, may alert SOC | ✅ Domain admin approval |
-| `masscan` | Ultra-fast port scanner (1M packets/sec capability) | **High** - High network noise, likely IDS trigger | ✅ Network team + security approval |
-| `rpcclient` | Windows RPC enumeration (users, groups, shares) | **High** - Active Directory logs, auth attempts | ✅ Domain admin approval |
-| `ldapsearch` | LDAP/AD queries for organizational structure | **Medium** - LDAP server logs queries | ✅ Directory admin approval |
-| `bettercap` | Multi-purpose L2 attack framework (ARP spoofing, MITM, injection) | **Critical** - Active network attacks, illegal without authorization | ✅ Executive + legal approval |
-| `scapy` (passive) | Passive packet sniffing for 802.1Q VLAN tags | **Low** - Passive only (no injection) | ⚠️ Requires promiscuous mode (root) |
-| `kerbrute` | Kerberos user enumeration via pre-auth checks | **High** - Generates Failed Logons (Event 4771) on DC | ✅ Domain admin approval |
-| `proxychains4` | Routes traffic through SOCKS5 proxies | **Medium** - Evades network controls / firewall logging | ✅ Network security approval |
+| `snmpwalk` | Queries SNMP agents for network device information (VLANs, ARP tables, interface configs) | **Medium** - Logs on SNMP-enabled devices | Internal admin approval |
+| `enum4linux` | Enumerates Windows SMB shares, users, password policies, domain info | **High** - Triggers security logs, may alert SOC | Domain admin approval |
+| `masscan` | Ultra-fast port scanner (1M packets/sec capability) | **High** - High network noise, likely IDS trigger | Network team + security approval |
+| `rpcclient` | Windows RPC enumeration (users, groups, shares) | **High** - Active Directory logs, auth attempts | Domain admin approval |
+| `ldapsearch` | LDAP/AD queries for organizational structure | **Medium** - LDAP server logs queries | Directory admin approval |
+| `bettercap` | Multi-purpose L2 attack framework (ARP spoofing, MITM, injection) | **Critical** - Active network attacks, illegal without authorization | Executive + legal approval |
+| `scapy` (passive) | Passive packet sniffing for 802.1Q VLAN tags | **Low** - Passive only (no injection) | Requires promiscuous mode (root) |
+| `kerbrute` | Kerberos user enumeration via pre-auth checks | **High** - Generates Failed Logons (Event 4771) on DC | Domain admin approval |
+| `proxychains4` | Routes traffic through SOCKS5 proxies | **Medium** - Evades network controls / firewall logging | Network security approval |
 
 ### Best Practices for Red Team Features
 
