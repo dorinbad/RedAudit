@@ -49,6 +49,13 @@ These items represent the current backlog of planned or deferred work for the re
 
 These items are ordered chronologically (most recent first).
 
+### v4.19.6 Nuclei Progress Detail and INFO Contrast (Done)
+
+| Feature | Status | Description |
+| --- | --- | --- |
+| **Parallel Batch Detail** | Done (v4.19.6) | Progress detail now reports parallel batch completion accurately. |
+| **INFO Color Contrast** | Done (v4.19.6) | INFO status output uses the standard blue color for readability. |
+
 ### v4.19.5 Nuclei Resume Metadata Alignment (Done)
 
 | Feature | Status | Description |

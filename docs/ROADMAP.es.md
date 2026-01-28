@@ -49,6 +49,13 @@ Estos elementos representan el backlog actual de trabajo planificado o aplazado 
 
 Estos elementos están ordenados cronológicamente (el más reciente primero).
 
+### v4.19.6 Progreso de Nuclei y contraste INFO (Hecho)
+
+| Funcionalidad | Estado | Descripción |
+|---|---|---|
+| **Detalle de lotes en paralelo** | Hecho (v4.19.6) | El detalle de progreso informa correctamente los lotes completados. |
+| **Contraste de INFO** | Hecho (v4.19.6) | La salida INFO usa el azul estandar para mejor legibilidad. |
+
 ### v4.19.5 Metadatos de reanudacion de Nuclei (Hecho)
 
 | Funcionalidad | Estado | Descripción |

@@ -10,6 +10,13 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Sin lanzar]
 
+## [4.19.6] - 2026-01-28
+
+### Corregido
+
+- **Detalle de progreso de Nuclei**: El progreso paralelo informa el recuento de lotes completados sin indices engañosos.
+- **Color INFO**: La salida INFO usa el azul estandar para visibilidad consistente.
+
 ## [4.19.5] - 2026-01-28
 
 ### Corregido
