@@ -395,9 +395,9 @@ class InteractiveNetworkAuditor:
 
         return self.ask_yes_no(self.ui.t("start_audit"), default="yes")
 
-    def _filter_auditor_ips(self, hosts: list) -> list:
+    def _collect_auditor_ip_reasons(self) -> Dict[str, Set[str]]:
         """
-        Filter out auditor's own IPs from the host list.
+        Collect auditor IPs with reasons without mutating host lists.
         Uses self.results['network_info'] as the source of truth.
         """
         network_info = self.results.get("network_info") or []
@@ -468,6 +468,14 @@ class InteractiveNetworkAuditor:
                     except Exception:
                         pass
 
+        return auditor_ip_reasons
+
+    def _filter_auditor_ips(self, hosts: list) -> list:
+        """
+        Filter out auditor's own IPs from the host list.
+        Uses self.results['network_info'] as the source of truth.
+        """
+        auditor_ip_reasons = self._collect_auditor_ip_reasons()
         auditor_ips = set(auditor_ip_reasons)
         if not auditor_ips:
             self.results["auditor_exclusions"] = {"count": 0, "items": []}
@@ -652,6 +660,10 @@ class InteractiveNetworkAuditor:
                         "active_l2": bool(self.config.get("net_discovery_active_l2", False)),
                         "use_masscan": self.config.get("net_discovery_masscan", True),
                     }
+                    redteam_enabled = bool(self.config.get("net_discovery_redteam", False))
+                    exclude_ips = None
+                    if redteam_enabled:
+                        exclude_ips = set(self._collect_auditor_ip_reasons())
 
                     # v3.2.3: Add spinner progress for net_discovery phase
                     try:
@@ -691,8 +703,9 @@ class InteractiveNetworkAuditor:
                                     dhcp_interfaces=dhcp_interfaces,
                                     dhcp_timeout_s=dhcp_timeout_s,
                                     protocols=self.config.get("net_discovery_protocols"),
-                                    redteam=self.config.get("net_discovery_redteam", False),
+                                    redteam=redteam_enabled,
                                     redteam_options=redteam_options,
+                                    exclude_ips=exclude_ips,
                                     extra_tools=self.extra_tools,
                                     progress_callback=lambda lbl, s, t: self._nd_progress_callback(
                                         lbl, s, t, progress, task, nd_start_time
@@ -714,8 +727,9 @@ class InteractiveNetworkAuditor:
                                     dhcp_interfaces=dhcp_interfaces,
                                     dhcp_timeout_s=dhcp_timeout_s,
                                     protocols=self.config.get("net_discovery_protocols"),
-                                    redteam=self.config.get("net_discovery_redteam", False),
+                                    redteam=redteam_enabled,
                                     redteam_options=redteam_options,
+                                    exclude_ips=exclude_ips,
                                     extra_tools=self.extra_tools,
                                     progress_callback=lambda lbl, s, t: indicator.update(
                                         f"{lbl} ({s}/{t})"

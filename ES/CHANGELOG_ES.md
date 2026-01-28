@@ -10,6 +10,12 @@ Las notas de versión viven en `docs/releases/` para más contexto.
 
 ## [Sin lanzar]
 
+## [4.19.7] - 2026-01-28
+
+### Corregido
+
+- **Autoobjetivo en Red Team**: El descubrimiento Red Team ahora omite las IPs del auditor al seleccionar objetivos para evitar auto-enumeracion.
+
 ## [4.19.6] - 2026-01-28
 
 ### Corregido

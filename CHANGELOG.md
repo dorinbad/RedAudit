@@ -10,6 +10,12 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [4.19.7] - 2026-01-28
+
+### Fixed
+
+- **Red Team Self-Targeting**: Red Team discovery now skips auditor IPs during target selection to avoid self-enumeration.
+
 ## [4.19.6] - 2026-01-28
 
 ### Fixed
