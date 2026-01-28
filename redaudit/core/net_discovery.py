@@ -21,7 +21,7 @@ import shutil
 import threading
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from redaudit.core.command_runner import CommandRunner
@@ -1171,6 +1171,7 @@ def discover_networks(
     protocols: Optional[List[str]] = None,
     redteam: bool = False,
     redteam_options: Optional[Dict[str, Any]] = None,
+    exclude_ips: Optional[Set[str]] = None,
     extra_tools: Optional[Dict[str, str]] = None,
     progress_callback: Optional[ProgressCallback] = None,
     logger=None,
@@ -1186,6 +1187,7 @@ def discover_networks(
         protocols: List of protocols to use (dhcp, netbios, mdns, upnp, arp, fping)
                    If None, uses all available
         redteam: Enable Red Team techniques (slower, noisier)
+        exclude_ips: Optional set of IPs to skip for Red Team enumeration
         extra_tools: Override tool paths
         logger: Logger instance
 
@@ -1542,6 +1544,7 @@ def discover_networks(
             target_networks,
             interface=interface,
             redteam_options=redteam_options,
+            exclude_ips=exclude_ips,
             tools=result.get("tools"),
             logger=logger,
             progress_callback=progress_callback,

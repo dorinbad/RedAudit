@@ -12,7 +12,7 @@ import re
 import shutil
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from redaudit.core.command_runner import CommandRunner
 from redaudit.core.rustscan import is_rustscan_available, run_rustscan_multi
@@ -53,6 +53,7 @@ def run_redteam_discovery(
     target_networks: List[str],
     interface: Optional[str] = None,
     redteam_options: Optional[Dict[str, Any]] = None,
+    exclude_ips: Optional[Set[str]] = None,
     tools: Optional[Dict[str, bool]] = None,
     logger=None,
     progress_callback: Optional[ProgressCallback] = None,
@@ -123,7 +124,10 @@ def run_redteam_discovery(
 
     active_l2 = bool(options.get("active_l2", False))
 
-    target_ips = _gather_redteam_targets(result, max_targets=max_targets)
+    exclude_set = {ip for ip in (exclude_ips or set()) if isinstance(ip, str) and ip}
+    target_ips = _gather_redteam_targets(
+        result, max_targets=max_targets, exclude_ips=exclude_set
+    )
 
     rustscan_res = {}
     if options.get("use_masscan", True):
@@ -252,29 +256,34 @@ def _dedupe_preserve_order(items: List[str]) -> List[str]:
     return out
 
 
-def _gather_redteam_targets(discovery_result: Dict[str, Any], max_targets: int = 50) -> List[str]:
+def _gather_redteam_targets(
+    discovery_result: Dict[str, Any],
+    max_targets: int = 50,
+    exclude_ips: Optional[Set[str]] = None,
+) -> List[str]:
     candidates: List[str] = []
+    exclude = {ip for ip in (exclude_ips or set()) if isinstance(ip, str) and ip}
 
     for ip_str in discovery_result.get("alive_hosts", []) or []:
-        if isinstance(ip_str, str) and _is_ipv4(ip_str):
+        if isinstance(ip_str, str) and _is_ipv4(ip_str) and ip_str not in exclude:
             candidates.append(ip_str)
 
     for host in discovery_result.get("arp_hosts", []) or []:
         if isinstance(host, dict):
             ip_str = host.get("ip")
-            if isinstance(ip_str, str) and _is_ipv4(ip_str):
+            if isinstance(ip_str, str) and _is_ipv4(ip_str) and ip_str not in exclude:
                 candidates.append(ip_str)
 
     for host in discovery_result.get("netbios_hosts", []) or []:
         if isinstance(host, dict):
             ip_str = host.get("ip")
-            if isinstance(ip_str, str) and _is_ipv4(ip_str):
+            if isinstance(ip_str, str) and _is_ipv4(ip_str) and ip_str not in exclude:
                 candidates.append(ip_str)
 
     for srv in discovery_result.get("dhcp_servers", []) or []:
         if isinstance(srv, dict):
             ip_str = srv.get("ip")
-            if isinstance(ip_str, str) and _is_ipv4(ip_str):
+            if isinstance(ip_str, str) and _is_ipv4(ip_str) and ip_str not in exclude:
                 candidates.append(ip_str)
 
     return _dedupe_preserve_order(candidates)[:max_targets]
