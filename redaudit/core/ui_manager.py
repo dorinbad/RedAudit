@@ -156,7 +156,7 @@ class UIManager:
         elif status_display in ("FAIL", "ERROR"):
             color_key = "FAIL"
         elif status_display == "INFO":
-            color_key = "CYAN"
+            color_key = "OKBLUE"
         rich_style = rich_color_map.get(color_key, "bright_blue")
         return status_display, color_key, rich_style
 

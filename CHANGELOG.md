@@ -10,6 +10,13 @@ Release notes live under `docs/releases/` for additional context.
 
 ## [Unreleased]
 
+## [4.19.6] - 2026-01-28
+
+### Fixed
+
+- **Nuclei Progress Detail**: Parallel batch progress now reports completed batch counts and avoids misleading batch indices.
+- **INFO Status Color**: INFO output now uses the standard blue color for consistent visibility.
+
 ## [4.19.5] - 2026-01-28
 
 ### Fixed

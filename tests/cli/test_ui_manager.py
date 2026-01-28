@@ -111,12 +111,12 @@ class TestUIManagerPrintStatus:
 class TestUIManagerHelpers:
     """Test helper methods."""
 
-    def test_resolve_status_style_info_uses_cyan(self):
+    def test_resolve_status_style_info_uses_okblue(self):
         ui = UIManager()
         status_display, color_key, rich_style = ui._resolve_status_style("INFO")
         assert status_display == "INFO"
-        assert color_key == "CYAN"
-        assert rich_style == "bright_cyan"
+        assert color_key == "OKBLUE"
+        assert rich_style == "bright_blue"
 
     def test_format_eta_seconds(self):
         """Test format_eta with seconds."""

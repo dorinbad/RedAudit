@@ -451,10 +451,17 @@ def run_nuclei_scan(
                                 final_display_val = max_progress_targets
 
                             eta_batch = _format_eta(max(0.0, timeout_s - elapsed))
-                            detail = (
-                                f"batch {batch_idx}/{total_batches} running "
-                                f"{_format_eta(elapsed)} elapsed"
-                            )
+                            active_count = len(active_batch_progress)
+                            if max_parallel > 1 and total_batches > 1:
+                                detail = (
+                                    f"parallel batches {active_count}/{total_batches} running "
+                                    f"{_format_eta(elapsed)} elapsed"
+                                )
+                            else:
+                                detail = (
+                                    f"batch {batch_idx}/{total_batches} running "
+                                    f"{_format_eta(elapsed)} elapsed"
+                                )
                             eta_label = f"ETA≈ {eta_batch}" if eta_batch != "--:--" else ""
                             _emit_progress(final_display_val, total_targets, eta_label, detail)
                     except KeyboardInterrupt:
@@ -583,6 +590,7 @@ def run_nuclei_scan(
                 _run_one_batch(idx, batch)
                 return idx
 
+            completed_batches = 0
             with ThreadPoolExecutor(max_workers=max_parallel) as executor:
                 futures = {
                     executor.submit(_run_batch_wrapper, (idx, batch)): idx
@@ -590,20 +598,21 @@ def run_nuclei_scan(
                 }
                 for future in as_completed(futures):
                     try:
-                        completed_idx = future.result()
+                        future.result()
+                        completed_batches += 1
                         with batch_lock:
                             avg = (
                                 (sum(batch_durations) / len(batch_durations))
                                 if batch_durations
                                 else 0.0
                             )
-                        remaining = max(0, total_batches - completed_idx)
+                        remaining = max(0, total_batches - completed_batches)
                         eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
                         _emit_progress(
                             min(float(total_targets), max_progress_targets),
                             total_targets,
                             f"ETA≈ {eta}",
-                            f"batch {completed_idx}/{total_batches}",
+                            f"batches {completed_batches}/{total_batches} complete",
                         )
                     except Exception as e:
                         if logger:
@@ -648,25 +657,27 @@ def run_nuclei_scan(
                         _run_one_batch(idx, batch)
                         return idx
 
+                    completed_batches = 0
                     with ThreadPoolExecutor(max_workers=max_parallel) as executor:
                         futures = {
                             executor.submit(_run_batch_wrapper, (idx, batch)): idx
                             for idx, batch in enumerate(batches, start=1)
                         }
                         for future in as_completed(futures):
-                            completed_idx = future.result()
+                            future.result()
+                            completed_batches += 1
                             with batch_lock:
                                 avg = (
                                     (sum(batch_durations) / len(batch_durations))
                                     if batch_durations
                                     else 0.0
                                 )
-                            remaining = max(0, total_batches - completed_idx)
+                            remaining = max(0, total_batches - completed_batches)
                             eta = _format_eta(avg * remaining) if avg > 0 else "--:--"
                             progress.update(
                                 task,
                                 advance=1,
-                                description=f"[cyan]Nuclei ({completed_idx}/{total_batches})",
+                                description=f"[cyan]Nuclei ({completed_batches}/{total_batches})",
                                 eta=f"ETA≈ {eta}",
                             )
             except Exception:
@@ -683,8 +694,8 @@ def run_nuclei_scan(
             for idx, batch in enumerate(batches, start=1):
                 if runtime_budget_s is not None:
                     elapsed = time.time() - budget_start
-                    remaining = runtime_budget_s - elapsed
-                    if remaining <= 0:
+                    remaining_budget = runtime_budget_s - elapsed
+                    if remaining_budget <= 0:
                         remaining_targets_budget: List[str] = []
                         for remain_batch in batches[idx - 1 :]:
                             remaining_targets_budget.extend(remain_batch)
@@ -694,7 +705,7 @@ def run_nuclei_scan(
                         result["partial"] = True
                         break
                     expected_batch_timeout = _estimate_batch_timeout(batch)
-                    if remaining < expected_batch_timeout:
+                    if remaining_budget < expected_batch_timeout:
                         if print_status:
                             print_status(
                                 "[nuclei] budget too low for next batch; deferring remaining targets",
